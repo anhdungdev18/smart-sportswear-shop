@@ -1,0 +1,19 @@
+# Test-only overrides, layered on top of the main application.yml (profile
+# "test" merges, it does not replace).
+#
+# Datasource: points at the docker-compose postgres service (host port 5433,
+# see ../../../docker-compose.yml). Precondition for running this test suite:
+# `docker compose up -d postgres` from the repo root. See
+# AbstractIntegrationTest's javadoc for why this isn't Testcontainers.
+#
+# Hikari pool size: bumped so the one-time-use concurrency test (10 parallel
+# /refresh calls, one of which can transiently hold 2 connections via
+# REQUIRES_NEW) does not flake on pool exhaustion under MockMvc's
+# thread-per-call execution.
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5433/dunghaiquyen
+    username: postgres
+    password: postgres
+    hikari:
+      maximum-pool-size: 20
