@@ -1,0 +1,26 @@
+{
+  "name": "sportai-storefront",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start -p 3000",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@phosphor-icons/react": "^2.1.7",
+    "framer-motion": "^12.23.0",
+    "next": "^15.3.4",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.34",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "eslint": "^9.29.0",
+    "eslint-config-next": "^15.3.4",
+    "typescript": "^5.8.3"
+  }
+}

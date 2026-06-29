@@ -1,0 +1,23 @@
+:root {
+  --admin-bg: #f5f5f7;
+  --admin-surface: #ffffff;
+  --admin-sidebar: #0e1c22;
+  --admin-sidebar-soft: #15272f;
+  --admin-text: #0e1c22;
+  --admin-muted: #666666;
+  --admin-line: #e1e3e8;
+  --admin-accent: #d9121f;
+  --admin-accent-dark: #b90f19;
+  --admin-sale: #f76b1c;
+  --admin-success: #16a34a;
+  --admin-warning: #f59e0b;
+  --admin-danger: #dc2626;
+  --admin-info: #288ad6;
+  --admin-radius-sm: 3px;
+  --admin-radius-md: 6px;
+  --admin-radius-lg: 8px;
+  --admin-shadow: 0 12px 28px rgba(14, 28, 34, 0.08);
+  --admin-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --admin-duration-fast: 160ms;
+  --admin-duration-base: 260ms;
+}
