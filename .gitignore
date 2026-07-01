@@ -18,3 +18,8 @@ yarn-error.log*
 # Local runtime / temp
 tmp/
 temp/
+
+# Frontend build artifacts
+frontend/**/node_modules/
+frontend/**/.next/
+frontend/**/.env.local

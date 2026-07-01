@@ -32,7 +32,13 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public String getPassword() {
-        return user.getPasswordHash();
+        // Google-authenticated users have no password hash (V9: column nullable).
+        // Return "" so Spring's BCryptPasswordEncoder.matches() returns false
+        // instead of NPE - the actual protection against Google users slipping
+        // through email+password login is in AuthService.login's explicit check,
+        // which fires before this method is even reached for password comparison.
+        String hash = user.getPasswordHash();
+        return hash != null ? hash : "";
     }
 
     @Override

@@ -14,6 +14,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -73,6 +74,10 @@ public class Order extends AbstractAuditEntity {
 
     @Column(name = "internal_note", columnDefinition = "text")
     private String internalNote;
+
+    /** Set once, when orderStatus first reaches DELIVERED (see OrderService.applyStatusTransition) - backs the returns module's return-window eligibility check. Null for orders delivered before this column existed. */
+    @Column(name = "delivered_at")
+    private Instant deliveredAt;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<OrderItem> items = new ArrayList<>();

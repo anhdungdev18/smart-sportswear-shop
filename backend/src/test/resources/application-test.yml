@@ -1,9 +1,10 @@
 # Test-only overrides, layered on top of the main application.yml (profile
 # "test" merges, it does not replace).
 #
-# Datasource: points at the docker-compose postgres service (host port 5433,
-# see ../../../docker-compose.yml). Precondition for running this test suite:
-# `docker compose up -d postgres` from the repo root. See
+# Datasource: points at the docker-compose postgres service (host port 5434,
+# see ../../../docker-compose.yml - bumped from 5433 because another project's
+# container claimed it on this dev machine). Precondition for running this
+# test suite: `docker compose up -d postgres` from the repo root. See
 # AbstractIntegrationTest's javadoc for why this isn't Testcontainers.
 #
 # Hikari pool size: bumped so the one-time-use concurrency test (10 parallel
@@ -12,8 +13,17 @@
 # thread-per-call execution.
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5433/dunghaiquyen
+    url: jdbc:postgresql://localhost:5434/dunghaiquyen
     username: postgres
     password: postgres
     hikari:
       maximum-pool-size: 20
+
+# No real VNPay sandbox account exists for this project - tests sign their own
+# callback payloads with the same VnpaySignatureService bean (autowired in
+# PaymentIntegrationTest), so only a deterministic, non-blank secret matters
+# here, not a real merchant credential.
+app:
+  vnpay:
+    tmn-code: TESTTMN01
+    hash-secret: test-only-vnpay-hash-secret-do-not-use-in-prod

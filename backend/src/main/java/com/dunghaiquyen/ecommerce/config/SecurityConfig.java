@@ -32,7 +32,14 @@ public class SecurityConfig {
     private static final String[] PUBLIC_GET_ENDPOINTS = {
             "/api/v1/products/**",
             "/api/v1/categories/**",
-            "/api/v1/brands/**"
+            "/api/v1/brands/**",
+            "/api/v1/shipping/methods",
+            "/api/v1/promotions/active",
+            "/api/v1/banners/active",
+            "/api/v1/pages/*",
+            "/api/v1/settings/public",
+            "/api/v1/collections",
+            "/api/v1/collections/*"
     };
 
     // All methods public: guest cart (session_id-based, no JWT) needs full
@@ -40,7 +47,12 @@ public class SecurityConfig {
     // JWT (auth is the checksum check inside the handler) - API_SPEC_PHASE1.md 8.2.
     private static final String[] PUBLIC_ANY_METHOD_ENDPOINTS = {
             "/api/v1/cart/**",
-            "/api/v1/payments/callback"
+            "/api/v1/payments/callback",
+            "/v3/api-docs/**",
+            "/swagger-ui/**",
+            "/swagger-ui.html",
+            "/actuator/health",
+            "/actuator/health/**"
     };
 
     // Only these specific auth endpoints are anonymous (API_SPEC_PHASE1.md 3.1-3.6).
@@ -50,7 +62,8 @@ public class SecurityConfig {
             "/api/v1/auth/login",
             "/api/v1/auth/refresh",
             "/api/v1/auth/forgot-password",
-            "/api/v1/auth/reset-password"
+            "/api/v1/auth/reset-password",
+            "/api/v1/auth/google"
     };
 
     private final AppCorsProperties corsProperties;

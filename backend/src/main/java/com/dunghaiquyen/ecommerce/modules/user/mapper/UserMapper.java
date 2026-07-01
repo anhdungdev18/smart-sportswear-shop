@@ -1,5 +1,6 @@
 package com.dunghaiquyen.ecommerce.modules.user.mapper;
 
+import com.dunghaiquyen.ecommerce.modules.user.dto.AdminUserResponse;
 import com.dunghaiquyen.ecommerce.modules.user.dto.UserResponse;
 import com.dunghaiquyen.ecommerce.modules.user.entity.User;
 import org.mapstruct.Mapper;
@@ -8,4 +9,6 @@ import org.mapstruct.Mapper;
 public interface UserMapper {
 
     UserResponse toResponse(User user);
+
+    AdminUserResponse toAdminResponse(User user);
 }

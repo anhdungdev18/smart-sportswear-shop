@@ -25,8 +25,13 @@ public class User extends AbstractAuditEntity {
     @Column(length = 20)
     private String phone;
 
-    @Column(name = "password_hash", nullable = false, length = 255)
+    /** Null for Google-authenticated users (see LoginProvider.GOOGLE). V9 made this column nullable. */
+    @Column(name = "password_hash", length = 255)
     private String passwordHash;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "login_provider", nullable = false, length = 20)
+    private LoginProvider loginProvider = LoginProvider.LOCAL;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)

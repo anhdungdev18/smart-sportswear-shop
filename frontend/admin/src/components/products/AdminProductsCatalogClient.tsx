@@ -1,0 +1,733 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { ApiRequestError } from "@/modules/api/common";
+import {
+  addProductImage,
+  createAdminProduct,
+  createVariant,
+  deleteProductImage,
+  fetchAdminProductDetail,
+  updateAdminProduct,
+  updateVariant,
+  uploadProductImage
+} from "@/modules/catalog-admin/browser-api";
+import type {
+  BrandResponse,
+  CategoryResponse,
+  ProductDetailResponse,
+  ProductImageResponse,
+  ProductVariantResponse
+} from "@/modules/catalog-admin/types";
+import type { AdminProduct } from "@/modules/product-management/products";
+
+const productStatusOptions = ["DRAFT", "ACTIVE", "INACTIVE"] as const;
+const genderOptions = ["MEN", "WOMEN", "UNISEX", "KIDS"] as const;
+const variantStatusOptions = ["ACTIVE", "OUT_OF_STOCK", "INACTIVE"] as const;
+
+function extractError(error: unknown, fallback: string) {
+  if (error instanceof ApiRequestError) {
+    const payload = error.payload as { message?: string } | null;
+    return payload?.message ?? fallback;
+  }
+
+  return fallback;
+}
+
+function formatPrice(value: string) {
+  const amount = Number(value);
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return "Liên hệ";
+  }
+
+  return `${Math.round(amount).toLocaleString("vi-VN")} ₫`;
+}
+
+function mapAdminStatus(status: ProductDetailResponse["status"], stock: number): AdminProduct["status"] {
+  if (status !== "ACTIVE") {
+    return "draft";
+  }
+
+  if (stock <= 0) {
+    return "out";
+  }
+
+  if (stock <= 10) {
+    return "low";
+  }
+
+  return "active";
+}
+
+function createEmptyProductForm(categoryId = "", brandId = "") {
+  return {
+    name: "",
+    slug: "",
+    shortDescription: "",
+    description: "",
+    categoryId,
+    brandId,
+    gender: "",
+    sportType: "",
+    status: "DRAFT",
+    isFeatured: false
+  };
+}
+
+function createEmptyVariantForm() {
+  return {
+    sku: "",
+    size: "",
+    color: "",
+    price: "",
+    compareAtPrice: "",
+    stockQuantity: "0",
+    status: "ACTIVE"
+  };
+}
+
+function createEmptyImageForm() {
+  return {
+    imageUrl: "",
+    publicId: "",
+    altText: "",
+    isPrimary: false,
+    sortOrder: "0"
+  };
+}
+
+function createEmptyUploadForm() {
+  return {
+    file: null as File | null,
+    altText: "",
+    isPrimary: false,
+    sortOrder: "0"
+  };
+}
+
+function toAdminProduct(
+  detail: ProductDetailResponse,
+  categories: CategoryResponse[],
+  brands: BrandResponse[]
+): AdminProduct {
+  const stock = detail.variants.reduce((sum, item) => sum + item.availableQuantity, 0);
+  const prices = detail.variants.map((item) => item.price).filter((value): value is number => value != null);
+  const minPrice = prices.length ? Math.min(...prices) : 0;
+  const maxPrice = prices.length ? Math.max(...prices) : 0;
+  const firstVariant = detail.variants[0];
+
+  return {
+    id: detail.id,
+    sku: firstVariant?.sku ?? detail.slug,
+    name: detail.name,
+    category:
+      categories.find((item) => item.id === detail.category?.id)?.name ??
+      detail.category?.name ??
+      "Chưa phân loại",
+    brand:
+      brands.find((item) => item.id === detail.brand?.id)?.name ??
+      detail.brand?.name ??
+      "Chưa có thương hiệu",
+    price: minPrice === maxPrice ? formatPrice(String(minPrice)) : `${formatPrice(String(minPrice))} - ${formatPrice(String(maxPrice))}`,
+    stock,
+    sold: 0,
+    status: mapAdminStatus(detail.status, stock),
+    image: detail.images[0]?.imageUrl ?? "https://placehold.co/96x96/f5f5f5/202020?text=SP"
+  };
+}
+
+export function AdminProductsCatalogClient({
+  initialProducts,
+  categories,
+  brands
+}: {
+  initialProducts: AdminProduct[];
+  categories: CategoryResponse[];
+  brands: BrandResponse[];
+}) {
+  const [products, setProducts] = useState(initialProducts);
+  const [selectedProductId, setSelectedProductId] = useState(initialProducts.find((item) => item.id)?.id ?? "");
+  const [detail, setDetail] = useState<ProductDetailResponse | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [productForm, setProductForm] = useState(createEmptyProductForm(categories[0]?.id ?? "", brands[0]?.id ?? ""));
+  const [variantForm, setVariantForm] = useState(createEmptyVariantForm());
+  const [variantDrafts, setVariantDrafts] = useState<Record<string, ReturnType<typeof createEmptyVariantForm>>>({});
+  const [imageForm, setImageForm] = useState(createEmptyImageForm());
+  const [uploadForm, setUploadForm] = useState(createEmptyUploadForm());
+  const [message, setMessage] = useState<string | null>(null);
+  const [saving, setSaving] = useState<string | null>(null);
+
+  const selectedProduct = useMemo(
+    () => products.find((item) => item.id === selectedProductId) ?? null,
+    [products, selectedProductId]
+  );
+
+  useEffect(() => {
+    if (!selectedProductId) {
+      setDetail(null);
+      return;
+    }
+
+    let active = true;
+
+    async function loadDetail() {
+      try {
+        setDetailLoading(true);
+        const response = await fetchAdminProductDetail(selectedProductId);
+        if (!active) {
+          return;
+        }
+
+        setDetail(response);
+        setProductForm({
+          name: response.name,
+          slug: response.slug,
+          shortDescription: response.shortDescription ?? "",
+          description: response.description ?? "",
+          categoryId: response.category?.id ?? categories[0]?.id ?? "",
+          brandId: response.brand?.id ?? brands[0]?.id ?? "",
+          gender: response.gender ?? "",
+          sportType: response.sportType ?? "",
+          status: response.status,
+          isFeatured: response.isFeatured
+        });
+        setVariantDrafts(
+          Object.fromEntries(
+            response.variants.map((item) => [
+              item.id,
+              {
+                sku: item.sku,
+                size: item.size ?? "",
+                color: item.color ?? "",
+                price: item.price != null ? String(item.price) : "",
+                compareAtPrice: item.compareAtPrice != null ? String(item.compareAtPrice) : "",
+                stockQuantity: String(item.availableQuantity),
+                status: item.status
+              }
+            ])
+          )
+        );
+      } catch (error) {
+        if (active) {
+          setMessage(extractError(error, "Không tải được chi tiết sản phẩm"));
+        }
+      } finally {
+        if (active) {
+          setDetailLoading(false);
+        }
+      }
+    }
+
+    void loadDetail();
+
+    return () => {
+      active = false;
+    };
+  }, [brands, categories, selectedProductId]);
+
+  function upsertProductCard(nextDetail: ProductDetailResponse) {
+    const nextProduct = toAdminProduct(nextDetail, categories, brands);
+    setProducts((current) => {
+      const existingIndex = current.findIndex((item) => item.id === nextProduct.id);
+      if (existingIndex === -1) {
+        return [nextProduct, ...current];
+      }
+
+      const clone = current.slice();
+      clone[existingIndex] = {
+        ...clone[existingIndex],
+        ...nextProduct,
+        sold: clone[existingIndex].sold
+      };
+      return clone;
+    });
+  }
+
+  async function refreshDetail(productId: string) {
+    const response = await fetchAdminProductDetail(productId);
+    setDetail(response);
+    upsertProductCard(response);
+    setVariantDrafts(
+      Object.fromEntries(
+        response.variants.map((item) => [
+          item.id,
+          {
+            sku: item.sku,
+            size: item.size ?? "",
+            color: item.color ?? "",
+            price: item.price != null ? String(item.price) : "",
+            compareAtPrice: item.compareAtPrice != null ? String(item.compareAtPrice) : "",
+            stockQuantity: String(item.availableQuantity),
+            status: item.status
+          }
+        ])
+      )
+    );
+    return response;
+  }
+
+  async function handleCreateOrUpdateProduct() {
+    try {
+      setSaving("product");
+      setMessage(null);
+
+      const payload = {
+        name: productForm.name,
+        slug: productForm.slug,
+        shortDescription: productForm.shortDescription || null,
+        description: productForm.description || null,
+        categoryId: productForm.categoryId,
+        brandId: productForm.brandId,
+        gender: productForm.gender || null,
+        sportType: productForm.sportType || null,
+        status: productForm.status,
+        isFeatured: productForm.isFeatured
+      };
+
+      if (selectedProductId) {
+        const updated = await updateAdminProduct(selectedProductId, payload);
+        setDetail(updated);
+        upsertProductCard(updated);
+        setMessage(`Đã cập nhật sản phẩm ${updated.name}.`);
+        return;
+      }
+
+      const created = await createAdminProduct(payload);
+      setSelectedProductId(created.id);
+      setDetail(created);
+      upsertProductCard(created);
+      setMessage(`Đã tạo sản phẩm ${created.name}.`);
+    } catch (error) {
+      setMessage(extractError(error, "Không lưu được sản phẩm"));
+    } finally {
+      setSaving(null);
+    }
+  }
+
+  async function handleCreateVariant() {
+    if (!selectedProductId) {
+      setMessage("Hãy tạo sản phẩm trước khi thêm biến thể.");
+      return;
+    }
+
+    try {
+      setSaving("variant-create");
+      setMessage(null);
+      await createVariant(selectedProductId, {
+        sku: variantForm.sku,
+        size: variantForm.size,
+        color: variantForm.color,
+        price: Number(variantForm.price),
+        compareAtPrice: variantForm.compareAtPrice ? Number(variantForm.compareAtPrice) : null,
+        stockQuantity: Number(variantForm.stockQuantity || 0),
+        status: variantForm.status
+      });
+      await refreshDetail(selectedProductId);
+      setVariantForm(createEmptyVariantForm());
+      setMessage("Đã thêm biến thể mới.");
+    } catch (error) {
+      setMessage(extractError(error, "Không thêm được biến thể"));
+    } finally {
+      setSaving(null);
+    }
+  }
+
+  async function handleUpdateVariant(variantId: string) {
+    const draft = variantDrafts[variantId];
+    if (!draft) {
+      return;
+    }
+
+    try {
+      setSaving(`variant-${variantId}`);
+      setMessage(null);
+      const updated = await updateVariant(variantId, {
+        size: draft.size,
+        color: draft.color,
+        price: Number(draft.price),
+        compareAtPrice: draft.compareAtPrice ? Number(draft.compareAtPrice) : null,
+        status: draft.status
+      });
+      setVariantDrafts((current) => ({
+        ...current,
+        [variantId]: {
+          ...current[variantId],
+          size: updated.size ?? "",
+          color: updated.color ?? "",
+          price: updated.price != null ? String(updated.price) : "",
+          compareAtPrice: updated.compareAtPrice != null ? String(updated.compareAtPrice) : "",
+          status: updated.status,
+          stockQuantity: String(updated.availableQuantity),
+          sku: updated.sku
+        }
+      }));
+      if (selectedProductId) {
+        await refreshDetail(selectedProductId);
+      }
+      setMessage(`Đã cập nhật biến thể ${updated.sku}.`);
+    } catch (error) {
+      setMessage(extractError(error, "Không cập nhật được biến thể"));
+    } finally {
+      setSaving(null);
+    }
+  }
+
+  async function handleAddImageByUrl() {
+    if (!selectedProductId) {
+      setMessage("Hãy tạo sản phẩm trước khi thêm ảnh.");
+      return;
+    }
+
+    try {
+      setSaving("image-url");
+      setMessage(null);
+      await addProductImage(selectedProductId, {
+        imageUrl: imageForm.imageUrl,
+        publicId: imageForm.publicId || null,
+        altText: imageForm.altText || null,
+        sortOrder: Number(imageForm.sortOrder || 0),
+        isPrimary: imageForm.isPrimary
+      });
+      await refreshDetail(selectedProductId);
+      setImageForm(createEmptyImageForm());
+      setMessage("Đã thêm ảnh bằng URL.");
+    } catch (error) {
+      setMessage(extractError(error, "Không thêm được ảnh"));
+    } finally {
+      setSaving(null);
+    }
+  }
+
+  async function handleUploadImage() {
+    if (!selectedProductId) {
+      setMessage("Hãy tạo sản phẩm trước khi upload ảnh.");
+      return;
+    }
+
+    if (!uploadForm.file) {
+      setMessage("Bạn chưa chọn tệp ảnh.");
+      return;
+    }
+
+    try {
+      setSaving("image-upload");
+      setMessage(null);
+      const formData = new FormData();
+      formData.append("file", uploadForm.file);
+      if (uploadForm.altText.trim()) {
+        formData.append("altText", uploadForm.altText.trim());
+      }
+      formData.append("isPrimary", String(uploadForm.isPrimary));
+      formData.append("sortOrder", String(Number(uploadForm.sortOrder || 0)));
+      await uploadProductImage(selectedProductId, formData);
+      await refreshDetail(selectedProductId);
+      setUploadForm(createEmptyUploadForm());
+      setMessage("Đã upload ảnh lên Cloudinary.");
+    } catch (error) {
+      setMessage(extractError(error, "Không upload được ảnh"));
+    } finally {
+      setSaving(null);
+    }
+  }
+
+  async function handleDeleteImage(image: ProductImageResponse) {
+    if (!selectedProductId) {
+      return;
+    }
+
+    try {
+      setSaving(`image-delete-${image.id}`);
+      setMessage(null);
+      await deleteProductImage(selectedProductId, image.id);
+      await refreshDetail(selectedProductId);
+      setMessage("Đã xóa ảnh khỏi sản phẩm.");
+    } catch (error) {
+      setMessage(extractError(error, "Không xóa được ảnh"));
+    } finally {
+      setSaving(null);
+    }
+  }
+
+  function startCreateProduct() {
+    setSelectedProductId("");
+    setDetail(null);
+    setProductForm(createEmptyProductForm(categories[0]?.id ?? "", brands[0]?.id ?? ""));
+    setVariantForm(createEmptyVariantForm());
+    setVariantDrafts({});
+    setImageForm(createEmptyImageForm());
+    setUploadForm(createEmptyUploadForm());
+    setMessage("Bạn đang ở chế độ tạo sản phẩm mới.");
+  }
+
+  return (
+    <div className="admin-grid admin-grid-2">
+      <section className="card panel">
+        <div className="panel-header">
+          <div>
+            <h2>Catalog sản phẩm</h2>
+            <p className="panel-copy">Danh sách sản phẩm đang được đồng bộ từ API quản trị.</p>
+          </div>
+          <button className="admin-btn" type="button" onClick={startCreateProduct}>
+            Tạo sản phẩm mới
+          </button>
+        </div>
+
+        <table className="data-table">
+          <thead>
+            <tr>
+              <th>Sản phẩm</th>
+              <th>SKU</th>
+              <th>Tồn</th>
+              <th>Trạng thái</th>
+            </tr>
+          </thead>
+          <tbody>
+            {products.map((product) => (
+              <tr
+                key={product.id ?? product.sku}
+                className={selectedProductId && product.id === selectedProductId ? "row-selected" : ""}
+                onClick={() => product.id && setSelectedProductId(product.id)}
+              >
+                <td>
+                  <strong>{product.name}</strong>
+                  <div className="table-subtle">
+                    {product.category} · {product.brand}
+                  </div>
+                </td>
+                <td>{product.sku}</td>
+                <td>{product.stock}</td>
+                <td>
+                  <span className={`status ${product.status}`}>{product.status}</span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+
+      <div className="admin-stack">
+        <section className="card panel">
+          <div className="panel-header">
+            <div>
+              <h2>{selectedProduct ? `Chỉnh sửa: ${selectedProduct.name}` : "Tạo sản phẩm mới"}</h2>
+              <p className="panel-copy">Form này gọi trực tiếp API admin product create/update.</p>
+            </div>
+          </div>
+          {message ? <p className="action-message">{message}</p> : null}
+          {detailLoading ? <div className="loading-state">Đang tải chi tiết sản phẩm...</div> : null}
+          <div className="admin-form-grid">
+            <input
+              className="admin-input"
+              placeholder="Tên sản phẩm"
+              value={productForm.name}
+              onChange={(event) => setProductForm((current) => ({ ...current, name: event.target.value }))}
+            />
+            <input
+              className="admin-input"
+              placeholder="Slug"
+              value={productForm.slug}
+              onChange={(event) => setProductForm((current) => ({ ...current, slug: event.target.value }))}
+            />
+            <select
+              className="select"
+              value={productForm.categoryId}
+              onChange={(event) => setProductForm((current) => ({ ...current, categoryId: event.target.value }))}
+            >
+              {categories.map((item) => (
+                <option value={item.id} key={item.id}>{item.name}</option>
+              ))}
+            </select>
+            <select
+              className="select"
+              value={productForm.brandId}
+              onChange={(event) => setProductForm((current) => ({ ...current, brandId: event.target.value }))}
+            >
+              {brands.map((item) => (
+                <option value={item.id} key={item.id}>{item.name}</option>
+              ))}
+            </select>
+            <select
+              className="select"
+              value={productForm.gender}
+              onChange={(event) => setProductForm((current) => ({ ...current, gender: event.target.value }))}
+            >
+              <option value="">Không chọn giới tính</option>
+              {genderOptions.map((item) => (
+                <option value={item} key={item}>{item}</option>
+              ))}
+            </select>
+            <select
+              className="select"
+              value={productForm.status}
+              onChange={(event) => setProductForm((current) => ({ ...current, status: event.target.value }))}
+            >
+              {productStatusOptions.map((item) => (
+                <option value={item} key={item}>{item}</option>
+              ))}
+            </select>
+            <input
+              className="admin-input"
+              placeholder="Môn thể thao"
+              value={productForm.sportType}
+              onChange={(event) => setProductForm((current) => ({ ...current, sportType: event.target.value }))}
+            />
+            <label className="admin-check">
+              <input
+                type="checkbox"
+                checked={productForm.isFeatured}
+                onChange={(event) => setProductForm((current) => ({ ...current, isFeatured: event.target.checked }))}
+              />
+              Sản phẩm nổi bật
+            </label>
+            <div className="admin-form-full">
+              <input
+                className="admin-input"
+                placeholder="Mô tả ngắn"
+                value={productForm.shortDescription}
+                onChange={(event) => setProductForm((current) => ({ ...current, shortDescription: event.target.value }))}
+              />
+            </div>
+            <div className="admin-form-full">
+              <textarea
+                className="admin-textarea"
+                placeholder="Mô tả chi tiết"
+                value={productForm.description}
+                onChange={(event) => setProductForm((current) => ({ ...current, description: event.target.value }))}
+              />
+            </div>
+          </div>
+          <div className="page-actions">
+            <button className="admin-btn" type="button" onClick={() => void handleCreateOrUpdateProduct()} disabled={saving === "product"}>
+              {saving === "product" ? "Đang lưu..." : selectedProductId ? "Cập nhật sản phẩm" : "Tạo sản phẩm"}
+            </button>
+          </div>
+        </section>
+
+        <section className="card panel">
+          <div className="panel-header">
+            <div>
+              <h2>Biến thể</h2>
+              <p className="panel-copy">Thêm biến thể mới tại đây. Chỉnh tồn kho sau tạo dùng module tồn kho.</p>
+            </div>
+          </div>
+
+          <div className="admin-form-grid">
+            <input className="admin-input" placeholder="SKU" value={variantForm.sku} onChange={(event) => setVariantForm((current) => ({ ...current, sku: event.target.value }))} />
+            <input className="admin-input" placeholder="Size" value={variantForm.size} onChange={(event) => setVariantForm((current) => ({ ...current, size: event.target.value }))} />
+            <input className="admin-input" placeholder="Màu sắc" value={variantForm.color} onChange={(event) => setVariantForm((current) => ({ ...current, color: event.target.value }))} />
+            <input className="admin-input" type="number" min={0} placeholder="Giá bán" value={variantForm.price} onChange={(event) => setVariantForm((current) => ({ ...current, price: event.target.value }))} />
+            <input className="admin-input" type="number" min={0} placeholder="Giá so sánh" value={variantForm.compareAtPrice} onChange={(event) => setVariantForm((current) => ({ ...current, compareAtPrice: event.target.value }))} />
+            <input className="admin-input" type="number" min={0} placeholder="Tồn ban đầu" value={variantForm.stockQuantity} onChange={(event) => setVariantForm((current) => ({ ...current, stockQuantity: event.target.value }))} />
+            <select className="select" value={variantForm.status} onChange={(event) => setVariantForm((current) => ({ ...current, status: event.target.value }))}>
+              {variantStatusOptions.map((item) => (
+                <option value={item} key={item}>{item}</option>
+              ))}
+            </select>
+          </div>
+          <div className="page-actions">
+            <button className="admin-btn" type="button" onClick={() => void handleCreateVariant()} disabled={saving === "variant-create"}>
+              {saving === "variant-create" ? "Đang thêm..." : "Thêm biến thể"}
+            </button>
+          </div>
+
+          {detail?.variants.length ? (
+            <div className="admin-stack">
+              {detail.variants.map((variant: ProductVariantResponse) => {
+                const draft = variantDrafts[variant.id];
+                if (!draft) {
+                  return null;
+                }
+
+                return (
+                  <div className="admin-subcard" key={variant.id}>
+                    <strong>{variant.sku}</strong>
+                    <div className="table-subtle">Khả dụng hiện tại: {variant.availableQuantity}</div>
+                    <div className="admin-form-grid">
+                      <input className="admin-input" value={draft.size} onChange={(event) => setVariantDrafts((current) => ({ ...current, [variant.id]: { ...current[variant.id], size: event.target.value } }))} />
+                      <input className="admin-input" value={draft.color} onChange={(event) => setVariantDrafts((current) => ({ ...current, [variant.id]: { ...current[variant.id], color: event.target.value } }))} />
+                      <input className="admin-input" type="number" min={0} value={draft.price} onChange={(event) => setVariantDrafts((current) => ({ ...current, [variant.id]: { ...current[variant.id], price: event.target.value } }))} />
+                      <input className="admin-input" type="number" min={0} value={draft.compareAtPrice} onChange={(event) => setVariantDrafts((current) => ({ ...current, [variant.id]: { ...current[variant.id], compareAtPrice: event.target.value } }))} />
+                      <select className="select" value={draft.status} onChange={(event) => setVariantDrafts((current) => ({ ...current, [variant.id]: { ...current[variant.id], status: event.target.value } }))}>
+                        {variantStatusOptions.map((item) => (
+                          <option value={item} key={item}>{item}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <button className="admin-btn secondary" type="button" onClick={() => void handleUpdateVariant(variant.id)} disabled={saving === `variant-${variant.id}`}>
+                      {saving === `variant-${variant.id}` ? "Đang lưu..." : "Lưu biến thể"}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="empty-state">Sản phẩm này chưa có biến thể.</div>
+          )}
+        </section>
+
+        <section className="card panel">
+          <div className="panel-header">
+            <div>
+              <h2>Ảnh sản phẩm</h2>
+              <p className="panel-copy">Hỗ trợ cả thêm URL có sẵn và upload ảnh thật.</p>
+            </div>
+          </div>
+
+          <div className="admin-form-grid">
+            <div className="admin-form-full">
+              <input className="admin-input" placeholder="Image URL" value={imageForm.imageUrl} onChange={(event) => setImageForm((current) => ({ ...current, imageUrl: event.target.value }))} />
+            </div>
+            <input className="admin-input" placeholder="Cloudinary publicId (nếu có)" value={imageForm.publicId} onChange={(event) => setImageForm((current) => ({ ...current, publicId: event.target.value }))} />
+            <input className="admin-input" placeholder="Alt text" value={imageForm.altText} onChange={(event) => setImageForm((current) => ({ ...current, altText: event.target.value }))} />
+            <input className="admin-input" type="number" min={0} placeholder="Sort order" value={imageForm.sortOrder} onChange={(event) => setImageForm((current) => ({ ...current, sortOrder: event.target.value }))} />
+            <label className="admin-check">
+              <input type="checkbox" checked={imageForm.isPrimary} onChange={(event) => setImageForm((current) => ({ ...current, isPrimary: event.target.checked }))} />
+              Đặt làm ảnh chính
+            </label>
+          </div>
+          <div className="page-actions">
+            <button className="admin-btn secondary" type="button" onClick={() => void handleAddImageByUrl()} disabled={saving === "image-url"}>
+              {saving === "image-url" ? "Đang thêm..." : "Thêm ảnh bằng URL"}
+            </button>
+          </div>
+
+          <div className="admin-form-grid">
+            <input className="admin-input admin-form-full" type="file" accept="image/*" onChange={(event) => setUploadForm((current) => ({ ...current, file: event.target.files?.[0] ?? null }))} />
+            <input className="admin-input" placeholder="Alt text upload" value={uploadForm.altText} onChange={(event) => setUploadForm((current) => ({ ...current, altText: event.target.value }))} />
+            <input className="admin-input" type="number" min={0} placeholder="Sort order" value={uploadForm.sortOrder} onChange={(event) => setUploadForm((current) => ({ ...current, sortOrder: event.target.value }))} />
+            <label className="admin-check">
+              <input type="checkbox" checked={uploadForm.isPrimary} onChange={(event) => setUploadForm((current) => ({ ...current, isPrimary: event.target.checked }))} />
+              Ảnh chính khi upload
+            </label>
+          </div>
+          <div className="page-actions">
+            <button className="admin-btn" type="button" onClick={() => void handleUploadImage()} disabled={saving === "image-upload"}>
+              {saving === "image-upload" ? "Đang upload..." : "Upload ảnh"}
+            </button>
+          </div>
+
+          {detail?.images.length ? (
+            <div className="admin-gallery">
+              {detail.images.map((image) => (
+                <article className="admin-image-card" key={image.id}>
+                  <img src={image.imageUrl} alt={image.altText ?? detail.name} />
+                  <div>
+                    <strong>{image.altText ?? "Không có alt text"}</strong>
+                    <div className="table-subtle">
+                      {image.isPrimary ? "Ảnh chính" : "Ảnh phụ"} · Thứ tự {image.sortOrder}
+                    </div>
+                  </div>
+                  <button className="admin-btn secondary" type="button" onClick={() => void handleDeleteImage(image)} disabled={saving === `image-delete-${image.id}`}>
+                    {saving === `image-delete-${image.id}` ? "Đang xóa..." : "Xóa ảnh"}
+                  </button>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="empty-state">Sản phẩm này chưa có ảnh.</div>
+          )}
+        </section>
+      </div>
+    </div>
+  );
+}

@@ -56,6 +56,11 @@ public class Product extends AbstractAuditEntity {
     @Column(name = "sport_type", length = 50)
     private String sportType;
 
+    /** Catalog V2 (V10): nullable for existing products, populated by admin going forward. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "product_type", length = 30)
+    private ProductType productType;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private ProductStatus status = ProductStatus.DRAFT;

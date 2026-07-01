@@ -26,20 +26,46 @@ spring:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
 
+  servlet:
+    multipart:
+      # Hard ceiling enforced by Spring's multipart resolver, ahead of any
+      # controller code. ProductImageService's own business-rule check
+      # (5MB, see validateImageFile) is tighter and is what most "file too
+      # big" rejections actually hit - this is just the outer safety net.
+      max-file-size: 8MB
+      max-request-size: 9MB
+
   mail:
-    host: ${SMTP_HOST:localhost}
-    port: ${SMTP_PORT:1025}
-    username: ${SMTP_USER:}
-    password: ${SMTP_PASS:}
+    # Plain Spring Boot mail config - only consumed when app.mail.provider=smtp
+    # (SmtpMailService). Ignored by the default "logging" provider, so these
+    # defaults are deliberately harmless (no real server at localhost:1025
+    # is required to start the app or run tests).
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:1025}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
     properties:
       mail:
         smtp:
-          auth: ${SMTP_AUTH:false}
+          auth: ${MAIL_SMTP_AUTH:false}
           starttls:
-            enable: ${SMTP_STARTTLS:false}
+            enable: ${MAIL_SMTP_STARTTLS_ENABLE:false}
 
 server:
   port: ${SERVER_PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  info:
+    env:
+      enabled: true
 
 app:
   cors:
@@ -50,15 +76,82 @@ app:
     access-token-ttl-minutes: ${JWT_ACCESS_TTL_MINUTES:15}
     refresh-token-ttl-days: ${JWT_REFRESH_TTL_DAYS:30}
   mail:
+    # "logging" (default) keeps the existing log-only behavior - safe for any
+    # fresh checkout/test run, no SMTP server needed. Switch to "smtp" to
+    # actually send mail (SmtpMailService) - see README for Gmail setup.
+    # Any other value (typo, etc.) means NEITHER MailService bean matches its
+    # @ConditionalOnProperty, so the app fails to start with a clear
+    # "no qualifying bean" error instead of silently picking the wrong one.
+    provider: ${APP_MAIL_PROVIDER:logging}
     from: ${MAIL_FROM:no-reply@dunghaiquyen.local}
   order:
     pending-payment-expiry-minutes: ${ORDER_PENDING_EXPIRY_MINUTES:30}
+  google:
+    # Google OAuth2 client ID - must match the Web Client ID in Google Cloud
+    # Console for your project. Frontend sends a Google ID token; backend
+    # verifies it and checks that its "aud" claim equals this value to prevent
+    # token substitution attacks from other Google apps. Empty string (default)
+    # is safe for local dev/tests that never call the Google login endpoint.
+    client-id: ${GOOGLE_CLIENT_ID:}
+    # Token verification endpoint - externalised so tests can override it to
+    # point at a WireMock stub (application-test.yml sets this).
+    token-info-url: ${GOOGLE_TOKENINFO_URL:https://oauth2.googleapis.com/tokeninfo}
   vnpay:
-    tmn-code: ${VNPAY_TMN_CODE:}
-    hash-secret: ${VNPAY_HASH_SECRET:}
+    tmn-code: ${VNPAY_TMN_CODE:DEVTMNCODE}
+    # Must never be empty: HMAC-SHA512 (VnpaySignatureService) rejects a
+    # zero-length key outright (IllegalArgumentException), which previously
+    # crashed any VNPAY flow - including this project's own seed data, caught
+    # by actually running it - whenever this var was left unset outside the
+    # test profile (application-test.yml has always set its own real value).
+    hash-secret: ${VNPAY_HASH_SECRET:dev-only-vnpay-hash-secret-change-me-please}
     pay-url: ${VNPAY_PAY_URL:https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}
     return-url: ${PAYMENT_RETURN_URL:http://localhost:3000/payment/result}
     callback-url: ${PAYMENT_CALLBACK_URL:http://localhost:8080/api/v1/payments/callback}
+  report:
+    # No threshold is given anywhere in the Phase 1 spec docs - 10 units
+    # (available = stock - reserved) is this project's own default, tunable
+    # without a redeploy. See ReportService javadoc for the full reasoning.
+    low-stock-threshold: ${LOW_STOCK_THRESHOLD:10}
+  shipping:
+    # No real shipping engine - flat fee waived once subtotal reaches the
+    # free-shipping threshold. flat-fee defaults to 0, so existing behavior
+    # (shippingFee always 0) is unchanged until an operator opts in.
+    # free-shipping-threshold defaults effectively "unreachable" (NOT 0) -
+    # a threshold of 0 would make every order qualify as free-shipping
+    # immediately and silently swallow any flat-fee an operator configures,
+    # which is the opposite of what "I just set a flat fee" should do.
+    # Same rule used by both checkout (OrderService) and the checkout preview -
+    # see OrderService.calculateShippingFee.
+    flat-fee: ${SHIPPING_FLAT_FEE:0}
+    free-shipping-threshold: ${SHIPPING_FREE_THRESHOLD:999999999999}
+  password-reset:
+    # PHASE1_SPEC.md 6.1 suggests 15 minutes explicitly.
+    token-ttl-minutes: ${PASSWORD_RESET_TOKEN_TTL_MINUTES:15}
+    reset-url: ${PASSWORD_RESET_URL:http://localhost:3000/reset-password}
+  seed:
+    # Deliberately opt-in: demo data must not be auto-created on every normal
+    # app start. Run with --app.seed.enabled=true when you explicitly want it.
+    enabled: ${APP_SEED_ENABLED:false}
+    demo-password: ${APP_SEED_DEMO_PASSWORD:Password123}
+  storage:
+    # "none" (default) keeps the legacy manual-image-URL flow working with no
+    # credentials needed - only the NEW upload endpoint is unusable under it
+    # (fails per-request with a clear message, not at app startup). Switch to
+    # "cloudinary" to enable real uploads - see README "Cloudinary setup".
+    # Same "typo means no bean matches, app fails to start" rule as app.mail.provider.
+    provider: ${APP_STORAGE_PROVIDER:none}
+  cloudinary:
+    # Only read/required when app.storage.provider=cloudinary.
+    cloud-name: ${CLOUDINARY_CLOUD_NAME:}
+    api-key: ${CLOUDINARY_API_KEY:}
+    api-secret: ${CLOUDINARY_API_SECRET:}
+
+info:
+  app:
+    name: Smart Sportswear Shop Backend
+    phase: Phase 1
+    docs: /swagger-ui/index.html
+    health: /actuator/health
 
 logging:
   level:

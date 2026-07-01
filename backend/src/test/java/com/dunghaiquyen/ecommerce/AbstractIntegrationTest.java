@@ -3,6 +3,8 @@ package com.dunghaiquyen.ecommerce;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.dunghaiquyen.ecommerce.modules.user.entity.UserRole;
+import com.dunghaiquyen.ecommerce.modules.user.repository.UserRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +20,7 @@ import org.springframework.test.web.servlet.MvcResult;
  * Spring Security filter chain (via MockMvc + spring-security-test, not a
  * @WebMvcTest slice), real Postgres - no service-layer mocking.
  *
- * Database: the docker-compose postgres service (localhost:5433, same
+ * Database: the docker-compose postgres service (localhost:5434, same
  * postgres:16-alpine image as docker-compose.yml; see application-test.yml).
  * Flyway runs the real V1 migration against it on context startup, same as
  * the dev profile.
@@ -43,6 +45,9 @@ public abstract class AbstractIntegrationTest {
 
     @Autowired
     protected ObjectMapper objectMapper;
+
+    @Autowired
+    protected UserRepository userRepository;
 
     protected String uniqueEmail(String prefix) {
         return prefix + "-" + java.util.UUID.randomUUID() + "@example.com";
@@ -69,5 +74,29 @@ public abstract class AbstractIntegrationTest {
         return new TokenPair(
                 node.at("/data/tokens/accessToken").asText(),
                 node.at("/data/tokens/refreshToken").asText());
+    }
+
+    /**
+     * Registers a normal CUSTOMER (the only role register can ever create),
+     * promotes it to ADMIN directly via the repository (no admin-creation
+     * endpoint exists), then logs in again so the issued access token's "role"
+     * claim reflects ADMIN - the claim is fixed at issuance time, so reusing
+     * the original registration token would still say CUSTOMER.
+     */
+    protected String registerAdminAndGetAccessToken(String email) throws Exception {
+        registerUser(email);
+        var user = userRepository.findByEmail(email).orElseThrow();
+        user.setRole(UserRole.ADMIN);
+        userRepository.save(user);
+
+        String body = """
+                {"email":"%s","password":"Password123"}
+                """.formatted(email);
+        MvcResult result = mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andReturn();
+        return json(result.getResponse().getContentAsString()).at("/data/tokens/accessToken").asText();
     }
 }
