@@ -1,0 +1,216 @@
+- generic [active] [ref=f10e1]:
+  - banner [ref=f10e2]:
+    - generic [ref=f10e3]:
+      - generic [ref=f10e4]:
+        - navigation [ref=f10e5]:
+          - list [ref=f10e6]:
+            - listitem [ref=f10e7]:
+              - link "NỮ" [ref=f10e8] [cursor=pointer]:
+                - /url: https://ivymoda.com/danh-muc/nu
+            - listitem [ref=f10e9]:
+              - link "NAM" [ref=f10e10] [cursor=pointer]:
+                - /url: https://ivymoda.com/danh-muc/nam
+            - listitem [ref=f10e11]:
+              - link "HÈ SALE CHẠM ĐỈNH 70%" [ref=f10e12] [cursor=pointer]:
+                - /url: https://ivymoda.com/danh-muc/sale-all-70-0626
+            - listitem [ref=f10e13]:
+              - link "Bộ sưu tập" [ref=f10e14] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=f10e15]:
+              - link "LIFESTYLE" [ref=f10e16] [cursor=pointer]:
+                - /url: https://ivymoda.com/tin-tuc/tin-chinh
+            - listitem [ref=f10e17]:
+              - link "Về Chúng Tôi" [ref=f10e18] [cursor=pointer]:
+                - /url: "#"
+        - link "IVY moda" [ref=f10e20] [cursor=pointer]:
+          - /url: https://ivymoda.com
+          - img "IVY moda" [ref=f10e21]
+      - generic [ref=f10e23]:
+        - generic [ref=f10e24]:
+          - button "Tìm kiếm" [ref=f10e25]:
+            - img [ref=f10e26]
+          - textbox "TÌM KIẾM SẢN PHẨM" [ref=f10e29]
+        - link "Outlet" [ref=f10e30] [cursor=pointer]:
+          - /url: "#"
+        - button "Hỗ trợ khách hàng" [ref=f10e32]:
+          - img [ref=f10e33]
+        - link "Tài khoản" [ref=f10e35] [cursor=pointer]:
+          - /url: "#"
+          - img [ref=f10e36]
+        - link "Giỏ hàng" [ref=f10e39] [cursor=pointer]:
+          - /url: "#"
+          - img [ref=f10e40]
+          - generic [ref=f10e43]: "0"
+  - main [ref=f10e44]:
+    - generic [ref=f10e45]:
+      - generic [ref=f10e46]:
+        - list [ref=f10e47]:
+          - listitem [ref=f10e48]:
+            - button "Size" [ref=f10e49] [cursor=pointer]:
+              - generic [ref=f10e50]: Size
+              - img [ref=f10e51]
+            - generic [ref=f10e53]:
+              - button "S" [ref=f10e54]
+              - button "M" [ref=f10e55]
+              - button "L" [ref=f10e56]
+              - button "XL" [ref=f10e57]
+              - button "XXL" [ref=f10e58]
+          - listitem [ref=f10e59]:
+            - button "Màu sắc" [ref=f10e60] [cursor=pointer]:
+              - generic [ref=f10e61]: Màu sắc
+              - img [ref=f10e62]
+            - generic [ref=f10e64]:
+              - button "Đen" [ref=f10e65]
+              - button "Đỏ" [ref=f10e66]
+              - button "Cam" [ref=f10e67]
+              - button "Vàng" [ref=f10e68]
+              - button "Cam đất" [ref=f10e69]
+              - button "Đỏ đô" [ref=f10e70]
+              - button "Trắng" [ref=f10e71]
+              - button "Xám nhạt" [ref=f10e72]
+              - button "Xám" [ref=f10e73]
+              - button "Xám đậm" [ref=f10e74]
+              - button "Be" [ref=f10e75]
+              - button "Nâu nhạt" [ref=f10e76]
+              - button "Nâu" [ref=f10e77]
+              - button "Nâu đậm" [ref=f10e78]
+          - listitem [ref=f10e79]:
+            - button "Mức giá" [ref=f10e80] [cursor=pointer]:
+              - generic [ref=f10e81]: Mức giá
+              - img [ref=f10e82]
+            - generic [ref=f10e84]:
+              - generic [ref=f10e87]:
+                - slider "Mức giá tối thiểu" [ref=f10e88]: "0"
+                - slider "Mức giá tối đa" [ref=f10e89]: "5000000"
+              - generic [ref=f10e90]:
+                - generic [ref=f10e91]: 0đ
+                - generic [ref=f10e92]: 5.000.000đ
+          - listitem [ref=f10e93]:
+            - button "Mức chiết khấu" [ref=f10e94] [cursor=pointer]:
+              - generic [ref=f10e95]: Mức chiết khấu
+              - img [ref=f10e96]
+            - list [ref=f10e98]:
+              - listitem [ref=f10e99]:
+                - generic [ref=f10e100] [cursor=pointer]:
+                  - radio "Dưới 30%" [ref=f10e101]
+                  - generic [ref=f10e102]: Dưới 30%
+              - listitem [ref=f10e103]:
+                - generic [ref=f10e104] [cursor=pointer]:
+                  - radio "30% - 50%" [ref=f10e105]
+                  - generic [ref=f10e106]: 30% - 50%
+              - listitem [ref=f10e107]:
+                - generic [ref=f10e108] [cursor=pointer]:
+                  - radio "Trên 50%" [ref=f10e109]
+                  - generic [ref=f10e110]: Trên 50%
+          - listitem [ref=f10e111]:
+            - button "Nâng cao" [ref=f10e112] [cursor=pointer]:
+              - generic [ref=f10e113]: Nâng cao
+              - img [ref=f10e114]
+        - generic [ref=f10e115]:
+          - button "BỎ LỌC" [ref=f10e116]
+          - button "LỌC" [ref=f10e117]
+      - generic [ref=f10e118]:
+        - generic [ref=f10e119]:
+          - heading "Kết quả tìm kiếm theo \"\"" [level=1] [ref=f10e120]
+          - paragraph [ref=f10e121]: 0 sản phẩm
+          - button "Sắp xếp theo" [ref=f10e123] [cursor=pointer]:
+            - text: Sắp xếp theo
+            - img [ref=f10e124]
+        - paragraph [ref=f10e126]: Không tìm thấy sản phẩm phù hợp !
+  - contentinfo [ref=f10e127]:
+    - generic [ref=f10e129]:
+      - generic [ref=f10e130]:
+        - img "IVY moda" [ref=f10e131]
+        - generic [ref=f10e132]:
+          - link "DMCA Protected" [ref=f10e133] [cursor=pointer]:
+            - /url: https://www.dmca.com/Protection/Status.aspx?ID=0cfdeac4-6e7f-4fca-941f-57a0a0962777
+            - img "DMCA Protected" [ref=f10e134]
+          - link "Đã thông báo Bộ Công Thương" [ref=f10e135] [cursor=pointer]:
+            - /url: http://online.gov.vn/Home/WebDetails/36596
+            - img "Đã thông báo Bộ Công Thương" [ref=f10e136]
+        - list [ref=f10e137]:
+          - listitem [ref=f10e138]:
+            - link "Facebook" [ref=f10e139] [cursor=pointer]:
+              - /url: https://www.facebook.com/thoitrangivymoda/
+              - img "Facebook" [ref=f10e140]
+          - listitem [ref=f10e141]:
+            - link "Google" [ref=f10e142] [cursor=pointer]:
+              - /url: https://ivymoda.com/
+              - img "Google" [ref=f10e143]
+          - listitem [ref=f10e144]:
+            - link "Instagram" [ref=f10e145] [cursor=pointer]:
+              - /url: https://www.instagram.com/ivy_moda/
+              - img "Instagram" [ref=f10e146]
+      - generic [ref=f10e147]:
+        - generic [ref=f10e148]:
+          - heading "Giới thiệu" [level=3] [ref=f10e149]
+          - list [ref=f10e150]:
+            - listitem [ref=f10e151]:
+              - link "Về IVY moda" [ref=f10e152] [cursor=pointer]:
+                - /url: https://ivymoda.com/about/gioi-thieu
+            - listitem [ref=f10e153]:
+              - link "Tuyển dụng" [ref=f10e154] [cursor=pointer]:
+                - /url: https://tuyendung.ivy.com.vn
+            - listitem [ref=f10e155]:
+              - link "Hệ thống cửa hàng" [ref=f10e156] [cursor=pointer]:
+                - /url: https://ivymoda.com/page/cuahang
+        - generic [ref=f10e157]:
+          - heading "Dịch vụ khách hàng" [level=3] [ref=f10e158]
+          - list [ref=f10e159]:
+            - listitem [ref=f10e160]:
+              - link "Chính sách điều khoản" [ref=f10e161] [cursor=pointer]:
+                - /url: https://ivymoda.com/about/chinhsach-dieukhoan
+            - listitem [ref=f10e162]:
+              - link "Hướng dẫn mua hàng" [ref=f10e163] [cursor=pointer]:
+                - /url: https://ivymoda.com/about/huong-dan-mua-hang
+            - listitem [ref=f10e164]:
+              - link "Chính sách thanh toán" [ref=f10e165] [cursor=pointer]:
+                - /url: https://ivymoda.com/about/chinh-sach-thanh-toan
+            - listitem [ref=f10e166]:
+              - link "Chính sách đổi trả" [ref=f10e167] [cursor=pointer]:
+                - /url: https://ivymoda.com/about/chinh-sach-doi-tra
+            - listitem [ref=f10e168]:
+              - link "Chính sách bảo hành" [ref=f10e169] [cursor=pointer]:
+                - /url: https://ivymoda.com/about/chinh-sach-bao-hanh
+            - listitem [ref=f10e170]:
+              - link "Chính sách thẻ thành viên" [ref=f10e171] [cursor=pointer]:
+                - /url: https://ivymoda.com/about/chinh-sach-the-thanh-vien
+            - listitem [ref=f10e172]:
+              - link "Q&A" [ref=f10e173] [cursor=pointer]:
+                - /url: https://ivymoda.com/about/qa
+        - generic [ref=f10e174]:
+          - heading "Liên hệ" [level=3] [ref=f10e175]
+          - list [ref=f10e176]:
+            - listitem [ref=f10e177]:
+              - link "Hotline" [ref=f10e178] [cursor=pointer]:
+                - /url: tel:02466623434
+            - listitem [ref=f10e179]:
+              - link "Email" [ref=f10e180] [cursor=pointer]:
+                - /url: mailto:saleadmin@ivy.com.vn
+            - listitem [ref=f10e181]:
+              - link "Live Chat" [ref=f10e182] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=f10e183]:
+              - link "Messenger" [ref=f10e184] [cursor=pointer]:
+                - /url: http://messenger.com/t/thoitrangivymoda
+            - listitem [ref=f10e185]:
+              - link "Liên hệ" [ref=f10e186] [cursor=pointer]:
+                - /url: https://ivymoda.com/lien-he
+      - generic [ref=f10e187]:
+        - generic [ref=f10e188]:
+          - heading "Nhận thông tin các chương trình của IVY moda" [level=3] [ref=f10e189]
+          - generic [ref=f10e190]:
+            - textbox "Nhập địa chỉ email" [ref=f10e191]
+            - button "Đăng ký" [ref=f10e192]
+        - generic [ref=f10e193]:
+          - heading "Download App" [level=3] [ref=f10e194]
+          - generic [ref=f10e195]:
+            - link "Download on the App Store" [ref=f10e196] [cursor=pointer]:
+              - /url: "#"
+              - img "Download on the App Store" [ref=f10e197]
+            - link "Get it on Google Play" [ref=f10e198] [cursor=pointer]:
+              - /url: "#"
+              - img "Get it on Google Play" [ref=f10e199]
+    - paragraph [ref=f10e201]: ©IVYmoda All rights reserved
+  - button "Open Next.js Dev Tools" [ref=f10e207] [cursor=pointer]:
+    - img [ref=f10e208]

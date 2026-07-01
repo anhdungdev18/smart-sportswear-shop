@@ -1,0 +1,318 @@
+- generic [active] [ref=f21e1]:
+  - banner [ref=f21e2]:
+    - generic [ref=f21e3]:
+      - navigation [ref=f21e4]:
+        - list [ref=f21e5]:
+          - listitem [ref=f21e6]:
+            - link "NỮ" [ref=f21e7] [cursor=pointer]:
+              - /url: javascript:void(0)
+          - listitem [ref=f21e8]:
+            - link "NAM" [ref=f21e9] [cursor=pointer]:
+              - /url: javascript:void(0)
+          - listitem [ref=f21e10]:
+            - link "HÈ SALE CHẠM ĐỈNH 70%" [ref=f21e11] [cursor=pointer]:
+              - /url: javascript:void(0)
+          - listitem [ref=f21e12]:
+            - link "Bộ sưu tập" [ref=f21e13] [cursor=pointer]:
+              - /url: javascript:void(0)
+          - listitem [ref=f21e14]:
+            - link "Về Chúng Tôi" [ref=f21e15] [cursor=pointer]:
+              - /url: javascript:void(0)
+      - link "Danh sách cửa hàng | IVY moda" [ref=f21e17] [cursor=pointer]:
+        - /url: https://ivymoda.com/
+        - img "Danh sách cửa hàng | IVY moda" [ref=f21e18]
+      - generic [ref=f21e19]:
+        - generic [ref=f21e20]:
+          - button "" [ref=f21e21] [cursor=pointer]:
+            - generic [ref=f21e22]: 
+          - textbox "TÌM KIẾM SẢN PHẨM" [ref=f21e23]
+        - generic [ref=f21e24]:
+          - generic [ref=f21e25]:
+            - link "" [ref=f21e26] [cursor=pointer]:
+              - /url: "#"
+              - generic [ref=f21e27]: 
+            - text:     
+          - link "" [ref=f21e29] [cursor=pointer]:
+            - /url: https://ivymoda.com/customer/login
+            - generic [ref=f21e30]: 
+          - link " 0" [ref=f21e32] [cursor=pointer]:
+            - /url: "#"
+            - generic [ref=f21e33]: 
+            - generic [ref=f21e34]: "0"
+  - main [ref=f21e35]:
+    - generic [ref=f21e36]:
+      - list [ref=f21e38]:
+        - listitem [ref=f21e39]:
+          - link "Trang chủ" [ref=f21e40] [cursor=pointer]:
+            - /url: https://ivymoda.com/
+        - listitem [ref=f21e41]:
+          - text: 
+          - link "Danh sách cửa hàng" [ref=f21e42] [cursor=pointer]:
+            - /url: https://ivymoda.com/page/cuahang
+      - link "banner" [ref=f21e46] [cursor=pointer]:
+        - /url: "#"
+        - img "banner" [ref=f21e47]
+      - generic [ref=f21e48]:
+        - generic [ref=f21e49]:
+          - heading "Hệ thống cửa hàng" [level=2] [ref=f21e50]
+          - list [ref=f21e51]:
+            - listitem [ref=f21e52]:
+              - link "Miền Bắc" [ref=f21e53] [cursor=pointer]:
+                - /url: https://ivymoda.com/page/cuahang/1
+            - listitem [ref=f21e54]:
+              - link "Miền Trung" [ref=f21e55] [cursor=pointer]:
+                - /url: https://ivymoda.com/page/cuahang/2
+            - listitem [ref=f21e56]:
+              - link "Miền Nam" [ref=f21e57] [cursor=pointer]:
+                - /url: https://ivymoda.com/page/cuahang/3
+        - generic [ref=f21e59]:
+          - generic [ref=f21e61]:
+            - heading "Cửa hàng Miền Bắc" [level=3] [ref=f21e62]
+            - generic [ref=f21e66]:
+              - generic [ref=f21e68] [cursor=pointer]: 
+              - textbox "Tìm cửa hàng" [ref=f21e69]
+            - generic [ref=f21e70]:
+              - generic [ref=f21e71]:
+                - heading "Hà Nội " [level=4] [ref=f21e72] [cursor=pointer]:
+                  - text: Hà Nội
+                  - generic [ref=f21e73]: 
+                - text:                                                   
+              - generic [ref=f21e74]:
+                - heading "Hải Phòng " [level=4] [ref=f21e75] [cursor=pointer]:
+                  - text: Hải Phòng
+                  - generic [ref=f21e76]: 
+                - text:       
+              - generic [ref=f21e77]:
+                - heading "Bắc Giang " [level=4] [ref=f21e78] [cursor=pointer]:
+                  - text: Bắc Giang
+                  - generic [ref=f21e79]: 
+                - text:   
+              - generic [ref=f21e80]:
+                - heading "Hải Dương " [level=4] [ref=f21e81] [cursor=pointer]:
+                  - text: Hải Dương
+                  - generic [ref=f21e82]: 
+                - text:    
+              - generic [ref=f21e83]:
+                - heading "Hưng Yên " [level=4] [ref=f21e84] [cursor=pointer]:
+                  - text: Hưng Yên
+                  - generic [ref=f21e85]: 
+                - text:   
+              - generic [ref=f21e86]:
+                - heading "Lào Cai " [level=4] [ref=f21e87] [cursor=pointer]:
+                  - text: Lào Cai
+                  - generic [ref=f21e88]: 
+                - text:    
+              - generic [ref=f21e89]:
+                - heading "Nam Định " [level=4] [ref=f21e90] [cursor=pointer]:
+                  - text: Nam Định
+                  - generic [ref=f21e91]: 
+                - text:    
+              - generic [ref=f21e92]:
+                - heading "Ninh Bình " [level=4] [ref=f21e93] [cursor=pointer]:
+                  - text: Ninh Bình
+                  - generic [ref=f21e94]: 
+                - text:    
+              - generic [ref=f21e95]:
+                - heading "Phú Thọ " [level=4] [ref=f21e96] [cursor=pointer]:
+                  - text: Phú Thọ
+                  - generic [ref=f21e97]: 
+                - text:    
+              - generic [ref=f21e98]:
+                - heading "Quảng Ninh " [level=4] [ref=f21e99] [cursor=pointer]:
+                  - text: Quảng Ninh
+                  - generic [ref=f21e100]: 
+                - text:    
+              - generic [ref=f21e101]:
+                - heading "Thái Bình " [level=4] [ref=f21e102] [cursor=pointer]:
+                  - text: Thái Bình
+                  - generic [ref=f21e103]: 
+                - text:    
+              - generic [ref=f21e104]:
+                - heading "Thái Nguyên " [level=4] [ref=f21e105] [cursor=pointer]:
+                  - text: Thái Nguyên
+                  - generic [ref=f21e106]: 
+                - text:    
+              - generic [ref=f21e107]:
+                - heading "Tuyên Quang " [level=4] [ref=f21e108] [cursor=pointer]:
+                  - text: Tuyên Quang
+                  - generic [ref=f21e109]: 
+                - text:    
+              - generic [ref=f21e110]:
+                - heading "Vĩnh Yên " [level=4] [ref=f21e111] [cursor=pointer]:
+                  - text: Vĩnh Yên
+                  - generic [ref=f21e112]: 
+                - text:    
+              - generic [ref=f21e113]:
+                - heading "Yên Bái " [level=4] [ref=f21e114] [cursor=pointer]:
+                  - text: Yên Bái
+                  - generic [ref=f21e115]: 
+                - text:   
+          - generic [ref=f21e116]:
+            - generic [ref=f21e119]:
+              - region "Map" [ref=f21e120]
+              - generic [ref=f21e121]:
+                - generic [ref=f21e176]:
+                  - generic:
+                    - generic:
+                      - button "IVY moda 267 Đ. Quang Trung, P. Quang Trung (Hà Đông), TP. Hà Nội" [ref=f21e178] [cursor=pointer]
+                      - button "IVY moda 261-263 Cao Lỗ, Uy Nỗ, Đông Anh, Hà Nội" [ref=f21e179] [cursor=pointer]
+                      - button "IVY moda 460- 462 Nguyễn Văn Cừ , Phường Bồ Đề, TP Hà Nội" [ref=f21e180] [cursor=pointer]
+                      - button "IVY moda 86 Đ. Trần Duy Hưng, Trung Hoà, Q. Cầu Giấy, Hà Nội" [ref=f21e181] [cursor=pointer]
+                      - button "IVY moda 186 - 188 Hoàng Quốc Việt, Cổ Nhuế, Cầu Giấy, Hà Nội" [ref=f21e182] [cursor=pointer]
+                      - button "IVY moda 41 Thái Hà, Đống Đa, TP. Hà Nội" [ref=f21e183] [cursor=pointer]
+                      - button "IVY moda Tầng 2, T207, TTTM AEON Hà Đông, P. Dương Nội, Q. Hà Đông, TP. Hà Nội" [ref=f21e184] [cursor=pointer]
+                      - button "IVY moda (KHO) Số 126 Lê Trọng Tấn, La Khê, Hà Đông, TP. Hà Nội" [ref=f21e185] [cursor=pointer]
+                      - button "IVY moda 290 Bà Triệu, Hoàn Kiếm, TP. Hà Nội" [ref=f21e186] [cursor=pointer]
+                      - button "IVY moda Số 17 BT2, Khu đô thị Bắc Linh Đàm, Hoàng Mai, Hà Nội" [ref=f21e187] [cursor=pointer]
+                      - button "IVY moda Lô T244 tầng 2 TTTM Aeon Mall Long Biên, Số 27 Đường Cổ Linh, P. Long Biên, Q. Long Biên, TP. Hà Nội" [ref=f21e188] [cursor=pointer]
+                      - button "IVY moda Tầng 1, 7 - 9 Tasco Mall Long Biên, 7-9 Nguyễn Văn Linh, Long Biên, TP. Hà Nội" [ref=f21e189] [cursor=pointer]
+                      - button "IVY moda 5/447 Lạc Long Quân, Tây Hồ, TP. Hà Nội" [ref=f21e190] [cursor=pointer]
+                      - button "IVY moda 535 Nguyễn Trãi, Thanh Xuân, TP. Hà Nội" [ref=f21e191] [cursor=pointer]
+                      - button "IVY moda B2-R6-09+10 TTTM Vincom Royal City, 72A Nguyễn Trãi, Thanh Xuân" [ref=f21e192] [cursor=pointer]
+                      - button "IVY moda 77 Nguyễn Đức Cảnh, P. An Biên, Q. Lê Chân, TP. Hải Phòng" [ref=f21e193] [cursor=pointer]
+                      - button "IVY moda T2-60, TTTM Aeon Lê Chân Hải Phòng, Số 10 Đường Võ Nguyên Giáp, P. Kênh Dương, Q. Lê Chân, TP. Hải Phòng" [ref=f21e194] [cursor=pointer]
+                      - button "IVY moda 198 Đường Hoàng Văn Thụ, Phường Hoàng Văn Thụ, Bắc Giang" [ref=f21e195] [cursor=pointer]
+                      - button "IVY moda 34 Trần Hưng Đạo, TP. Hải Dương" [ref=f21e196] [cursor=pointer]
+                      - button "IVY moda 34 Điện Biên, Phường Phố Hiến, tỉnh Hưng Yên" [ref=f21e197] [cursor=pointer]
+                      - button "IVY moda 213 Hoàng Liên, Phường Cốc Lếu , Thp Lào Cai, Lào Cai" [ref=f21e198] [cursor=pointer]
+                      - button "IVY moda 114 - 116 Trần Hưng Đạo, Nam Định, Nam Định" [ref=f21e199] [cursor=pointer]
+                      - button "IVY moda Số 7 đường Lê Hồng Phong, Phường Vân Giang, TP Ninh Bình, Tỉnh Ninh Bình" [ref=f21e200] [cursor=pointer]
+                      - button "IVY moda Căn hộ SH8-2-3, Lô SH08, Khu đô thị Times Garden, TP. Hạ Long, Quảng Ninh" [ref=f21e201] [cursor=pointer]
+                      - button "IVY moda 404 Lý Bôn (gần bến xe Thái Bình),P.Trần Hưng Đạo,TP.Thái Bình, Thái Bình" [ref=f21e202] [cursor=pointer]
+                      - button "IVY moda 241 Hoàng Văn Thụ, P. Đồng Quang, Thái Nguyên" [ref=f21e203] [cursor=pointer]
+                      - button "IVY moda 225 đường Quang Trung , phường Tân Quang , TP. Tuyên Quang ( Ngã Tư đèn xanh đèn đỏ - DỐC DƯỢC )" [ref=f21e204] [cursor=pointer]
+                      - button "IVY moda 189 Mê Linh, P. Liên Bảo," [ref=f21e205] [cursor=pointer]
+                      - button "IVY moda 662 Điện Biên, phường Yên Bái, tỉnh Lào Cai" [ref=f21e206] [cursor=pointer]
+                - iframe [ref=f21e207]:
+                  
+            - heading [level=3] [ref=f21e208]
+            - heading [level=3] [ref=f21e209]
+            - generic [ref=f21e210]:
+              - generic [ref=f21e211]:
+                - heading [level=4] [ref=f21e212]
+                - heading "Chính sách vận chuyển" [level=4] [ref=f21e213]:
+                  - strong [ref=f21e214]: Chính sách vận chuyển
+                - list [ref=f21e215]:
+                  - listitem [ref=f21e216]: "Nội thành Hà Nội, TP Hồ Chí Minh: đồng giá 25k"
+                  - listitem [ref=f21e217]: "Đơn đi tỉnh gần (Khoảng cách đến HN/HCM < 100km): đồng giá 33k"
+                  - listitem [ref=f21e218]: "Đơn đi tỉnh gần (Khoảng cách đến HN/HCM > 100 km): đồng giá 38k"
+              - generic [ref=f21e219]:
+                - heading [level=4] [ref=f21e220]
+                - heading "Chính sách miễn phí vận chuyển" [level=4] [ref=f21e221]:
+                  - strong [ref=f21e222]: Chính sách miễn phí vận chuyển
+                - list [ref=f21e223]:
+                  - listitem [ref=f21e224]: Miễn phí vận chuyển cho đơn hàng giá trị từ 700,000đ
+                  - listitem [ref=f21e225]: Miễn phí vận chuyển cho đơn hàng có sản phẩm nguyên giá > 500k
+  - generic [ref=f21e228]:
+    - generic [ref=f21e229]:
+      - generic [ref=f21e230]:
+        - link "logo-footer" [ref=f21e232] [cursor=pointer]:
+          - /url: https://ivymoda.com/
+          - img "logo-footer" [ref=f21e233]
+        - link "DMCA.com Protection Status" [ref=f21e234] [cursor=pointer]:
+          - /url: https://www.dmca.com/Protection/Status.aspx?ID=0cfdeac4-6e7f-4fca-941f-57a0a0962777&refurl=https://ivymoda.com/page/cuahang
+          - img "DMCA.com Protection Status" [ref=f21e235]
+        - link "img-congthuong" [ref=f21e237] [cursor=pointer]:
+          - /url: http://online.gov.vn/Home/WebDetails/36596
+          - img "img-congthuong" [ref=f21e238]
+      - generic [ref=f21e239]:
+        - list [ref=f21e240]:
+          - listitem [ref=f21e241]:
+            - link "ic_fb" [ref=f21e242] [cursor=pointer]:
+              - /url: https://www.facebook.com/thoitrangivymoda/
+              - img "ic_fb" [ref=f21e243]
+          - listitem [ref=f21e244]:
+            - link "ic_gg" [ref=f21e245] [cursor=pointer]:
+              - /url: https://ivymoda.com/
+              - img "ic_gg" [ref=f21e246]
+          - listitem [ref=f21e247]:
+            - link "ic_instagram" [ref=f21e248] [cursor=pointer]:
+              - /url: https://www.instagram.com/ivy_moda/
+              - img "ic_instagram" [ref=f21e249]
+          - listitem [ref=f21e250]:
+            - link "ic_zalo" [ref=f21e251] [cursor=pointer]:
+              - /url: https://zalo.me/2129412421626719329
+              - img "ic_zalo" [ref=f21e252]
+          - listitem [ref=f21e253]:
+            - link "ic_ytb" [ref=f21e254] [cursor=pointer]:
+              - /url: https://www.youtube.com/user/thoitrangivymoda
+              - img "ic_ytb" [ref=f21e255]
+        - 'link "Hotline: 0246 662 3434" [ref=f21e257] [cursor=pointer]':
+          - /url: tel:02466623434
+    - generic [ref=f21e258]:
+      - generic [ref=f21e259]:
+        - paragraph [ref=f21e260]: Giới thiệu
+        - list [ref=f21e261]:
+          - listitem [ref=f21e262]:
+            - link "Về IVY moda" [ref=f21e263] [cursor=pointer]:
+              - /url: https://ivymoda.com/about/gioi-thieu
+          - listitem [ref=f21e264]:
+            - link "Tuyển dụng" [ref=f21e265] [cursor=pointer]:
+              - /url: https://tuyendung.ivy.com.vn
+          - listitem [ref=f21e266]:
+            - link "Hệ thống cửa hàng" [ref=f21e267] [cursor=pointer]:
+              - /url: https://ivymoda.com/page/cuahang
+      - generic [ref=f21e268]:
+        - paragraph [ref=f21e269]: Dịch vụ khách hàng
+        - list [ref=f21e270]:
+          - listitem [ref=f21e271]:
+            - link "Chính sách điều khoản" [ref=f21e272] [cursor=pointer]:
+              - /url: https://ivymoda.com/about/chinhsach-dieukhoan
+          - listitem [ref=f21e273]:
+            - link "Hướng dẫn mua hàng" [ref=f21e274] [cursor=pointer]:
+              - /url: https://ivymoda.com/about/huong-dan-mua-hang
+          - listitem [ref=f21e275]:
+            - link "Chính sách thanh toán" [ref=f21e276] [cursor=pointer]:
+              - /url: https://ivymoda.com/about/chinh-sach-thanh-toan
+          - listitem [ref=f21e277]:
+            - link "Chính sách đổi trả" [ref=f21e278] [cursor=pointer]:
+              - /url: https://ivymoda.com/about/chinh-sach-doi-tra
+          - listitem [ref=f21e279]:
+            - link "Chính sách bảo hành" [ref=f21e280] [cursor=pointer]:
+              - /url: https://ivymoda.com/about/chinh-sach-bao-hanh
+          - listitem [ref=f21e281]:
+            - link "Chính sách giao nhận vận chuyển" [ref=f21e282] [cursor=pointer]:
+              - /url: https://ivymoda.com/about/chinh-sach-giao-nhan-van-chuyen
+          - listitem [ref=f21e283]:
+            - link "Chính sách thẻ thành viên" [ref=f21e284] [cursor=pointer]:
+              - /url: https://ivymoda.com/about/chinh-sach-the-thanh-vien
+          - listitem [ref=f21e285]:
+            - link "Q&A" [ref=f21e286] [cursor=pointer]:
+              - /url: https://ivymoda.com/about/qa
+      - generic [ref=f21e287]:
+        - paragraph [ref=f21e288]: Liên hệ
+        - list [ref=f21e289]:
+          - listitem [ref=f21e290]:
+            - link "Hotline" [ref=f21e291] [cursor=pointer]:
+              - /url: tel:02466623434
+          - listitem [ref=f21e292]:
+            - link "Email" [ref=f21e293] [cursor=pointer]:
+              - /url: mailto:saleadmin@ivy.com.vn
+          - listitem [ref=f21e294]:
+            - link "Live Chat" [ref=f21e295] [cursor=pointer]:
+              - /url: javascript:openCsChatBox();
+          - listitem [ref=f21e296]:
+            - link "Messenger" [ref=f21e297] [cursor=pointer]:
+              - /url: http://messenger.com/t/thoitrangivymoda
+          - listitem [ref=f21e298]:
+            - link "Liên hệ" [ref=f21e299] [cursor=pointer]:
+              - /url: https://ivymoda.com/lien-he
+    - generic [ref=f21e300]:
+      - generic [ref=f21e301]:
+        - paragraph [ref=f21e302]: Nhận thông tin các chương trình của IVY moda
+        - generic [ref=f21e303]:
+          - textbox "Nhập địa chỉ email" [ref=f21e304]
+          - button "Đăng ký" [ref=f21e306] [cursor=pointer]
+      - generic [ref=f21e307]:
+        - paragraph [ref=f21e308]: Download App
+        - list [ref=f21e309]:
+          - listitem [ref=f21e310]:
+            - link "Tải App IVYmoda trên App Store" [ref=f21e311] [cursor=pointer]:
+              - /url: http://ios.ivy.vn
+          - listitem [ref=f21e312]:
+            - link "Tải App IVYmoda trên Google Play" [ref=f21e313] [cursor=pointer]:
+              - /url: http://android.ivy.vn
+  - text:   
+  - contentinfo [ref=f21e314]:
+    - generic [ref=f21e316]: ©IVYmoda All rights reserved
+  - text:          

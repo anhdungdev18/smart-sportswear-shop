@@ -1,0 +1,193 @@
+- generic [ref=f3e1]:
+  - banner [ref=f3e2]:
+    - generic [ref=f3e3]:
+      - generic [ref=f3e4]:
+        - navigation [ref=f3e5]:
+          - list [ref=f3e6]:
+            - listitem [ref=f3e7]:
+              - link "NỮ" [ref=f3e8] [cursor=pointer]:
+                - /url: https://ivymoda.com/danh-muc/nu
+            - listitem [ref=f3e9]:
+              - link "NAM" [ref=f3e10] [cursor=pointer]:
+                - /url: https://ivymoda.com/danh-muc/nam
+            - listitem [ref=f3e11]:
+              - link "HÈ SALE CHẠM ĐỈNH 70%" [ref=f3e12] [cursor=pointer]:
+                - /url: https://ivymoda.com/danh-muc/sale-all-70-0626
+            - listitem [ref=f3e13]:
+              - link "Bộ sưu tập" [ref=f3e14] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=f3e15]:
+              - link "LIFESTYLE" [ref=f3e16] [cursor=pointer]:
+                - /url: https://ivymoda.com/tin-tuc/tin-chinh
+            - listitem [ref=f3e17]:
+              - link "Về Chúng Tôi" [ref=f3e18] [cursor=pointer]:
+                - /url: "#"
+        - link "IVY moda" [ref=f3e20] [cursor=pointer]:
+          - /url: https://ivymoda.com
+          - img "IVY moda" [ref=f3e21]
+      - generic [ref=f3e23]:
+        - generic [ref=f3e24]:
+          - button "Tìm kiếm" [ref=f3e25]:
+            - img [ref=f3e26]
+          - textbox "TÌM KIẾM SẢN PHẨM" [ref=f3e29]
+        - link "Outlet" [ref=f3e30] [cursor=pointer]:
+          - /url: "#"
+        - button "Hỗ trợ khách hàng" [ref=f3e32]:
+          - img [ref=f3e33]
+        - link "Tài khoản" [ref=f3e35] [cursor=pointer]:
+          - /url: "#"
+          - img [ref=f3e36]
+        - link "Giỏ hàng" [ref=f3e39] [cursor=pointer]:
+          - /url: "#"
+          - img [ref=f3e40]
+          - generic [ref=f3e43]: "0"
+  - main [ref=f3e44]:
+    - navigation "Breadcrumb" [ref=f3e45]:
+      - list [ref=f3e46]:
+        - listitem [ref=f3e47]:
+          - link "Trang chủ" [ref=f3e48] [cursor=pointer]:
+            - /url: https://ivymoda.com/
+        - listitem [ref=f3e49]:
+          - text: ›
+          - generic [ref=f3e50]: Danh sách cửa hàng
+    - generic [ref=f3e51]:
+      - img "Hệ thống cửa hàng IVY moda" [ref=f3e53]
+      - heading "Hệ thống cửa hàng" [level=1] [ref=f3e54]
+      - generic [ref=f3e55]:
+        - generic [ref=f3e56]:
+          - generic [ref=f3e57]:
+            - button "Miền Bắc" [ref=f3e58] [cursor=pointer]
+            - button "Miền Trung" [ref=f3e59] [cursor=pointer]
+            - button "Miền Nam" [active] [ref=f3e60] [cursor=pointer]
+          - generic [ref=f3e61]:
+            - heading "Cửa hàng Miền Nam" [level=3] [ref=f3e265]
+            - generic [ref=f3e63]:
+              - img
+              - textbox "Tìm cửa hàng" [ref=f3e64]
+            - list [ref=f3e65]:
+              - listitem [ref=f3e266]:
+                - button "TP. Hồ Chí Minh" [ref=f3e267]:
+                  - generic [ref=f3e268]: TP. Hồ Chí Minh
+                  - img [ref=f3e269]
+              - listitem [ref=f3e271]:
+                - button "Cần Thơ" [ref=f3e272]:
+                  - generic [ref=f3e273]: Cần Thơ
+                  - img [ref=f3e274]
+              - listitem [ref=f3e276]:
+                - button "Bình Dương" [ref=f3e277]:
+                  - generic [ref=f3e278]: Bình Dương
+                  - img [ref=f3e279]
+        - generic [ref=f3e154]:
+          - generic [ref=f3e155]:
+            - img [ref=f3e157]
+            - img [ref=f3e160]
+            - img [ref=f3e163]
+            - generic [ref=f3e166]: Bản đồ minh họa
+          - generic [ref=f3e167]:
+            - heading "Chính sách vận chuyển" [level=4] [ref=f3e168]
+            - list [ref=f3e169]:
+              - listitem [ref=f3e170]: "Nội thành Hà Nội, TP Hồ Chí Minh: đồng giá 25k"
+              - listitem [ref=f3e171]: "Đơn đi tỉnh gần (Khoảng cách đến HN/HCM < 100km): đồng giá 33k"
+              - listitem [ref=f3e172]: "Đơn đi tỉnh gần (Khoảng cách đến HN/HCM > 100 km): đồng giá 38k"
+            - heading "Chính sách miễn phí vận chuyển" [level=4] [ref=f3e173]
+            - list [ref=f3e174]:
+              - listitem [ref=f3e175]: Miễn phí vận chuyển cho đơn hàng giá trị từ 700,000đ
+              - listitem [ref=f3e176]: Miễn phí vận chuyển cho đơn hàng có sản phẩm nguyên giá > 500k
+  - contentinfo [ref=f3e177]:
+    - generic [ref=f3e179]:
+      - generic [ref=f3e180]:
+        - img "IVY moda" [ref=f3e181]
+        - generic [ref=f3e182]:
+          - link "DMCA Protected" [ref=f3e183] [cursor=pointer]:
+            - /url: https://www.dmca.com/Protection/Status.aspx?ID=0cfdeac4-6e7f-4fca-941f-57a0a0962777
+            - img "DMCA Protected" [ref=f3e184]
+          - link "Đã thông báo Bộ Công Thương" [ref=f3e185] [cursor=pointer]:
+            - /url: http://online.gov.vn/Home/WebDetails/36596
+            - img "Đã thông báo Bộ Công Thương" [ref=f3e186]
+        - list [ref=f3e187]:
+          - listitem [ref=f3e188]:
+            - link "Facebook" [ref=f3e189] [cursor=pointer]:
+              - /url: https://www.facebook.com/thoitrangivymoda/
+              - img "Facebook" [ref=f3e190]
+          - listitem [ref=f3e191]:
+            - link "Google" [ref=f3e192] [cursor=pointer]:
+              - /url: https://ivymoda.com/
+              - img "Google" [ref=f3e193]
+          - listitem [ref=f3e194]:
+            - link "Instagram" [ref=f3e195] [cursor=pointer]:
+              - /url: https://www.instagram.com/ivy_moda/
+              - img "Instagram" [ref=f3e196]
+      - generic [ref=f3e197]:
+        - generic [ref=f3e198]:
+          - heading "Giới thiệu" [level=3] [ref=f3e199]
+          - list [ref=f3e200]:
+            - listitem [ref=f3e201]:
+              - link "Về IVY moda" [ref=f3e202] [cursor=pointer]:
+                - /url: https://ivymoda.com/about/gioi-thieu
+            - listitem [ref=f3e203]:
+              - link "Tuyển dụng" [ref=f3e204] [cursor=pointer]:
+                - /url: https://tuyendung.ivy.com.vn
+            - listitem [ref=f3e205]:
+              - link "Hệ thống cửa hàng" [ref=f3e206] [cursor=pointer]:
+                - /url: https://ivymoda.com/page/cuahang
+        - generic [ref=f3e207]:
+          - heading "Dịch vụ khách hàng" [level=3] [ref=f3e208]
+          - list [ref=f3e209]:
+            - listitem [ref=f3e210]:
+              - link "Chính sách điều khoản" [ref=f3e211] [cursor=pointer]:
+                - /url: https://ivymoda.com/about/chinhsach-dieukhoan
+            - listitem [ref=f3e212]:
+              - link "Hướng dẫn mua hàng" [ref=f3e213] [cursor=pointer]:
+                - /url: https://ivymoda.com/about/huong-dan-mua-hang
+            - listitem [ref=f3e214]:
+              - link "Chính sách thanh toán" [ref=f3e215] [cursor=pointer]:
+                - /url: https://ivymoda.com/about/chinh-sach-thanh-toan
+            - listitem [ref=f3e216]:
+              - link "Chính sách đổi trả" [ref=f3e217] [cursor=pointer]:
+                - /url: https://ivymoda.com/about/chinh-sach-doi-tra
+            - listitem [ref=f3e218]:
+              - link "Chính sách bảo hành" [ref=f3e219] [cursor=pointer]:
+                - /url: https://ivymoda.com/about/chinh-sach-bao-hanh
+            - listitem [ref=f3e220]:
+              - link "Chính sách thẻ thành viên" [ref=f3e221] [cursor=pointer]:
+                - /url: https://ivymoda.com/about/chinh-sach-the-thanh-vien
+            - listitem [ref=f3e222]:
+              - link "Q&A" [ref=f3e223] [cursor=pointer]:
+                - /url: https://ivymoda.com/about/qa
+        - generic [ref=f3e224]:
+          - heading "Liên hệ" [level=3] [ref=f3e225]
+          - list [ref=f3e226]:
+            - listitem [ref=f3e227]:
+              - link "Hotline" [ref=f3e228] [cursor=pointer]:
+                - /url: tel:02466623434
+            - listitem [ref=f3e229]:
+              - link "Email" [ref=f3e230] [cursor=pointer]:
+                - /url: mailto:saleadmin@ivy.com.vn
+            - listitem [ref=f3e231]:
+              - link "Live Chat" [ref=f3e232] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=f3e233]:
+              - link "Messenger" [ref=f3e234] [cursor=pointer]:
+                - /url: http://messenger.com/t/thoitrangivymoda
+            - listitem [ref=f3e235]:
+              - link "Liên hệ" [ref=f3e236] [cursor=pointer]:
+                - /url: https://ivymoda.com/lien-he
+      - generic [ref=f3e237]:
+        - generic [ref=f3e238]:
+          - heading "Nhận thông tin các chương trình của IVY moda" [level=3] [ref=f3e239]
+          - generic [ref=f3e240]:
+            - textbox "Nhập địa chỉ email" [ref=f3e241]
+            - button "Đăng ký" [ref=f3e242]
+        - generic [ref=f3e243]:
+          - heading "Download App" [level=3] [ref=f3e244]
+          - generic [ref=f3e245]:
+            - link "Download on the App Store" [ref=f3e246] [cursor=pointer]:
+              - /url: "#"
+              - img "Download on the App Store" [ref=f3e247]
+            - link "Get it on Google Play" [ref=f3e248] [cursor=pointer]:
+              - /url: "#"
+              - img "Get it on Google Play" [ref=f3e249]
+    - paragraph [ref=f3e251]: ©IVYmoda All rights reserved
+  - button "Open Next.js Dev Tools" [ref=f3e257] [cursor=pointer]:
+    - img [ref=f3e258]
+  - alert [ref=f3e261]

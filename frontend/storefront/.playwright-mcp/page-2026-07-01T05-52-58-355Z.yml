@@ -1,0 +1,428 @@
+- generic [active] [ref=f2e1]:
+  - banner [ref=f2e2]:
+    - generic [ref=f2e3]:
+      - navigation [ref=f2e4]:
+        - list [ref=f2e5]:
+          - listitem [ref=f2e6]:
+            - link "NỮ" [ref=f2e7] [cursor=pointer]:
+              - /url: javascript:void(0)
+          - listitem [ref=f2e8]:
+            - link "NAM" [ref=f2e9] [cursor=pointer]:
+              - /url: javascript:void(0)
+          - listitem [ref=f2e10]:
+            - link "HÈ SALE CHẠM ĐỈNH 70%" [ref=f2e11] [cursor=pointer]:
+              - /url: javascript:void(0)
+          - listitem [ref=f2e12]:
+            - link "Bộ sưu tập" [ref=f2e13] [cursor=pointer]:
+              - /url: javascript:void(0)
+          - listitem [ref=f2e14]:
+            - link "Về Chúng Tôi" [ref=f2e15] [cursor=pointer]:
+              - /url: javascript:void(0)
+      - link "Áo kiểu Day Dream | IVY moda" [ref=f2e17] [cursor=pointer]:
+        - /url: https://ivymoda.com/
+        - img "Áo kiểu Day Dream | IVY moda" [ref=f2e18]
+      - generic [ref=f2e19]:
+        - generic [ref=f2e20]:
+          - button "" [ref=f2e21] [cursor=pointer]:
+            - generic [ref=f2e22]: 
+          - textbox "TÌM KIẾM SẢN PHẨM" [ref=f2e23]
+        - generic [ref=f2e24]:
+          - generic [ref=f2e25]:
+            - link "" [ref=f2e26] [cursor=pointer]:
+              - /url: "#"
+              - generic [ref=f2e27]: 
+            - text:     
+          - link "" [ref=f2e29] [cursor=pointer]:
+            - /url: https://ivymoda.com/customer/login
+            - generic [ref=f2e30]: 
+          - link " 0" [ref=f2e32] [cursor=pointer]:
+            - /url: "#"
+            - generic [ref=f2e33]: 
+            - generic [ref=f2e34]: "0"
+  - main [ref=f2e35]:
+    - generic [ref=f2e38]:
+      - list [ref=f2e40]:
+        - listitem [ref=f2e41]:
+          - link "Trang chủ" [ref=f2e42] [cursor=pointer]:
+            - /url: https://ivymoda.com/
+        - listitem [ref=f2e43]:
+          - text: 
+          - link "NỮ" [ref=f2e44] [cursor=pointer]:
+            - /url: https://ivymoda.com/danh-muc/nu-ivy-moda
+        - listitem [ref=f2e45]:
+          - text: 
+          - link "Áo kiểu Day Dream" [ref=f2e46] [cursor=pointer]:
+            - /url: https://ivymoda.com/sanpham/ao-kieu-day-dream-ms-16b0570-44652
+      - generic [ref=f2e49]:
+        - generic [ref=f2e52]:
+          - generic [ref=f2e53]:
+            - button "Previous slide" [disabled] [ref=f2e54] [cursor=pointer]:
+              - generic [ref=f2e55]: 
+            - button "Next slide" [ref=f2e56] [cursor=pointer]:
+              - generic [ref=f2e57]: 
+            - generic [ref=f2e59]:
+              - group "1 / 12" [ref=f2e60]:
+                - img "Áo kiểu Day Dream" [ref=f2e62]
+              - group "2 / 12":
+                - generic:
+                  - img "Áo kiểu Day Dream"
+              - group "3 / 12":
+                - generic:
+                  - img "Áo kiểu Day Dream"
+              - group "4 / 12":
+                - generic:
+                  - img "Áo kiểu Day Dream"
+              - group "5 / 12":
+                - generic:
+                  - img "Áo kiểu Day Dream"
+              - group "6 / 12":
+                - generic:
+                  - img "Áo kiểu Day Dream"
+              - group "7 / 12":
+                - generic:
+                  - img "Áo kiểu Day Dream"
+              - group "8 / 12":
+                - generic:
+                  - img "Áo kiểu Day Dream"
+              - group "9 / 12":
+                - generic:
+                  - img "Áo kiểu Day Dream"
+              - group "10 / 12":
+                - generic:
+                  - img "Áo kiểu Day Dream"
+              - group "11 / 12":
+                - generic:
+                  - img "Áo kiểu Day Dream"
+              - group "12 / 12":
+                - generic:
+                  - img "Áo kiểu Day Dream"
+          - generic [ref=f2e64]:
+            - button "Previous slide" [disabled] [ref=f2e65] [cursor=pointer]:
+              - generic [ref=f2e66]: 
+            - button "Next slide" [ref=f2e67] [cursor=pointer]:
+              - generic [ref=f2e68]: 
+            - generic [ref=f2e70]:
+              - group "1 / 12" [ref=f2e71] [cursor=pointer]:
+                - img "Áo kiểu Day Dream" [ref=f2e72]
+              - group "2 / 12" [ref=f2e73] [cursor=pointer]:
+                - img "Áo kiểu Day Dream" [ref=f2e74]
+              - group "3 / 12" [ref=f2e75] [cursor=pointer]:
+                - img "Áo kiểu Day Dream" [ref=f2e76]
+              - group "4 / 12" [ref=f2e77] [cursor=pointer]:
+                - img "Áo kiểu Day Dream" [ref=f2e78]
+              - group "5 / 12" [ref=f2e79] [cursor=pointer]:
+                - img "Áo kiểu Day Dream" [ref=f2e80]
+              - group "6 / 12" [ref=f2e81] [cursor=pointer]:
+                - img "Áo kiểu Day Dream" [ref=f2e82]
+              - group "7 / 12" [ref=f2e83] [cursor=pointer]:
+                - img "Áo kiểu Day Dream" [ref=f2e84]
+              - group "8 / 12" [ref=f2e85] [cursor=pointer]:
+                - img "Áo kiểu Day Dream" [ref=f2e86]
+              - group "9 / 12" [ref=f2e87] [cursor=pointer]:
+                - img "Áo kiểu Day Dream" [ref=f2e88]
+              - group "10 / 12" [ref=f2e89] [cursor=pointer]:
+                - img "Áo kiểu Day Dream" [ref=f2e90]
+              - group "11 / 12" [ref=f2e91] [cursor=pointer]:
+                - img "Áo kiểu Day Dream" [ref=f2e92]
+              - group "12 / 12" [ref=f2e93] [cursor=pointer]:
+                - img "Áo kiểu Day Dream" [ref=f2e94]
+        - generic [ref=f2e96]:
+          - heading "Áo kiểu Day Dream" [level=1] [ref=f2e97]
+          - generic [ref=f2e98]:
+            - paragraph [ref=f2e99]: "SKU: 16B0570"
+            - generic [ref=f2e104]: (0 đánh giá)
+          - generic [ref=f2e105]: 1.390.000đ
+          - generic [ref=f2e106]:
+            - paragraph [ref=f2e107]: "Màu sắc: Họa tiết Trắng"
+            - generic [ref=f2e110] [cursor=pointer]:
+              - text: 
+              - link "h01" [ref=f2e111]:
+                - /url: https://ivymoda.com/sanpham/ao-kieu-day-dream-ms-16b0570-44652
+                - img "h01" [ref=f2e112]
+          - generic [ref=f2e113]:
+            - generic [ref=f2e114]:
+              - generic [ref=f2e116] [cursor=pointer]: s
+              - generic [ref=f2e118] [cursor=pointer]: m
+              - generic [ref=f2e120] [cursor=pointer]: l
+              - generic [ref=f2e122] [cursor=pointer]: xl
+              - generic [ref=f2e124] [cursor=pointer]: xxl
+            - link " Kiểm tra size của bạn" [ref=f2e125] [cursor=pointer]:
+              - /url: javascript:;
+              - generic [ref=f2e126]: 
+              - text: Kiểm tra size của bạn
+          - generic [ref=f2e127]:
+            - paragraph [ref=f2e128]: Số lượng
+            - generic [ref=f2e129]:
+              - spinbutton [ref=f2e130]: "1"
+              - generic [ref=f2e131] [cursor=pointer]: +
+              - generic [ref=f2e132] [cursor=pointer]: "-"
+          - generic [ref=f2e133]:
+            - button "Thêm vào giỏ" [ref=f2e134] [cursor=pointer]
+            - link "Mua hàng" [ref=f2e135] [cursor=pointer]:
+              - /url: javascript:void(0)
+              - button "Mua hàng" [ref=f2e136]
+            - button "" [ref=f2e137] [cursor=pointer]:
+              - generic [ref=f2e138]: 
+            - link "Tìm tại cửa hàng" [ref=f2e140] [cursor=pointer]:
+              - /url: javascript:void(0);
+          - generic [ref=f2e143]:
+            - generic [ref=f2e144]:
+              - generic [ref=f2e145] [cursor=pointer]: GIỚI THIỆU
+              - generic [ref=f2e146] [cursor=pointer]: CHI TIẾT SẢN PHẨM
+              - generic [ref=f2e147] [cursor=pointer]: BẢO QUẢN
+            - generic [ref=f2e148]:
+              - generic [ref=f2e149]:
+                - paragraph [ref=f2e150]: Thiết kế mang tinh thần thanh lịch hiện đại với gam trắng tinh khôi cùng bề mặt vải dệt nổi họa tiết lông vũ mềm mại. Phom áo dáng ngắn gọn gàng giúp tôn tỷ lệ cơ thể, đồng thời tạo điểm nhấn tinh tế khi phối cùng chân váy hoặc quần cạp cao.
+                - paragraph [ref=f2e151]: Hàng cúc kim loại ánh bạc được sắp xếp tối giản trên thân trước, kết hợp cổ tròn thanh lịch, một vẻ ngoài trang nhã và chỉn chu. Thiết kế tay ngắn giúp tổng thể trở nên trẻ trung, phù hợp cho nhiều hoàn cảnh từ công sở đến những buổi gặp gỡ nhẹ nhàng.
+                - paragraph [ref=f2e152]:
+                  - strong [ref=f2e153]: "Phom dáng:"
+                  - text: Cropped suông nhẹ, gọn gàng
+                  - strong [ref=f2e154]: "Chi tiết:"
+                  - text: Cổ tròn, cúc kim loại nổi bật, bề mặt vải họa tiết lông vũ dệt nổi
+                  - strong [ref=f2e155]: "Chất liệu:"
+                  - text: Vải jacquard cao cấp tạo hiệu ứng bề mặt mềm mại, đứng phom nhẹ
+                  - strong [ref=f2e156]: "Màu sắc:"
+                  - text: Trắng thanh lịch
+                  - strong [ref=f2e157]: "Phù hợp:"
+                  - text: Công sở, sự kiện nhẹ, gặp gỡ hoặc phối đồng bộ cùng chân váy để tạo set thanh lịch hiện đại
+                - paragraph [ref=f2e158]:
+                  - strong [ref=f2e159]: "Thông tin mẫu:"
+                - paragraph [ref=f2e160]:
+                  - strong [ref=f2e161]: "Chiều cao:"
+                  - text: 165 cm
+                - paragraph [ref=f2e162]:
+                  - strong [ref=f2e163]: "Cân nặng:"
+                  - text: 49 kg
+                - paragraph [ref=f2e164]:
+                  - strong [ref=f2e165]: "Số đo 3 vòng:"
+                  - text: 81-63-90 cm
+                - paragraph [ref=f2e166]: Mẫu mặc size S
+                - paragraph [ref=f2e167]: "Lưu ý: Màu sắc sản phẩm thực tế sẽ có sự chênh lệch nhỏ so với ảnh do điều kiện ánh sáng khi chụp và màu sắc hiển thị qua màn hình máy tính/ điện thoại."
+              - img "image down" [ref=f2e170] [cursor=pointer]
+      - generic [ref=f2e172]:
+        - heading "MUA CÙNG VỚI" [level=2] [ref=f2e173]
+        - generic [ref=f2e174]:
+          - generic [ref=f2e176]:
+            - generic [ref=f2e179]:
+              - generic [ref=f2e180]: NEW
+              - link "Quần Tây suông Deep Muse" [ref=f2e182] [cursor=pointer]:
+                - /url: https://ivymoda.com/sanpham/quan-tay-suong-deep-muse-ms-22b0721-44801
+                - img "Quần Tây suông Deep Muse" [ref=f2e183]
+              - generic [ref=f2e184]:
+                - generic [ref=f2e185]:
+                  - list [ref=f2e186]:
+                    - listitem [ref=f2e187] [cursor=pointer]:
+                      - link "049" [ref=f2e188]:
+                        - /url: javascript:void(0)
+                        - img "049" [ref=f2e189]
+                  - generic [ref=f2e191] [cursor=pointer]: 
+                - heading "Quần Tây suông Deep Muse" [level=3] [ref=f2e192]:
+                  - link "Quần Tây suông Deep Muse" [ref=f2e193] [cursor=pointer]:
+                    - /url: https://ivymoda.com/sanpham/quan-tay-suong-deep-muse-ms-22b0721-44801
+                - insertion [ref=f2e195]: 1.750.000đ
+              - link "" [ref=f2e196] [cursor=pointer]:
+                - /url: javascript:void(0)
+                - generic [ref=f2e197]: 
+            - generic [ref=f2e200]:
+              - link "Chân váy xòe Day Dream" [ref=f2e202] [cursor=pointer]:
+                - /url: https://ivymoda.com/sanpham/chan-vay-xoe-day-dream-ms-31b0570-44663
+                - img "Chân váy xòe Day Dream" [ref=f2e203]
+              - generic [ref=f2e204]:
+                - generic [ref=f2e205]:
+                  - list [ref=f2e206]:
+                    - listitem [ref=f2e207] [cursor=pointer]:
+                      - link "h01" [ref=f2e208]:
+                        - /url: javascript:void(0)
+                        - img "h01" [ref=f2e209]
+                  - generic [ref=f2e211] [cursor=pointer]: 
+                - heading "Chân váy xòe Day Dream" [level=3] [ref=f2e212]:
+                  - link "Chân váy xòe Day Dream" [ref=f2e213] [cursor=pointer]:
+                    - /url: https://ivymoda.com/sanpham/chan-vay-xoe-day-dream-ms-31b0570-44663
+                - insertion [ref=f2e215]: 1.590.000đ
+              - link "" [ref=f2e216] [cursor=pointer]:
+                - /url: javascript:void(0)
+                - generic [ref=f2e217]: 
+          - text:  
+      - generic [ref=f2e218]:
+        - paragraph [ref=f2e219]: Sản phẩm tương tự
+        - generic [ref=f2e220]:
+          - generic [ref=f2e222]:
+            - generic [ref=f2e225]:
+              - generic [ref=f2e226]: NEW
+              - link "Áo lụa Art Elegance" [ref=f2e228] [cursor=pointer]:
+                - /url: https://ivymoda.com/sanpham/ao-lua-art-elegance-ms-16b0618-44735
+                - img "Áo lụa Art Elegance" [ref=f2e229]
+              - generic [ref=f2e230]:
+                - generic [ref=f2e231]:
+                  - list [ref=f2e232]:
+                    - listitem [ref=f2e233] [cursor=pointer]:
+                      - link "h01" [ref=f2e234]:
+                        - /url: javascript:void(0)
+                        - img "h01" [ref=f2e235]
+                  - generic [ref=f2e237] [cursor=pointer]: 
+                - heading "Áo lụa Art Elegance" [level=3] [ref=f2e238]:
+                  - link "Áo lụa Art Elegance" [ref=f2e239] [cursor=pointer]:
+                    - /url: https://ivymoda.com/sanpham/ao-lua-art-elegance-ms-16b0618-44735
+                - insertion [ref=f2e241]: 890.000đ
+              - link "" [ref=f2e242] [cursor=pointer]:
+                - /url: javascript:void(0)
+                - generic [ref=f2e243]: 
+            - generic [ref=f2e246]:
+              - link "Áo sơ mi lụa Daisy Panel" [ref=f2e248] [cursor=pointer]:
+                - /url: https://ivymoda.com/sanpham/ao-so-mi-lua-daisy-panel-ms-16b0351-43499
+                - img "Áo sơ mi lụa Daisy Panel" [ref=f2e249]
+              - generic [ref=f2e250]:
+                - generic [ref=f2e251]:
+                  - list [ref=f2e252]:
+                    - listitem [ref=f2e253] [cursor=pointer]:
+                      - link "001" [ref=f2e254]:
+                        - /url: javascript:void(0)
+                        - img "001" [ref=f2e255]
+                    - listitem [ref=f2e256] [cursor=pointer]:
+                      - link "h01" [ref=f2e257]:
+                        - /url: javascript:void(0)
+                        - img "h01" [ref=f2e258]
+                  - generic [ref=f2e260] [cursor=pointer]: 
+                - heading "Áo sơ mi lụa Daisy Panel" [level=3] [ref=f2e261]:
+                  - link "Áo sơ mi lụa Daisy Panel" [ref=f2e262] [cursor=pointer]:
+                    - /url: https://ivymoda.com/sanpham/ao-so-mi-lua-daisy-panel-ms-16b0351-43499
+                - insertion [ref=f2e264]: 890.000đ
+              - link "" [ref=f2e265] [cursor=pointer]:
+                - /url: javascript:void(0)
+                - generic [ref=f2e266]: 
+            - generic [ref=f2e269]:
+              - link "Ivory Bloom Lace Top - Áo ren kiểu" [ref=f2e271] [cursor=pointer]:
+                - /url: https://ivymoda.com/sanpham/ivory-bloom-lace-top-ao-ren-kieu-ms-16b0121-43040
+                - img "Ivory Bloom Lace Top - Áo ren kiểu" [ref=f2e272]
+              - generic [ref=f2e273]:
+                - generic [ref=f2e274]:
+                  - list [ref=f2e275]:
+                    - listitem [ref=f2e276] [cursor=pointer]:
+                      - link "h01" [ref=f2e277]:
+                        - /url: javascript:void(0)
+                        - img "h01" [ref=f2e278]
+                  - generic [ref=f2e280] [cursor=pointer]: 
+                - heading "Ivory Bloom Lace Top - Áo ren kiểu" [level=3] [ref=f2e281]:
+                  - link "Ivory Bloom Lace Top - Áo ren kiểu" [ref=f2e282] [cursor=pointer]:
+                    - /url: https://ivymoda.com/sanpham/ivory-bloom-lace-top-ao-ren-kieu-ms-16b0121-43040
+                - insertion [ref=f2e284]: 990.000đ
+              - link "" [ref=f2e285] [cursor=pointer]:
+                - /url: javascript:void(0)
+                - generic [ref=f2e286]: 
+          - text:  
+      - link "BANNER TRENDING" [ref=f2e287] [cursor=pointer]:
+        - /url: https://ivymoda.com/danh-muc/sale-all-70-0626
+        - img "BANNER TRENDING" [ref=f2e290]
+  - generic [ref=f2e294]:
+    - generic [ref=f2e295]:
+      - generic [ref=f2e296]:
+        - link "logo-footer" [ref=f2e298] [cursor=pointer]:
+          - /url: https://ivymoda.com/
+          - img "logo-footer" [ref=f2e299]
+        - link "DMCA.com Protection Status" [ref=f2e300] [cursor=pointer]:
+          - /url: https://www.dmca.com/Protection/Status.aspx?ID=0cfdeac4-6e7f-4fca-941f-57a0a0962777&refurl=https://ivymoda.com/sanpham/ao-kieu-day-dream-ms-16b0570-44652
+          - img "DMCA.com Protection Status" [ref=f2e301]
+        - link "img-congthuong" [ref=f2e303] [cursor=pointer]:
+          - /url: http://online.gov.vn/Home/WebDetails/36596
+          - img "img-congthuong" [ref=f2e304]
+      - generic [ref=f2e305]:
+        - list [ref=f2e306]:
+          - listitem [ref=f2e307]:
+            - link "ic_fb" [ref=f2e308] [cursor=pointer]:
+              - /url: https://www.facebook.com/thoitrangivymoda/
+              - img "ic_fb" [ref=f2e309]
+          - listitem [ref=f2e310]:
+            - link "ic_gg" [ref=f2e311] [cursor=pointer]:
+              - /url: https://ivymoda.com/
+              - img "ic_gg" [ref=f2e312]
+          - listitem [ref=f2e313]:
+            - link "ic_instagram" [ref=f2e314] [cursor=pointer]:
+              - /url: https://www.instagram.com/ivy_moda/
+              - img "ic_instagram" [ref=f2e315]
+          - listitem [ref=f2e316]:
+            - link "ic_zalo" [ref=f2e317] [cursor=pointer]:
+              - /url: https://zalo.me/2129412421626719329
+              - img "ic_zalo" [ref=f2e318]
+          - listitem [ref=f2e319]:
+            - link "ic_ytb" [ref=f2e320] [cursor=pointer]:
+              - /url: https://www.youtube.com/user/thoitrangivymoda
+              - img "ic_ytb" [ref=f2e321]
+        - 'link "Hotline: 0246 662 3434" [ref=f2e323] [cursor=pointer]':
+          - /url: tel:02466623434
+    - generic [ref=f2e324]:
+      - generic [ref=f2e325]:
+        - paragraph [ref=f2e326]: Giới thiệu
+        - list [ref=f2e327]:
+          - listitem [ref=f2e328]:
+            - link "Về IVY moda" [ref=f2e329] [cursor=pointer]:
+              - /url: https://ivymoda.com/about/gioi-thieu
+          - listitem [ref=f2e330]:
+            - link "Tuyển dụng" [ref=f2e331] [cursor=pointer]:
+              - /url: https://tuyendung.ivy.com.vn
+          - listitem [ref=f2e332]:
+            - link "Hệ thống cửa hàng" [ref=f2e333] [cursor=pointer]:
+              - /url: https://ivymoda.com/page/cuahang
+      - generic [ref=f2e334]:
+        - paragraph [ref=f2e335]: Dịch vụ khách hàng
+        - list [ref=f2e336]:
+          - listitem [ref=f2e337]:
+            - link "Chính sách điều khoản" [ref=f2e338] [cursor=pointer]:
+              - /url: https://ivymoda.com/about/chinhsach-dieukhoan
+          - listitem [ref=f2e339]:
+            - link "Hướng dẫn mua hàng" [ref=f2e340] [cursor=pointer]:
+              - /url: https://ivymoda.com/about/huong-dan-mua-hang
+          - listitem [ref=f2e341]:
+            - link "Chính sách thanh toán" [ref=f2e342] [cursor=pointer]:
+              - /url: https://ivymoda.com/about/chinh-sach-thanh-toan
+          - listitem [ref=f2e343]:
+            - link "Chính sách đổi trả" [ref=f2e344] [cursor=pointer]:
+              - /url: https://ivymoda.com/about/chinh-sach-doi-tra
+          - listitem [ref=f2e345]:
+            - link "Chính sách bảo hành" [ref=f2e346] [cursor=pointer]:
+              - /url: https://ivymoda.com/about/chinh-sach-bao-hanh
+          - listitem [ref=f2e347]:
+            - link "Chính sách giao nhận vận chuyển" [ref=f2e348] [cursor=pointer]:
+              - /url: https://ivymoda.com/about/chinh-sach-giao-nhan-van-chuyen
+          - listitem [ref=f2e349]:
+            - link "Chính sách thẻ thành viên" [ref=f2e350] [cursor=pointer]:
+              - /url: https://ivymoda.com/about/chinh-sach-the-thanh-vien
+          - listitem [ref=f2e351]:
+            - link "Q&A" [ref=f2e352] [cursor=pointer]:
+              - /url: https://ivymoda.com/about/qa
+      - generic [ref=f2e353]:
+        - paragraph [ref=f2e354]: Liên hệ
+        - list [ref=f2e355]:
+          - listitem [ref=f2e356]:
+            - link "Hotline" [ref=f2e357] [cursor=pointer]:
+              - /url: tel:02466623434
+          - listitem [ref=f2e358]:
+            - link "Email" [ref=f2e359] [cursor=pointer]:
+              - /url: mailto:saleadmin@ivy.com.vn
+          - listitem [ref=f2e360]:
+            - link "Live Chat" [ref=f2e361] [cursor=pointer]:
+              - /url: javascript:openCsChatBox();
+          - listitem [ref=f2e362]:
+            - link "Messenger" [ref=f2e363] [cursor=pointer]:
+              - /url: http://messenger.com/t/thoitrangivymoda
+          - listitem [ref=f2e364]:
+            - link "Liên hệ" [ref=f2e365] [cursor=pointer]:
+              - /url: https://ivymoda.com/lien-he
+    - generic [ref=f2e366]:
+      - generic [ref=f2e367]:
+        - paragraph [ref=f2e368]: Nhận thông tin các chương trình của IVY moda
+        - generic [ref=f2e369]:
+          - textbox "Nhập địa chỉ email" [ref=f2e370]
+          - button "Đăng ký" [ref=f2e372] [cursor=pointer]
+      - generic [ref=f2e373]:
+        - paragraph [ref=f2e374]: Download App
+        - list [ref=f2e375]:
+          - listitem [ref=f2e376]:
+            - link "Tải App IVYmoda trên App Store" [ref=f2e377] [cursor=pointer]:
+              - /url: http://ios.ivy.vn
+          - listitem [ref=f2e378]:
+            - link "Tải App IVYmoda trên Google Play" [ref=f2e379] [cursor=pointer]:
+              - /url: http://android.ivy.vn
+  - text:   
+  - contentinfo [ref=f2e380]:
+    - generic [ref=f2e382]: ©IVYmoda All rights reserved
+  - text:          

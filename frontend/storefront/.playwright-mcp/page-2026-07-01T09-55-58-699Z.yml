@@ -1,0 +1,605 @@
+- generic [active] [ref=f12e1]:
+  - banner [ref=f12e2]:
+    - generic [ref=f12e3]:
+      - generic [ref=f12e4]:
+        - button "Open menu" [ref=f12e5]
+        - link "IVY moda" [ref=f12e10] [cursor=pointer]:
+          - /url: https://ivymoda.com
+          - img "IVY moda" [ref=f12e11]
+      - generic [ref=f12e13]:
+        - link "Tài khoản" [ref=f12e14] [cursor=pointer]:
+          - /url: "#"
+          - img [ref=f12e15]
+        - link "Giỏ hàng" [ref=f12e18] [cursor=pointer]:
+          - /url: "#"
+          - img [ref=f12e19]
+          - generic [ref=f12e22]: "0"
+  - main [ref=f12e23]:
+    - navigation "Breadcrumb" [ref=f12e24]:
+      - list [ref=f12e25]:
+        - listitem [ref=f12e26]:
+          - link "Trang chủ" [ref=f12e27] [cursor=pointer]:
+            - /url: https://ivymoda.com/
+        - listitem [ref=f12e28]:
+          - text: ›
+          - generic [ref=f12e29]: ALL ITEMS
+    - generic [ref=f12e30]:
+      - generic [ref=f12e31]:
+        - list [ref=f12e32]:
+          - listitem [ref=f12e33]:
+            - button "Size" [ref=f12e34] [cursor=pointer]:
+              - generic [ref=f12e35]: Size
+              - img [ref=f12e36]
+            - generic [ref=f12e38]:
+              - button "S" [ref=f12e39]
+              - button "M" [ref=f12e40]
+              - button "L" [ref=f12e41]
+              - button "XL" [ref=f12e42]
+              - button "XXL" [ref=f12e43]
+          - listitem [ref=f12e44]:
+            - button "Màu sắc" [ref=f12e45] [cursor=pointer]:
+              - generic [ref=f12e46]: Màu sắc
+              - img [ref=f12e47]
+            - generic [ref=f12e49]:
+              - button "Đen" [ref=f12e50]
+              - button "Đỏ" [ref=f12e51]
+              - button "Cam" [ref=f12e52]
+              - button "Vàng" [ref=f12e53]
+              - button "Cam đất" [ref=f12e54]
+              - button "Đỏ đô" [ref=f12e55]
+              - button "Trắng" [ref=f12e56]
+              - button "Xám nhạt" [ref=f12e57]
+              - button "Xám" [ref=f12e58]
+              - button "Xám đậm" [ref=f12e59]
+              - button "Be" [ref=f12e60]
+              - button "Nâu nhạt" [ref=f12e61]
+              - button "Nâu" [ref=f12e62]
+              - button "Nâu đậm" [ref=f12e63]
+          - listitem [ref=f12e64]:
+            - button "Mức giá" [ref=f12e65] [cursor=pointer]:
+              - generic [ref=f12e66]: Mức giá
+              - img [ref=f12e67]
+            - generic [ref=f12e69]:
+              - generic [ref=f12e72]:
+                - slider "Mức giá tối thiểu" [ref=f12e73]: "0"
+                - slider "Mức giá tối đa" [ref=f12e74]: "5000000"
+              - generic [ref=f12e75]:
+                - generic [ref=f12e76]: 0đ
+                - generic [ref=f12e77]: 5.000.000đ
+          - listitem [ref=f12e78]:
+            - button "Mức chiết khấu" [ref=f12e79] [cursor=pointer]:
+              - generic [ref=f12e80]: Mức chiết khấu
+              - img [ref=f12e81]
+            - list [ref=f12e83]:
+              - listitem [ref=f12e84]:
+                - generic [ref=f12e85] [cursor=pointer]:
+                  - radio "Dưới 30%" [ref=f12e86]
+                  - generic [ref=f12e87]: Dưới 30%
+              - listitem [ref=f12e88]:
+                - generic [ref=f12e89] [cursor=pointer]:
+                  - radio "30% - 50%" [ref=f12e90]
+                  - generic [ref=f12e91]: 30% - 50%
+              - listitem [ref=f12e92]:
+                - generic [ref=f12e93] [cursor=pointer]:
+                  - radio "Trên 50%" [ref=f12e94]
+                  - generic [ref=f12e95]: Trên 50%
+          - listitem [ref=f12e96]:
+            - button "Nâng cao" [ref=f12e97] [cursor=pointer]:
+              - generic [ref=f12e98]: Nâng cao
+              - img [ref=f12e99]
+        - generic [ref=f12e100]:
+          - button "BỎ LỌC" [ref=f12e101]
+          - button "LỌC" [ref=f12e102]
+      - generic [ref=f12e103]:
+        - generic [ref=f12e104]:
+          - heading "Thời Trang Nữ" [level=1] [ref=f12e105]
+          - paragraph [ref=f12e106]: 18 sản phẩm
+          - button "Sắp xếp theo" [ref=f12e108] [cursor=pointer]:
+            - text: Sắp xếp theo
+            - img [ref=f12e109]
+        - generic [ref=f12e111]:
+          - generic [ref=f12e113]:
+            - generic [ref=f12e114]: Best Seller
+            - generic [ref=f12e115]: "-70%"
+            - generic [ref=f12e116]:
+              - link "Đầm voan hoa dáng xòe" [ref=f12e117] [cursor=pointer]:
+                - /url: https://ivymoda.com/sanpham/dam-voan-hoa-dang-xoe-ms-48m8652-40094
+                - img "Đầm voan hoa dáng xòe" [ref=f12e118]
+              - button "Thêm vào giỏ hàng" [ref=f12e120]:
+                - img [ref=f12e121]
+            - generic [ref=f12e124]:
+              - generic [ref=f12e125]:
+                - list [ref=f12e126]:
+                  - listitem [ref=f12e127]:
+                    - button "default" [ref=f12e128] [cursor=pointer]:
+                      - img "default" [ref=f12e129]
+                - button "Yêu thích" [ref=f12e130] [cursor=pointer]:
+                  - img [ref=f12e131]
+              - heading "Đầm voan hoa dáng xòe" [level=3] [ref=f12e133]:
+                - link "Đầm voan hoa dáng xòe" [ref=f12e134] [cursor=pointer]:
+                  - /url: https://ivymoda.com/sanpham/dam-voan-hoa-dang-xoe-ms-48m8652-40094
+              - generic [ref=f12e135]:
+                - insertion [ref=f12e136]: 447.000đ
+                - deletion [ref=f12e137]: 1.490.000đ
+          - generic [ref=f12e139]:
+            - generic [ref=f12e140]: NEW
+            - generic [ref=f12e141]: "-70%"
+            - generic [ref=f12e142]:
+              - link "Chân váy Tapta 2 lớp" [ref=f12e143] [cursor=pointer]:
+                - /url: https://ivymoda.com/sanpham/chan-vay-tapta-2-lop-ms-31m8293-37520
+                - img "Chân váy Tapta 2 lớp" [ref=f12e144]
+              - button "Thêm vào giỏ hàng" [ref=f12e146]:
+                - img [ref=f12e147]
+            - generic [ref=f12e150]:
+              - generic [ref=f12e151]:
+                - list [ref=f12e152]:
+                  - listitem [ref=f12e153]:
+                    - button "default" [ref=f12e154] [cursor=pointer]:
+                      - img "default" [ref=f12e155]
+                - button "Yêu thích" [ref=f12e156] [cursor=pointer]:
+                  - img [ref=f12e157]
+              - heading "Chân váy Tapta 2 lớp" [level=3] [ref=f12e159]:
+                - link "Chân váy Tapta 2 lớp" [ref=f12e160] [cursor=pointer]:
+                  - /url: https://ivymoda.com/sanpham/chan-vay-tapta-2-lop-ms-31m8293-37520
+              - generic [ref=f12e161]:
+                - insertion [ref=f12e162]: 237.000đ
+                - deletion [ref=f12e163]: 790.000đ
+          - generic [ref=f12e165]:
+            - generic [ref=f12e166]: NEW
+            - generic [ref=f12e167]: "-70%"
+            - generic [ref=f12e168]:
+              - link "Đầm lụa xòe cổ V" [ref=f12e169] [cursor=pointer]:
+                - /url: https://ivymoda.com/sanpham/dam-lua-xoe-co-v-ms-48m6598-37977
+                - img "Đầm lụa xòe cổ V" [ref=f12e170]
+              - button "Thêm vào giỏ hàng" [ref=f12e172]:
+                - img [ref=f12e173]
+            - generic [ref=f12e176]:
+              - generic [ref=f12e177]:
+                - list [ref=f12e178]:
+                  - listitem [ref=f12e179]:
+                    - button "default" [ref=f12e180] [cursor=pointer]:
+                      - img "default" [ref=f12e181]
+                - button "Yêu thích" [ref=f12e182] [cursor=pointer]:
+                  - img [ref=f12e183]
+              - heading "Đầm lụa xòe cổ V" [level=3] [ref=f12e185]:
+                - link "Đầm lụa xòe cổ V" [ref=f12e186] [cursor=pointer]:
+                  - /url: https://ivymoda.com/sanpham/dam-lua-xoe-co-v-ms-48m6598-37977
+              - generic [ref=f12e187]:
+                - insertion [ref=f12e188]: 537.000đ
+                - deletion [ref=f12e189]: 1.790.000đ
+          - generic [ref=f12e191]:
+            - generic [ref=f12e192]: NEW
+            - generic [ref=f12e193]: "-70%"
+            - generic [ref=f12e194]:
+              - link "Zuýp đuôi cá 2 lớp" [ref=f12e195] [cursor=pointer]:
+                - /url: https://ivymoda.com/sanpham/zuyp-duoi-ca-2-lop-ms-31m8636-38863
+                - img "Zuýp đuôi cá 2 lớp" [ref=f12e196]
+              - button "Thêm vào giỏ hàng" [ref=f12e198]:
+                - img [ref=f12e199]
+            - generic [ref=f12e202]:
+              - generic [ref=f12e203]:
+                - list [ref=f12e204]:
+                  - listitem [ref=f12e205]:
+                    - button "default" [ref=f12e206] [cursor=pointer]:
+                      - img "default" [ref=f12e207]
+                - button "Yêu thích" [ref=f12e208] [cursor=pointer]:
+                  - img [ref=f12e209]
+              - heading "Zuýp đuôi cá 2 lớp" [level=3] [ref=f12e211]:
+                - link "Zuýp đuôi cá 2 lớp" [ref=f12e212] [cursor=pointer]:
+                  - /url: https://ivymoda.com/sanpham/zuyp-duoi-ca-2-lop-ms-31m8636-38863
+              - generic [ref=f12e213]:
+                - insertion [ref=f12e214]: 285.000đ
+                - deletion [ref=f12e215]: 950.000đ
+          - generic [ref=f12e217]:
+            - generic [ref=f12e218]: NEW
+            - generic [ref=f12e219]: "-70%"
+            - generic [ref=f12e220]:
+              - link "Chân váy Tuytsi xếp ly" [ref=f12e221] [cursor=pointer]:
+                - /url: https://ivymoda.com/sanpham/chan-vay-tuytsi-xep-ly-ms-30m8749-39604
+                - img "Chân váy Tuytsi xếp ly" [ref=f12e222]
+              - button "Thêm vào giỏ hàng" [ref=f12e224]:
+                - img [ref=f12e225]
+            - generic [ref=f12e228]:
+              - generic [ref=f12e229]:
+                - list [ref=f12e230]:
+                  - listitem [ref=f12e231]:
+                    - button "default" [ref=f12e232] [cursor=pointer]:
+                      - img "default" [ref=f12e233]
+                - button "Yêu thích" [ref=f12e234] [cursor=pointer]:
+                  - img [ref=f12e235]
+              - heading "Chân váy Tuytsi xếp ly" [level=3] [ref=f12e237]:
+                - link "Chân váy Tuytsi xếp ly" [ref=f12e238] [cursor=pointer]:
+                  - /url: https://ivymoda.com/sanpham/chan-vay-tuytsi-xep-ly-ms-30m8749-39604
+              - generic [ref=f12e239]:
+                - insertion [ref=f12e240]: 477.000đ
+                - deletion [ref=f12e241]: 1.590.000đ
+          - generic [ref=f12e243]:
+            - generic [ref=f12e244]: NEW
+            - generic [ref=f12e245]: "-70%"
+            - generic [ref=f12e246]:
+              - link "Áo Blazer Dahlia Set" [ref=f12e247] [cursor=pointer]:
+                - /url: https://ivymoda.com/sanpham/ao-blazer-dahlia-set-ms-67m8817-40194
+                - img "Áo Blazer Dahlia Set" [ref=f12e248]
+              - button "Thêm vào giỏ hàng" [ref=f12e250]:
+                - img [ref=f12e251]
+            - generic [ref=f12e254]:
+              - generic [ref=f12e255]:
+                - list [ref=f12e256]:
+                  - listitem [ref=f12e257]:
+                    - button "default" [ref=f12e258] [cursor=pointer]:
+                      - img "default" [ref=f12e259]
+                - button "Yêu thích" [ref=f12e260] [cursor=pointer]:
+                  - img [ref=f12e261]
+              - heading "Áo Blazer Dahlia Set" [level=3] [ref=f12e263]:
+                - link "Áo Blazer Dahlia Set" [ref=f12e264] [cursor=pointer]:
+                  - /url: https://ivymoda.com/sanpham/ao-blazer-dahlia-set-ms-67m8817-40194
+              - generic [ref=f12e265]:
+                - insertion [ref=f12e266]: 567.000đ
+                - deletion [ref=f12e267]: 1.890.000đ
+          - generic [ref=f12e269]:
+            - generic [ref=f12e270]: NEW
+            - generic [ref=f12e271]:
+              - link "Áo kiểu Day Dream" [ref=f12e272] [cursor=pointer]:
+                - /url: https://ivymoda.com/sanpham/ao-kieu-day-dream-ms-16b0570-44652
+                - img "Áo kiểu Day Dream" [ref=f12e273]
+              - button "Thêm vào giỏ hàng" [ref=f12e275]:
+                - img [ref=f12e276]
+            - generic [ref=f12e279]:
+              - generic [ref=f12e280]:
+                - list [ref=f12e281]:
+                  - listitem [ref=f12e282]:
+                    - button "default" [ref=f12e283] [cursor=pointer]:
+                      - img "default" [ref=f12e284]
+                - button "Yêu thích" [ref=f12e285] [cursor=pointer]:
+                  - img [ref=f12e286]
+              - heading "Áo kiểu Day Dream" [level=3] [ref=f12e288]:
+                - link "Áo kiểu Day Dream" [ref=f12e289] [cursor=pointer]:
+                  - /url: https://ivymoda.com/sanpham/ao-kieu-day-dream-ms-16b0570-44652
+              - insertion [ref=f12e291]: 1.390.000đ
+          - generic [ref=f12e293]:
+            - generic [ref=f12e294]: NEW
+            - generic [ref=f12e295]:
+              - link "Đầm xòe Soft Vibes" [ref=f12e296] [cursor=pointer]:
+                - /url: https://ivymoda.com/sanpham/dam-xoe-soft-vibes-ms-48b0651-44767
+                - img "Đầm xòe Soft Vibes" [ref=f12e297]
+              - button "Thêm vào giỏ hàng" [ref=f12e299]:
+                - img [ref=f12e300]
+            - generic [ref=f12e303]:
+              - generic [ref=f12e304]:
+                - list [ref=f12e305]:
+                  - listitem [ref=f12e306]:
+                    - button "default" [ref=f12e307] [cursor=pointer]:
+                      - img "default" [ref=f12e308]
+                - button "Yêu thích" [ref=f12e309] [cursor=pointer]:
+                  - img [ref=f12e310]
+              - heading "Đầm xòe Soft Vibes" [level=3] [ref=f12e312]:
+                - link "Đầm xòe Soft Vibes" [ref=f12e313] [cursor=pointer]:
+                  - /url: https://ivymoda.com/sanpham/dam-xoe-soft-vibes-ms-48b0651-44767
+              - insertion [ref=f12e315]: 1.690.000đ
+          - generic [ref=f12e317]:
+            - generic [ref=f12e318]: NEW
+            - generic [ref=f12e319]:
+              - link "Áo lụa Art Elegance" [ref=f12e320] [cursor=pointer]:
+                - /url: https://ivymoda.com/sanpham/ao-lua-art-elegance-ms-16b0618-44735
+                - img "Áo lụa Art Elegance" [ref=f12e321]
+              - button "Thêm vào giỏ hàng" [ref=f12e323]:
+                - img [ref=f12e324]
+            - generic [ref=f12e327]:
+              - generic [ref=f12e328]:
+                - list [ref=f12e329]:
+                  - listitem [ref=f12e330]:
+                    - button "default" [ref=f12e331] [cursor=pointer]:
+                      - img "default" [ref=f12e332]
+                - button "Yêu thích" [ref=f12e333] [cursor=pointer]:
+                  - img [ref=f12e334]
+              - heading "Áo lụa Art Elegance" [level=3] [ref=f12e336]:
+                - link "Áo lụa Art Elegance" [ref=f12e337] [cursor=pointer]:
+                  - /url: https://ivymoda.com/sanpham/ao-lua-art-elegance-ms-16b0618-44735
+              - insertion [ref=f12e339]: 890.000đ
+          - generic [ref=f12e341]:
+            - generic [ref=f12e342]: NEW
+            - generic [ref=f12e343]:
+              - link "Áo lụa Pure Daily" [ref=f12e344] [cursor=pointer]:
+                - /url: https://ivymoda.com/sanpham/ao-lua-pure-daily-ms-16m9377-44764
+                - img "Áo lụa Pure Daily" [ref=f12e345]
+              - button "Thêm vào giỏ hàng" [ref=f12e347]:
+                - img [ref=f12e348]
+            - generic [ref=f12e351]:
+              - generic [ref=f12e352]:
+                - list [ref=f12e353]:
+                  - listitem [ref=f12e354]:
+                    - button "default" [ref=f12e355] [cursor=pointer]:
+                      - img "default" [ref=f12e356]
+                - button "Yêu thích" [ref=f12e357] [cursor=pointer]:
+                  - img [ref=f12e358]
+              - heading "Áo lụa Pure Daily" [level=3] [ref=f12e360]:
+                - link "Áo lụa Pure Daily" [ref=f12e361] [cursor=pointer]:
+                  - /url: https://ivymoda.com/sanpham/ao-lua-pure-daily-ms-16m9377-44764
+              - insertion [ref=f12e363]: 990.000đ
+          - generic [ref=f12e365]:
+            - generic [ref=f12e366]: NEW
+            - generic [ref=f12e367]:
+              - link "Đầm xòe Silk Touch" [ref=f12e368] [cursor=pointer]:
+                - /url: https://ivymoda.com/sanpham/dam-xoe-silk-touch-ms-48b0727-44667
+                - img "Đầm xòe Silk Touch" [ref=f12e369]
+              - button "Thêm vào giỏ hàng" [ref=f12e371]:
+                - img [ref=f12e372]
+            - generic [ref=f12e375]:
+              - generic [ref=f12e376]:
+                - list [ref=f12e377]:
+                  - listitem [ref=f12e378]:
+                    - button "default" [ref=f12e379] [cursor=pointer]:
+                      - img "default" [ref=f12e380]
+                - button "Yêu thích" [ref=f12e381] [cursor=pointer]:
+                  - img [ref=f12e382]
+              - heading "Đầm xòe Silk Touch" [level=3] [ref=f12e384]:
+                - link "Đầm xòe Silk Touch" [ref=f12e385] [cursor=pointer]:
+                  - /url: https://ivymoda.com/sanpham/dam-xoe-silk-touch-ms-48b0727-44667
+              - insertion [ref=f12e387]: 1.790.000đ
+          - generic [ref=f12e389]:
+            - generic [ref=f12e390]: NEW
+            - generic [ref=f12e391]:
+              - link "Áo sơ mi Deep Muse" [ref=f12e392] [cursor=pointer]:
+                - /url: https://ivymoda.com/sanpham/ao-so-mi-deep-muse-ms-16b0620-44762
+                - img "Áo sơ mi Deep Muse" [ref=f12e393]
+              - button "Thêm vào giỏ hàng" [ref=f12e395]:
+                - img [ref=f12e396]
+            - generic [ref=f12e399]:
+              - generic [ref=f12e400]:
+                - list [ref=f12e401]:
+                  - listitem [ref=f12e402]:
+                    - button "default" [ref=f12e403] [cursor=pointer]:
+                      - img "default" [ref=f12e404]
+                - button "Yêu thích" [ref=f12e405] [cursor=pointer]:
+                  - img [ref=f12e406]
+              - heading "Áo sơ mi Deep Muse" [level=3] [ref=f12e408]:
+                - link "Áo sơ mi Deep Muse" [ref=f12e409] [cursor=pointer]:
+                  - /url: https://ivymoda.com/sanpham/ao-so-mi-deep-muse-ms-16b0620-44762
+              - insertion [ref=f12e411]: 850.000đ
+          - generic [ref=f12e413]:
+            - generic [ref=f12e414]: "-45%"
+            - generic [ref=f12e415]:
+              - link "Áo thun Polo Classe Zip" [ref=f12e416] [cursor=pointer]:
+                - /url: https://ivymoda.com/sanpham/ao-thun-polo-classe-zip-ms-57t0295-44544
+                - img "Áo thun Polo Classe Zip" [ref=f12e417]
+              - button "Thêm vào giỏ hàng" [ref=f12e419]:
+                - img [ref=f12e420]
+            - generic [ref=f12e423]:
+              - generic [ref=f12e424]:
+                - list [ref=f12e425]:
+                  - listitem [ref=f12e426]:
+                    - button "default" [ref=f12e427] [cursor=pointer]:
+                      - img "default" [ref=f12e428]
+                - button "Yêu thích" [ref=f12e429] [cursor=pointer]:
+                  - img [ref=f12e430]
+              - heading "Áo thun Polo Classe Zip" [level=3] [ref=f12e432]:
+                - link "Áo thun Polo Classe Zip" [ref=f12e433] [cursor=pointer]:
+                  - /url: https://ivymoda.com/sanpham/ao-thun-polo-classe-zip-ms-57t0295-44544
+              - generic [ref=f12e434]:
+                - insertion [ref=f12e435]: 434.500đ
+                - deletion [ref=f12e436]: 790.000đ
+          - generic [ref=f12e438]:
+            - generic [ref=f12e439]: "-45%"
+            - generic [ref=f12e440]:
+              - link "Áo sơ mi Aurelia IVYmoda" [ref=f12e441] [cursor=pointer]:
+                - /url: https://ivymoda.com/sanpham/ao-so-mi-aurelia-ivymoda-ms-16t0296-44724
+                - img "Áo sơ mi Aurelia IVYmoda" [ref=f12e442]
+              - button "Thêm vào giỏ hàng" [ref=f12e444]:
+                - img [ref=f12e445]
+            - generic [ref=f12e448]:
+              - generic [ref=f12e449]:
+                - list [ref=f12e450]:
+                  - listitem [ref=f12e451]:
+                    - button "default" [ref=f12e452] [cursor=pointer]:
+                      - img "default" [ref=f12e453]
+                - button "Yêu thích" [ref=f12e454] [cursor=pointer]:
+                  - img [ref=f12e455]
+              - heading "Áo sơ mi Aurelia IVYmoda" [level=3] [ref=f12e457]:
+                - link "Áo sơ mi Aurelia IVYmoda" [ref=f12e458] [cursor=pointer]:
+                  - /url: https://ivymoda.com/sanpham/ao-so-mi-aurelia-ivymoda-ms-16t0296-44724
+              - generic [ref=f12e459]:
+                - insertion [ref=f12e460]: 544.500đ
+                - deletion [ref=f12e461]: 990.000đ
+          - generic [ref=f12e463]:
+            - generic [ref=f12e464]: "-45%"
+            - generic [ref=f12e465]:
+              - link "Áo ren Pearl Lace" [ref=f12e466] [cursor=pointer]:
+                - /url: https://ivymoda.com/sanpham/ao-ren-pearl-lace-ms-57t0310-44752
+                - img "Áo ren Pearl Lace" [ref=f12e467]
+              - button "Thêm vào giỏ hàng" [ref=f12e469]:
+                - img [ref=f12e470]
+            - generic [ref=f12e473]:
+              - generic [ref=f12e474]:
+                - list [ref=f12e475]:
+                  - listitem [ref=f12e476]:
+                    - button "default" [ref=f12e477] [cursor=pointer]:
+                      - img "default" [ref=f12e478]
+                - button "Yêu thích" [ref=f12e479] [cursor=pointer]:
+                  - img [ref=f12e480]
+              - heading "Áo ren Pearl Lace" [level=3] [ref=f12e482]:
+                - link "Áo ren Pearl Lace" [ref=f12e483] [cursor=pointer]:
+                  - /url: https://ivymoda.com/sanpham/ao-ren-pearl-lace-ms-57t0310-44752
+              - generic [ref=f12e484]:
+                - insertion [ref=f12e485]: 434.500đ
+                - deletion [ref=f12e486]: 790.000đ
+          - generic [ref=f12e488]:
+            - generic [ref=f12e489]: "-40%"
+            - generic [ref=f12e490]:
+              - link "Áo kiểu Sculpt Moda" [ref=f12e491] [cursor=pointer]:
+                - /url: https://ivymoda.com/sanpham/ao-kieu-sculpt-moda-ms-16t0251-43162
+                - img "Áo kiểu Sculpt Moda" [ref=f12e492]
+              - button "Thêm vào giỏ hàng" [ref=f12e494]:
+                - img [ref=f12e495]
+            - generic [ref=f12e498]:
+              - generic [ref=f12e499]:
+                - list [ref=f12e500]:
+                  - listitem [ref=f12e501]:
+                    - button "default" [ref=f12e502] [cursor=pointer]:
+                      - img "default" [ref=f12e503]
+                - button "Yêu thích" [ref=f12e504] [cursor=pointer]:
+                  - img [ref=f12e505]
+              - heading "Áo kiểu Sculpt Moda" [level=3] [ref=f12e507]:
+                - link "Áo kiểu Sculpt Moda" [ref=f12e508] [cursor=pointer]:
+                  - /url: https://ivymoda.com/sanpham/ao-kieu-sculpt-moda-ms-16t0251-43162
+              - generic [ref=f12e509]:
+                - insertion [ref=f12e510]: 534.000đ
+                - deletion [ref=f12e511]: 890.000đ
+          - generic [ref=f12e513]:
+            - generic [ref=f12e514]: "-45%"
+            - generic [ref=f12e515]:
+              - link "Áo sơ mi Aurelia IVYmoda" [ref=f12e516] [cursor=pointer]:
+                - /url: https://ivymoda.com/sanpham/ao-so-mi-aurelia-ivymoda-ms-16t0296-44730
+                - img "Áo sơ mi Aurelia IVYmoda" [ref=f12e517]
+              - button "Thêm vào giỏ hàng" [ref=f12e519]:
+                - img [ref=f12e520]
+            - generic [ref=f12e523]:
+              - generic [ref=f12e524]:
+                - list [ref=f12e525]:
+                  - listitem [ref=f12e526]:
+                    - button "default" [ref=f12e527] [cursor=pointer]:
+                      - img "default" [ref=f12e528]
+                - button "Yêu thích" [ref=f12e529] [cursor=pointer]:
+                  - img [ref=f12e530]
+              - heading "Áo sơ mi Aurelia IVYmoda" [level=3] [ref=f12e532]:
+                - link "Áo sơ mi Aurelia IVYmoda" [ref=f12e533] [cursor=pointer]:
+                  - /url: https://ivymoda.com/sanpham/ao-so-mi-aurelia-ivymoda-ms-16t0296-44730
+              - generic [ref=f12e534]:
+                - insertion [ref=f12e535]: 544.500đ
+                - deletion [ref=f12e536]: 990.000đ
+          - generic [ref=f12e538]:
+            - generic [ref=f12e539]: "-45%"
+            - generic [ref=f12e540]:
+              - link "Chân váy Elara Lace Pencil" [ref=f12e541] [cursor=pointer]:
+                - /url: https://ivymoda.com/sanpham/chan-vay-elara-lace-pencil-ms-31t0304-44736
+                - img "Chân váy Elara Lace Pencil" [ref=f12e542]
+              - button "Thêm vào giỏ hàng" [ref=f12e544]:
+                - img [ref=f12e545]
+            - generic [ref=f12e548]:
+              - generic [ref=f12e549]:
+                - list [ref=f12e550]:
+                  - listitem [ref=f12e551]:
+                    - button "default" [ref=f12e552] [cursor=pointer]:
+                      - img "default" [ref=f12e553]
+                - button "Yêu thích" [ref=f12e554] [cursor=pointer]:
+                  - img [ref=f12e555]
+              - heading "Chân váy Elara Lace Pencil" [level=3] [ref=f12e557]:
+                - link "Chân váy Elara Lace Pencil" [ref=f12e558] [cursor=pointer]:
+                  - /url: https://ivymoda.com/sanpham/chan-vay-elara-lace-pencil-ms-31t0304-44736
+              - generic [ref=f12e559]:
+                - insertion [ref=f12e560]: 599.500đ
+                - deletion [ref=f12e561]: 1.090.000đ
+        - list [ref=f12e563]:
+          - listitem [ref=f12e564]:
+            - link "Trang trước" [disabled]:
+              - /url: https://ivymoda.com/danh-muc/nu
+              - text: «
+          - listitem [ref=f12e565]:
+            - link "1" [ref=f12e566] [cursor=pointer]:
+              - /url: https://ivymoda.com/danh-muc/nu
+          - listitem [ref=f12e567]:
+            - link "2" [ref=f12e568] [cursor=pointer]:
+              - /url: https://ivymoda.com/danh-muc/nu/2
+          - listitem [ref=f12e569]:
+            - link "Trang sau" [ref=f12e570] [cursor=pointer]:
+              - /url: https://ivymoda.com/danh-muc/nu/2
+              - text: »
+          - listitem [ref=f12e571]:
+            - link "Trang cuối" [ref=f12e572] [cursor=pointer]:
+              - /url: https://ivymoda.com/danh-muc/nu/5
+  - contentinfo [ref=f12e573]:
+    - generic [ref=f12e575]:
+      - generic [ref=f12e576]:
+        - img "IVY moda" [ref=f12e577]
+        - generic [ref=f12e578]:
+          - link "DMCA Protected" [ref=f12e579] [cursor=pointer]:
+            - /url: https://www.dmca.com/Protection/Status.aspx?ID=0cfdeac4-6e7f-4fca-941f-57a0a0962777
+            - img "DMCA Protected" [ref=f12e580]
+          - link "Đã thông báo Bộ Công Thương" [ref=f12e581] [cursor=pointer]:
+            - /url: http://online.gov.vn/Home/WebDetails/36596
+            - img "Đã thông báo Bộ Công Thương" [ref=f12e582]
+        - list [ref=f12e583]:
+          - listitem [ref=f12e584]:
+            - link "Facebook" [ref=f12e585] [cursor=pointer]:
+              - /url: https://www.facebook.com/thoitrangivymoda/
+              - img "Facebook" [ref=f12e586]
+          - listitem [ref=f12e587]:
+            - link "Google" [ref=f12e588] [cursor=pointer]:
+              - /url: https://ivymoda.com/
+              - img "Google" [ref=f12e589]
+          - listitem [ref=f12e590]:
+            - link "Instagram" [ref=f12e591] [cursor=pointer]:
+              - /url: https://www.instagram.com/ivy_moda/
+              - img "Instagram" [ref=f12e592]
+      - generic [ref=f12e593]:
+        - generic [ref=f12e594]:
+          - heading "Giới thiệu" [level=3] [ref=f12e595]
+          - list [ref=f12e596]:
+            - listitem [ref=f12e597]:
+              - link "Về IVY moda" [ref=f12e598] [cursor=pointer]:
+                - /url: https://ivymoda.com/about/gioi-thieu
+            - listitem [ref=f12e599]:
+              - link "Tuyển dụng" [ref=f12e600] [cursor=pointer]:
+                - /url: https://tuyendung.ivy.com.vn
+            - listitem [ref=f12e601]:
+              - link "Hệ thống cửa hàng" [ref=f12e602] [cursor=pointer]:
+                - /url: https://ivymoda.com/page/cuahang
+        - generic [ref=f12e603]:
+          - heading "Dịch vụ khách hàng" [level=3] [ref=f12e604]
+          - list [ref=f12e605]:
+            - listitem [ref=f12e606]:
+              - link "Chính sách điều khoản" [ref=f12e607] [cursor=pointer]:
+                - /url: https://ivymoda.com/about/chinhsach-dieukhoan
+            - listitem [ref=f12e608]:
+              - link "Hướng dẫn mua hàng" [ref=f12e609] [cursor=pointer]:
+                - /url: https://ivymoda.com/about/huong-dan-mua-hang
+            - listitem [ref=f12e610]:
+              - link "Chính sách thanh toán" [ref=f12e611] [cursor=pointer]:
+                - /url: https://ivymoda.com/about/chinh-sach-thanh-toan
+            - listitem [ref=f12e612]:
+              - link "Chính sách đổi trả" [ref=f12e613] [cursor=pointer]:
+                - /url: https://ivymoda.com/about/chinh-sach-doi-tra
+            - listitem [ref=f12e614]:
+              - link "Chính sách bảo hành" [ref=f12e615] [cursor=pointer]:
+                - /url: https://ivymoda.com/about/chinh-sach-bao-hanh
+            - listitem [ref=f12e616]:
+              - link "Chính sách thẻ thành viên" [ref=f12e617] [cursor=pointer]:
+                - /url: https://ivymoda.com/about/chinh-sach-the-thanh-vien
+            - listitem [ref=f12e618]:
+              - link "Q&A" [ref=f12e619] [cursor=pointer]:
+                - /url: https://ivymoda.com/about/qa
+        - generic [ref=f12e620]:
+          - heading "Liên hệ" [level=3] [ref=f12e621]
+          - list [ref=f12e622]:
+            - listitem [ref=f12e623]:
+              - link "Hotline" [ref=f12e624] [cursor=pointer]:
+                - /url: tel:02466623434
+            - listitem [ref=f12e625]:
+              - link "Email" [ref=f12e626] [cursor=pointer]:
+                - /url: mailto:saleadmin@ivy.com.vn
+            - listitem [ref=f12e627]:
+              - link "Live Chat" [ref=f12e628] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=f12e629]:
+              - link "Messenger" [ref=f12e630] [cursor=pointer]:
+                - /url: http://messenger.com/t/thoitrangivymoda
+            - listitem [ref=f12e631]:
+              - link "Liên hệ" [ref=f12e632] [cursor=pointer]:
+                - /url: https://ivymoda.com/lien-he
+      - generic [ref=f12e633]:
+        - generic [ref=f12e634]:
+          - heading "Nhận thông tin các chương trình của IVY moda" [level=3] [ref=f12e635]
+          - generic [ref=f12e636]:
+            - textbox "Nhập địa chỉ email" [ref=f12e637]
+            - button "Đăng ký" [ref=f12e638]
+        - generic [ref=f12e639]:
+          - heading "Download App" [level=3] [ref=f12e640]
+          - generic [ref=f12e641]:
+            - link "Download on the App Store" [ref=f12e642] [cursor=pointer]:
+              - /url: "#"
+              - img "Download on the App Store" [ref=f12e643]
+            - link "Get it on Google Play" [ref=f12e644] [cursor=pointer]:
+              - /url: "#"
+              - img "Get it on Google Play" [ref=f12e645]
+    - paragraph [ref=f12e647]: ©IVYmoda All rights reserved
+  - button "Open Next.js Dev Tools" [ref=f12e653] [cursor=pointer]:
+    - img [ref=f12e654]

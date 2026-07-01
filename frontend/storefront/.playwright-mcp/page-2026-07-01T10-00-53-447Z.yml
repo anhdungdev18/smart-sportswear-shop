@@ -1,0 +1,264 @@
+- generic [active] [ref=f16e1]:
+  - banner [ref=f16e2]:
+    - generic [ref=f16e3]:
+      - generic [ref=f16e4]:
+        - button "Open menu" [ref=f16e5]
+        - link "IVY moda" [ref=f16e10] [cursor=pointer]:
+          - /url: https://ivymoda.com
+          - img "IVY moda" [ref=f16e11]
+      - generic [ref=f16e13]:
+        - link "Tài khoản" [ref=f16e14] [cursor=pointer]:
+          - /url: "#"
+          - img [ref=f16e15]
+        - link "Giỏ hàng" [ref=f16e18] [cursor=pointer]:
+          - /url: "#"
+          - img [ref=f16e19]
+          - generic [ref=f16e22]: "0"
+  - main [ref=f16e23]:
+    - navigation "Breadcrumb" [ref=f16e24]:
+      - list [ref=f16e25]:
+        - listitem [ref=f16e26]:
+          - link "Trang chủ" [ref=f16e27] [cursor=pointer]:
+            - /url: https://ivymoda.com/
+        - listitem [ref=f16e28]:
+          - text: ›
+          - generic [ref=f16e29]: Tin tức
+    - generic [ref=f16e30]:
+      - generic [ref=f16e31]:
+        - heading "LIFESTYLE" [level=1] [ref=f16e32]
+        - navigation [ref=f16e33]:
+          - link "TIN TỨC" [ref=f16e34] [cursor=pointer]:
+            - /url: https://ivymoda.com/tin-tuc/tin-chinh
+          - link "KIẾN THỨC" [ref=f16e35] [cursor=pointer]:
+            - /url: https://ivymoda.com/tin-tuc/kien-thuc
+          - link "XU HƯỚNG" [ref=f16e36] [cursor=pointer]:
+            - /url: https://ivymoda.com/tin-tuc/xu-huong
+          - link "PHONG CÁCH" [ref=f16e37] [cursor=pointer]:
+            - /url: https://ivymoda.com/tin-tuc/phong-cach
+          - link "BLOG CHIA SẺ" [ref=f16e38] [cursor=pointer]:
+            - /url: https://ivymoda.com/tin-tuc/blog
+      - generic [ref=f16e39]:
+        - img "ĐỘT NHẬP HẬU TRƯỜNG CỦA SHOW DIỄN EXPRESS_FW23 FASHION SHOW" [ref=f16e41]
+        - generic [ref=f16e42]:
+          - heading "STORY" [level=3] [ref=f16e43]
+          - heading "ĐỘT NHẬP HẬU TRƯỜNG CỦA SHOW DIỄN EXPRESS_FW23 FASHION SHOW" [level=2] [ref=f16e44]:
+            - link "ĐỘT NHẬP HẬU TRƯỜNG CỦA SHOW DIỄN EXPRESS_FW23 FASHION SHOW" [ref=f16e45] [cursor=pointer]:
+              - /url: "#"
+          - paragraph [ref=f16e46]: Bên cạnh những hình ảnh trên sàn catwalk, khoảnh khắc tại hậu trường là nơi thể hiện sống động nhất tinh thần cống hiến hết mình của toàn bộ đội ngũ ekip thực hiện.
+          - generic [ref=f16e47]: 25/10/2023
+          - link "XEM NGAY" [ref=f16e49] [cursor=pointer]:
+            - /url: "#"
+      - generic [ref=f16e50]:
+        - 'img "QUIETLUXURY: KHI SỰ KHIÊM NHƯỜNG ẨN CHỨA NÉT CAO SANG" [ref=f16e52]'
+        - generic [ref=f16e53]:
+          - heading "STORY" [level=3] [ref=f16e54]
+          - 'heading "QUIETLUXURY: KHI SỰ KHIÊM NHƯỜNG ẨN CHỨA NÉT CAO SANG" [level=2] [ref=f16e55]':
+            - 'link "QUIETLUXURY: KHI SỰ KHIÊM NHƯỜNG ẨN CHỨA NÉT CAO SANG" [ref=f16e56] [cursor=pointer]':
+              - /url: "#"
+          - paragraph [ref=f16e57]: Quietluxury của IVY moda mang đến vẻ đẹp riêng biệt một cách thầm lặng. Giống như người phụ nữ an tĩnh và sâu sắc, họ vẫn luôn dùng trái tim yêu để đối diện với khó khăn, theo đuổi lối sống tinh tế, tao nhã và chẳng cần chưng diện những họa tiết logo để khẳng định mình là ai.
+          - generic [ref=f16e58]: 19/10/2023
+          - link "XEM NGAY" [ref=f16e60] [cursor=pointer]:
+            - /url: "#"
+      - generic [ref=f16e61]:
+        - link "SÀN RUNWAY EXPRESS BÙNG NỔ VỚI 2 BẢN REMIX MỚI NHẤT CỦA CA SỸ VĂN MAI HƯƠNG Tối 21/10 , ca sĩ Văn Mai Hương đã có mặt tại Trung tâm Hội nghị Quốc Gia Hà Nội để tham dự EXPRESS_FALL/WINTER 2023 FASHION SHOW của IVY moda. SÀN RUNWAY EXPRESS BÙNG NỔ VỚI 2 BẢN REMIX MỚI NHẤT CỦA CA SỸ VĂN MAI HƯƠNG 23/10/2023" [ref=f16e62] [cursor=pointer]:
+          - /url: "#"
+          - img "SÀN RUNWAY EXPRESS BÙNG NỔ VỚI 2 BẢN REMIX MỚI NHẤT CỦA CA SỸ VĂN MAI HƯƠNG" [ref=f16e64]
+          - generic [ref=f16e65]:
+            - paragraph [ref=f16e66]: Tối 21/10 , ca sĩ Văn Mai Hương đã có mặt tại Trung tâm Hội nghị Quốc Gia Hà Nội để tham dự EXPRESS_FALL/WINTER 2023 FASHION SHOW của IVY moda.
+            - paragraph [ref=f16e67]: SÀN RUNWAY EXPRESS BÙNG NỔ VỚI 2 BẢN REMIX MỚI NHẤT CỦA CA SỸ VĂN MAI HƯƠNG
+            - paragraph [ref=f16e68]: 23/10/2023
+        - link "EXPRESS_FALL/WINTER 2023 FASHION SHOW - LỜI BÀY TỎ TỪ GIÁ TRỊ ĐÍCH THỰC Vào ngày 21.10.2023 tại Trung tâm Hội nghị Quốc Gia - 57 Phạm Hùng, Hà Nội, IVY moda ra mắt thành công show diễn thứ 22 mang tên EXPRESS. EXPRESS_FALL/WINTER 2023 FASHION SHOW - LỜI BÀY TỎ TỪ GIÁ TRỊ ĐÍCH THỰC 23/10/2023" [ref=f16e69] [cursor=pointer]:
+          - /url: "#"
+          - img "EXPRESS_FALL/WINTER 2023 FASHION SHOW - LỜI BÀY TỎ TỪ GIÁ TRỊ ĐÍCH THỰC" [ref=f16e71]
+          - generic [ref=f16e72]:
+            - paragraph [ref=f16e73]: Vào ngày 21.10.2023 tại Trung tâm Hội nghị Quốc Gia - 57 Phạm Hùng, Hà Nội, IVY moda ra mắt thành công show diễn thứ 22 mang tên EXPRESS.
+            - paragraph [ref=f16e74]: EXPRESS_FALL/WINTER 2023 FASHION SHOW - LỜI BÀY TỎ TỪ GIÁ TRỊ ĐÍCH THỰC
+            - paragraph [ref=f16e75]: 23/10/2023
+        - link "Kỳ Duyên - Minh Triệu diện váy cúp ngực khoe vóc dáng gợi cảm tại EXPRESS 22 FW2023 Tối 21/10, Kỳ Duyên - Minh Triệu thu hút nhiều ánh nhìn khi xuất hiện trong show diễn thời trang Express 22 FW2023 của IVY moda Kỳ Duyên - Minh Triệu diện váy cúp ngực khoe vóc dáng gợi cảm tại EXPRESS 22 FW2023 23/10/2023" [ref=f16e76] [cursor=pointer]:
+          - /url: "#"
+          - img "Kỳ Duyên - Minh Triệu diện váy cúp ngực khoe vóc dáng gợi cảm tại EXPRESS 22 FW2023" [ref=f16e78]
+          - generic [ref=f16e79]:
+            - paragraph [ref=f16e80]: Tối 21/10, Kỳ Duyên - Minh Triệu thu hút nhiều ánh nhìn khi xuất hiện trong show diễn thời trang Express 22 FW2023 của IVY moda
+            - paragraph [ref=f16e81]: Kỳ Duyên - Minh Triệu diện váy cúp ngực khoe vóc dáng gợi cảm tại EXPRESS 22 FW2023
+            - paragraph [ref=f16e82]: 23/10/2023
+      - generic [ref=f16e83]:
+        - heading "Modern Trending" [level=2] [ref=f16e84]
+        - generic [ref=f16e85]:
+          - generic [ref=f16e87]:
+            - generic [ref=f16e88]:
+              - link "Basic Caro Tee" [ref=f16e89] [cursor=pointer]:
+                - /url: https://ivymoda.com/sanpham/basic-caro-tee-ms-57m8608-38735
+                - img "Basic Caro Tee" [ref=f16e90]
+              - button "Thêm vào giỏ hàng" [ref=f16e92]:
+                - img [ref=f16e93]
+            - generic [ref=f16e96]:
+              - generic [ref=f16e97]:
+                - list [ref=f16e98]:
+                  - listitem [ref=f16e99]:
+                    - button "default" [ref=f16e100] [cursor=pointer]:
+                      - img "default" [ref=f16e101]
+                - button "Yêu thích" [ref=f16e102] [cursor=pointer]:
+                  - img [ref=f16e103]
+              - heading "Basic Caro Tee" [level=3] [ref=f16e105]:
+                - link "Basic Caro Tee" [ref=f16e106] [cursor=pointer]:
+                  - /url: https://ivymoda.com/sanpham/basic-caro-tee-ms-57m8608-38735
+              - insertion [ref=f16e108]: 650.000đ
+          - generic [ref=f16e110]:
+            - generic [ref=f16e111]: Best Seller
+            - generic [ref=f16e112]:
+              - link "Shirt Dress - Đầm cổ đức" [ref=f16e113] [cursor=pointer]:
+                - /url: https://ivymoda.com/sanpham/shirt-dress-dam-co-duc-ms-48m8584-38883
+                - img "Shirt Dress - Đầm cổ đức" [ref=f16e114]
+              - button "Thêm vào giỏ hàng" [ref=f16e116]:
+                - img [ref=f16e117]
+            - generic [ref=f16e120]:
+              - generic [ref=f16e121]:
+                - list [ref=f16e122]:
+                  - listitem [ref=f16e123]:
+                    - button "default" [ref=f16e124] [cursor=pointer]:
+                      - img "default" [ref=f16e125]
+                - button "Yêu thích" [ref=f16e126] [cursor=pointer]:
+                  - img [ref=f16e127]
+              - heading "Shirt Dress - Đầm cổ đức" [level=3] [ref=f16e129]:
+                - link "Shirt Dress - Đầm cổ đức" [ref=f16e130] [cursor=pointer]:
+                  - /url: https://ivymoda.com/sanpham/shirt-dress-dam-co-duc-ms-48m8584-38883
+              - generic [ref=f16e131]:
+                - insertion [ref=f16e132]: 916.000đ
+                - deletion [ref=f16e133]: 2.290.000đ
+          - generic [ref=f16e135]:
+            - generic [ref=f16e136]:
+              - link "Calista Dress - Đầm dạ hội thêu hoa" [ref=f16e137] [cursor=pointer]:
+                - /url: https://ivymoda.com/sanpham/calista-dress-dam-da-hoi-theu-hoa-ms-45s2802-38789
+                - img "Calista Dress - Đầm dạ hội thêu hoa" [ref=f16e138]
+              - button "Thêm vào giỏ hàng" [ref=f16e140]:
+                - img [ref=f16e141]
+            - generic [ref=f16e144]:
+              - generic [ref=f16e145]:
+                - list [ref=f16e146]:
+                  - listitem [ref=f16e147]:
+                    - button "default" [ref=f16e148] [cursor=pointer]:
+                      - img "default" [ref=f16e149]
+                - button "Yêu thích" [ref=f16e150] [cursor=pointer]:
+                  - img [ref=f16e151]
+              - heading "Calista Dress - Đầm dạ hội thêu hoa" [level=3] [ref=f16e153]:
+                - link "Calista Dress - Đầm dạ hội thêu hoa" [ref=f16e154] [cursor=pointer]:
+                  - /url: https://ivymoda.com/sanpham/calista-dress-dam-da-hoi-theu-hoa-ms-45s2802-38789
+              - insertion [ref=f16e156]: 5.990.000đ
+          - generic [ref=f16e158]:
+            - generic [ref=f16e159]:
+              - link "Áo sơ mi phối bèo" [ref=f16e160] [cursor=pointer]:
+                - /url: https://ivymoda.com/sanpham/ao-so-mi-phoi-beo-ms-17m8642-38674
+                - img "Áo sơ mi phối bèo" [ref=f16e161]
+              - button "Thêm vào giỏ hàng" [ref=f16e163]:
+                - img [ref=f16e164]
+            - generic [ref=f16e167]:
+              - generic [ref=f16e168]:
+                - list [ref=f16e169]:
+                  - listitem [ref=f16e170]:
+                    - button "default" [ref=f16e171] [cursor=pointer]:
+                      - img "default" [ref=f16e172]
+                - button "Yêu thích" [ref=f16e173] [cursor=pointer]:
+                  - img [ref=f16e174]
+              - heading "Áo sơ mi phối bèo" [level=3] [ref=f16e176]:
+                - link "Áo sơ mi phối bèo" [ref=f16e177] [cursor=pointer]:
+                  - /url: https://ivymoda.com/sanpham/ao-so-mi-phoi-beo-ms-17m8642-38674
+              - generic [ref=f16e178]:
+                - insertion [ref=f16e179]: 360.000đ
+                - deletion [ref=f16e180]: 1.200.000đ
+  - contentinfo [ref=f16e181]:
+    - generic [ref=f16e183]:
+      - generic [ref=f16e184]:
+        - img "IVY moda" [ref=f16e185]
+        - generic [ref=f16e186]:
+          - link "DMCA Protected" [ref=f16e187] [cursor=pointer]:
+            - /url: https://www.dmca.com/Protection/Status.aspx?ID=0cfdeac4-6e7f-4fca-941f-57a0a0962777
+            - img "DMCA Protected" [ref=f16e188]
+          - link "Đã thông báo Bộ Công Thương" [ref=f16e189] [cursor=pointer]:
+            - /url: http://online.gov.vn/Home/WebDetails/36596
+            - img "Đã thông báo Bộ Công Thương" [ref=f16e190]
+        - list [ref=f16e191]:
+          - listitem [ref=f16e192]:
+            - link "Facebook" [ref=f16e193] [cursor=pointer]:
+              - /url: https://www.facebook.com/thoitrangivymoda/
+              - img "Facebook" [ref=f16e194]
+          - listitem [ref=f16e195]:
+            - link "Google" [ref=f16e196] [cursor=pointer]:
+              - /url: https://ivymoda.com/
+              - img "Google" [ref=f16e197]
+          - listitem [ref=f16e198]:
+            - link "Instagram" [ref=f16e199] [cursor=pointer]:
+              - /url: https://www.instagram.com/ivy_moda/
+              - img "Instagram" [ref=f16e200]
+      - generic [ref=f16e201]:
+        - generic [ref=f16e202]:
+          - heading "Giới thiệu" [level=3] [ref=f16e203]
+          - list [ref=f16e204]:
+            - listitem [ref=f16e205]:
+              - link "Về IVY moda" [ref=f16e206] [cursor=pointer]:
+                - /url: https://ivymoda.com/about/gioi-thieu
+            - listitem [ref=f16e207]:
+              - link "Tuyển dụng" [ref=f16e208] [cursor=pointer]:
+                - /url: https://tuyendung.ivy.com.vn
+            - listitem [ref=f16e209]:
+              - link "Hệ thống cửa hàng" [ref=f16e210] [cursor=pointer]:
+                - /url: https://ivymoda.com/page/cuahang
+        - generic [ref=f16e211]:
+          - heading "Dịch vụ khách hàng" [level=3] [ref=f16e212]
+          - list [ref=f16e213]:
+            - listitem [ref=f16e214]:
+              - link "Chính sách điều khoản" [ref=f16e215] [cursor=pointer]:
+                - /url: https://ivymoda.com/about/chinhsach-dieukhoan
+            - listitem [ref=f16e216]:
+              - link "Hướng dẫn mua hàng" [ref=f16e217] [cursor=pointer]:
+                - /url: https://ivymoda.com/about/huong-dan-mua-hang
+            - listitem [ref=f16e218]:
+              - link "Chính sách thanh toán" [ref=f16e219] [cursor=pointer]:
+                - /url: https://ivymoda.com/about/chinh-sach-thanh-toan
+            - listitem [ref=f16e220]:
+              - link "Chính sách đổi trả" [ref=f16e221] [cursor=pointer]:
+                - /url: https://ivymoda.com/about/chinh-sach-doi-tra
+            - listitem [ref=f16e222]:
+              - link "Chính sách bảo hành" [ref=f16e223] [cursor=pointer]:
+                - /url: https://ivymoda.com/about/chinh-sach-bao-hanh
+            - listitem [ref=f16e224]:
+              - link "Chính sách thẻ thành viên" [ref=f16e225] [cursor=pointer]:
+                - /url: https://ivymoda.com/about/chinh-sach-the-thanh-vien
+            - listitem [ref=f16e226]:
+              - link "Q&A" [ref=f16e227] [cursor=pointer]:
+                - /url: https://ivymoda.com/about/qa
+        - generic [ref=f16e228]:
+          - heading "Liên hệ" [level=3] [ref=f16e229]
+          - list [ref=f16e230]:
+            - listitem [ref=f16e231]:
+              - link "Hotline" [ref=f16e232] [cursor=pointer]:
+                - /url: tel:02466623434
+            - listitem [ref=f16e233]:
+              - link "Email" [ref=f16e234] [cursor=pointer]:
+                - /url: mailto:saleadmin@ivy.com.vn
+            - listitem [ref=f16e235]:
+              - link "Live Chat" [ref=f16e236] [cursor=pointer]:
+                - /url: "#"
+            - listitem [ref=f16e237]:
+              - link "Messenger" [ref=f16e238] [cursor=pointer]:
+                - /url: http://messenger.com/t/thoitrangivymoda
+            - listitem [ref=f16e239]:
+              - link "Liên hệ" [ref=f16e240] [cursor=pointer]:
+                - /url: https://ivymoda.com/lien-he
+      - generic [ref=f16e241]:
+        - generic [ref=f16e242]:
+          - heading "Nhận thông tin các chương trình của IVY moda" [level=3] [ref=f16e243]
+          - generic [ref=f16e244]:
+            - textbox "Nhập địa chỉ email" [ref=f16e245]
+            - button "Đăng ký" [ref=f16e246]
+        - generic [ref=f16e247]:
+          - heading "Download App" [level=3] [ref=f16e248]
+          - generic [ref=f16e249]:
+            - link "Download on the App Store" [ref=f16e250] [cursor=pointer]:
+              - /url: "#"
+              - img "Download on the App Store" [ref=f16e251]
+            - link "Get it on Google Play" [ref=f16e252] [cursor=pointer]:
+              - /url: "#"
+              - img "Get it on Google Play" [ref=f16e253]
+    - paragraph [ref=f16e255]: ©IVYmoda All rights reserved
+  - button "Open Next.js Dev Tools" [ref=f16e261] [cursor=pointer]:
+    - img [ref=f16e262]

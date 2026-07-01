@@ -1,0 +1,1096 @@
+- generic [active] [ref=f1e1]:
+  - banner [ref=f1e2]:
+    - generic [ref=f1e3]:
+      - navigation [ref=f1e4]:
+        - list [ref=f1e5]:
+          - listitem [ref=f1e6]:
+            - link "NỮ" [ref=f1e7] [cursor=pointer]:
+              - /url: javascript:void(0)
+          - listitem [ref=f1e8]:
+            - link "NAM" [ref=f1e9] [cursor=pointer]:
+              - /url: javascript:void(0)
+          - listitem [ref=f1e10]:
+            - link "HÈ SALE CHẠM ĐỈNH 70%" [ref=f1e11] [cursor=pointer]:
+              - /url: javascript:void(0)
+          - listitem [ref=f1e12]:
+            - link "Bộ sưu tập" [ref=f1e13] [cursor=pointer]:
+              - /url: javascript:void(0)
+          - listitem [ref=f1e14]:
+            - link "Về Chúng Tôi" [ref=f1e15] [cursor=pointer]:
+              - /url: javascript:void(0)
+      - link "IVY moda - Thời Trang Công Sở Hiện Đại | IVY moda" [ref=f1e17] [cursor=pointer]:
+        - /url: https://ivymoda.com/
+        - img "IVY moda - Thời Trang Công Sở Hiện Đại | IVY moda" [ref=f1e18]
+      - generic [ref=f1e19]:
+        - generic [ref=f1e20]:
+          - button "" [ref=f1e21] [cursor=pointer]:
+            - generic [ref=f1e22]: 
+          - textbox "TÌM KIẾM SẢN PHẨM" [ref=f1e23]
+        - generic [ref=f1e24]:
+          - generic [ref=f1e25]:
+            - link "" [ref=f1e26] [cursor=pointer]:
+              - /url: "#"
+              - generic [ref=f1e27]: 
+            - text:     
+          - link "" [ref=f1e29] [cursor=pointer]:
+            - /url: https://ivymoda.com/customer/login
+            - generic [ref=f1e30]: 
+          - link " 0" [ref=f1e32] [cursor=pointer]:
+            - /url: "#"
+            - generic [ref=f1e33]: 
+            - generic [ref=f1e34]: "0"
+  - main [ref=f1e35]:
+    - generic [ref=f1e36]:
+      - generic [ref=f1e38]:
+        - generic [ref=f1e40]:
+          - link "slide image" [ref=f1e43] [cursor=pointer]:
+            - /url: https://ivymoda.com/lookbook/daily-mood-226
+            - img "slide image" [ref=f1e44]
+          - generic [ref=f1e45]:
+            - generic:
+              - link "slide image":
+                - /url: https://ivymoda.com/danh-muc/sale-all-70-0626
+                - img "slide image"
+          - link "slide image" [ref=f1e48] [cursor=pointer]:
+            - /url: https://ivymoda.com/lookbook/daily-mood-226
+            - img "slide image" [ref=f1e49]
+          - generic [ref=f1e50]:
+            - generic:
+              - link "slide image":
+                - /url: https://ivymoda.com/danh-muc/sale-all-70-0626
+                - img "slide image"
+          - link "slide image" [ref=f1e53] [cursor=pointer]:
+            - /url: https://ivymoda.com/lookbook/daily-mood-226
+            - img "slide image" [ref=f1e54]
+          - generic [ref=f1e55]:
+            - generic:
+              - link "slide image":
+                - /url: https://ivymoda.com/danh-muc/sale-all-70-0626
+                - img "slide image"
+        - generic:
+          - generic [ref=f1e57] [cursor=pointer]: 
+          - generic [ref=f1e59] [cursor=pointer]: 
+      - generic [ref=f1e63]:
+        - generic [ref=f1e64]: NEW ARRIVAL
+        - generic [ref=f1e65]:
+          - list [ref=f1e67]:
+            - listitem [ref=f1e68] [cursor=pointer]: IVY moda
+            - listitem [ref=f1e69] [cursor=pointer]: Metagent
+          - generic [ref=f1e70]:
+            - generic [ref=f1e71]:
+              - generic [ref=f1e72]:
+                - generic [ref=f1e74]:
+                  - generic [ref=f1e77]:
+                    - link "Áo kiểu Day Dream" [ref=f1e79] [cursor=pointer]:
+                      - /url: https://ivymoda.com/sanpham/ao-kieu-day-dream-ms-16b0570-44652
+                      - img "Áo kiểu Day Dream" [ref=f1e80]
+                    - generic [ref=f1e81]:
+                      - generic [ref=f1e82]:
+                        - list [ref=f1e83]:
+                          - listitem [ref=f1e84] [cursor=pointer]:
+                            - link "h01" [ref=f1e85]:
+                              - /url: javascript:void(0)
+                              - img "h01" [ref=f1e86]
+                        - generic [ref=f1e88] [cursor=pointer]: 
+                      - heading "Áo kiểu Day Dream" [level=3] [ref=f1e89]:
+                        - link "Áo kiểu Day Dream" [ref=f1e90] [cursor=pointer]:
+                          - /url: https://ivymoda.com/sanpham/ao-kieu-day-dream-ms-16b0570-44652
+                      - insertion [ref=f1e92]: 1.390.000đ
+                    - link "" [ref=f1e93] [cursor=pointer]:
+                      - /url: javascript:void(0)
+                      - generic [ref=f1e94]: 
+                  - generic [ref=f1e97]:
+                    - generic [ref=f1e98]: NEW
+                    - link "Đầm xòe Soft Vibes" [ref=f1e100] [cursor=pointer]:
+                      - /url: https://ivymoda.com/sanpham/dam-xoe-soft-vibes-ms-48b0651-44767
+                      - img "Đầm xòe Soft Vibes" [ref=f1e101]
+                    - generic [ref=f1e102]:
+                      - generic [ref=f1e103]:
+                        - list [ref=f1e104]:
+                          - listitem [ref=f1e105] [cursor=pointer]:
+                            - link "k49" [ref=f1e106]:
+                              - /url: javascript:void(0)
+                              - img "k49" [ref=f1e107]
+                        - generic [ref=f1e109] [cursor=pointer]: 
+                      - heading "Đầm xòe Soft Vibes" [level=3] [ref=f1e110]:
+                        - link "Đầm xòe Soft Vibes" [ref=f1e111] [cursor=pointer]:
+                          - /url: https://ivymoda.com/sanpham/dam-xoe-soft-vibes-ms-48b0651-44767
+                      - insertion [ref=f1e113]: 1.690.000đ
+                    - link "" [ref=f1e114] [cursor=pointer]:
+                      - /url: javascript:void(0)
+                      - generic [ref=f1e115]: 
+                  - generic [ref=f1e118]:
+                    - generic [ref=f1e119]: NEW
+                    - link "Áo lụa Art Elegance" [ref=f1e121] [cursor=pointer]:
+                      - /url: https://ivymoda.com/sanpham/ao-lua-art-elegance-ms-16b0618-44735
+                      - img "Áo lụa Art Elegance" [ref=f1e122]
+                    - generic [ref=f1e123]:
+                      - generic [ref=f1e124]:
+                        - list [ref=f1e125]:
+                          - listitem [ref=f1e126] [cursor=pointer]:
+                            - link "h01" [ref=f1e127]:
+                              - /url: javascript:void(0)
+                              - img "h01" [ref=f1e128]
+                        - generic [ref=f1e130] [cursor=pointer]: 
+                      - heading "Áo lụa Art Elegance" [level=3] [ref=f1e131]:
+                        - link "Áo lụa Art Elegance" [ref=f1e132] [cursor=pointer]:
+                          - /url: https://ivymoda.com/sanpham/ao-lua-art-elegance-ms-16b0618-44735
+                      - insertion [ref=f1e134]: 890.000đ
+                    - link "" [ref=f1e135] [cursor=pointer]:
+                      - /url: javascript:void(0)
+                      - generic [ref=f1e136]: 
+                  - generic [ref=f1e139]:
+                    - generic [ref=f1e140]: NEW
+                    - link "Áo lụa Pure Daily" [ref=f1e142] [cursor=pointer]:
+                      - /url: https://ivymoda.com/sanpham/ao-lua-pure-daily-ms-16m9377-44764
+                      - img "Áo lụa Pure Daily" [ref=f1e143]
+                    - generic [ref=f1e144]:
+                      - generic [ref=f1e145]:
+                        - list [ref=f1e146]:
+                          - listitem [ref=f1e147] [cursor=pointer]:
+                            - link "h01" [ref=f1e148]:
+                              - /url: javascript:void(0)
+                              - img "h01" [ref=f1e149]
+                          - listitem [ref=f1e150] [cursor=pointer]:
+                            - link "h49" [ref=f1e151]:
+                              - /url: javascript:void(0)
+                              - img "h49" [ref=f1e152]
+                        - generic [ref=f1e154] [cursor=pointer]: 
+                      - heading "Áo lụa Pure Daily" [level=3] [ref=f1e155]:
+                        - link "Áo lụa Pure Daily" [ref=f1e156] [cursor=pointer]:
+                          - /url: https://ivymoda.com/sanpham/ao-lua-pure-daily-ms-16m9377-44764
+                      - insertion [ref=f1e158]: 990.000đ
+                    - link "" [ref=f1e159] [cursor=pointer]:
+                      - /url: javascript:void(0)
+                      - generic [ref=f1e160]: 
+                  - generic [ref=f1e163]:
+                    - link "Đầm xòe Silk Touch" [ref=f1e165] [cursor=pointer]:
+                      - /url: https://ivymoda.com/sanpham/dam-xoe-silk-touch-ms-48b0727-44667
+                      - img "Đầm xòe Silk Touch" [ref=f1e166]
+                    - generic [ref=f1e167]:
+                      - generic [ref=f1e168]:
+                        - list [ref=f1e169]:
+                          - listitem [ref=f1e170] [cursor=pointer]:
+                            - link "001" [ref=f1e171]:
+                              - /url: javascript:void(0)
+                              - img "001" [ref=f1e172]
+                        - generic [ref=f1e174] [cursor=pointer]: 
+                      - heading "Đầm xòe Silk Touch" [level=3] [ref=f1e175]:
+                        - link "Đầm xòe Silk Touch" [ref=f1e176] [cursor=pointer]:
+                          - /url: https://ivymoda.com/sanpham/dam-xoe-silk-touch-ms-48b0727-44667
+                      - insertion [ref=f1e178]: 1.790.000đ
+                    - link "" [ref=f1e179] [cursor=pointer]:
+                      - /url: javascript:void(0)
+                      - generic [ref=f1e180]: 
+                  - generic [ref=f1e183]:
+                    - generic [ref=f1e184]: NEW
+                    - generic:
+                      - link "Áo sơ mi Deep Muse":
+                        - /url: https://ivymoda.com/sanpham/ao-so-mi-deep-muse-ms-16b0620-44762
+                        - img "Áo sơ mi Deep Muse"
+                    - generic [ref=f1e185]:
+                      - generic [ref=f1e186]:
+                        - list [ref=f1e187]:
+                          - listitem:
+                            - link "h02":
+                              - /url: javascript:void(0)
+                              - img "h02"
+                        - generic [ref=f1e189] [cursor=pointer]: 
+                      - heading "Áo sơ mi Deep Muse" [level=3] [ref=f1e190]:
+                        - link "Áo sơ mi Deep Muse" [ref=f1e191] [cursor=pointer]:
+                          - /url: https://ivymoda.com/sanpham/ao-so-mi-deep-muse-ms-16b0620-44762
+                      - insertion [ref=f1e193]: 850.000đ
+                    - link "" [ref=f1e194] [cursor=pointer]:
+                      - /url: javascript:void(0)
+                      - generic [ref=f1e195]: 
+                  - generic [ref=f1e198]:
+                    - generic [ref=f1e199]: NEW
+                    - generic:
+                      - link "Chân váy A Dewy":
+                        - /url: https://ivymoda.com/sanpham/chan-vay-a-dewy-ms-31b0612-44771
+                        - img "Chân váy A Dewy"
+                    - generic [ref=f1e200]:
+                      - generic [ref=f1e201]:
+                        - list [ref=f1e202]:
+                          - listitem:
+                            - link "049":
+                              - /url: javascript:void(0)
+                              - img "049"
+                        - generic [ref=f1e204] [cursor=pointer]: 
+                      - heading "Chân váy A Dewy" [level=3] [ref=f1e205]:
+                        - link "Chân váy A Dewy" [ref=f1e206] [cursor=pointer]:
+                          - /url: https://ivymoda.com/sanpham/chan-vay-a-dewy-ms-31b0612-44771
+                      - insertion [ref=f1e208]: 1.090.000đ
+                    - link "" [ref=f1e209] [cursor=pointer]:
+                      - /url: javascript:void(0)
+                      - generic [ref=f1e210]: 
+                  - generic [ref=f1e213]:
+                    - generic [ref=f1e214]: NEW
+                    - generic:
+                      - link "Đầm công sở Black Charm":
+                        - /url: https://ivymoda.com/sanpham/dam-cong-so-black-charm-ms-48b0613-44784
+                        - img "Đầm công sở Black Charm"
+                    - generic [ref=f1e215]:
+                      - generic [ref=f1e216]:
+                        - list [ref=f1e217]:
+                          - listitem:
+                            - link "h49":
+                              - /url: javascript:void(0)
+                              - img "h49"
+                        - generic [ref=f1e219] [cursor=pointer]: 
+                      - heading "Đầm công sở Black Charm" [level=3] [ref=f1e220]:
+                        - link "Đầm công sở Black Charm" [ref=f1e221] [cursor=pointer]:
+                          - /url: https://ivymoda.com/sanpham/dam-cong-so-black-charm-ms-48b0613-44784
+                      - insertion [ref=f1e223]: 1.990.000đ
+                    - link "" [ref=f1e224] [cursor=pointer]:
+                      - /url: javascript:void(0)
+                      - generic [ref=f1e225]: 
+                  - generic [ref=f1e228]:
+                    - generic [ref=f1e229]: NEW
+                    - generic:
+                      - link "Chân váy bút chì Verse":
+                        - /url: https://ivymoda.com/sanpham/chan-vay-but-chi-verse-ms-31m9380-44783
+                        - img "Chân váy bút chì Verse"
+                    - generic [ref=f1e230]:
+                      - generic [ref=f1e231]:
+                        - list [ref=f1e232]:
+                          - listitem:
+                            - link "049":
+                              - /url: javascript:void(0)
+                              - img "049"
+                          - listitem:
+                            - link "002":
+                              - /url: javascript:void(0)
+                              - img "002"
+                        - generic [ref=f1e234] [cursor=pointer]: 
+                      - heading "Chân váy bút chì Verse" [level=3] [ref=f1e235]:
+                        - link "Chân váy bút chì Verse" [ref=f1e236] [cursor=pointer]:
+                          - /url: https://ivymoda.com/sanpham/chan-vay-but-chi-verse-ms-31m9380-44783
+                      - insertion [ref=f1e238]: 990.000đ
+                    - link "" [ref=f1e239] [cursor=pointer]:
+                      - /url: javascript:void(0)
+                      - generic [ref=f1e240]: 
+                  - generic [ref=f1e243]:
+                    - generic [ref=f1e244]: NEW
+                    - generic:
+                      - link "Áo lụa kiểu Pure Essence":
+                        - /url: https://ivymoda.com/sanpham/ao-lua-kieu-pure-essence-ms-16m9361-44790
+                        - img "Áo lụa kiểu Pure Essence"
+                    - generic [ref=f1e245]:
+                      - generic [ref=f1e246]:
+                        - list [ref=f1e247]:
+                          - listitem:
+                            - link "h03":
+                              - /url: javascript:void(0)
+                              - img "h03"
+                          - listitem:
+                            - link "h50":
+                              - /url: javascript:void(0)
+                              - img "h50"
+                        - generic [ref=f1e249] [cursor=pointer]: 
+                      - heading "Áo lụa kiểu Pure Essence" [level=3] [ref=f1e250]:
+                        - link "Áo lụa kiểu Pure Essence" [ref=f1e251] [cursor=pointer]:
+                          - /url: https://ivymoda.com/sanpham/ao-lua-kieu-pure-essence-ms-16m9361-44790
+                      - insertion [ref=f1e253]: 990.000đ
+                    - link "" [ref=f1e254] [cursor=pointer]:
+                      - /url: javascript:void(0)
+                      - generic [ref=f1e255]: 
+                - generic:
+                  - generic [ref=f1e257] [cursor=pointer]: 
+                  - generic [ref=f1e259] [cursor=pointer]: 
+              - link "Xem tất cả" [ref=f1e261] [cursor=pointer]:
+                - /url: https://ivymoda.com/danh-muc/hang-nu-moi-ve
+            - text:                        
+      - generic [ref=f1e262]:
+        - generic [ref=f1e263]: THE CLASSY | BST ĐỘC QUYỀN ONLINE x HUYỀN LIZZIE
+        - generic [ref=f1e266]:
+          - generic [ref=f1e267]:
+            - generic [ref=f1e269]:
+              - generic [ref=f1e272]:
+                - generic [ref=f1e273]:
+                  - text: "-45"
+                  - generic [ref=f1e274]: "%"
+                - link "Áo thun Polo Classe Zip" [ref=f1e276] [cursor=pointer]:
+                  - /url: https://ivymoda.com/sanpham/ao-thun-polo-classe-zip-ms-57t0295-44544
+                  - img "Áo thun Polo Classe Zip" [ref=f1e277]
+                - generic [ref=f1e278]:
+                  - generic [ref=f1e279]:
+                    - list [ref=f1e280]:
+                      - listitem [ref=f1e281] [cursor=pointer]:
+                        - link "k49" [ref=f1e282]:
+                          - /url: javascript:void(0)
+                          - img "k49" [ref=f1e283]
+                    - generic [ref=f1e285] [cursor=pointer]: 
+                  - heading "Áo thun Polo Classe Zip" [level=3] [ref=f1e286]:
+                    - link "Áo thun Polo Classe Zip" [ref=f1e287] [cursor=pointer]:
+                      - /url: https://ivymoda.com/sanpham/ao-thun-polo-classe-zip-ms-57t0295-44544
+                  - generic [ref=f1e288]:
+                    - insertion [ref=f1e289]: 434.500đ
+                    - deletion [ref=f1e290]: 790.000đ
+                - link "" [ref=f1e291] [cursor=pointer]:
+                  - /url: javascript:void(0)
+                  - generic [ref=f1e292]: 
+              - generic [ref=f1e295]:
+                - generic [ref=f1e296]:
+                  - text: "-45"
+                  - generic [ref=f1e297]: "%"
+                - link "Áo sơ mi Aurelia IVYmoda" [ref=f1e299] [cursor=pointer]:
+                  - /url: https://ivymoda.com/sanpham/ao-so-mi-aurelia-ivymoda-ms-16t0296-44724
+                  - img "Áo sơ mi Aurelia IVYmoda" [ref=f1e300]
+                - generic [ref=f1e301]:
+                  - generic [ref=f1e302]:
+                    - list [ref=f1e303]:
+                      - listitem [ref=f1e304] [cursor=pointer]:
+                        - link "060" [ref=f1e305]:
+                          - /url: javascript:void(0)
+                          - img "060" [ref=f1e306]
+                      - listitem [ref=f1e307] [cursor=pointer]:
+                        - link "001" [ref=f1e308]:
+                          - /url: javascript:void(0)
+                          - img "001" [ref=f1e309]
+                    - generic [ref=f1e311] [cursor=pointer]: 
+                  - heading "Áo sơ mi Aurelia IVYmoda" [level=3] [ref=f1e312]:
+                    - link "Áo sơ mi Aurelia IVYmoda" [ref=f1e313] [cursor=pointer]:
+                      - /url: https://ivymoda.com/sanpham/ao-so-mi-aurelia-ivymoda-ms-16t0296-44724
+                  - generic [ref=f1e314]:
+                    - insertion [ref=f1e315]: 544.500đ
+                    - deletion [ref=f1e316]: 990.000đ
+                - link "" [ref=f1e317] [cursor=pointer]:
+                  - /url: javascript:void(0)
+                  - generic [ref=f1e318]: 
+              - generic [ref=f1e321]:
+                - generic [ref=f1e322]:
+                  - text: "-45"
+                  - generic [ref=f1e323]: "%"
+                - link "Áo ren Pearl Lace" [ref=f1e325] [cursor=pointer]:
+                  - /url: https://ivymoda.com/sanpham/ao-ren-pearl-lace-ms-57t0310-44752
+                  - img "Áo ren Pearl Lace" [ref=f1e326]
+                - generic [ref=f1e327]:
+                  - generic [ref=f1e328]:
+                    - list [ref=f1e329]:
+                      - listitem [ref=f1e330] [cursor=pointer]:
+                        - link "002" [ref=f1e331]:
+                          - /url: javascript:void(0)
+                          - img "002" [ref=f1e332]
+                    - generic [ref=f1e334] [cursor=pointer]: 
+                  - heading "Áo ren Pearl Lace" [level=3] [ref=f1e335]:
+                    - link "Áo ren Pearl Lace" [ref=f1e336] [cursor=pointer]:
+                      - /url: https://ivymoda.com/sanpham/ao-ren-pearl-lace-ms-57t0310-44752
+                  - generic [ref=f1e337]:
+                    - insertion [ref=f1e338]: 434.500đ
+                    - deletion [ref=f1e339]: 790.000đ
+                - link "" [ref=f1e340] [cursor=pointer]:
+                  - /url: javascript:void(0)
+                  - generic [ref=f1e341]: 
+              - generic [ref=f1e344]:
+                - generic [ref=f1e345]:
+                  - text: "-40"
+                  - generic [ref=f1e346]: "%"
+                - link "Áo kiểu Sculpt Moda" [ref=f1e348] [cursor=pointer]:
+                  - /url: https://ivymoda.com/sanpham/ao-kieu-sculpt-moda-ms-16t0251-43162
+                  - img "Áo kiểu Sculpt Moda" [ref=f1e349]
+                - generic [ref=f1e350]:
+                  - generic [ref=f1e351]:
+                    - list [ref=f1e352]:
+                      - listitem [ref=f1e353] [cursor=pointer]:
+                        - link "002" [ref=f1e354]:
+                          - /url: javascript:void(0)
+                          - img "002" [ref=f1e355]
+                      - listitem [ref=f1e356] [cursor=pointer]:
+                        - link "049" [ref=f1e357]:
+                          - /url: javascript:void(0)
+                          - img "049" [ref=f1e358]
+                    - generic [ref=f1e360] [cursor=pointer]: 
+                  - heading "Áo kiểu Sculpt Moda" [level=3] [ref=f1e361]:
+                    - link "Áo kiểu Sculpt Moda" [ref=f1e362] [cursor=pointer]:
+                      - /url: https://ivymoda.com/sanpham/ao-kieu-sculpt-moda-ms-16t0251-43162
+                  - generic [ref=f1e363]:
+                    - insertion [ref=f1e364]: 534.000đ
+                    - deletion [ref=f1e365]: 890.000đ
+                - link "" [ref=f1e366] [cursor=pointer]:
+                  - /url: javascript:void(0)
+                  - generic [ref=f1e367]: 
+              - generic [ref=f1e370]:
+                - generic [ref=f1e371]:
+                  - text: "-45"
+                  - generic [ref=f1e372]: "%"
+                - link "Áo sơ mi Aurelia IVYmoda" [ref=f1e374] [cursor=pointer]:
+                  - /url: https://ivymoda.com/sanpham/ao-so-mi-aurelia-ivymoda-ms-16t0296-44730
+                  - img "Áo sơ mi Aurelia IVYmoda" [ref=f1e375]
+                - generic [ref=f1e376]:
+                  - generic [ref=f1e377]:
+                    - list [ref=f1e378]:
+                      - listitem [ref=f1e379] [cursor=pointer]:
+                        - link "060" [ref=f1e380]:
+                          - /url: javascript:void(0)
+                          - img "060" [ref=f1e381]
+                      - listitem [ref=f1e382] [cursor=pointer]:
+                        - link "001" [ref=f1e383]:
+                          - /url: javascript:void(0)
+                          - img "001" [ref=f1e384]
+                    - generic [ref=f1e386] [cursor=pointer]: 
+                  - heading "Áo sơ mi Aurelia IVYmoda" [level=3] [ref=f1e387]:
+                    - link "Áo sơ mi Aurelia IVYmoda" [ref=f1e388] [cursor=pointer]:
+                      - /url: https://ivymoda.com/sanpham/ao-so-mi-aurelia-ivymoda-ms-16t0296-44730
+                  - generic [ref=f1e389]:
+                    - insertion [ref=f1e390]: 544.500đ
+                    - deletion [ref=f1e391]: 990.000đ
+                - link "" [ref=f1e392] [cursor=pointer]:
+                  - /url: javascript:void(0)
+                  - generic [ref=f1e393]: 
+              - generic [ref=f1e396]:
+                - generic [ref=f1e397]:
+                  - text: "-45"
+                  - generic [ref=f1e398]: "%"
+                - generic:
+                  - link "Chân váy Elara Lace Pencil":
+                    - /url: https://ivymoda.com/sanpham/chan-vay-elara-lace-pencil-ms-31t0304-44736
+                    - img "Chân váy Elara Lace Pencil"
+                - generic [ref=f1e399]:
+                  - generic [ref=f1e400]:
+                    - list [ref=f1e401]:
+                      - listitem [ref=f1e402] [cursor=pointer]:
+                        - link "001" [ref=f1e403]:
+                          - /url: javascript:void(0)
+                          - img "001" [ref=f1e404]
+                      - listitem:
+                        - link "002":
+                          - /url: javascript:void(0)
+                          - img "002"
+                    - generic [ref=f1e406] [cursor=pointer]: 
+                  - heading "Chân váy Elara Lace Pencil" [level=3] [ref=f1e407]:
+                    - link "Chân váy Elara Lace Pencil" [ref=f1e408] [cursor=pointer]:
+                      - /url: https://ivymoda.com/sanpham/chan-vay-elara-lace-pencil-ms-31t0304-44736
+                  - generic [ref=f1e409]:
+                    - insertion [ref=f1e410]: 599.500đ
+                    - deletion [ref=f1e411]: 1.090.000đ
+                - link "" [ref=f1e412] [cursor=pointer]:
+                  - /url: javascript:void(0)
+                  - generic [ref=f1e413]: 
+              - generic [ref=f1e416]:
+                - generic:
+                  - link "Áo ren Elara Lace":
+                    - /url: https://ivymoda.com/sanpham/ao-ren-elara-lace-ms-16t0304-44746
+                    - img "Áo ren Elara Lace"
+                - generic [ref=f1e417]:
+                  - generic [ref=f1e418]:
+                    - list [ref=f1e419]:
+                      - listitem [ref=f1e420] [cursor=pointer]:
+                        - link "001" [ref=f1e421]:
+                          - /url: javascript:void(0)
+                          - img "001" [ref=f1e422]
+                      - listitem:
+                        - link "002":
+                          - /url: javascript:void(0)
+                          - img "002"
+                    - generic [ref=f1e424] [cursor=pointer]: 
+                  - heading "Áo ren Elara Lace" [level=3] [ref=f1e425]:
+                    - link "Áo ren Elara Lace" [ref=f1e426] [cursor=pointer]:
+                      - /url: https://ivymoda.com/sanpham/ao-ren-elara-lace-ms-16t0304-44746
+                  - generic [ref=f1e427]:
+                    - insertion [ref=f1e428]: 699.000đ
+                    - deletion [ref=f1e429]: 1.290.000đ
+                - link "" [ref=f1e430] [cursor=pointer]:
+                  - /url: javascript:void(0)
+                  - generic [ref=f1e431]: 
+              - generic [ref=f1e434]:
+                - generic [ref=f1e435]:
+                  - text: "-45"
+                  - generic [ref=f1e436]: "%"
+                - generic:
+                  - link "Áo sơ mi Soft Line":
+                    - /url: https://ivymoda.com/sanpham/ao-so-mi-soft-line-ms-16t0306-44747
+                    - img "Áo sơ mi Soft Line"
+                - generic [ref=f1e437]:
+                  - generic [ref=f1e438]:
+                    - list [ref=f1e439]:
+                      - listitem:
+                        - link "002":
+                          - /url: javascript:void(0)
+                          - img "002"
+                    - generic [ref=f1e441] [cursor=pointer]: 
+                  - heading "Áo sơ mi Soft Line" [level=3] [ref=f1e442]:
+                    - link "Áo sơ mi Soft Line" [ref=f1e443] [cursor=pointer]:
+                      - /url: https://ivymoda.com/sanpham/ao-so-mi-soft-line-ms-16t0306-44747
+                  - generic [ref=f1e444]:
+                    - insertion [ref=f1e445]: 599.500đ
+                    - deletion [ref=f1e446]: 1.090.000đ
+                - link "" [ref=f1e447] [cursor=pointer]:
+                  - /url: javascript:void(0)
+                  - generic [ref=f1e448]: 
+              - generic [ref=f1e451]:
+                - generic [ref=f1e452]:
+                  - text: "-40"
+                  - generic [ref=f1e453]: "%"
+                - generic:
+                  - link "Áo thun kẻ cổ thuyền":
+                    - /url: https://ivymoda.com/sanpham/ao-thun-ke-co-thuyen-ms-57t0320-44765
+                    - img "Áo thun kẻ cổ thuyền"
+                - generic [ref=f1e454]:
+                  - generic [ref=f1e455]:
+                    - list [ref=f1e456]:
+                      - listitem:
+                        - link "k02":
+                          - /url: javascript:void(0)
+                          - img "k02"
+                      - listitem:
+                        - link "k52":
+                          - /url: javascript:void(0)
+                          - img "k52"
+                    - generic [ref=f1e458] [cursor=pointer]: 
+                  - heading "Áo thun kẻ cổ thuyền" [level=3] [ref=f1e459]:
+                    - link "Áo thun kẻ cổ thuyền" [ref=f1e460] [cursor=pointer]:
+                      - /url: https://ivymoda.com/sanpham/ao-thun-ke-co-thuyen-ms-57t0320-44765
+                  - generic [ref=f1e461]:
+                    - insertion [ref=f1e462]: 354.000đ
+                    - deletion [ref=f1e463]: 590.000đ
+                - link "" [ref=f1e464] [cursor=pointer]:
+                  - /url: javascript:void(0)
+                  - generic [ref=f1e465]: 
+              - generic [ref=f1e468]:
+                - img "Giá cuối" [ref=f1e470]
+                - generic:
+                  - link "Áo ren Elara Lace":
+                    - /url: https://ivymoda.com/sanpham/ao-ren-elara-lace-ms-16t0304-44748
+                    - img "Áo ren Elara Lace"
+                - generic [ref=f1e471]:
+                  - generic [ref=f1e472]:
+                    - list [ref=f1e473]:
+                      - listitem [ref=f1e474] [cursor=pointer]:
+                        - link "001" [ref=f1e475]:
+                          - /url: javascript:void(0)
+                          - img "001" [ref=f1e476]
+                      - listitem:
+                        - link "002":
+                          - /url: javascript:void(0)
+                          - img "002"
+                    - generic [ref=f1e478] [cursor=pointer]: 
+                  - heading "Áo ren Elara Lace" [level=3] [ref=f1e479]:
+                    - link "Áo ren Elara Lace" [ref=f1e480] [cursor=pointer]:
+                      - /url: https://ivymoda.com/sanpham/ao-ren-elara-lace-ms-16t0304-44748
+                  - generic [ref=f1e481]:
+                    - insertion [ref=f1e482]: 699.000đ
+                    - deletion [ref=f1e483]: 1.290.000đ
+                - link "" [ref=f1e484] [cursor=pointer]:
+                  - /url: javascript:void(0)
+                  - generic [ref=f1e485]: 
+            - generic:
+              - generic [ref=f1e487] [cursor=pointer]: 
+              - generic [ref=f1e489] [cursor=pointer]: 
+          - link "Xem tất cả" [ref=f1e491] [cursor=pointer]:
+            - /url: https://ivymoda.com/danh-muc/the-classy-online-0526
+      - generic [ref=f1e492]:
+        - generic [ref=f1e493]: GIÁ MỚI - CHẠM ĐỈNH | SALE ALL 70% CHỈ CÓ TẠI ONLINE
+        - generic [ref=f1e494]:
+          - list [ref=f1e496]:
+            - listitem [ref=f1e497] [cursor=pointer]: IVY moda
+            - listitem [ref=f1e498] [cursor=pointer]: Metagent
+          - generic [ref=f1e499]:
+            - generic [ref=f1e500]:
+              - generic [ref=f1e501]:
+                - generic [ref=f1e503]:
+                  - generic [ref=f1e506]:
+                    - generic [ref=f1e507]: Best Seller
+                    - generic [ref=f1e508]:
+                      - text: "-70"
+                      - generic [ref=f1e509]: "%"
+                    - link "Đầm voan hoa dáng xòe" [ref=f1e511] [cursor=pointer]:
+                      - /url: https://ivymoda.com/sanpham/dam-voan-hoa-dang-xoe-ms-48m8652-40094
+                      - img "Đầm voan hoa dáng xòe" [ref=f1e512]
+                    - generic [ref=f1e513]:
+                      - generic [ref=f1e514]:
+                        - list [ref=f1e515]:
+                          - listitem [ref=f1e516] [cursor=pointer]:
+                            - link "h02" [ref=f1e517]:
+                              - /url: javascript:void(0)
+                              - img "h02" [ref=f1e518]
+                          - listitem [ref=f1e519] [cursor=pointer]:
+                            - link "h61" [ref=f1e520]:
+                              - /url: javascript:void(0)
+                              - img "h61" [ref=f1e521]
+                          - listitem [ref=f1e522] [cursor=pointer]:
+                            - link "h09" [ref=f1e523]:
+                              - /url: javascript:void(0)
+                              - img "h09" [ref=f1e524]
+                          - listitem [ref=f1e525] [cursor=pointer]:
+                            - link "h13" [ref=f1e526]:
+                              - /url: javascript:void(0)
+                              - img "h13" [ref=f1e527]
+                        - generic [ref=f1e529] [cursor=pointer]: 
+                      - heading "Đầm voan hoa dáng xòe" [level=3] [ref=f1e530]:
+                        - link "Đầm voan hoa dáng xòe" [ref=f1e531] [cursor=pointer]:
+                          - /url: https://ivymoda.com/sanpham/dam-voan-hoa-dang-xoe-ms-48m8652-40094
+                      - generic [ref=f1e532]:
+                        - insertion [ref=f1e533]: 447.000đ
+                        - deletion [ref=f1e534]: 1.490.000đ
+                    - link "" [ref=f1e535] [cursor=pointer]:
+                      - /url: javascript:void(0)
+                      - generic [ref=f1e536]: 
+                  - generic [ref=f1e539]:
+                    - generic [ref=f1e540]: Best Seller
+                    - generic [ref=f1e541]:
+                      - text: "-70"
+                      - generic [ref=f1e542]: "%"
+                    - link "Chân váy Tapta 2 lớp" [ref=f1e544] [cursor=pointer]:
+                      - /url: https://ivymoda.com/sanpham/chan-vay-tapta-2-lop-ms-31m8293-37520
+                      - img "Chân váy Tapta 2 lớp" [ref=f1e545]
+                    - generic [ref=f1e546]:
+                      - generic [ref=f1e547]:
+                        - list [ref=f1e548]:
+                          - listitem [ref=f1e549] [cursor=pointer]:
+                            - link "002" [ref=f1e550]:
+                              - /url: javascript:void(0)
+                              - img "002" [ref=f1e551]
+                          - listitem [ref=f1e552] [cursor=pointer]:
+                            - link "013" [ref=f1e553]:
+                              - /url: javascript:void(0)
+                              - img "013" [ref=f1e554]
+                          - listitem [ref=f1e555] [cursor=pointer]:
+                            - link "049" [ref=f1e556]:
+                              - /url: javascript:void(0)
+                              - img "049" [ref=f1e557]
+                        - generic [ref=f1e559] [cursor=pointer]: 
+                      - heading "Chân váy Tapta 2 lớp" [level=3] [ref=f1e560]:
+                        - link "Chân váy Tapta 2 lớp" [ref=f1e561] [cursor=pointer]:
+                          - /url: https://ivymoda.com/sanpham/chan-vay-tapta-2-lop-ms-31m8293-37520
+                      - generic [ref=f1e562]:
+                        - insertion [ref=f1e563]: 237.000đ
+                        - deletion [ref=f1e564]: 790.000đ
+                    - link "" [ref=f1e565] [cursor=pointer]:
+                      - /url: javascript:void(0)
+                      - generic [ref=f1e566]: 
+                  - generic [ref=f1e569]:
+                    - generic [ref=f1e570]: Best Seller
+                    - generic [ref=f1e571]:
+                      - text: "-70"
+                      - generic [ref=f1e572]: "%"
+                    - link "Đầm lụa xòe cổ V" [ref=f1e574] [cursor=pointer]:
+                      - /url: https://ivymoda.com/sanpham/dam-lua-xoe-co-v-ms-48m6598-37977
+                      - img "Đầm lụa xòe cổ V" [ref=f1e575]
+                    - generic [ref=f1e576]:
+                      - generic [ref=f1e577]:
+                        - list [ref=f1e578]:
+                          - listitem [ref=f1e579] [cursor=pointer]:
+                            - link "004" [ref=f1e580]:
+                              - /url: javascript:void(0)
+                              - img "004" [ref=f1e581]
+                          - listitem [ref=f1e582] [cursor=pointer]:
+                            - link "008" [ref=f1e583]:
+                              - /url: javascript:void(0)
+                              - img "008" [ref=f1e584]
+                          - listitem [ref=f1e585] [cursor=pointer]:
+                            - link "014" [ref=f1e586]:
+                              - /url: javascript:void(0)
+                              - img "014" [ref=f1e587]
+                          - listitem [ref=f1e588] [cursor=pointer]:
+                            - link "013" [ref=f1e589]:
+                              - /url: javascript:void(0)
+                              - img "013" [ref=f1e590]
+                          - listitem [ref=f1e591] [cursor=pointer]:
+                            - link "017" [ref=f1e592]:
+                              - /url: javascript:void(0)
+                              - img "017" [ref=f1e593]
+                          - listitem [ref=f1e594] [cursor=pointer]:
+                            - link "018" [ref=f1e595]:
+                              - /url: javascript:void(0)
+                              - img "018" [ref=f1e596]
+                        - generic [ref=f1e598] [cursor=pointer]: 
+                      - heading "Đầm lụa xòe cổ V" [level=3] [ref=f1e599]:
+                        - link "Đầm lụa xòe cổ V" [ref=f1e600] [cursor=pointer]:
+                          - /url: https://ivymoda.com/sanpham/dam-lua-xoe-co-v-ms-48m6598-37977
+                      - generic [ref=f1e601]:
+                        - insertion [ref=f1e602]: 537.000đ
+                        - deletion [ref=f1e603]: 1.790.000đ
+                    - link "" [ref=f1e604] [cursor=pointer]:
+                      - /url: javascript:void(0)
+                      - generic [ref=f1e605]: 
+                  - generic [ref=f1e608]:
+                    - generic [ref=f1e609]: Best Seller
+                    - generic [ref=f1e610]:
+                      - text: "-70"
+                      - generic [ref=f1e611]: "%"
+                    - link "Zuýp đuôi cá 2 lớp" [ref=f1e613] [cursor=pointer]:
+                      - /url: https://ivymoda.com/sanpham/zuyp-duoi-ca-2-lop-ms-31m8636-38863
+                      - img "Zuýp đuôi cá 2 lớp" [ref=f1e614]
+                    - generic [ref=f1e615]:
+                      - generic [ref=f1e616]:
+                        - list [ref=f1e617]:
+                          - listitem [ref=f1e618] [cursor=pointer]:
+                            - link "049" [ref=f1e619]:
+                              - /url: javascript:void(0)
+                              - img "049" [ref=f1e620]
+                          - listitem [ref=f1e621] [cursor=pointer]:
+                            - link "050" [ref=f1e622]:
+                              - /url: javascript:void(0)
+                              - img "050" [ref=f1e623]
+                        - generic [ref=f1e625] [cursor=pointer]: 
+                      - heading "Zuýp đuôi cá 2 lớp" [level=3] [ref=f1e626]:
+                        - link "Zuýp đuôi cá 2 lớp" [ref=f1e627] [cursor=pointer]:
+                          - /url: https://ivymoda.com/sanpham/zuyp-duoi-ca-2-lop-ms-31m8636-38863
+                      - generic [ref=f1e628]:
+                        - insertion [ref=f1e629]: 285.000đ
+                        - deletion [ref=f1e630]: 950.000đ
+                    - link "" [ref=f1e631] [cursor=pointer]:
+                      - /url: javascript:void(0)
+                      - generic [ref=f1e632]: 
+                  - generic [ref=f1e635]:
+                    - generic [ref=f1e636]: Best Seller
+                    - generic [ref=f1e637]:
+                      - text: "-70"
+                      - generic [ref=f1e638]: "%"
+                    - link "Chân váy Tuytsi xếp ly" [ref=f1e640] [cursor=pointer]:
+                      - /url: https://ivymoda.com/sanpham/chan-vay-tuytsi-xep-ly-ms-30m8749-39604
+                      - img "Chân váy Tuytsi xếp ly" [ref=f1e641]
+                    - generic [ref=f1e642]:
+                      - generic [ref=f1e643]:
+                        - list [ref=f1e644]:
+                          - listitem [ref=f1e645] [cursor=pointer]:
+                            - link "049" [ref=f1e646]:
+                              - /url: javascript:void(0)
+                              - img "049" [ref=f1e647]
+                          - listitem [ref=f1e648] [cursor=pointer]:
+                            - link "065" [ref=f1e649]:
+                              - /url: javascript:void(0)
+                              - img "065" [ref=f1e650]
+                        - generic [ref=f1e652] [cursor=pointer]: 
+                      - heading "Chân váy Tuytsi xếp ly" [level=3] [ref=f1e653]:
+                        - link "Chân váy Tuytsi xếp ly" [ref=f1e654] [cursor=pointer]:
+                          - /url: https://ivymoda.com/sanpham/chan-vay-tuytsi-xep-ly-ms-30m8749-39604
+                      - generic [ref=f1e655]:
+                        - insertion [ref=f1e656]: 477.000đ
+                        - deletion [ref=f1e657]: 1.590.000đ
+                    - link "" [ref=f1e658] [cursor=pointer]:
+                      - /url: javascript:void(0)
+                      - generic [ref=f1e659]: 
+                  - generic [ref=f1e662]:
+                    - generic [ref=f1e663]: Best Seller
+                    - generic [ref=f1e664]:
+                      - text: "-70"
+                      - generic [ref=f1e665]: "%"
+                    - generic:
+                      - link "Áo Blazer Dahlia Set":
+                        - /url: https://ivymoda.com/sanpham/ao-blazer-dahlia-set-ms-67m8817-40194
+                        - img "Áo Blazer Dahlia Set"
+                    - generic [ref=f1e666]:
+                      - generic [ref=f1e667]:
+                        - list [ref=f1e668]:
+                          - listitem:
+                            - link "003":
+                              - /url: javascript:void(0)
+                              - img "003"
+                          - listitem:
+                            - link "050":
+                              - /url: javascript:void(0)
+                              - img "050"
+                        - generic [ref=f1e670] [cursor=pointer]: 
+                      - heading "Áo Blazer Dahlia Set" [level=3] [ref=f1e671]:
+                        - link "Áo Blazer Dahlia Set" [ref=f1e672] [cursor=pointer]:
+                          - /url: https://ivymoda.com/sanpham/ao-blazer-dahlia-set-ms-67m8817-40194
+                      - generic [ref=f1e673]:
+                        - insertion [ref=f1e674]: 567.000đ
+                        - deletion [ref=f1e675]: 1.890.000đ
+                    - link "" [ref=f1e676] [cursor=pointer]:
+                      - /url: javascript:void(0)
+                      - generic [ref=f1e677]: 
+                  - generic [ref=f1e680]:
+                    - generic [ref=f1e681]: Best Seller
+                    - generic [ref=f1e682]:
+                      - text: "-70"
+                      - generic [ref=f1e683]: "%"
+                    - generic:
+                      - link "Đầm cổ xếp in hoa":
+                        - /url: https://ivymoda.com/sanpham/dam-co-xep-in-hoa-ms-48m8687-39865
+                        - img "Đầm cổ xếp in hoa"
+                    - generic [ref=f1e684]:
+                      - generic [ref=f1e685]:
+                        - list [ref=f1e686]:
+                          - listitem:
+                            - link "009":
+                              - /url: javascript:void(0)
+                              - img "009"
+                          - listitem:
+                            - link "050":
+                              - /url: javascript:void(0)
+                              - img "050"
+                        - generic [ref=f1e688] [cursor=pointer]: 
+                      - heading "Đầm cổ xếp in hoa" [level=3] [ref=f1e689]:
+                        - link "Đầm cổ xếp in hoa" [ref=f1e690] [cursor=pointer]:
+                          - /url: https://ivymoda.com/sanpham/dam-co-xep-in-hoa-ms-48m8687-39865
+                      - generic [ref=f1e691]:
+                        - insertion [ref=f1e692]: 537.000đ
+                        - deletion [ref=f1e693]: 1.790.000đ
+                    - link "" [ref=f1e694] [cursor=pointer]:
+                      - /url: javascript:void(0)
+                      - generic [ref=f1e695]: 
+                  - generic [ref=f1e698]:
+                    - generic [ref=f1e699]: Best Seller
+                    - generic [ref=f1e700]:
+                      - text: "-70"
+                      - generic [ref=f1e701]: "%"
+                    - generic:
+                      - link "Đầm hoa xòe tay lỡ":
+                        - /url: https://ivymoda.com/sanpham/dam-hoa-xoe-tay-lo-ms-48m8775-40096
+                        - img "Đầm hoa xòe tay lỡ"
+                    - generic [ref=f1e702]:
+                      - generic [ref=f1e703]:
+                        - list [ref=f1e704]:
+                          - listitem:
+                            - link "h01":
+                              - /url: javascript:void(0)
+                              - img "h01"
+                          - listitem:
+                            - link "h66":
+                              - /url: javascript:void(0)
+                              - img "h66"
+                        - generic [ref=f1e706] [cursor=pointer]: 
+                      - heading "Đầm hoa xòe tay lỡ" [level=3] [ref=f1e707]:
+                        - link "Đầm hoa xòe tay lỡ" [ref=f1e708] [cursor=pointer]:
+                          - /url: https://ivymoda.com/sanpham/dam-hoa-xoe-tay-lo-ms-48m8775-40096
+                      - generic [ref=f1e709]:
+                        - insertion [ref=f1e710]: 537.000đ
+                        - deletion [ref=f1e711]: 1.790.000đ
+                    - link "" [ref=f1e712] [cursor=pointer]:
+                      - /url: javascript:void(0)
+                      - generic [ref=f1e713]: 
+                  - generic [ref=f1e716]:
+                    - generic [ref=f1e717]: Best Seller
+                    - generic [ref=f1e718]:
+                      - text: "-70"
+                      - generic [ref=f1e719]: "%"
+                    - generic:
+                      - link "Chân váy Mini Khaki":
+                        - /url: https://ivymoda.com/sanpham/chan-vay-mini-khaki-ms-31m8981-41152
+                        - img "Chân váy Mini Khaki"
+                    - generic [ref=f1e720]:
+                      - generic [ref=f1e721]:
+                        - list [ref=f1e722]:
+                          - listitem:
+                            - link "004":
+                              - /url: javascript:void(0)
+                              - img "004"
+                          - listitem:
+                            - link "065":
+                              - /url: javascript:void(0)
+                              - img "065"
+                        - generic [ref=f1e724] [cursor=pointer]: 
+                      - heading "Chân váy Mini Khaki" [level=3] [ref=f1e725]:
+                        - link "Chân váy Mini Khaki" [ref=f1e726] [cursor=pointer]:
+                          - /url: https://ivymoda.com/sanpham/chan-vay-mini-khaki-ms-31m8981-41152
+                      - generic [ref=f1e727]:
+                        - insertion [ref=f1e728]: 327.000đ
+                        - deletion [ref=f1e729]: 1.090.000đ
+                    - link "" [ref=f1e730] [cursor=pointer]:
+                      - /url: javascript:void(0)
+                      - generic [ref=f1e731]: 
+                  - generic [ref=f1e734]:
+                    - generic [ref=f1e735]: Best Seller
+                    - generic [ref=f1e736]:
+                      - text: "-70"
+                      - generic [ref=f1e737]: "%"
+                    - generic:
+                      - link "Đầm lụa xòe Pink Baby":
+                        - /url: https://ivymoda.com/sanpham/dam-lua-xoe-pink-baby-ms-41b9851-40291
+                        - img "Đầm lụa xòe Pink Baby"
+                    - generic [ref=f1e738]:
+                      - generic [ref=f1e739]:
+                        - list [ref=f1e740]:
+                          - listitem:
+                            - link "013":
+                              - /url: javascript:void(0)
+                              - img "013"
+                        - generic [ref=f1e742] [cursor=pointer]: 
+                      - heading "Đầm lụa xòe Pink Baby" [level=3] [ref=f1e743]:
+                        - link "Đầm lụa xòe Pink Baby" [ref=f1e744] [cursor=pointer]:
+                          - /url: https://ivymoda.com/sanpham/dam-lua-xoe-pink-baby-ms-41b9851-40291
+                      - generic [ref=f1e745]:
+                        - insertion [ref=f1e746]: 597.000đ
+                        - deletion [ref=f1e747]: 1.990.000đ
+                    - link "" [ref=f1e748] [cursor=pointer]:
+                      - /url: javascript:void(0)
+                      - generic [ref=f1e749]: 
+                - generic:
+                  - generic [ref=f1e751] [cursor=pointer]: 
+                  - generic [ref=f1e753] [cursor=pointer]: 
+              - link "Xem tất cả" [ref=f1e755] [cursor=pointer]:
+                - /url: https://ivymoda.com/danh-muc/nu?hid_best_seller=1
+            - text:                        
+      - link "BANNER TRENDING" [ref=f1e756] [cursor=pointer]:
+        - /url: https://ivymoda.com/danh-muc/sale-all-70-0626
+        - img "BANNER TRENDING" [ref=f1e759]
+      - generic [ref=f1e761]:
+        - generic [ref=f1e762]: HÈ SANG RỘN RÀNG - TẶNG ƯU ĐÃI ĐẶC BIỆT
+        - generic [ref=f1e763]:
+          - generic [ref=f1e765]:
+            - link [ref=f1e768] [cursor=pointer]:
+              - /url: https://ivymoda.com/danh-muc/deal-gia-cuoi-mtg-0526
+            - link [ref=f1e771] [cursor=pointer]:
+              - /url: https://ivymoda.com/danh-muc/mua-2-tang-1-mtg-0526
+            - link [ref=f1e774] [cursor=pointer]:
+              - /url: https://ivymoda.com/danh-muc/deal-gia-cuoi-mtg-0526
+            - link [ref=f1e777] [cursor=pointer]:
+              - /url: https://ivymoda.com/danh-muc/mua-2-tang-1-mtg-0526
+            - link [ref=f1e780] [cursor=pointer]:
+              - /url: https://ivymoda.com/danh-muc/deal-gia-cuoi-mtg-0526
+            - link [ref=f1e783] [cursor=pointer]:
+              - /url: https://ivymoda.com/danh-muc/mua-2-tang-1-mtg-0526
+          - generic:
+            - generic [ref=f1e785] [cursor=pointer]: 
+            - generic [ref=f1e787] [cursor=pointer]: 
+      - generic [ref=f1e788]:
+        - heading "GALLERY" [level=3] [ref=f1e789]
+        - generic [ref=f1e792]:
+          - link [ref=f1e795] [cursor=pointer]:
+            - /url: https://ivymoda.com/sanpham/chan-vay-but-chi-xanh-coban-ms-31b0608-44353
+          - link [ref=f1e798] [cursor=pointer]:
+            - /url: https://ivymoda.com/sanpham/ao-canh-polo-phoi-ren-ms-16m9204-43337
+          - link [ref=f1e801] [cursor=pointer]:
+            - /url: https://ivymoda.com/sanpham/ao-kieu-petal-light-ms-16b0646-44338
+          - generic [ref=f1e802]:
+            - generic:
+              - link:
+                - /url: https://ivymoda.com/sanpham/ao-blazer-dahlia-set-ms-67m8817-40193
+          - generic [ref=f1e803]:
+            - generic:
+              - link:
+                - /url: https://ivymoda.com/sanpham/ao-khoac-tweed-ruby-classic-ms-67h9916-43703
+          - link [ref=f1e806] [cursor=pointer]:
+            - /url: https://ivymoda.com//sanpham/ao-kieu-blooming-touch-ms-16m9353-44349
+          - link [ref=f1e809] [cursor=pointer]:
+            - /url: https://ivymoda.com/sanpham/ao-gile-elegant-layer-ms-76b0551-44337
+          - link [ref=f1e812] [cursor=pointer]:
+            - /url: https://ivymoda.com/sanpham/chan-vay-but-chi-xanh-coban-ms-31b0608-44353
+          - link [ref=f1e815] [cursor=pointer]:
+            - /url: https://ivymoda.com/sanpham/ao-canh-polo-phoi-ren-ms-16m9204-43337
+          - link [ref=f1e818] [cursor=pointer]:
+            - /url: https://ivymoda.com/sanpham/ao-kieu-petal-light-ms-16b0646-44338
+          - generic [ref=f1e819]:
+            - generic:
+              - link:
+                - /url: https://ivymoda.com/sanpham/ao-blazer-dahlia-set-ms-67m8817-40193
+          - generic [ref=f1e820]:
+            - generic:
+              - link:
+                - /url: https://ivymoda.com/sanpham/ao-khoac-tweed-ruby-classic-ms-67h9916-43703
+          - link [ref=f1e823] [cursor=pointer]:
+            - /url: https://ivymoda.com//sanpham/ao-kieu-blooming-touch-ms-16m9353-44349
+          - link [ref=f1e826] [cursor=pointer]:
+            - /url: https://ivymoda.com/sanpham/ao-gile-elegant-layer-ms-76b0551-44337
+          - link [ref=f1e829] [cursor=pointer]:
+            - /url: https://ivymoda.com/sanpham/chan-vay-but-chi-xanh-coban-ms-31b0608-44353
+          - link [ref=f1e832] [cursor=pointer]:
+            - /url: https://ivymoda.com/sanpham/ao-canh-polo-phoi-ren-ms-16m9204-43337
+          - link [ref=f1e835] [cursor=pointer]:
+            - /url: https://ivymoda.com/sanpham/ao-kieu-petal-light-ms-16b0646-44338
+  - generic [ref=f1e838]:
+    - generic [ref=f1e839]:
+      - generic [ref=f1e840]:
+        - link "logo-footer" [ref=f1e842] [cursor=pointer]:
+          - /url: https://ivymoda.com/
+          - img "logo-footer" [ref=f1e843]
+        - link "DMCA.com Protection Status" [ref=f1e844] [cursor=pointer]:
+          - /url: https://www.dmca.com/Protection/Status.aspx?ID=0cfdeac4-6e7f-4fca-941f-57a0a0962777&refurl=https://ivymoda.com/
+          - img "DMCA.com Protection Status" [ref=f1e845]
+        - link "img-congthuong" [ref=f1e847] [cursor=pointer]:
+          - /url: http://online.gov.vn/Home/WebDetails/36596
+          - img "img-congthuong" [ref=f1e848]
+      - generic [ref=f1e849]:
+        - list [ref=f1e850]:
+          - listitem [ref=f1e851]:
+            - link "ic_fb" [ref=f1e852] [cursor=pointer]:
+              - /url: https://www.facebook.com/thoitrangivymoda/
+              - img "ic_fb" [ref=f1e853]
+          - listitem [ref=f1e854]:
+            - link "ic_gg" [ref=f1e855] [cursor=pointer]:
+              - /url: https://ivymoda.com/
+              - img "ic_gg" [ref=f1e856]
+          - listitem [ref=f1e857]:
+            - link "ic_instagram" [ref=f1e858] [cursor=pointer]:
+              - /url: https://www.instagram.com/ivy_moda/
+              - img "ic_instagram" [ref=f1e859]
+          - listitem [ref=f1e860]:
+            - link "ic_zalo" [ref=f1e861] [cursor=pointer]:
+              - /url: https://zalo.me/2129412421626719329
+              - img "ic_zalo" [ref=f1e862]
+          - listitem [ref=f1e863]:
+            - link "ic_ytb" [ref=f1e864] [cursor=pointer]:
+              - /url: https://www.youtube.com/user/thoitrangivymoda
+              - img "ic_ytb" [ref=f1e865]
+        - 'link "Hotline: 0246 662 3434" [ref=f1e867] [cursor=pointer]':
+          - /url: tel:02466623434
+    - generic [ref=f1e868]:
+      - generic [ref=f1e869]:
+        - paragraph [ref=f1e870]: Giới thiệu
+        - list [ref=f1e871]:
+          - listitem [ref=f1e872]:
+            - link "Về IVY moda" [ref=f1e873] [cursor=pointer]:
+              - /url: https://ivymoda.com/about/gioi-thieu
+          - listitem [ref=f1e874]:
+            - link "Tuyển dụng" [ref=f1e875] [cursor=pointer]:
+              - /url: https://tuyendung.ivy.com.vn
+          - listitem [ref=f1e876]:
+            - link "Hệ thống cửa hàng" [ref=f1e877] [cursor=pointer]:
+              - /url: https://ivymoda.com/page/cuahang
+      - generic [ref=f1e878]:
+        - paragraph [ref=f1e879]: Dịch vụ khách hàng
+        - list [ref=f1e880]:
+          - listitem [ref=f1e881]:
+            - link "Chính sách điều khoản" [ref=f1e882] [cursor=pointer]:
+              - /url: https://ivymoda.com/about/chinhsach-dieukhoan
+          - listitem [ref=f1e883]:
+            - link "Hướng dẫn mua hàng" [ref=f1e884] [cursor=pointer]:
+              - /url: https://ivymoda.com/about/huong-dan-mua-hang
+          - listitem [ref=f1e885]:
+            - link "Chính sách thanh toán" [ref=f1e886] [cursor=pointer]:
+              - /url: https://ivymoda.com/about/chinh-sach-thanh-toan
+          - listitem [ref=f1e887]:
+            - link "Chính sách đổi trả" [ref=f1e888] [cursor=pointer]:
+              - /url: https://ivymoda.com/about/chinh-sach-doi-tra
+          - listitem [ref=f1e889]:
+            - link "Chính sách bảo hành" [ref=f1e890] [cursor=pointer]:
+              - /url: https://ivymoda.com/about/chinh-sach-bao-hanh
+          - listitem [ref=f1e891]:
+            - link "Chính sách giao nhận vận chuyển" [ref=f1e892] [cursor=pointer]:
+              - /url: https://ivymoda.com/about/chinh-sach-giao-nhan-van-chuyen
+          - listitem [ref=f1e893]:
+            - link "Chính sách thẻ thành viên" [ref=f1e894] [cursor=pointer]:
+              - /url: https://ivymoda.com/about/chinh-sach-the-thanh-vien
+          - listitem [ref=f1e895]:
+            - link "Q&A" [ref=f1e896] [cursor=pointer]:
+              - /url: https://ivymoda.com/about/qa
+      - generic [ref=f1e897]:
+        - paragraph [ref=f1e898]: Liên hệ
+        - list [ref=f1e899]:
+          - listitem [ref=f1e900]:
+            - link "Hotline" [ref=f1e901] [cursor=pointer]:
+              - /url: tel:02466623434
+          - listitem [ref=f1e902]:
+            - link "Email" [ref=f1e903] [cursor=pointer]:
+              - /url: mailto:saleadmin@ivy.com.vn
+          - listitem [ref=f1e904]:
+            - link "Live Chat" [ref=f1e905] [cursor=pointer]:
+              - /url: javascript:openCsChatBox();
+          - listitem [ref=f1e906]:
+            - link "Messenger" [ref=f1e907] [cursor=pointer]:
+              - /url: http://messenger.com/t/thoitrangivymoda
+          - listitem [ref=f1e908]:
+            - link "Liên hệ" [ref=f1e909] [cursor=pointer]:
+              - /url: https://ivymoda.com/lien-he
+    - generic [ref=f1e910]:
+      - generic [ref=f1e911]:
+        - paragraph [ref=f1e912]: Nhận thông tin các chương trình của IVY moda
+        - generic [ref=f1e913]:
+          - textbox "Nhập địa chỉ email" [ref=f1e914]
+          - button "Đăng ký" [ref=f1e916] [cursor=pointer]
+      - generic [ref=f1e917]:
+        - paragraph [ref=f1e918]: Download App
+        - list [ref=f1e919]:
+          - listitem [ref=f1e920]:
+            - link "Tải App IVYmoda trên App Store" [ref=f1e921] [cursor=pointer]:
+              - /url: http://ios.ivy.vn
+          - listitem [ref=f1e922]:
+            - link "Tải App IVYmoda trên Google Play" [ref=f1e923] [cursor=pointer]:
+              - /url: http://android.ivy.vn
+  - text:   
+  - contentinfo [ref=f1e924]:
+    - generic [ref=f1e926]: ©IVYmoda All rights reserved
+  - text:          

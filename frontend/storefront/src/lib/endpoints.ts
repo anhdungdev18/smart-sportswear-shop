@@ -1,0 +1,22 @@
+export const endpoints = {
+  products: "/api/v1/products",
+  product: (slugOrId: string) => `/api/v1/products/${slugOrId}`,
+  productSuggestions: "/api/v1/products/search-suggestions",
+  categories: "/api/v1/categories",
+  category: (slugOrId: string) => `/api/v1/categories/${slugOrId}`,
+  brands: "/api/v1/brands",
+  collections: "/api/v1/collections",
+  collection: (slug: string) => `/api/v1/collections/${slug}`,
+  banners: "/api/v1/banners/active",
+  promotions: "/api/v1/promotions/active",
+  page: (slug: string) => `/api/v1/pages/${slug}`,
+  settings: "/api/v1/settings/public",
+  cart: "/api/v1/cart",
+  auth: {
+    login: "/api/v1/auth/login",
+    register: "/api/v1/auth/register",
+    refresh: "/api/v1/auth/refresh",
+    logout: "/api/v1/auth/logout",
+    me: "/api/v1/users/me",
+  },
+} as const;
