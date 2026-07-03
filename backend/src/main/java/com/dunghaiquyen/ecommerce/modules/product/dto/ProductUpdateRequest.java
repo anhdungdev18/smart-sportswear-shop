@@ -6,6 +6,7 @@ import com.dunghaiquyen.ecommerce.modules.product.entity.Gender;
 import com.dunghaiquyen.ecommerce.modules.product.entity.ProductStatus;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -42,5 +43,7 @@ public record ProductUpdateRequest(
 
         ProductStatus status,
 
-        Boolean isFeatured) {
+        Boolean isFeatured,
+
+        Map<String, String> attributes) {
 }

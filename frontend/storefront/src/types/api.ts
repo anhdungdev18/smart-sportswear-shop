@@ -66,6 +66,7 @@ export interface ProductDetail {
   variants: ProductVariant[];
   status: string;
   isFeatured: boolean;
+  attributes?: Record<string, string>;
   reviewSummary?: ReviewSummary;
   relatedProducts: ProductListItem[];
 }
@@ -77,6 +78,48 @@ export interface Category {
   description?: string;
   imageUrl?: string;
   parentId?: string;
+}
+
+export interface CollectionSummary {
+  id: string;
+  name: string;
+  slug: string;
+  shortDescription?: string;
+  season?: string;
+  year?: number;
+  coverImageUrl?: string;
+  bannerImageUrl?: string;
+  isFeatured: boolean;
+}
+
+export interface CollectionDetail {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  shortDescription?: string;
+  season?: string;
+  year?: number;
+  coverImageUrl?: string;
+  bannerImageUrl?: string;
+  products: ProductListItem[];
+}
+
+export interface BannerItem {
+  id: string;
+  title?: string;
+  subtitle?: string;
+  imageUrl: string;
+  targetUrl?: string;
+  sortOrder: number;
+  isActive: boolean;
+}
+
+export interface Banner {
+  id: string;
+  name: string;
+  placement: string;
+  items: BannerItem[];
 }
 
 export interface ProductSuggestion {

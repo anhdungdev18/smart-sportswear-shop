@@ -13,20 +13,26 @@ public class SeedDataRunner implements CommandLineRunner {
     private static final Logger log = LoggerFactory.getLogger(SeedDataRunner.class);
 
     private final SeedDataService seedDataService;
+    private final FashionProductSeeder fashionProductSeeder;
 
-    public SeedDataRunner(SeedDataService seedDataService) {
+    public SeedDataRunner(SeedDataService seedDataService, FashionProductSeeder fashionProductSeeder) {
         this.seedDataService = seedDataService;
+        this.fashionProductSeeder = fashionProductSeeder;
     }
 
     @Override
     public void run(String... args) {
+        // Sports seeder must run first — it clears old data before SeedDataService re-creates its own fixtures.
+        fashionProductSeeder.seed();
+
         SeedDataService.SeedSummary summary = seedDataService.seed();
         log.info(
-                "Seed complete: users={}, products={}, variants={}, orders={}",
+                "Core seed complete: users={}, products={}, variants={}, orders={}",
                 summary.users(),
                 summary.products(),
                 summary.variants(),
                 summary.orders());
+
         log.info(
                 "Demo credentials: {} / {}",
                 SeedDataService.DEMO_ADMIN_EMAIL,

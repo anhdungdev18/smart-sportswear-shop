@@ -250,6 +250,9 @@ public class ProductService {
         product.setProductType(request.productType());
         product.setStatus(request.status() != null ? request.status() : ProductStatus.DRAFT);
         product.setFeatured(request.isFeatured() != null && request.isFeatured());
+        if (request.attributes() != null) {
+            product.setAttributes(request.attributes());
+        }
 
         try {
             product = productRepository.save(product);
@@ -304,6 +307,9 @@ public class ProductService {
         }
         if (request.isFeatured() != null) {
             product.setFeatured(request.isFeatured());
+        }
+        if (request.attributes() != null) {
+            product.setAttributes(request.attributes());
         }
 
         try {
@@ -435,6 +441,9 @@ public class ProductService {
                 // Unknown collection slug → empty result set (same pattern as unknown category/brand slug).
                 spec = spec.and((root, query, cb) -> cb.disjunction());
             }
+        }
+        if (q.featured() != null) {
+            spec = spec.and(ProductSpecifications.isFeatured(q.featured()));
         }
         return spec;
     }
@@ -585,6 +594,7 @@ public class ProductService {
                 variants.stream().map(productMapper::toVariantResponse).toList(),
                 product.getStatus(),
                 product.isFeatured(),
+                product.getAttributes(),
                 reviewSummary,
                 relatedProducts);
     }

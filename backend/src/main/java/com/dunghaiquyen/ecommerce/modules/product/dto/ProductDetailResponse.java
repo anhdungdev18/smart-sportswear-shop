@@ -4,6 +4,7 @@ import com.dunghaiquyen.ecommerce.modules.product.entity.Gender;
 import com.dunghaiquyen.ecommerce.modules.product.entity.ProductStatus;
 import com.dunghaiquyen.ecommerce.modules.product.entity.ProductType;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -27,6 +28,7 @@ public record ProductDetailResponse(
         List<ProductVariantResponse> variants,
         ProductStatus status,
         boolean isFeatured,
+        Map<String, String> attributes,
         ReviewSummaryResponse reviewSummary,
         List<ProductListItemResponse> relatedProducts) {
 }
