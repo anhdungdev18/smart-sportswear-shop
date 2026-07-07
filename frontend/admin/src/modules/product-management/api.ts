@@ -1,4 +1,4 @@
-import { apiRequest, shouldUseMockApi, type ApiQuery } from "@/modules/api/client";
+﻿import { apiRequest, shouldUseMockApi, type ApiQuery } from "@/modules/api/client";
 import { adminEndpoints } from "@/modules/api/endpoints";
 import { adminProducts, productStats, type AdminProduct } from "@/modules/product-management/products";
 
@@ -70,19 +70,18 @@ function mapAdminStatus(status: AdminProductListItemResponse["status"], stock: n
 }
 
 async function loadAdminProductDataset(query: AdminProductListQuery = {}) {
-  const [productsResponse, inventoryResponse, productReport] = await Promise.all([
-    apiRequest<AdminProductListItemResponse[]>(adminEndpoints.products, {
-      query: {
-        page: query.page,
-        limit: query.limit ?? 50
-      },
-      next: { revalidate: 30 }
-    }),
+  const productsResponse = await apiRequest<AdminProductListItemResponse[]>(adminEndpoints.products, {
+    query: { page: query.page, limit: query.limit ?? 50 },
+    next: { revalidate: 30 }
+  });
+
+  const [inventoryResponse, productReport] = await Promise.all([
     apiRequest<InventoryItemResponse[]>(adminEndpoints.inventory, {
       query: { limit: 500 },
       next: { revalidate: 30 }
-    }),
+    }).catch(() => [] as InventoryItemResponse[]),
     apiRequest<ProductReportResponse>(adminEndpoints.topProducts, { next: { revalidate: 30 } })
+      .catch(() => ({ bestSelling: [] } as ProductReportResponse))
   ]);
 
   const stockByProduct = new Map<string, { stock: number; sku: string }>();
@@ -113,41 +112,38 @@ async function loadAdminProductDataset(query: AdminProductListQuery = {}) {
       stock,
       sold: soldByProduct.get(item.id) ?? 0,
       status: mapAdminStatus(item.status, stock),
+      isFeatured: item.isFeatured,
       image: item.thumbnail ?? "https://placehold.co/96x96/f5f5f5/202020?text=SP"
     } satisfies AdminProduct;
   });
 }
 
 export async function listAdminProducts(query: AdminProductListQuery = {}) {
-  if (!shouldUseMockApi()) {
-    try {
-      return await loadAdminProductDataset(query);
-    } catch {
-      return adminProducts;
-    }
+  if (shouldUseMockApi()) {
+    return adminProducts;
   }
 
-  return adminProducts;
+  return loadAdminProductDataset(query);
+}
+
+export function buildAdminProductStats(items: AdminProduct[]) {
+  const active = items.filter((item) => item.status === "active").length;
+  const low = items.filter((item) => item.status === "low").length;
+  const out = items.filter((item) => item.status === "out").length;
+
+  return [
+    { label: "Tổng sản phẩm", value: String(items.length), tone: "neutral" },
+    { label: "Đang bán", value: String(active), tone: "success" },
+    { label: "Sắp hết hàng", value: String(low), tone: "warning" },
+    { label: "Hết hàng", value: String(out), tone: "danger" }
+  ] as const;
 }
 
 export async function getAdminProductStats() {
-  if (!shouldUseMockApi()) {
-    try {
-      const items = await loadAdminProductDataset({ limit: 100 });
-      const active = items.filter((item) => item.status === "active").length;
-      const low = items.filter((item) => item.status === "low").length;
-      const out = items.filter((item) => item.status === "out").length;
-
-      return [
-        { label: "Tổng sản phẩm", value: String(items.length), tone: "neutral" },
-        { label: "Đang bán", value: String(active), tone: "success" },
-        { label: "Sắp hết hàng", value: String(low), tone: "warning" },
-        { label: "Hết hàng", value: String(out), tone: "danger" }
-      ];
-    } catch {
-      return productStats;
-    }
+  if (shouldUseMockApi()) {
+    return productStats;
   }
 
-  return productStats;
+  const items = await loadAdminProductDataset({ limit: 100 });
+  return buildAdminProductStats(items);
 }

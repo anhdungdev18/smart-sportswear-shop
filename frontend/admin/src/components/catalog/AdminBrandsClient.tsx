@@ -1,18 +1,10 @@
-"use client";
+﻿"use client";
 
-import { useState } from "react";
-import { ApiRequestError } from "@/modules/api/common";
+import { useEffect, useState } from "react";
+import { extractAdminError } from "@/modules/api/admin-errors";
 import { createBrand, updateBrand } from "@/modules/catalog-admin/browser-api";
 import type { BrandResponse } from "@/modules/catalog-admin/types";
-
-function extractError(error: unknown, fallback: string) {
-  if (error instanceof ApiRequestError) {
-    const payload = error.payload as { message?: string } | null;
-    return payload?.message ?? fallback;
-  }
-
-  return fallback;
-}
+import { toSlug } from "@/modules/utils/slug";
 
 function createEmptyForm() {
   return {
@@ -23,15 +15,37 @@ function createEmptyForm() {
   };
 }
 
+function toStatusLabel(status: string) {
+  return status === "ACTIVE" ? "Hoạt động" : "Ẩn";
+}
+
 export function AdminBrandsClient({ initialItems }: { initialItems: BrandResponse[] }) {
   const [items, setItems] = useState(initialItems);
   const [selectedId, setSelectedId] = useState(initialItems[0]?.id ?? "");
   const [form, setForm] = useState(createEmptyForm());
   const [message, setMessage] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [slugDirty, setSlugDirty] = useState(false);
+
+  useEffect(() => {
+    if (initialItems.length === 0) {
+      return;
+    }
+
+    const first = initialItems[0];
+    setSelectedId(first.id);
+    setSlugDirty(true);
+    setForm({
+      name: first.name,
+      slug: first.slug,
+      description: first.description ?? "",
+      status: first.status
+    });
+  }, [initialItems]);
 
   function handleSelect(item: BrandResponse) {
     setSelectedId(item.id);
+    setSlugDirty(true);
     setForm({
       name: item.name,
       slug: item.slug,
@@ -43,6 +57,7 @@ export function AdminBrandsClient({ initialItems }: { initialItems: BrandRespons
 
   function startCreate() {
     setSelectedId("");
+    setSlugDirty(false);
     setForm(createEmptyForm());
     setMessage("Bạn đang tạo thương hiệu mới.");
   }
@@ -72,9 +87,16 @@ export function AdminBrandsClient({ initialItems }: { initialItems: BrandRespons
       });
       setItems((current) => [created, ...current]);
       setSelectedId(created.id);
+      setSlugDirty(true);
+      setForm({
+        name: created.name,
+        slug: created.slug,
+        description: created.description ?? "",
+        status: created.status
+      });
       setMessage(`Đã tạo thương hiệu ${created.name}.`);
     } catch (error) {
-      setMessage(extractError(error, "Không lưu được thương hiệu"));
+      setMessage(extractAdminError(error, "Không lưu được thương hiệu"));
     } finally {
       setSaving(false);
     }
@@ -86,48 +108,78 @@ export function AdminBrandsClient({ initialItems }: { initialItems: BrandRespons
         <div className="panel-header">
           <div>
             <h2>Danh sách thương hiệu</h2>
-            <p className="panel-copy">Quản lý brand dùng chung cho storefront và admin.</p>
+            <p className="panel-copy">Quản lý thương hiệu dùng chung cho storefront và toàn bộ catalog sản phẩm.</p>
           </div>
           <button className="admin-btn" type="button" onClick={startCreate}>
             Tạo thương hiệu
           </button>
         </div>
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Tên</th>
-              <th>Slug</th>
-              <th>Trạng thái</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((item) => (
-              <tr key={item.id} className={selectedId === item.id ? "row-selected" : ""} onClick={() => handleSelect(item)}>
-                <td>{item.name}</td>
-                <td>{item.slug}</td>
-                <td>{item.status}</td>
+
+        {items.length === 0 ? (
+          <div className="empty-state">Hiện chưa có thương hiệu nào. Hãy tạo thương hiệu đầu tiên để bắt đầu.</div>
+        ) : (
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Tên</th>
+                <th>Slug</th>
+                <th>Trạng thái</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {items.map((item) => (
+                <tr key={item.id} className={selectedId === item.id ? "row-selected" : ""} onClick={() => handleSelect(item)}>
+                  <td>
+                    <strong>{item.name}</strong>
+                    {item.description ? <div className="table-subtle">{item.description}</div> : null}
+                  </td>
+                  <td>{item.slug}</td>
+                  <td>{toStatusLabel(item.status)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </section>
 
       <section className="card panel">
         <div className="panel-header">
           <div>
             <h2>{selectedId ? "Cập nhật thương hiệu" : "Tạo thương hiệu mới"}</h2>
+            <p className="panel-copy">Slug có thể nhập tay hoặc tự sinh theo tên khi bạn chưa chỉnh thủ công.</p>
           </div>
         </div>
         {message ? <p className="action-message">{message}</p> : null}
         <div className="admin-form-grid">
-          <input className="admin-input" placeholder="Tên thương hiệu" value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} />
-          <input className="admin-input" placeholder="Slug" value={form.slug} onChange={(event) => setForm((current) => ({ ...current, slug: event.target.value }))} />
+          <input
+            className="admin-input"
+            placeholder="Tên thương hiệu"
+            value={form.name}
+            onChange={(event) => {
+              const name = event.target.value;
+              setForm((current) => ({ ...current, name, ...(!slugDirty && { slug: toSlug(name) }) }));
+            }}
+          />
+          <input
+            className="admin-input"
+            placeholder="Slug"
+            value={form.slug}
+            onChange={(event) => {
+              setSlugDirty(true);
+              setForm((current) => ({ ...current, slug: event.target.value }));
+            }}
+          />
           <select className="select" value={form.status} onChange={(event) => setForm((current) => ({ ...current, status: event.target.value }))}>
             <option value="ACTIVE">ACTIVE</option>
             <option value="INACTIVE">INACTIVE</option>
           </select>
           <div className="admin-form-full">
-            <textarea className="admin-textarea" placeholder="Mô tả" value={form.description} onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))} />
+            <textarea
+              className="admin-textarea"
+              placeholder="Mô tả"
+              value={form.description}
+              onChange={(event) => setForm((current) => ({ ...current, description: event.target.value }))}
+            />
           </div>
         </div>
         <div className="page-actions">

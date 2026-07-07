@@ -3,6 +3,7 @@ import { adminEndpoints } from "@/modules/api/endpoints";
 import type {
   BrandResponse,
   CategoryResponse,
+  CollectionResponse,
   CouponResponse,
   ProductDetailResponse,
   ProductImageResponse,
@@ -104,6 +105,51 @@ export async function updatePromotion(id: string, input: Record<string, unknown>
   return browserApiRequest<PromotionResponse>(adminEndpoints.promotion(id), {
     method: "PATCH",
     body: JSON.stringify(input)
+  });
+}
+
+export type ProductPickItem = { id: string; name: string; slug: string; status: string };
+
+export async function listProductsForPicker() {
+  return browserApiRequest<ProductPickItem[]>(`${adminEndpoints.products}?limit=200`, { method: "GET" });
+}
+
+export async function listCollectionProducts(collectionId: string) {
+  return browserApiRequest<ProductPickItem[]>(adminEndpoints.collectionProducts(collectionId), { method: "GET" });
+}
+
+export async function listPromotionsForPicker() {
+  return browserApiRequest<PromotionResponse[]>(`${adminEndpoints.promotions}?limit=200`, { method: "GET" });
+}
+
+export async function listCouponsForAdmin() {
+  return browserApiRequest<CouponResponse[]>(`${adminEndpoints.coupons}?limit=200`, { method: "GET" });
+}
+
+export async function createCollection(input: Record<string, unknown>) {
+  return browserApiRequest<CollectionResponse>(adminEndpoints.collections, {
+    method: "POST",
+    body: JSON.stringify(input)
+  });
+}
+
+export async function updateCollection(id: string, input: Record<string, unknown>) {
+  return browserApiRequest<CollectionResponse>(adminEndpoints.collection(id), {
+    method: "PATCH",
+    body: JSON.stringify(input)
+  });
+}
+
+export async function addProductToCollection(productId: string, collectionId: string) {
+  return browserApiRequest<void>(adminEndpoints.productCollections(productId), {
+    method: "POST",
+    body: JSON.stringify({ collectionId })
+  });
+}
+
+export async function removeProductFromCollection(productId: string, collectionId: string) {
+  return browserApiRequest<void>(adminEndpoints.productCollection(productId, collectionId), {
+    method: "DELETE"
   });
 }
 

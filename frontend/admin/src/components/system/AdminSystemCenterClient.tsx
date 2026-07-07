@@ -1,6 +1,6 @@
-"use client";
+﻿"use client";
 
-import { useState } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 import { ApiRequestError } from "@/modules/api/common";
 import { resendNotification, updateNotificationTemplate } from "@/modules/notifications/browser-api";
 import type { NotificationResponse, NotificationTemplateResponse } from "@/modules/notifications/types";
@@ -32,6 +32,14 @@ export function AdminSystemCenterClient({
   const [settings, setSettings] = useState(initialSettings);
   const [message, setMessage] = useState<string | null>(null);
   const [savingKey, setSavingKey] = useState<string | null>(null);
+  const [notificationSearch, setNotificationSearch] = useState("");
+  const deferredNotificationSearch = useDeferredValue(notificationSearch);
+
+  const filteredNotifications = useMemo(() => {
+    const query = deferredNotificationSearch.trim().toLowerCase();
+    if (!query) return notifications;
+    return notifications.filter((item) => [item.recipient, item.type, item.status, item.subject].join(" ").toLowerCase().includes(query));
+  }, [deferredNotificationSearch, notifications]);
 
   async function handleTemplateUpdate(template: NotificationTemplateResponse) {
     try {
@@ -111,7 +119,7 @@ export function AdminSystemCenterClient({
                     value={item.settingValue ?? ""}
                     onChange={(event) =>
                       setSettings((current) =>
-                        current.map((setting) => setting.id === item.id ? { ...setting, settingValue: event.target.value } : setting)
+                        current.map((setting) => (setting.id === item.id ? { ...setting, settingValue: event.target.value } : setting))
                       )
                     }
                   />
@@ -122,12 +130,14 @@ export function AdminSystemCenterClient({
                     value={item.valueType}
                     onChange={(event) =>
                       setSettings((current) =>
-                        current.map((setting) => setting.id === item.id ? { ...setting, valueType: event.target.value } : setting)
+                        current.map((setting) => (setting.id === item.id ? { ...setting, valueType: event.target.value } : setting))
                       )
                     }
                   >
                     {settingValueTypes.map((type) => (
-                      <option value={type} key={type}>{type}</option>
+                      <option value={type} key={type}>
+                        {type}
+                      </option>
                     ))}
                   </select>
                 </td>
@@ -137,7 +147,7 @@ export function AdminSystemCenterClient({
                     value={item.description ?? ""}
                     onChange={(event) =>
                       setSettings((current) =>
-                        current.map((setting) => setting.id === item.id ? { ...setting, description: event.target.value } : setting)
+                        current.map((setting) => (setting.id === item.id ? { ...setting, description: event.target.value } : setting))
                       )
                     }
                   />
@@ -149,7 +159,7 @@ export function AdminSystemCenterClient({
                       checked={item.isPublic}
                       onChange={(event) =>
                         setSettings((current) =>
-                          current.map((setting) => setting.id === item.id ? { ...setting, isPublic: event.target.checked } : setting)
+                          current.map((setting) => (setting.id === item.id ? { ...setting, isPublic: event.target.checked } : setting))
                         )
                       }
                     />
@@ -192,7 +202,7 @@ export function AdminSystemCenterClient({
                     value={item.subject}
                     onChange={(event) =>
                       setTemplates((current) =>
-                        current.map((template) => template.id === item.id ? { ...template, subject: event.target.value } : template)
+                        current.map((template) => (template.id === item.id ? { ...template, subject: event.target.value } : template))
                       )
                     }
                   />
@@ -203,7 +213,7 @@ export function AdminSystemCenterClient({
                     value={item.body}
                     onChange={(event) =>
                       setTemplates((current) =>
-                        current.map((template) => template.id === item.id ? { ...template, body: event.target.value } : template)
+                        current.map((template) => (template.id === item.id ? { ...template, body: event.target.value } : template))
                       )
                     }
                   />
@@ -222,7 +232,17 @@ export function AdminSystemCenterClient({
 
       <section className="card panel">
         <div className="panel-header">
-          <h2>Lịch sử gửi gần đây</h2>
+          <div>
+            <h2>Lịch sử gửi gần đây</h2>
+            <p className="panel-copy">Theo dõi trạng thái gửi thực tế và hỗ trợ gửi lại nhanh khi cần.</p>
+          </div>
+          <input
+            className="admin-input"
+            style={{ width: 280 }}
+            placeholder="Tìm theo người nhận, loại hoặc tiêu đề..."
+            value={notificationSearch}
+            onChange={(event) => setNotificationSearch(event.target.value)}
+          />
         </div>
         <table className="data-table">
           <thead>
@@ -235,7 +255,14 @@ export function AdminSystemCenterClient({
             </tr>
           </thead>
           <tbody>
-            {notifications.map((item) => (
+            {filteredNotifications.length === 0 ? (
+              <tr>
+                <td colSpan={5} style={{ textAlign: "center", color: "var(--admin-muted)" }}>
+                  Không có thông báo nào khớp bộ lọc hiện tại.
+                </td>
+              </tr>
+            ) : null}
+            {filteredNotifications.map((item) => (
               <tr key={item.id}>
                 <td>{new Date(item.createdAt).toLocaleString("vi-VN")}</td>
                 <td>{item.recipient}</td>

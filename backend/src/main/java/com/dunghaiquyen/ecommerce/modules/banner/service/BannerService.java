@@ -3,6 +3,9 @@ package com.dunghaiquyen.ecommerce.modules.banner.service;
 import com.dunghaiquyen.ecommerce.common.exception.BusinessRuleException;
 import com.dunghaiquyen.ecommerce.common.exception.ResourceNotFoundException;
 import com.dunghaiquyen.ecommerce.common.response.PageMeta;
+import com.dunghaiquyen.ecommerce.config.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import com.dunghaiquyen.ecommerce.modules.banner.dto.BannerCreateRequest;
 import com.dunghaiquyen.ecommerce.modules.banner.dto.BannerItemCreateRequest;
 import com.dunghaiquyen.ecommerce.modules.banner.dto.BannerItemResponse;
@@ -54,6 +57,7 @@ public class BannerService {
     public record ListResult(List<BannerResponse> items, PageMeta meta) {
     }
 
+    @Cacheable(value = CacheConfig.BANNERS, key = "#placement")
     @Transactional(readOnly = true)
     public List<PublicBannerResponse> listActive(BannerPlacement placement) {
         return bannerRepository.findAllActiveByPlacement(BannerStatus.ACTIVE, placement, Instant.now()).stream()
@@ -83,6 +87,7 @@ public class BannerService {
         return toResponse(banner);
     }
 
+    @CacheEvict(value = CacheConfig.BANNERS, allEntries = true)
     @Transactional
     public BannerResponse create(BannerCreateRequest request) {
         if (bannerRepository.existsByCode(request.code())) {
@@ -106,6 +111,7 @@ public class BannerService {
         return toResponse(banner);
     }
 
+    @CacheEvict(value = CacheConfig.BANNERS, allEntries = true)
     @Transactional
     public BannerResponse update(UUID id, BannerUpdateRequest request) {
         Banner banner = bannerRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Banner not found"));
@@ -141,6 +147,7 @@ public class BannerService {
         return toResponse(bannerRepository.save(banner));
     }
 
+    @CacheEvict(value = CacheConfig.BANNERS, allEntries = true)
     @Transactional
     public BannerItemResponse addItem(UUID bannerId, BannerItemCreateRequest request) {
         Banner banner = bannerRepository.findById(bannerId)
@@ -159,6 +166,7 @@ public class BannerService {
         return toItemResponse(bannerItemRepository.save(item));
     }
 
+    @CacheEvict(value = CacheConfig.BANNERS, allEntries = true)
     @Transactional
     public BannerItemResponse updateItem(UUID itemId, BannerItemUpdateRequest request) {
         BannerItem item = bannerItemRepository.findById(itemId)
@@ -189,6 +197,7 @@ public class BannerService {
         return toItemResponse(bannerItemRepository.save(item));
     }
 
+    @CacheEvict(value = CacheConfig.BANNERS, allEntries = true)
     @Transactional
     public void deleteItem(UUID itemId) {
         if (!bannerItemRepository.existsById(itemId)) {

@@ -3,8 +3,12 @@ package com.dunghaiquyen.ecommerce.modules.collection.service;
 import com.dunghaiquyen.ecommerce.common.exception.BusinessRuleException;
 import com.dunghaiquyen.ecommerce.common.exception.ResourceNotFoundException;
 import com.dunghaiquyen.ecommerce.common.response.PageMeta;
+import com.dunghaiquyen.ecommerce.config.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import com.dunghaiquyen.ecommerce.modules.collection.dto.AddProductToCollectionRequest;
 import com.dunghaiquyen.ecommerce.modules.collection.dto.CollectionCreateRequest;
+import com.dunghaiquyen.ecommerce.modules.collection.dto.CollectionProductAssignmentResponse;
 import com.dunghaiquyen.ecommerce.modules.collection.dto.CollectionResponse;
 import com.dunghaiquyen.ecommerce.modules.collection.dto.CollectionUpdateRequest;
 import com.dunghaiquyen.ecommerce.modules.collection.dto.PublicCollectionDetailResponse;
@@ -58,6 +62,7 @@ public class CollectionService {
 
     // ===== PUBLIC ===========================================================
 
+    @Cacheable(CacheConfig.COLLECTIONS)
     @Transactional(readOnly = true)
     public List<PublicCollectionResponse> listPublic() {
         return collectionRepository.findAllActive(CollectionStatus.ACTIVE, Instant.now()).stream()
@@ -104,6 +109,23 @@ public class CollectionService {
         return new AdminListResult(p.getContent().stream().map(this::toAdminResponse).toList(), PageMeta.from(p));
     }
 
+    @Transactional(readOnly = true)
+    public List<CollectionProductAssignmentResponse> listAssignedProducts(UUID collectionId) {
+        if (!collectionRepository.existsById(collectionId)) {
+            throw new ResourceNotFoundException("Collection not found");
+        }
+
+        return productCollectionRepository.findAllByCollectionIdOrderBySortOrderAsc(collectionId).stream()
+                .map(ProductCollection::getProduct)
+                .map(product -> new CollectionProductAssignmentResponse(
+                        product.getId(),
+                        product.getName(),
+                        product.getSlug(),
+                        product.getStatus().name()))
+                .toList();
+    }
+
+    @CacheEvict(value = CacheConfig.COLLECTIONS, allEntries = true)
     @Transactional
     public CollectionResponse create(CollectionCreateRequest request) {
         if (collectionRepository.existsBySlug(request.slug())) {
@@ -135,6 +157,7 @@ public class CollectionService {
         return toAdminResponse(c);
     }
 
+    @CacheEvict(value = CacheConfig.COLLECTIONS, allEntries = true)
     @Transactional
     public CollectionResponse update(UUID id, CollectionUpdateRequest request) {
         Collection c = collectionRepository.findById(id)
@@ -175,6 +198,7 @@ public class CollectionService {
      * clean 409 rather than a generic 500. This makes FE idempotent-safe: a
      * double-submit produces a clear business error, not an unhandled exception.
      */
+    @CacheEvict(value = CacheConfig.COLLECTIONS, allEntries = true)
     @Transactional
     public void linkProduct(UUID productId, AddProductToCollectionRequest request) {
         Product product = productRepository.findById(productId)
@@ -208,6 +232,7 @@ public class CollectionService {
      * of product/collection associations that are not needed for a plain DELETE.
      */
     @Transactional
+    @CacheEvict(value = CacheConfig.COLLECTIONS, allEntries = true)
     public void unlinkProduct(UUID productId, UUID collectionId) {
         productCollectionRepository.findByProductIdAndCollectionId(productId, collectionId)
                 .ifPresent(pc -> productCollectionRepository.deleteById(pc.getId()));

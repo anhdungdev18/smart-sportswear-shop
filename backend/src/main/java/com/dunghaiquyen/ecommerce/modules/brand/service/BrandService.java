@@ -2,6 +2,7 @@ package com.dunghaiquyen.ecommerce.modules.brand.service;
 
 import com.dunghaiquyen.ecommerce.common.exception.BusinessRuleException;
 import com.dunghaiquyen.ecommerce.common.exception.ResourceNotFoundException;
+import com.dunghaiquyen.ecommerce.config.CacheConfig;
 import com.dunghaiquyen.ecommerce.modules.brand.dto.BrandCreateRequest;
 import com.dunghaiquyen.ecommerce.modules.brand.dto.BrandResponse;
 import com.dunghaiquyen.ecommerce.modules.brand.dto.BrandUpdateRequest;
@@ -11,6 +12,8 @@ import com.dunghaiquyen.ecommerce.modules.brand.mapper.BrandMapper;
 import com.dunghaiquyen.ecommerce.modules.brand.repository.BrandRepository;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +29,7 @@ public class BrandService {
         this.brandMapper = brandMapper;
     }
 
+    @Cacheable(CacheConfig.BRANDS)
     @Transactional(readOnly = true)
     public List<BrandResponse> listActive() {
         return brandRepository.findAllByStatusOrderByNameAsc(BrandStatus.ACTIVE).stream()
@@ -33,6 +37,7 @@ public class BrandService {
                 .toList();
     }
 
+    @CacheEvict(value = CacheConfig.BRANDS, allEntries = true)
     @Transactional
     public BrandResponse create(BrandCreateRequest request) {
         if (brandRepository.existsBySlug(request.slug())) {
@@ -53,6 +58,7 @@ public class BrandService {
         return brandMapper.toResponse(brand);
     }
 
+    @CacheEvict(value = CacheConfig.BRANDS, allEntries = true)
     @Transactional
     public BrandResponse update(UUID id, BrandUpdateRequest request) {
         Brand brand = brandRepository.findById(id)

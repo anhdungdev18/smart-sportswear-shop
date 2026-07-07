@@ -1,13 +1,8 @@
-"use client";
+﻿"use client";
 
-import { useState } from "react";
+import { useDeferredValue, useMemo, useRef, useState } from "react";
 import { ApiRequestError } from "@/modules/api/common";
-import {
-  createRefund,
-  fetchAdminReturnDetail,
-  updateRefundStatus,
-  updateReturnStatus
-} from "@/modules/returns/browser-api";
+import { createRefund, fetchAdminReturnDetail, updateRefundStatus, updateReturnStatus } from "@/modules/returns/browser-api";
 import type { RefundResponse, ReturnResponse } from "@/modules/returns/types";
 
 const returnStatuses = ["REQUESTED", "APPROVED", "REJECTED", "RECEIVED", "REFUNDED", "CANCELLED"] as const;
@@ -32,25 +27,36 @@ export function AdminReturnsClient({
   const [items, setItems] = useState(initialReturns);
   const [selectedId, setSelectedId] = useState("");
   const [refundsByReturn, setRefundsByReturn] = useState(initialRefundsByReturn);
-  const [statusDrafts, setStatusDrafts] = useState<Record<string, string>>(
-    Object.fromEntries(initialReturns.map((item) => [item.id, item.status]))
-  );
+  const [statusDrafts, setStatusDrafts] = useState<Record<string, string>>(Object.fromEntries(initialReturns.map((item) => [item.id, item.status])));
   const [refundStatusDrafts, setRefundStatusDrafts] = useState<Record<string, string>>(
-    Object.fromEntries(
-      Object.values(initialRefundsByReturn)
-        .flat()
-        .map((item) => [item.id, item.status])
-    )
+    Object.fromEntries(Object.values(initialRefundsByReturn).flat().map((item) => [item.id, item.status]))
   );
   const [message, setMessage] = useState<string | null>(null);
   const [saving, setSaving] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const deferredSearch = useDeferredValue(search);
+  const detailCacheRef = useRef<Record<string, ReturnResponse>>({});
+
+  const filteredItems = useMemo(() => {
+    const query = deferredSearch.trim().toLowerCase();
+    if (!query) return items;
+    return items.filter((item) => [item.returnCode, item.orderCode, item.reason, item.description ?? "", item.status].join(" ").toLowerCase().includes(query));
+  }, [deferredSearch, items]);
 
   async function handleLoadDetail(id: string) {
+    setSelectedId(id);
+    setMessage(null);
+
+    const cached = detailCacheRef.current[id];
+    if (cached) {
+      setItems((current) => current.map((item) => (item.id === cached.id ? cached : item)));
+      return;
+    }
+
     try {
       setSaving(`detail:${id}`);
-      setSelectedId(id);
-      setMessage(null);
       const detail = await fetchAdminReturnDetail(id);
+      detailCacheRef.current[id] = detail;
       setItems((current) => current.map((item) => (item.id === detail.id ? detail : item)));
     } catch (error) {
       setMessage(extractError(error, "Không tải được chi tiết yêu cầu đổi trả"));
@@ -64,6 +70,7 @@ export function AdminReturnsClient({
       setSaving(`return:${item.id}`);
       setMessage(null);
       const updated = await updateReturnStatus(item.id, { status: statusDrafts[item.id] ?? item.status });
+      detailCacheRef.current[item.id] = updated;
       setItems((current) => current.map((currentItem) => (currentItem.id === updated.id ? updated : currentItem)));
       setMessage(`Đã cập nhật trạng thái yêu cầu ${updated.returnCode}.`);
     } catch (error) {
@@ -117,11 +124,20 @@ export function AdminReturnsClient({
           <h2>Quản lý đổi trả và hoàn tiền</h2>
           <p className="panel-copy">Theo dõi return workflow và refund ngay trên cùng một màn hình.</p>
         </div>
+        <input
+          className="admin-input"
+          style={{ width: 280 }}
+          placeholder="Tìm theo mã đổi trả, mã đơn hoặc lý do..."
+          value={search}
+          onChange={(event) => setSearch(event.target.value)}
+        />
       </div>
       {message ? <p className="action-message">{message}</p> : null}
 
       <div className="admin-stack">
-        {items.map((item) => {
+        {filteredItems.length === 0 ? <div className="empty-state">Không có yêu cầu đổi trả nào khớp bộ lọc hiện tại.</div> : null}
+
+        {filteredItems.map((item) => {
           const refunds = refundsByReturn[item.id] ?? [];
 
           return (
@@ -138,12 +154,12 @@ export function AdminReturnsClient({
                   <select
                     className="select"
                     value={statusDrafts[item.id] ?? item.status}
-                    onChange={(event) =>
-                      setStatusDrafts((current) => ({ ...current, [item.id]: event.target.value }))
-                    }
+                    onChange={(event) => setStatusDrafts((current) => ({ ...current, [item.id]: event.target.value }))}
                   >
                     {returnStatuses.map((status) => (
-                      <option value={status} key={status}>{status}</option>
+                      <option value={status} key={status}>
+                        {status}
+                      </option>
                     ))}
                   </select>
                   <button className="admin-btn" type="button" onClick={() => void handleUpdateStatus(item)} disabled={saving === `return:${item.id}`}>
@@ -183,21 +199,23 @@ export function AdminReturnsClient({
                 </tbody>
               </table>
 
-              {refunds.length ? (
+              {refunds.length > 0 ? (
                 <div className="admin-stack">
                   {refunds.map((refund) => (
                     <div className="admin-inline-form wrap" key={refund.id}>
                       <strong>{refund.refundCode}</strong>
-                      <span className="table-subtle">{refund.provider} · {Math.round(refund.amount).toLocaleString("vi-VN")}₫</span>
+                      <span className="table-subtle">
+                        {refund.provider} · {Math.round(refund.amount).toLocaleString("vi-VN")}₫
+                      </span>
                       <select
                         className="select"
                         value={refundStatusDrafts[refund.id] ?? refund.status}
-                        onChange={(event) =>
-                          setRefundStatusDrafts((current) => ({ ...current, [refund.id]: event.target.value }))
-                        }
+                        onChange={(event) => setRefundStatusDrafts((current) => ({ ...current, [refund.id]: event.target.value }))}
                       >
                         {refundStatuses.map((status) => (
-                          <option value={status} key={status}>{status}</option>
+                          <option value={status} key={status}>
+                            {status}
+                          </option>
                         ))}
                       </select>
                       <button className="admin-btn secondary" type="button" onClick={() => void handleUpdateRefund(item.id, refund)} disabled={saving === `refund:${refund.id}`}>

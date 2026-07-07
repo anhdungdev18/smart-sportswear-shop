@@ -4,9 +4,9 @@ import { listAdminSettings } from "@/modules/settings/api";
 
 export default async function SystemConfigPage() {
   const [templates, notifications, settings] = await Promise.all([
-    listNotificationTemplates(),
-    listAdminNotifications(),
-    listAdminSettings()
+    listNotificationTemplates().catch(() => []),
+    listAdminNotifications().catch(() => []),
+    listAdminSettings().catch(() => [])
   ]);
 
   return (

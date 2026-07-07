@@ -12,11 +12,32 @@ export const endpoints = {
   page: (slug: string) => `/api/v1/pages/${slug}`,
   settings: "/api/v1/settings/public",
   cart: "/api/v1/cart",
+  wishlist: {
+    root: "/api/v1/wishlist",
+    items: "/api/v1/wishlist/items",
+    item: (productId: string) => `/api/v1/wishlist/items/${productId}`,
+  },
+  addresses: {
+    root: "/api/v1/me/addresses",
+    item: (id: string) => `/api/v1/me/addresses/${id}`,
+    default: (id: string) => `/api/v1/me/addresses/${id}/default`,
+  },
+  checkout: {
+    preview: "/api/v1/checkout/preview",
+    validateCoupon: "/api/v1/checkout/validate-coupon",
+  },
+  orders: {
+    root: "/api/v1/orders",
+    mine: "/api/v1/orders/me",
+    detail: (id: string) => `/api/v1/orders/${id}`,
+  },
   auth: {
     login: "/api/v1/auth/login",
     register: "/api/v1/auth/register",
     refresh: "/api/v1/auth/refresh",
     logout: "/api/v1/auth/logout",
-    me: "/api/v1/users/me",
+    forgotPassword: "/api/v1/auth/forgot-password",
+    resetPassword: "/api/v1/auth/reset-password",
+    me: "/api/v1/me",
   },
 } as const;

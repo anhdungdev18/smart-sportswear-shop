@@ -2,6 +2,7 @@ package com.dunghaiquyen.ecommerce.modules.report.service;
 
 import com.dunghaiquyen.ecommerce.common.time.AppTimeZone;
 import com.dunghaiquyen.ecommerce.config.AppReportProperties;
+import com.dunghaiquyen.ecommerce.config.CacheConfig;
 import com.dunghaiquyen.ecommerce.modules.order.entity.OrderStatus;
 import com.dunghaiquyen.ecommerce.modules.payment.entity.PaymentStatus;
 import com.dunghaiquyen.ecommerce.modules.product.entity.ProductVariant;
@@ -22,6 +23,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -79,6 +81,7 @@ public class ReportService {
         this.reportProperties = reportProperties;
     }
 
+    @Cacheable(CacheConfig.REPORT_OVERVIEW)
     @Transactional(readOnly = true)
     public OverviewReportResponse getOverview() {
         var grossRevenue = orderReportRepository.sumTotalAmountByPaymentStatus(PaymentStatus.PAID);
@@ -100,6 +103,7 @@ public class ReportService {
         return new OrderReportResponse(dateFrom, dateTo, totalOrders, byStatus);
     }
 
+    @Cacheable(value = CacheConfig.REPORT_PRODUCTS, key = "#query.limit() != null ? #query.limit() : 'default'")
     @Transactional(readOnly = true)
     public ProductReportResponse getProductReport(ProductReportQuery query) {
         List<BestSellingProductResponse> bestSelling = orderItemReportRepository.findBestSelling(
@@ -107,6 +111,7 @@ public class ReportService {
         return new ProductReportResponse(bestSelling);
     }
 
+    @Cacheable(CacheConfig.REPORT_INVENTORY)
     @Transactional(readOnly = true)
     public InventoryReportResponse getInventoryReport() {
         long totalVariants = productVariantReportRepository.count();

@@ -1,5 +1,8 @@
 ﻿import type { Metadata } from "next";
 import { Montserrat } from "next/font/google";
+import { Header } from "@/components/layout/Header";
+import { Footer } from "@/components/layout/Footer";
+import { NavigationProgress } from "@/components/shared/NavigationProgress";
 import "./globals.css";
 
 const montserrat = Montserrat({
@@ -30,7 +33,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="vi" className={`${montserrat.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <NavigationProgress />
+        <Header />
+        {children}
+        <Footer />
+      </body>
     </html>
   );
 }
+

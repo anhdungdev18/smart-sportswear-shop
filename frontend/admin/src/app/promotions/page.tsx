@@ -1,9 +1,8 @@
 import { AdminPromotionsClient } from "@/components/catalog/AdminPromotionsClient";
 import { listPromotions } from "@/modules/catalog-admin/api";
-import { listAdminProducts } from "@/modules/product-management/api";
 
 export default async function PromotionsPage() {
-  const [promotions, products] = await Promise.all([listPromotions(), listAdminProducts()]);
+  const promotions = await listPromotions().catch(() => []);
 
   return (
     <main className="workspace">
@@ -14,15 +13,7 @@ export default async function PromotionsPage() {
         </div>
       </section>
 
-      <AdminPromotionsClient
-        initialItems={promotions}
-        products={products
-          .filter((item): item is typeof item & { id: string } => Boolean(item.id))
-          .map((item) => ({
-            id: item.id,
-            name: item.name
-          }))}
-      />
+      <AdminPromotionsClient initialItems={promotions} />
     </main>
   );
 }

@@ -1,19 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Breadcrumb } from "@/components/Breadcrumb";
-import { apiFetch } from "@/lib/api";
-import { endpoints } from "@/lib/endpoints";
-import type { CollectionSummary } from "@/types/api";
+import { Breadcrumb } from "@/components/shared/Breadcrumb";
+import { fetchCollections } from "@/modules/category/queries";
+import type { CollectionSummary } from "@/modules/category/types";
 
 export default async function CollectionListPage() {
-  let collections: CollectionSummary[] = [];
-
-  try {
-    const result = await apiFetch<CollectionSummary[]>(endpoints.collections);
-    collections = result.data ?? [];
-  } catch {
-    // show empty state
-  }
+  const collections: CollectionSummary[] = await fetchCollections();
 
   return (
     <main className="site-main flex-1 border-b border-ivy-hairline pt-[78px]">

@@ -1,6 +1,6 @@
-"use client";
+﻿"use client";
 
-import { useState } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 import { ApiRequestError } from "@/modules/api/common";
 import { adjustStock, exportStock, importStock } from "@/modules/inventory/browser-api";
 import type { InventoryItemResponse, InventoryTransactionResponse } from "@/modules/inventory/types";
@@ -31,6 +31,14 @@ export function AdminInventoryClient({
   const [note, setNote] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState("");
+  const deferredSearch = useDeferredValue(search);
+
+  const filteredItems = useMemo(() => {
+    const query = deferredSearch.trim().toLowerCase();
+    if (!query) return items;
+    return items.filter((item) => [item.sku, item.productName, item.size ?? "", item.color ?? ""].join(" ").toLowerCase().includes(query));
+  }, [deferredSearch, items]);
 
   async function handleSubmit() {
     try {
@@ -85,7 +93,9 @@ export function AdminInventoryClient({
         <div className="admin-inline-form wrap">
           <select className="select" value={variantId} onChange={(event) => setVariantId(event.target.value)}>
             {items.map((item) => (
-              <option value={item.variantId} key={item.variantId}>{item.sku} · {item.productName}</option>
+              <option value={item.variantId} key={item.variantId}>
+                {item.sku} · {item.productName}
+              </option>
             ))}
           </select>
           <select className="select" value={actionType} onChange={(event) => setActionType(event.target.value as ActionType)}>
@@ -104,7 +114,17 @@ export function AdminInventoryClient({
 
       <section className="card panel">
         <div className="panel-header">
-          <h2>Tồn kho hiện tại</h2>
+          <div>
+            <h2>Tồn kho hiện tại</h2>
+            <p className="panel-copy">Theo dõi số lượng thực, số lượng đang giữ và lượng khả dụng theo từng biến thể.</p>
+          </div>
+          <input
+            className="admin-input"
+            style={{ width: 280 }}
+            placeholder="Tìm theo SKU, tên sản phẩm, size hoặc màu..."
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+          />
         </div>
         <table className="data-table">
           <thead>
@@ -118,11 +138,20 @@ export function AdminInventoryClient({
             </tr>
           </thead>
           <tbody>
-            {items.map((item) => (
+            {filteredItems.length === 0 ? (
+              <tr>
+                <td colSpan={6} style={{ textAlign: "center", color: "var(--admin-muted)" }}>
+                  Không có biến thể nào khớp bộ lọc hiện tại.
+                </td>
+              </tr>
+            ) : null}
+            {filteredItems.map((item) => (
               <tr key={item.variantId}>
                 <td>{item.sku}</td>
                 <td>{item.productName}</td>
-                <td>{item.size ?? "-"} / {item.color ?? "-"}</td>
+                <td>
+                  {item.size ?? "-"} / {item.color ?? "-"}
+                </td>
                 <td>{item.stockQuantity}</td>
                 <td>{item.reservedQuantity}</td>
                 <td>{item.availableQuantity}</td>

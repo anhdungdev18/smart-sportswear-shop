@@ -2,6 +2,7 @@ package com.dunghaiquyen.ecommerce.modules.collection.controller;
 
 import com.dunghaiquyen.ecommerce.common.response.ApiResponse;
 import com.dunghaiquyen.ecommerce.modules.collection.dto.CollectionCreateRequest;
+import com.dunghaiquyen.ecommerce.modules.collection.dto.CollectionProductAssignmentResponse;
 import com.dunghaiquyen.ecommerce.modules.collection.dto.CollectionResponse;
 import com.dunghaiquyen.ecommerce.modules.collection.dto.CollectionUpdateRequest;
 import com.dunghaiquyen.ecommerce.modules.collection.service.CollectionService;
@@ -37,6 +38,11 @@ public class AdminCollectionController {
             @RequestParam(required = false) Integer limit) {
         CollectionService.AdminListResult result = collectionService.listAdmin(page, limit);
         return ApiResponse.ok(result.items(), result.meta());
+    }
+
+    @GetMapping("/{id}/products")
+    public ApiResponse<List<CollectionProductAssignmentResponse>> listAssignedProducts(@PathVariable UUID id) {
+        return ApiResponse.ok(collectionService.listAssignedProducts(id));
     }
 
     @PostMapping

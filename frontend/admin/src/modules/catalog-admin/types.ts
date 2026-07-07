@@ -91,6 +91,26 @@ export type CouponResponse = {
   updatedAt: string;
 };
 
+export type CollectionResponse = {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  shortDescription: string | null;
+  collectionType: string;
+  season: string | null;
+  year: number | null;
+  bannerImageUrl: string | null;
+  coverImageUrl: string | null;
+  status: string;
+  startsAt: string | null;
+  endsAt: string | null;
+  sortOrder: number;
+  isFeatured: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type ProductImageUploadResponse = {
   id: string;
   imageUrl: string;

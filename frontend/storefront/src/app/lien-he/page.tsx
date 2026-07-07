@@ -1,15 +1,11 @@
 ﻿import Image from "next/image";
-import { Header } from "@/components/Header";
-import { Footer } from "@/components/Footer";
-import { Breadcrumb } from "@/components/Breadcrumb";
-import { ContactInfoCards } from "@/components/ContactInfoCards";
-import { ContactForm } from "@/components/ContactForm";
+import { Breadcrumb } from "@/components/shared/Breadcrumb";
+import { ContactInfoCards } from "@/components/contact/ContactInfoCards";
+import { ContactForm } from "@/components/contact/ContactForm";
 
 export default function ContactPage() {
   return (
-    <>
-      <Header />
-      <main className="site-main flex-1 border-b border-ivy-hairline pt-16 md:pt-20">
+    <main className="site-main flex-1 border-b border-ivy-hairline pt-16 md:pt-20">
         <Breadcrumb
           items={[
             { label: "Trang chủ", href: "/" },
@@ -49,7 +45,7 @@ export default function ContactPage() {
           </div>
         </div>
       </main>
-      <Footer />
-    </>
   );
 }
+
+

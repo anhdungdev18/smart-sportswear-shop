@@ -1,106 +1,136 @@
-import { Brain, CurrencyCircleDollar, Package, Receipt, Users } from "@phosphor-icons/react/dist/ssr";
+import { Suspense } from "react";
+import { CurrencyCircleDollar, Package, Receipt, Users } from "@phosphor-icons/react/dist/ssr";
 import { RevenueChart, TopProductChart } from "@/components/ui/AdminCharts";
-import { getDashboardData } from "@/modules/analytics/api";
+import { getDashboardData, getOverviewReport } from "@/modules/analytics/api";
 
-const kpis = [
-  { label: "Doanh thu hôm nay", value: "128,4 triệu", trend: "+12,8%", icon: CurrencyCircleDollar },
-  { label: "Đơn hàng mới", value: "246", trend: "+31", icon: Receipt },
-  { label: "Cảnh báo kho", value: "18 SKU", trend: "Cần xử lý", icon: Package, warn: true },
-  { label: "Khách hàng mới", value: "1.284", trend: "+8,1%", icon: Users }
-];
+function formatVND(amount: number): string {
+  if (amount >= 1_000_000_000) return `${(amount / 1_000_000_000).toFixed(1)} tỷ`;
+  if (amount >= 1_000_000) return `${(amount / 1_000_000).toFixed(1)} triệu`;
+  if (amount >= 1_000) return `${(amount / 1_000).toFixed(0)}k`;
+  return amount.toLocaleString("vi-VN");
+}
 
-export default async function AdminDashboard() {
-  const dashboard = await getDashboardData();
-
+export default function AdminDashboard() {
   return (
     <main className="workspace">
       <section className="page-title">
         <div>
           <h1>Tổng quan vận hành</h1>
-          <p>Dashboard quản trị đơn hàng, tồn kho, sản phẩm và cảnh báo bán hàng cho Thanh Hùng Futsal.</p>
+          <p>Dashboard quản trị đơn hàng, tồn kho và sản phẩm cho Điểm Đến Thể Thao.</p>
         </div>
-        <button className="admin-btn">
-          <Brain size={18} weight="duotone" />
-          Phân tích bán hàng
-        </button>
       </section>
 
-      <section className="kpi-grid" aria-label="KPI tổng quan">
-        {kpis.map((kpi) => {
-          const Icon = kpi.icon;
-          return (
-            <article className="card kpi-card" key={kpi.label}>
-              <div className="kpi-label">
-                <span>{kpi.label}</span>
-                <Icon size={22} weight="duotone" />
-              </div>
-              <div className="kpi-value">{kpi.value}</div>
-              <span className={kpi.warn ? "trend warn" : "trend"}>{kpi.trend}</span>
-            </article>
-          );
-        })}
-      </section>
+      <Suspense fallback={<KpiSkeleton />}>
+        <DashboardKpis />
+      </Suspense>
 
+      <Suspense fallback={<ChartsSkeleton />}>
+        <DashboardCharts />
+      </Suspense>
+    </main>
+  );
+}
+
+async function DashboardKpis() {
+  const overview = await getOverviewReport();
+
+  const kpis = [
+    {
+      label: "Doanh thu",
+      value: overview ? formatVND(overview.grossRevenue) : "—",
+      trend: overview ? `${formatVND(overview.realizedRevenue)} thực nhận` : "Đang tải...",
+      icon: CurrencyCircleDollar,
+      warn: false,
+    },
+    {
+      label: "Tổng đơn hàng",
+      value: overview ? overview.totalOrders.toLocaleString("vi-VN") : "—",
+      trend: overview ? `${overview.pendingOrders} đang chờ xử lý` : "Đang tải...",
+      icon: Receipt,
+      warn: false,
+    },
+    {
+      label: "Cảnh báo kho",
+      value: overview ? `${overview.lowStockCount} SKU` : "—",
+      trend: overview && overview.lowStockCount > 0 ? "Cần nhập thêm" : "Tồn kho ổn định",
+      icon: Package,
+      warn: (overview?.lowStockCount ?? 0) > 0,
+    },
+    {
+      label: "Khách hàng",
+      value: "—",
+      trend: "Xem mục Khách hàng",
+      icon: Users,
+      warn: false,
+    },
+  ];
+
+  return (
+    <section className="kpi-grid" aria-label="KPI tổng quan">
+      {kpis.map((kpi) => {
+        const Icon = kpi.icon;
+        return (
+          <article className="card kpi-card" key={kpi.label}>
+            <div className="kpi-label">
+              <span>{kpi.label}</span>
+              <Icon size={22} weight="duotone" />
+            </div>
+            <div className="kpi-value">{kpi.value}</div>
+            <span className={kpi.warn ? "trend warn" : "trend"}>{kpi.trend}</span>
+          </article>
+        );
+      })}
+    </section>
+  );
+}
+
+async function DashboardCharts() {
+  const dashboard = await getDashboardData();
+
+  return (
+    <>
       <section className="dashboard-grid">
         <article className="card panel">
           <div className="panel-header">
             <h2>Doanh thu theo thời gian</h2>
-            <select className="select" aria-label="Khoảng thời gian">
-              <option>6 tháng gần nhất</option>
-              <option>30 ngày</option>
-              <option>12 tháng</option>
-            </select>
           </div>
           <RevenueChart data={dashboard.revenue} />
         </article>
 
         <article className="card panel">
           <div className="panel-header">
-            <h2>Top sản phẩm</h2>
-            <span className="filter-chip active">Theo doanh số</span>
+            <h2>Top sản phẩm bán chạy</h2>
           </div>
           <TopProductChart data={dashboard.topProducts} />
-          <div className="insight">
-            <strong>Gợi ý vận hành</strong>
-            <p>Nike Gato IC còn ít size phổ biến. Nên ưu tiên nhập thêm size 41-43 và đẩy combo vớ thi đấu trong tuần này.</p>
-          </div>
         </article>
       </section>
 
       <section className="card panel">
         <div className="panel-header">
           <h2>Cảnh báo tồn kho thấp</h2>
-          <button className="admin-btn">Export CSV</button>
-        </div>
-        <div className="table-toolbar">
-          <div className="filters">
-            <span className="filter-chip active">Tất cả</span>
-            <span className="filter-chip">Critical</span>
-            <span className="filter-chip">Low</span>
-            <span className="filter-chip">Dự báo bán</span>
-          </div>
-          <select className="select" aria-label="Sắp xếp">
-            <option>Sắp xếp theo mức độ</option>
-            <option>Sắp xếp theo SKU</option>
-          </select>
         </div>
         <table className="data-table">
           <thead>
             <tr>
               <th>SKU</th>
               <th>Sản phẩm</th>
-              <th>Tồn kho</th>
-              <th>Dự báo cần</th>
+              <th>Tồn khả dụng</th>
               <th>Trạng thái</th>
             </tr>
           </thead>
           <tbody>
+            {dashboard.stockAlerts.length === 0 && (
+              <tr>
+                <td colSpan={4} style={{ textAlign: "center", color: "var(--admin-muted)" }}>
+                  Tồn kho đang ổn định.
+                </td>
+              </tr>
+            )}
             {dashboard.stockAlerts.map((item) => (
               <tr key={item.sku}>
                 <td>{item.sku}</td>
                 <td>{item.product}</td>
                 <td>{item.stock}</td>
-                <td>{item.forecast}</td>
                 <td>
                   <span className={`status ${item.status}`}>{item.status === "critical" ? "Critical" : "Low"}</span>
                 </td>
@@ -109,18 +139,52 @@ export default async function AdminDashboard() {
           </tbody>
         </table>
       </section>
+    </>
+  );
+}
 
-      <section className="dashboard-grid">
-        <div className="loading-state">
-          <strong>Loading state</strong>
-          <div className="skeleton" style={{ marginTop: 14, width: "72%" }} />
-          <div className="skeleton" style={{ marginTop: 10, width: "46%" }} />
+function KpiSkeleton() {
+  return (
+    <div className="kpi-grid">
+      {[1, 2, 3, 4].map((i) => (
+        <div key={i} className="card kpi-card">
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div className="skeleton" style={{ width: 80, height: 12 }} />
+            <div className="skeleton" style={{ width: 22, height: 22, borderRadius: 6 }} />
+          </div>
+          <div className="skeleton" style={{ width: 120, height: 30 }} />
+          <div className="skeleton" style={{ width: 70, height: 20, borderRadius: 999 }} />
         </div>
-        <div className="empty-state">
-          <strong>Empty state</strong>
-          <p>Chưa có yêu cầu đổi size hoặc hoàn tiền mới trong khoảng thời gian đã chọn.</p>
-        </div>
-      </section>
-    </main>
+      ))}
+    </div>
+  );
+}
+
+function ChartsSkeleton() {
+  return (
+    <>
+      <div className="dashboard-grid">
+        {[220, 180].map((w, i) => (
+          <div key={i} className="card panel">
+            <div className="skeleton" style={{ width: w, height: 20, marginBottom: 18 }} />
+            <div className="skeleton" style={{ width: "100%", height: 200, borderRadius: 12 }} />
+          </div>
+        ))}
+      </div>
+      <div className="card panel">
+        <div className="skeleton" style={{ width: 200, height: 20, marginBottom: 18 }} />
+        {[1, 2, 3, 4].map((i) => (
+          <div
+            key={i}
+            style={{ display: "grid", gridTemplateColumns: "1fr 2fr 1fr 1fr", gap: 16, padding: "13px 0", borderBottom: "1px solid var(--admin-line)" }}
+          >
+            <div className="skeleton" style={{ height: 13 }} />
+            <div className="skeleton" style={{ height: 13 }} />
+            <div className="skeleton" style={{ height: 13 }} />
+            <div className="skeleton" style={{ width: 60, height: 22, borderRadius: 999 }} />
+          </div>
+        ))}
+      </div>
+    </>
   );
 }

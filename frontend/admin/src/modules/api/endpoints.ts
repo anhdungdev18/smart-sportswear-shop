@@ -55,5 +55,10 @@ export const adminEndpoints = {
   adminRefundStatus: (id: string) => `/api/v1/admin/refunds/${id}/status`,
   adminReviews: "/api/v1/admin/reviews",
   adminReviewDetail: (id: string) => `/api/v1/admin/reviews/${id}`,
-  adminReviewStatus: (id: string) => `/api/v1/admin/reviews/${id}/status`
+  adminReviewStatus: (id: string) => `/api/v1/admin/reviews/${id}/status`,
+  collections: "/api/v1/admin/collections",
+  collection: (id: string) => `/api/v1/admin/collections/${id}`,
+  collectionProducts: (id: string) => `/api/v1/admin/collections/${id}/products`,
+  productCollections: (productId: string) => `/api/v1/admin/products/${productId}/collections`,
+  productCollection: (productId: string, collectionId: string) => `/api/v1/admin/products/${productId}/collections/${collectionId}`,
 } as const;

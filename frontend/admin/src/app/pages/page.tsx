@@ -1,8 +1,8 @@
-import { AdminPagesClient } from "@/components/pages/AdminPagesClient";
+﻿import { AdminPagesClient } from "@/components/pages/AdminPagesClient";
 import { listAdminPages } from "@/modules/pages/api";
 
 export default async function PagesPage() {
-  const items = await listAdminPages();
+  const items = await listAdminPages().catch(() => []);
 
   return (
     <main className="workspace">

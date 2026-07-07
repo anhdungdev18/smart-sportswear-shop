@@ -2,6 +2,22 @@ import { apiRequest, shouldUseMockApi } from "@/modules/api/client";
 import { adminEndpoints } from "@/modules/api/endpoints";
 import { revenue, stockAlerts, topProducts } from "@/modules/analytics/dashboard-data";
 
+type OverviewReportResponse = {
+  grossRevenue: number;
+  realizedRevenue: number;
+  totalOrders: number;
+  pendingOrders: number;
+  lowStockCount: number;
+};
+
+export async function getOverviewReport(): Promise<OverviewReportResponse | null> {
+  try {
+    return await apiRequest<OverviewReportResponse>(adminEndpoints.overview, { next: { revalidate: 30 } });
+  } catch {
+    return null;
+  }
+}
+
 export type RevenuePoint = (typeof revenue)[number];
 export type TopProductPoint = (typeof topProducts)[number];
 export type StockAlert = (typeof stockAlerts)[number];

@@ -2,7 +2,7 @@ import { AdminAuditLogsClient } from "@/components/audit/AdminAuditLogsClient";
 import { listAuditLogs } from "@/modules/audit/api";
 
 export default async function AuditLogsPage() {
-  const logs = await listAuditLogs();
+  const logs = await listAuditLogs().catch(() => []);
 
   return (
     <main className="workspace">

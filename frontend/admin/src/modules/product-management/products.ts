@@ -1,4 +1,4 @@
-export type AdminProduct = {
+﻿export type AdminProduct = {
   id?: string;
   sku: string;
   name: string;
@@ -8,6 +8,7 @@ export type AdminProduct = {
   stock: number;
   sold: number;
   status: "active" | "draft" | "low" | "out";
+  isFeatured?: boolean;
   image: string;
 };
 
@@ -17,7 +18,7 @@ export const adminProducts: AdminProduct[] = [
     name: "Nike Zoom Mercurial Vapor 16 Pro TF",
     category: "Giày cỏ nhân tạo",
     brand: "Nike",
-    price: "3.350.000 đ",
+    price: "3.350.000 ₫",
     stock: 84,
     sold: 318,
     status: "active",
@@ -28,7 +29,7 @@ export const adminProducts: AdminProduct[] = [
     name: "Mizuno Alpha 3 Pro AS",
     category: "Giày cỏ nhân tạo",
     brand: "Mizuno",
-    price: "2.700.000 đ",
+    price: "2.700.000 ₫",
     stock: 6,
     sold: 185,
     status: "low",
@@ -39,7 +40,7 @@ export const adminProducts: AdminProduct[] = [
     name: "Mizuno Morelia Sala Elite TF",
     category: "Giày futsal",
     brand: "Mizuno",
-    price: "2.970.000 đ",
+    price: "2.970.000 ₫",
     stock: 14,
     sold: 242,
     status: "low",
@@ -50,7 +51,7 @@ export const adminProducts: AdminProduct[] = [
     name: "Adidas Predator Pro lưỡi gà lật TF",
     category: "Giày cỏ nhân tạo",
     brand: "Adidas",
-    price: "3.050.000 đ",
+    price: "3.050.000 ₫",
     stock: 42,
     sold: 211,
     status: "active",
@@ -61,7 +62,7 @@ export const adminProducts: AdminProduct[] = [
     name: "Nike Gato IC",
     category: "Giày futsal",
     brand: "Nike",
-    price: "1.590.000 đ",
+    price: "1.590.000 ₫",
     stock: 0,
     sold: 97,
     status: "out",
@@ -72,7 +73,7 @@ export const adminProducts: AdminProduct[] = [
     name: "Balo Thanh Hùng Futsal Training",
     category: "Phụ kiện",
     brand: "Thanh Hùng Futsal",
-    price: "390.000 đ",
+    price: "390.000 ₫",
     stock: 120,
     sold: 146,
     status: "draft",
@@ -86,3 +87,4 @@ export const productStats = [
   { label: "Sắp hết hàng", value: "2", tone: "warning" },
   { label: "Hết hàng", value: "1", tone: "danger" }
 ];
+

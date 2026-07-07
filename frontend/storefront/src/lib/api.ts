@@ -1,3 +1,5 @@
+import { getAccessToken } from "@/lib/session";
+
 // Next.js inlines NEXT_PUBLIC_* at build time for both server and client code.
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ?? "http://localhost:8080";
@@ -39,20 +41,14 @@ function buildUrl(
   return url.toString();
 }
 
-function getAccessToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return (
-    localStorage.getItem("sss_access_token") ??
-    document.cookie.match(/sss_access_token=([^;]+)/)?.[1] ??
-    null
-  );
-}
-
 export async function apiFetch<T>(
   path: string,
-  options?: RequestInit & { query?: Record<string, QueryValue | QueryValue[]> },
+  options?: RequestInit & {
+    query?: Record<string, QueryValue | QueryValue[]>;
+    next?: { revalidate?: number | false; tags?: string[] };
+  },
 ): Promise<{ data: T; meta?: Record<string, unknown> }> {
-  const { query, headers: extraHeaders, ...rest } = options ?? {};
+  const { query, headers: extraHeaders, next, ...rest } = options ?? {};
   const token = getAccessToken();
 
   const headers: Record<string, string> = {
@@ -64,10 +60,14 @@ export async function apiFetch<T>(
     headers["Content-Type"] = "application/json";
   }
 
+  const isGet = !rest.method || rest.method.toUpperCase() === "GET";
+  const nextOptions = next ?? (isGet && !token ? { revalidate: 60 } : undefined);
+
   const res = await fetch(buildUrl(path, query), {
     ...rest,
     credentials: "include",
     headers,
+    ...(nextOptions ? { next: nextOptions } : {}),
   });
   const payload = await res.json().catch(() => null);
   if (!res.ok) throw new ApiError(res.status, res.statusText, payload);

@@ -39,5 +39,7 @@ public record ProductListQuery(
         /** Catalog V2: filter by product type (APPAREL, FOOTWEAR, ACCESSORY, EQUIPMENT). */
         ProductType productType,
         /** Catalog V2: filter by collection slug (e.g. "bst-mua-he-2026"). */
-        String collection) {
+        String collection,
+        /** Filter by featured flag - used by storefront homepage gallery. */
+        Boolean featured) {
 }

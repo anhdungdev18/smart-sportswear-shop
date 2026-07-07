@@ -1,8 +1,8 @@
-import { AdminUsersClient } from "@/components/users/AdminUsersClient";
+﻿import { AdminUsersClient } from "@/components/users/AdminUsersClient";
 import { listAdminUsers } from "@/modules/users/api";
 
 export default async function CustomersPage() {
-  const users = await listAdminUsers();
+  const users = await listAdminUsers().catch(() => []);
 
   return (
     <main className="workspace">

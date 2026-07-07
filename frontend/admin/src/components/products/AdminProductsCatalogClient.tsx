@@ -1,7 +1,10 @@
+﻿
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
+import { memo, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { ApiRequestError } from "@/modules/api/common";
+import { toSlug } from "@/modules/utils/slug";
 import {
   addProductImage,
   createAdminProduct,
@@ -25,9 +28,67 @@ const productStatusOptions = ["DRAFT", "ACTIVE", "INACTIVE"] as const;
 const genderOptions = ["MEN", "WOMEN", "UNISEX", "KIDS"] as const;
 const variantStatusOptions = ["ACTIVE", "OUT_OF_STOCK", "INACTIVE"] as const;
 
+type ApiFieldErrorPayload = {
+  field?: string;
+  message?: string;
+};
+
+type ApiEnvelopePayload = {
+  message?: string;
+  data?: ApiFieldErrorPayload[] | null;
+  errors?: ApiFieldErrorPayload[] | null;
+};
+
+type VariantDraft = ReturnType<typeof createEmptyVariantForm>;
+
+const fieldLabelMap: Record<string, string> = {
+  name: "Tên sản phẩm",
+  slug: "Slug",
+  categoryId: "Danh mục",
+  brandId: "Thương hiệu",
+  shortDescription: "Mô tả ngắn",
+  description: "Mô tả chi tiết",
+  gender: "Giới tính",
+  sportType: "Môn thể thao",
+  status: "Trạng thái",
+  sku: "SKU",
+  size: "Kích cỡ",
+  color: "Màu sắc",
+  price: "Giá bán",
+  compareAtPrice: "Giá so sánh",
+  stockQuantity: "Tồn kho"
+};
+
+function formatFieldErrors(items: ApiFieldErrorPayload[]) {
+  const lines = items
+    .map((item) => {
+      const label = item.field ? fieldLabelMap[item.field] ?? item.field : null;
+      const message = item.message?.trim();
+
+      if (!message) {
+        return null;
+      }
+
+      return label ? `${label}: ${message}` : message;
+    })
+    .filter((value): value is string => Boolean(value));
+
+  return lines.length > 0 ? lines.join(" | ") : null;
+}
+
 function extractError(error: unknown, fallback: string) {
   if (error instanceof ApiRequestError) {
-    const payload = error.payload as { message?: string } | null;
+    const payload = error.payload as ApiEnvelopePayload | null;
+    const fieldErrors = [
+      ...(Array.isArray(payload?.errors) ? payload.errors : []),
+      ...(Array.isArray(payload?.data) ? payload.data : [])
+    ];
+    const fieldMessage = formatFieldErrors(fieldErrors);
+
+    if (fieldMessage) {
+      return fieldMessage;
+    }
+
     return payload?.message ?? fallback;
   }
 
@@ -105,11 +166,7 @@ function createEmptyUploadForm() {
   };
 }
 
-function toAdminProduct(
-  detail: ProductDetailResponse,
-  categories: CategoryResponse[],
-  brands: BrandResponse[]
-): AdminProduct {
+function toAdminProduct(detail: ProductDetailResponse, categories: CategoryResponse[], brands: BrandResponse[]): AdminProduct {
   const stock = detail.variants.reduce((sum, item) => sum + item.availableQuantity, 0);
   const prices = detail.variants.map((item) => item.price).filter((value): value is number => value != null);
   const minPrice = prices.length ? Math.min(...prices) : 0;
@@ -120,21 +177,118 @@ function toAdminProduct(
     id: detail.id,
     sku: firstVariant?.sku ?? detail.slug,
     name: detail.name,
-    category:
-      categories.find((item) => item.id === detail.category?.id)?.name ??
-      detail.category?.name ??
-      "Chưa phân loại",
-    brand:
-      brands.find((item) => item.id === detail.brand?.id)?.name ??
-      detail.brand?.name ??
-      "Chưa có thương hiệu",
+    category: categories.find((item) => item.id === detail.category?.id)?.name ?? detail.category?.name ?? "Chưa phân loại",
+    brand: brands.find((item) => item.id === detail.brand?.id)?.name ?? detail.brand?.name ?? "Chưa có thương hiệu",
     price: minPrice === maxPrice ? formatPrice(String(minPrice)) : `${formatPrice(String(minPrice))} - ${formatPrice(String(maxPrice))}`,
     stock,
     sold: 0,
     status: mapAdminStatus(detail.status, stock),
+    isFeatured: detail.isFeatured,
     image: detail.images[0]?.imageUrl ?? "https://placehold.co/96x96/f5f5f5/202020?text=SP"
   };
 }
+
+function buildVariantDrafts(variants: ProductVariantResponse[]) {
+  return Object.fromEntries(
+    variants.map((item) => [
+      item.id,
+      {
+        sku: item.sku,
+        size: item.size ?? "",
+        color: item.color ?? "",
+        price: item.price != null ? String(item.price) : "",
+        compareAtPrice: item.compareAtPrice != null ? String(item.compareAtPrice) : "",
+        stockQuantity: String(item.availableQuantity),
+        status: item.status
+      }
+    ])
+  );
+}
+
+function buildProductForm(detail: ProductDetailResponse, categories: CategoryResponse[], brands: BrandResponse[]) {
+  return {
+    name: detail.name,
+    slug: detail.slug,
+    shortDescription: detail.shortDescription ?? "",
+    description: detail.description ?? "",
+    categoryId: detail.category?.id ?? categories[0]?.id ?? "",
+    brandId: detail.brand?.id ?? brands[0]?.id ?? "",
+    gender: detail.gender ?? "",
+    sportType: detail.sportType ?? "",
+    status: detail.status,
+    isFeatured: detail.isFeatured
+  };
+}
+const VariantEditorCard = memo(function VariantEditorCard({
+  variant,
+  draft,
+  saving,
+  onDraftChange,
+  onSave
+}: {
+  variant: ProductVariantResponse;
+  draft: VariantDraft;
+  saving: boolean;
+  onDraftChange: (patch: Partial<VariantDraft>) => void;
+  onSave: () => void;
+}) {
+  return (
+    <div className="admin-subcard">
+      <strong>{variant.sku}</strong>
+      <div className="table-subtle">Khả dụng hiện tại: {variant.availableQuantity}</div>
+      <div className="admin-form-grid">
+        <input className="admin-input" value={draft.size} onChange={(event) => onDraftChange({ size: event.target.value })} />
+        <input className="admin-input" value={draft.color} onChange={(event) => onDraftChange({ color: event.target.value })} />
+        <input className="admin-input" type="number" min={0} value={draft.price} onChange={(event) => onDraftChange({ price: event.target.value })} />
+        <input className="admin-input" type="number" min={0} value={draft.compareAtPrice} onChange={(event) => onDraftChange({ compareAtPrice: event.target.value })} />
+        <select className="select" value={draft.status} onChange={(event) => onDraftChange({ status: event.target.value })}>
+          {variantStatusOptions.map((item) => (
+            <option value={item} key={item}>
+              {item}
+            </option>
+          ))}
+        </select>
+      </div>
+      <button className="admin-btn secondary" type="button" onClick={onSave} disabled={saving}>
+        {saving ? "Đang lưu..." : "Lưu biến thể"}
+      </button>
+    </div>
+  );
+});
+
+const ProductImageCard = memo(function ProductImageCard({
+  image,
+  productName,
+  saving,
+  onDelete
+}: {
+  image: ProductImageResponse;
+  productName: string;
+  saving: boolean;
+  onDelete: () => void;
+}) {
+  return (
+    <article className="admin-image-card">
+      <Image
+        src={image.imageUrl}
+        alt={image.altText ?? productName}
+        width={320}
+        height={320}
+        sizes="(max-width: 768px) 100vw, 320px"
+        style={{ width: "100%", height: "auto" }}
+      />
+      <div>
+        <strong>{image.altText ?? "Không có alt text"}</strong>
+        <div className="table-subtle">
+          {image.isPrimary ? "Ảnh chính" : "Ảnh phụ"} · Thứ tự {image.sortOrder}
+        </div>
+      </div>
+      <button className="admin-btn secondary" type="button" onClick={onDelete} disabled={saving}>
+        {saving ? "Đang xóa..." : "Xóa ảnh"}
+      </button>
+    </article>
+  );
+});
 
 export function AdminProductsCatalogClient({
   initialProducts,
@@ -148,19 +302,46 @@ export function AdminProductsCatalogClient({
   const [products, setProducts] = useState(initialProducts);
   const [selectedProductId, setSelectedProductId] = useState(initialProducts.find((item) => item.id)?.id ?? "");
   const [detail, setDetail] = useState<ProductDetailResponse | null>(null);
+  const detailCacheRef = useRef<Record<string, ProductDetailResponse>>({});
   const [detailLoading, setDetailLoading] = useState(false);
   const [productForm, setProductForm] = useState(createEmptyProductForm(categories[0]?.id ?? "", brands[0]?.id ?? ""));
+  const [slugDirty, setSlugDirty] = useState(false);
   const [variantForm, setVariantForm] = useState(createEmptyVariantForm());
-  const [variantDrafts, setVariantDrafts] = useState<Record<string, ReturnType<typeof createEmptyVariantForm>>>({});
+  const [variantDrafts, setVariantDrafts] = useState<Record<string, VariantDraft>>({});
   const [imageForm, setImageForm] = useState(createEmptyImageForm());
   const [uploadForm, setUploadForm] = useState(createEmptyUploadForm());
   const [message, setMessage] = useState<string | null>(null);
   const [saving, setSaving] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | AdminProduct["status"] | "featured">("all");
+  const deferredSearchTerm = useDeferredValue(searchTerm);
 
-  const selectedProduct = useMemo(
-    () => products.find((item) => item.id === selectedProductId) ?? null,
-    [products, selectedProductId]
-  );
+  const selectedProduct = useMemo(() => products.find((item) => item.id === selectedProductId) ?? null, [products, selectedProductId]);
+  const missingCategorySetup = categories.length === 0;
+  const missingBrandSetup = brands.length === 0;
+  const canSubmitProduct = !missingCategorySetup && !missingBrandSetup && saving !== "product";
+  const filteredProducts = useMemo(() => {
+    const keyword = deferredSearchTerm.trim().toLowerCase();
+
+    return products.filter((product) => {
+      const matchesStatus =
+        statusFilter === "all"
+          ? true
+          : statusFilter === "featured"
+            ? Boolean(product.isFeatured)
+            : product.status === statusFilter;
+      if (!matchesStatus) {
+        return false;
+      }
+
+      if (!keyword) {
+        return true;
+      }
+
+      const haystack = [product.name, product.sku, product.category, product.brand].join(" ").toLowerCase();
+      return haystack.includes(keyword);
+    });
+  }, [deferredSearchTerm, products, statusFilter]);
 
   useEffect(() => {
     if (!selectedProductId) {
@@ -173,40 +354,25 @@ export function AdminProductsCatalogClient({
     async function loadDetail() {
       try {
         setDetailLoading(true);
+        const cached = detailCacheRef.current[selectedProductId];
+        if (cached) {
+          setDetail(cached);
+          setSlugDirty(true);
+          setProductForm(buildProductForm(cached, categories, brands));
+          setVariantDrafts(buildVariantDrafts(cached.variants));
+          return;
+        }
+
         const response = await fetchAdminProductDetail(selectedProductId);
         if (!active) {
           return;
         }
 
+        detailCacheRef.current[response.id] = response;
         setDetail(response);
-        setProductForm({
-          name: response.name,
-          slug: response.slug,
-          shortDescription: response.shortDescription ?? "",
-          description: response.description ?? "",
-          categoryId: response.category?.id ?? categories[0]?.id ?? "",
-          brandId: response.brand?.id ?? brands[0]?.id ?? "",
-          gender: response.gender ?? "",
-          sportType: response.sportType ?? "",
-          status: response.status,
-          isFeatured: response.isFeatured
-        });
-        setVariantDrafts(
-          Object.fromEntries(
-            response.variants.map((item) => [
-              item.id,
-              {
-                sku: item.sku,
-                size: item.size ?? "",
-                color: item.color ?? "",
-                price: item.price != null ? String(item.price) : "",
-                compareAtPrice: item.compareAtPrice != null ? String(item.compareAtPrice) : "",
-                stockQuantity: String(item.availableQuantity),
-                status: item.status
-              }
-            ])
-          )
-        );
+        setSlugDirty(true);
+        setProductForm(buildProductForm(response, categories, brands));
+        setVariantDrafts(buildVariantDrafts(response.variants));
       } catch (error) {
         if (active) {
           setMessage(extractError(error, "Không tải được chi tiết sản phẩm"));
@@ -234,39 +400,30 @@ export function AdminProductsCatalogClient({
       }
 
       const clone = current.slice();
-      clone[existingIndex] = {
-        ...clone[existingIndex],
-        ...nextProduct,
-        sold: clone[existingIndex].sold
-      };
+      clone[existingIndex] = { ...clone[existingIndex], ...nextProduct, sold: clone[existingIndex].sold };
       return clone;
     });
   }
 
   async function refreshDetail(productId: string) {
     const response = await fetchAdminProductDetail(productId);
+    detailCacheRef.current[response.id] = response;
     setDetail(response);
     upsertProductCard(response);
-    setVariantDrafts(
-      Object.fromEntries(
-        response.variants.map((item) => [
-          item.id,
-          {
-            sku: item.sku,
-            size: item.size ?? "",
-            color: item.color ?? "",
-            price: item.price != null ? String(item.price) : "",
-            compareAtPrice: item.compareAtPrice != null ? String(item.compareAtPrice) : "",
-            stockQuantity: String(item.availableQuantity),
-            status: item.status
-          }
-        ])
-      )
-    );
+    setVariantDrafts(buildVariantDrafts(response.variants));
     return response;
   }
-
   async function handleCreateOrUpdateProduct() {
+    if (missingCategorySetup) {
+      setMessage("Chưa có danh mục nào trong hệ thống. Hãy tạo danh mục trước khi tạo sản phẩm.");
+      return;
+    }
+
+    if (missingBrandSetup) {
+      setMessage("Chưa có thương hiệu nào trong hệ thống. Hãy tạo thương hiệu trước khi tạo sản phẩm.");
+      return;
+    }
+
     try {
       setSaving("product");
       setMessage(null);
@@ -286,6 +443,7 @@ export function AdminProductsCatalogClient({
 
       if (selectedProductId) {
         const updated = await updateAdminProduct(selectedProductId, payload);
+        detailCacheRef.current[updated.id] = updated;
         setDetail(updated);
         upsertProductCard(updated);
         setMessage(`Đã cập nhật sản phẩm ${updated.name}.`);
@@ -293,6 +451,7 @@ export function AdminProductsCatalogClient({
       }
 
       const created = await createAdminProduct(payload);
+      detailCacheRef.current[created.id] = created;
       setSelectedProductId(created.id);
       setDetail(created);
       upsertProductCard(created);
@@ -348,6 +507,7 @@ export function AdminProductsCatalogClient({
         compareAtPrice: draft.compareAtPrice ? Number(draft.compareAtPrice) : null,
         status: draft.status
       });
+
       setVariantDrafts((current) => ({
         ...current,
         [variantId]: {
@@ -361,6 +521,7 @@ export function AdminProductsCatalogClient({
           sku: updated.sku
         }
       }));
+
       if (selectedProductId) {
         await refreshDetail(selectedProductId);
       }
@@ -451,6 +612,7 @@ export function AdminProductsCatalogClient({
   function startCreateProduct() {
     setSelectedProductId("");
     setDetail(null);
+    setSlugDirty(false);
     setProductForm(createEmptyProductForm(categories[0]?.id ?? "", brands[0]?.id ?? ""));
     setVariantForm(createEmptyVariantForm());
     setVariantDrafts({});
@@ -458,7 +620,6 @@ export function AdminProductsCatalogClient({
     setUploadForm(createEmptyUploadForm());
     setMessage("Bạn đang ở chế độ tạo sản phẩm mới.");
   }
-
   return (
     <div className="admin-grid admin-grid-2">
       <section className="card panel">
@@ -471,38 +632,61 @@ export function AdminProductsCatalogClient({
             Tạo sản phẩm mới
           </button>
         </div>
+        <div className="admin-form-grid" style={{ marginBottom: 16 }}>
+          <input
+            className="admin-input"
+            placeholder="Tìm theo tên, SKU, danh mục hoặc thương hiệu"
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+          />
+          <select className="select" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as "all" | AdminProduct["status"] | "featured")}>
+            <option value="all">Tất cả trạng thái</option>
+            <option value="active">Đang bán ổn định</option>
+            <option value="low">Sắp hết hàng</option>
+            <option value="out">Hết hàng</option>
+            <option value="draft">Bản nháp / ẩn</option>
+            <option value="featured">Sản phẩm nổi bật</option>
+          </select>
+        </div>
 
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Sản phẩm</th>
-              <th>SKU</th>
-              <th>Tồn</th>
-              <th>Trạng thái</th>
-            </tr>
-          </thead>
-          <tbody>
-            {products.map((product) => (
-              <tr
-                key={product.id ?? product.sku}
-                className={selectedProductId && product.id === selectedProductId ? "row-selected" : ""}
-                onClick={() => product.id && setSelectedProductId(product.id)}
-              >
-                <td>
-                  <strong>{product.name}</strong>
-                  <div className="table-subtle">
-                    {product.category} · {product.brand}
-                  </div>
-                </td>
-                <td>{product.sku}</td>
-                <td>{product.stock}</td>
-                <td>
-                  <span className={`status ${product.status}`}>{product.status}</span>
-                </td>
+        {products.length === 0 ? (
+          <div className="empty-state">Hiện chưa có sản phẩm nào trong database.</div>
+        ) : filteredProducts.length === 0 ? (
+          <div className="empty-state">Không có sản phẩm nào khớp bộ lọc hiện tại.</div>
+        ) : (
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Sản phẩm</th>
+                <th>SKU</th>
+                <th>Tồn</th>
+                <th>Trạng thái</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filteredProducts.map((product) => (
+                <tr
+                  key={product.id ?? product.sku}
+                  className={selectedProductId && product.id === selectedProductId ? "row-selected" : ""}
+                  onClick={() => product.id && setSelectedProductId(product.id)}
+                >
+                  <td>
+                    <strong>{product.name}</strong>
+                    <div className="table-subtle">
+                      {product.category} · {product.brand}
+                      {product.isFeatured ? " · Nổi bật" : ""}
+                    </div>
+                  </td>
+                  <td>{product.sku}</td>
+                  <td>{product.stock}</td>
+                  <td>
+                    <span className={`status ${product.status}`}>{product.status}</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </section>
 
       <div className="admin-stack">
@@ -514,90 +698,62 @@ export function AdminProductsCatalogClient({
             </div>
           </div>
           {message ? <p className="action-message">{message}</p> : null}
-          {detailLoading ? <div className="loading-state">Đang tải chi tiết sản phẩm...</div> : null}
+          {detailLoading ? (
+            <div className="loading-state">
+              <div className="skeleton" style={{ width: "42%", marginBottom: 10 }} />
+              <div className="skeleton" style={{ width: "100%", marginBottom: 8 }} />
+              <div className="skeleton" style={{ width: "86%" }} />
+            </div>
+          ) : null}
+          {missingCategorySetup || missingBrandSetup ? (
+            <div className="empty-state" style={{ marginBottom: 16 }}>
+              {[
+                missingCategorySetup ? "Danh mục đang trống" : null,
+                missingBrandSetup ? "Thương hiệu đang trống" : null
+              ]
+                .filter(Boolean)
+                .join(" · ")}
+              . Hãy tạo dữ liệu nền ở trang quản trị tương ứng rồi quay lại đây.
+            </div>
+          ) : null}
           <div className="admin-form-grid">
-            <input
-              className="admin-input"
-              placeholder="Tên sản phẩm"
-              value={productForm.name}
-              onChange={(event) => setProductForm((current) => ({ ...current, name: event.target.value }))}
-            />
-            <input
-              className="admin-input"
-              placeholder="Slug"
-              value={productForm.slug}
-              onChange={(event) => setProductForm((current) => ({ ...current, slug: event.target.value }))}
-            />
-            <select
-              className="select"
-              value={productForm.categoryId}
-              onChange={(event) => setProductForm((current) => ({ ...current, categoryId: event.target.value }))}
-            >
-              {categories.map((item) => (
-                <option value={item.id} key={item.id}>{item.name}</option>
-              ))}
+            <input className="admin-input" placeholder="Tên sản phẩm" value={productForm.name} onChange={(event) => {
+              const name = event.target.value;
+              setProductForm((current) => ({ ...current, name, ...(!slugDirty && { slug: toSlug(name) }) }));
+            }} />
+            <input className="admin-input" placeholder="Slug" value={productForm.slug} onChange={(event) => {
+              setSlugDirty(true);
+              setProductForm((current) => ({ ...current, slug: event.target.value }));
+            }} />
+            <select className="select" value={productForm.categoryId} onChange={(event) => setProductForm((current) => ({ ...current, categoryId: event.target.value }))} disabled={missingCategorySetup}>
+              {missingCategorySetup ? <option value="">Chưa có danh mục</option> : null}
+              {categories.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}
             </select>
-            <select
-              className="select"
-              value={productForm.brandId}
-              onChange={(event) => setProductForm((current) => ({ ...current, brandId: event.target.value }))}
-            >
-              {brands.map((item) => (
-                <option value={item.id} key={item.id}>{item.name}</option>
-              ))}
+            <select className="select" value={productForm.brandId} onChange={(event) => setProductForm((current) => ({ ...current, brandId: event.target.value }))} disabled={missingBrandSetup}>
+              {missingBrandSetup ? <option value="">Chưa có thương hiệu</option> : null}
+              {brands.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}
             </select>
-            <select
-              className="select"
-              value={productForm.gender}
-              onChange={(event) => setProductForm((current) => ({ ...current, gender: event.target.value }))}
-            >
+            <select className="select" value={productForm.gender} onChange={(event) => setProductForm((current) => ({ ...current, gender: event.target.value }))}>
               <option value="">Không chọn giới tính</option>
-              {genderOptions.map((item) => (
-                <option value={item} key={item}>{item}</option>
-              ))}
+              {genderOptions.map((item) => <option value={item} key={item}>{item}</option>)}
             </select>
-            <select
-              className="select"
-              value={productForm.status}
-              onChange={(event) => setProductForm((current) => ({ ...current, status: event.target.value }))}
-            >
-              {productStatusOptions.map((item) => (
-                <option value={item} key={item}>{item}</option>
-              ))}
+            <select className="select" value={productForm.status} onChange={(event) => setProductForm((current) => ({ ...current, status: event.target.value }))}>
+              {productStatusOptions.map((item) => <option value={item} key={item}>{item}</option>)}
             </select>
-            <input
-              className="admin-input"
-              placeholder="Môn thể thao"
-              value={productForm.sportType}
-              onChange={(event) => setProductForm((current) => ({ ...current, sportType: event.target.value }))}
-            />
+            <input className="admin-input" placeholder="Môn thể thao" value={productForm.sportType} onChange={(event) => setProductForm((current) => ({ ...current, sportType: event.target.value }))} />
             <label className="admin-check">
-              <input
-                type="checkbox"
-                checked={productForm.isFeatured}
-                onChange={(event) => setProductForm((current) => ({ ...current, isFeatured: event.target.checked }))}
-              />
+              <input type="checkbox" checked={productForm.isFeatured} onChange={(event) => setProductForm((current) => ({ ...current, isFeatured: event.target.checked }))} />
               Sản phẩm nổi bật
             </label>
             <div className="admin-form-full">
-              <input
-                className="admin-input"
-                placeholder="Mô tả ngắn"
-                value={productForm.shortDescription}
-                onChange={(event) => setProductForm((current) => ({ ...current, shortDescription: event.target.value }))}
-              />
+              <input className="admin-input" placeholder="Mô tả ngắn" value={productForm.shortDescription} onChange={(event) => setProductForm((current) => ({ ...current, shortDescription: event.target.value }))} />
             </div>
             <div className="admin-form-full">
-              <textarea
-                className="admin-textarea"
-                placeholder="Mô tả chi tiết"
-                value={productForm.description}
-                onChange={(event) => setProductForm((current) => ({ ...current, description: event.target.value }))}
-              />
+              <textarea className="admin-textarea" placeholder="Mô tả chi tiết" value={productForm.description} onChange={(event) => setProductForm((current) => ({ ...current, description: event.target.value }))} />
             </div>
           </div>
           <div className="page-actions">
-            <button className="admin-btn" type="button" onClick={() => void handleCreateOrUpdateProduct()} disabled={saving === "product"}>
+            <button className="admin-btn" type="button" onClick={() => void handleCreateOrUpdateProduct()} disabled={!canSubmitProduct}>
               {saving === "product" ? "Đang lưu..." : selectedProductId ? "Cập nhật sản phẩm" : "Tạo sản phẩm"}
             </button>
           </div>
@@ -610,7 +766,6 @@ export function AdminProductsCatalogClient({
               <p className="panel-copy">Thêm biến thể mới tại đây. Chỉnh tồn kho sau tạo dùng module tồn kho.</p>
             </div>
           </div>
-
           <div className="admin-form-grid">
             <input className="admin-input" placeholder="SKU" value={variantForm.sku} onChange={(event) => setVariantForm((current) => ({ ...current, sku: event.target.value }))} />
             <input className="admin-input" placeholder="Size" value={variantForm.size} onChange={(event) => setVariantForm((current) => ({ ...current, size: event.target.value }))} />
@@ -619,9 +774,7 @@ export function AdminProductsCatalogClient({
             <input className="admin-input" type="number" min={0} placeholder="Giá so sánh" value={variantForm.compareAtPrice} onChange={(event) => setVariantForm((current) => ({ ...current, compareAtPrice: event.target.value }))} />
             <input className="admin-input" type="number" min={0} placeholder="Tồn ban đầu" value={variantForm.stockQuantity} onChange={(event) => setVariantForm((current) => ({ ...current, stockQuantity: event.target.value }))} />
             <select className="select" value={variantForm.status} onChange={(event) => setVariantForm((current) => ({ ...current, status: event.target.value }))}>
-              {variantStatusOptions.map((item) => (
-                <option value={item} key={item}>{item}</option>
-              ))}
+              {variantStatusOptions.map((item) => <option value={item} key={item}>{item}</option>)}
             </select>
           </div>
           <div className="page-actions">
@@ -629,40 +782,15 @@ export function AdminProductsCatalogClient({
               {saving === "variant-create" ? "Đang thêm..." : "Thêm biến thể"}
             </button>
           </div>
-
           {detail?.variants.length ? (
             <div className="admin-stack">
-              {detail.variants.map((variant: ProductVariantResponse) => {
+              {detail.variants.map((variant) => {
                 const draft = variantDrafts[variant.id];
-                if (!draft) {
-                  return null;
-                }
-
-                return (
-                  <div className="admin-subcard" key={variant.id}>
-                    <strong>{variant.sku}</strong>
-                    <div className="table-subtle">Khả dụng hiện tại: {variant.availableQuantity}</div>
-                    <div className="admin-form-grid">
-                      <input className="admin-input" value={draft.size} onChange={(event) => setVariantDrafts((current) => ({ ...current, [variant.id]: { ...current[variant.id], size: event.target.value } }))} />
-                      <input className="admin-input" value={draft.color} onChange={(event) => setVariantDrafts((current) => ({ ...current, [variant.id]: { ...current[variant.id], color: event.target.value } }))} />
-                      <input className="admin-input" type="number" min={0} value={draft.price} onChange={(event) => setVariantDrafts((current) => ({ ...current, [variant.id]: { ...current[variant.id], price: event.target.value } }))} />
-                      <input className="admin-input" type="number" min={0} value={draft.compareAtPrice} onChange={(event) => setVariantDrafts((current) => ({ ...current, [variant.id]: { ...current[variant.id], compareAtPrice: event.target.value } }))} />
-                      <select className="select" value={draft.status} onChange={(event) => setVariantDrafts((current) => ({ ...current, [variant.id]: { ...current[variant.id], status: event.target.value } }))}>
-                        {variantStatusOptions.map((item) => (
-                          <option value={item} key={item}>{item}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <button className="admin-btn secondary" type="button" onClick={() => void handleUpdateVariant(variant.id)} disabled={saving === `variant-${variant.id}`}>
-                      {saving === `variant-${variant.id}` ? "Đang lưu..." : "Lưu biến thể"}
-                    </button>
-                  </div>
-                );
+                if (!draft) return null;
+                return <VariantEditorCard key={variant.id} variant={variant} draft={draft} saving={saving === `variant-${variant.id}`} onDraftChange={(patch) => setVariantDrafts((current) => ({ ...current, [variant.id]: { ...current[variant.id], ...patch } }))} onSave={() => void handleUpdateVariant(variant.id)} />;
               })}
             </div>
-          ) : (
-            <div className="empty-state">Sản phẩm này chưa có biến thể.</div>
-          )}
+          ) : <div className="empty-state">Sản phẩm này chưa có biến thể.</div>}
         </section>
 
         <section className="card panel">
@@ -672,7 +800,6 @@ export function AdminProductsCatalogClient({
               <p className="panel-copy">Hỗ trợ cả thêm URL có sẵn và upload ảnh thật.</p>
             </div>
           </div>
-
           <div className="admin-form-grid">
             <div className="admin-form-full">
               <input className="admin-input" placeholder="Image URL" value={imageForm.imageUrl} onChange={(event) => setImageForm((current) => ({ ...current, imageUrl: event.target.value }))} />
@@ -690,7 +817,6 @@ export function AdminProductsCatalogClient({
               {saving === "image-url" ? "Đang thêm..." : "Thêm ảnh bằng URL"}
             </button>
           </div>
-
           <div className="admin-form-grid">
             <input className="admin-input admin-form-full" type="file" accept="image/*" onChange={(event) => setUploadForm((current) => ({ ...current, file: event.target.files?.[0] ?? null }))} />
             <input className="admin-input" placeholder="Alt text upload" value={uploadForm.altText} onChange={(event) => setUploadForm((current) => ({ ...current, altText: event.target.value }))} />
@@ -705,27 +831,11 @@ export function AdminProductsCatalogClient({
               {saving === "image-upload" ? "Đang upload..." : "Upload ảnh"}
             </button>
           </div>
-
           {detail?.images.length ? (
             <div className="admin-gallery">
-              {detail.images.map((image) => (
-                <article className="admin-image-card" key={image.id}>
-                  <img src={image.imageUrl} alt={image.altText ?? detail.name} />
-                  <div>
-                    <strong>{image.altText ?? "Không có alt text"}</strong>
-                    <div className="table-subtle">
-                      {image.isPrimary ? "Ảnh chính" : "Ảnh phụ"} · Thứ tự {image.sortOrder}
-                    </div>
-                  </div>
-                  <button className="admin-btn secondary" type="button" onClick={() => void handleDeleteImage(image)} disabled={saving === `image-delete-${image.id}`}>
-                    {saving === `image-delete-${image.id}` ? "Đang xóa..." : "Xóa ảnh"}
-                  </button>
-                </article>
-              ))}
+              {detail.images.map((image) => <ProductImageCard key={image.id} image={image} productName={detail.name} saving={saving === `image-delete-${image.id}`} onDelete={() => void handleDeleteImage(image)} />)}
             </div>
-          ) : (
-            <div className="empty-state">Sản phẩm này chưa có ảnh.</div>
-          )}
+          ) : <div className="empty-state">Sản phẩm này chưa có ảnh.</div>}
         </section>
       </div>
     </div>

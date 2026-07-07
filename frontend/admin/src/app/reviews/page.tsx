@@ -2,7 +2,7 @@ import { AdminReviewsClient } from "@/components/reviews/AdminReviewsClient";
 import { listAdminReviews } from "@/modules/reviews/api";
 
 export default async function ReviewsPage() {
-  const items = await listAdminReviews();
+  const items = await listAdminReviews().catch(() => []);
 
   return (
     <main className="workspace">

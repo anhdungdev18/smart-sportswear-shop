@@ -3,9 +3,23 @@ spring:
     name: ecommerce-backend
 
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:dunghaiquyen}
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:dunghaiquyen}${DB_PARAMS:}
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:postgres}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 3
+      connection-timeout: 20000
+      idle-timeout: 300000
+      max-lifetime: 600000
+      keepalive-time: 60000
+      data-source-properties:
+        cachePrepStmts: true
+        prepStmtCacheSize: 250
+        prepStmtCacheSqlLimit: 2048
+
+  cache:
+    type: caffeine
 
   jpa:
     hibernate:
@@ -15,6 +29,10 @@ spring:
       hibernate:
         jdbc:
           time_zone: UTC
+          batch_size: 25
+        default_batch_fetch_size: 25
+        order_inserts: true
+        order_updates: true
 
   flyway:
     enabled: true

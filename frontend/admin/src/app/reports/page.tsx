@@ -1,7 +1,12 @@
-import { getOrderReport, getOverviewReport } from "@/modules/reports/api";
+﻿import { getOrderReport, getOverviewReport } from "@/modules/reports/api";
 
 export default async function ReportsPage() {
-  const [overview, orderReport] = await Promise.all([getOverviewReport(), getOrderReport()]);
+  const emptyOverview = { grossRevenue: 0, realizedRevenue: 0, totalOrders: 0, pendingOrders: 0 };
+  const emptyOrderReport = { byStatus: [] as { status: string; count: number }[] };
+  const [overview, orderReport] = await Promise.all([
+    getOverviewReport().catch(() => emptyOverview),
+    getOrderReport().catch(() => emptyOrderReport)
+  ]);
 
   return (
     <main className="workspace">

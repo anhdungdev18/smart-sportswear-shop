@@ -2,10 +2,12 @@ import { browserApiRequest } from "@/modules/api/browser-client";
 import type { AuthTokens } from "@/modules/auth/session";
 
 export interface AdminUser {
-  id: number;
+  id: string;
   email: string;
   fullName: string;
   role: string;
+  status: string;
+  phone: string | null;
 }
 
 export interface LoginResponseData {

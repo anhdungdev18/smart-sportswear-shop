@@ -1,29 +1,31 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { Bricolage_Grotesque, Plus_Jakarta_Sans } from "next/font/google";
 import { AdminShell } from "@/components/ui/AdminShell";
+import { NavigationProgress } from "@/components/ui/NavigationProgress";
 import "./globals.css";
 
 const display = Bricolage_Grotesque({
   subsets: ["latin", "vietnamese"],
   variable: "--font-display",
-  weight: ["700", "800"]
+  weight: ["700", "800"],
 });
 
 const body = Plus_Jakarta_Sans({
   subsets: ["latin", "vietnamese"],
   variable: "--font-body",
-  weight: ["400", "500", "700", "800"]
+  weight: ["400", "500", "700", "800"],
 });
 
 export const metadata: Metadata = {
   title: "THF Admin",
-  description: "Bảng quản trị vận hành Thanh Hùng Futsal"
+  description: "Bảng quản trị vận hành Thanh Hùng Futsal",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="vi">
       <body className={`${display.variable} ${body.variable}`}>
+        <NavigationProgress />
         <AdminShell>{children}</AdminShell>
       </body>
     </html>

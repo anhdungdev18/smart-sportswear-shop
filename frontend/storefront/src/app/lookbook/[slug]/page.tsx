@@ -1,12 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Breadcrumb } from "@/components/Breadcrumb";
-import { ProductCard } from "@/components/ProductCard";
-import { apiFetch } from "@/lib/api";
-import { endpoints } from "@/lib/endpoints";
-import { mapProductListItem } from "@/lib/mappers";
-import type { CollectionDetail } from "@/types/api";
+import { Breadcrumb } from "@/components/shared/Breadcrumb";
+import { fetchCollectionDetail } from "@/modules/category/queries";
+import type { CollectionDetail } from "@/modules/category/types";
+import { ProductCard } from "@/modules/product/components/ProductCard";
+import { mapProductListItem } from "@/modules/product/mappers";
 
 export default async function LookbookPage({
   params,
@@ -14,14 +13,7 @@ export default async function LookbookPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-
-  let collection: CollectionDetail | null = null;
-  try {
-    const result = await apiFetch<CollectionDetail>(endpoints.collection(slug));
-    collection = result.data;
-  } catch {
-    notFound();
-  }
+  const collection: CollectionDetail | null = await fetchCollectionDetail(slug);
   if (!collection) notFound();
 
   const products = collection.products.map(mapProductListItem);
@@ -30,7 +22,6 @@ export default async function LookbookPage({
 
   return (
     <main className="site-main flex-1">
-      {/* Hero — full width, no container */}
       {heroImage ? (
         <div className="relative h-[60vh] min-h-[400px] w-full overflow-hidden md:h-[80vh]">
           <Image
@@ -63,7 +54,6 @@ export default async function LookbookPage({
         </div>
       )}
 
-      {/* Breadcrumb under hero */}
       {heroImage && (
         <div className="border-b border-ivy-hairline">
           <Breadcrumb
@@ -76,7 +66,6 @@ export default async function LookbookPage({
         </div>
       )}
 
-      {/* Title + description */}
       <section className="mx-auto max-w-[680px] px-6 py-14 text-center">
         <p className="mb-3 text-[11px] font-semibold uppercase tracking-[4px] text-ivy-text-muted">
           {eyebrow}
@@ -91,7 +80,6 @@ export default async function LookbookPage({
         )}
       </section>
 
-      {/* Editorial cover image */}
       {collection.coverImageUrl && (
         <div className="mx-auto mb-4 max-w-[1368px] px-4 md:px-0">
           <div className="relative aspect-[16/7] w-full overflow-hidden">
@@ -106,7 +94,6 @@ export default async function LookbookPage({
         </div>
       )}
 
-      {/* Product grid */}
       {products.length > 0 && (
         <section className="mx-auto max-w-[1368px] px-4 pb-20 pt-14 md:px-0">
           <h3 className="mb-10 text-center text-[13px] font-semibold uppercase tracking-[4px] text-ivy-text-muted">

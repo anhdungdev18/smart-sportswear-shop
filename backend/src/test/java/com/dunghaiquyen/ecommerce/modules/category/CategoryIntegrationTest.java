@@ -118,4 +118,36 @@ class CategoryIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(jsonPath("$.data[?(@.slug=='" + activeSlug + "')]").exists())
                 .andExpect(jsonPath("$.data[?(@.slug=='" + inactiveSlug + "')]").doesNotExist());
     }
+
+    @Test
+    void publicDetail_bySlug_returnsActiveCategory() throws Exception {
+        String token = registerAdminAndGetAccessToken(uniqueEmail("cat-detail-admin"));
+        String slug = "cat-detail-" + java.util.UUID.randomUUID();
+
+        mockMvc.perform(post("/api/v1/admin/categories")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Detail Cat\",\"slug\":\"" + slug + "\",\"status\":\"ACTIVE\"}"))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/api/v1/categories/" + slug))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.slug").value(slug))
+                .andExpect(jsonPath("$.data.name").value("Detail Cat"));
+    }
+
+    @Test
+    void publicDetail_inactiveCategory_returns404() throws Exception {
+        String token = registerAdminAndGetAccessToken(uniqueEmail("cat-detail-inactive-admin"));
+        String slug = "cat-detail-inactive-" + java.util.UUID.randomUUID();
+
+        mockMvc.perform(post("/api/v1/admin/categories")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Hidden Cat\",\"slug\":\"" + slug + "\",\"status\":\"INACTIVE\"}"))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(get("/api/v1/categories/" + slug))
+                .andExpect(status().isNotFound());
+    }
 }

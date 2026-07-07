@@ -1,9 +1,9 @@
-import { AdminReturnsClient } from "@/components/returns/AdminReturnsClient";
+﻿import { AdminReturnsClient } from "@/components/returns/AdminReturnsClient";
 import { listRefundsForReturn, listAdminReturns } from "@/modules/returns/api";
 
 export default async function ReturnsPage() {
-  const items = await listAdminReturns();
-  const refunds = await Promise.all(items.map(async (item) => [item.id, await listRefundsForReturn(item.id)] as const));
+  const items = await listAdminReturns().catch(() => []);
+  const refunds = await Promise.all(items.map(async (item) => [item.id, await listRefundsForReturn(item.id).catch(() => [])] as const));
   const refundsByReturn = Object.fromEntries(refunds);
 
   return (

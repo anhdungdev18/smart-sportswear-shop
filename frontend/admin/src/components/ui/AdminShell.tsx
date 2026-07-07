@@ -14,9 +14,9 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="admin-shell">
       <Sidebar />
-      <div className="content">
+      <div className="content-area">
         <AdminTopbar />
-        {children}
+        <div className="content">{children}</div>
       </div>
     </div>
   );

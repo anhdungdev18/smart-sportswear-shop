@@ -5,6 +5,7 @@ import com.dunghaiquyen.ecommerce.modules.category.dto.CategoryResponse;
 import com.dunghaiquyen.ecommerce.modules.category.service.CategoryService;
 import java.util.List;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -22,5 +23,10 @@ public class CategoryController {
     @GetMapping
     public ApiResponse<List<CategoryResponse>> list() {
         return ApiResponse.ok(categoryService.listActive());
+    }
+
+    @GetMapping("/{slugOrId}")
+    public ApiResponse<CategoryResponse> detail(@PathVariable String slugOrId) {
+        return ApiResponse.ok(categoryService.getActiveDetail(slugOrId));
     }
 }
