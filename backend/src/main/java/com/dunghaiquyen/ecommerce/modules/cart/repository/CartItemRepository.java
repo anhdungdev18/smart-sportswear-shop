@@ -30,4 +30,6 @@ public interface CartItemRepository extends JpaRepository<CartItem, UUID> {
      * is intentionally the authoritative one.
      */
     List<CartItem> findAllByCartId(UUID cartId);
+
+    void deleteAllByVariantIdIn(List<UUID> variantIds);
 }

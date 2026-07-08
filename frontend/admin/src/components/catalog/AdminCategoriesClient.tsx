@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { extractAdminError } from "@/modules/api/admin-errors";
-import { createCategory, updateCategory } from "@/modules/catalog-admin/browser-api";
+import { createCategory, deleteCategory, updateCategory } from "@/modules/catalog-admin/browser-api";
 import type { CategoryResponse } from "@/modules/catalog-admin/types";
 import { toSlug } from "@/modules/utils/slug";
 
@@ -102,6 +102,28 @@ export function AdminCategoriesClient({ initialItems }: { initialItems: Category
     }
   }
 
+  async function handleDelete() {
+    if (!selectedId) return;
+    if (!window.confirm("Xóa danh mục này? Hành động không thể hoàn tác.")) return;
+    try {
+      setSaving(true);
+      await deleteCategory(selectedId);
+      const remaining = items.filter((item) => item.id !== selectedId);
+      setItems(remaining);
+      setSelectedId(remaining[0]?.id ?? "");
+      if (remaining[0]) {
+        setForm({ name: remaining[0].name, slug: remaining[0].slug, description: remaining[0].description ?? "", status: remaining[0].status });
+      } else {
+        setForm(createEmptyForm());
+      }
+      setMessage("Đã xóa danh mục.");
+    } catch (error) {
+      setMessage(extractAdminError(error, "Không xóa được danh mục"));
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <div className="admin-grid admin-grid-2">
       <section className="card panel">
@@ -183,6 +205,11 @@ export function AdminCategoriesClient({ initialItems }: { initialItems: Category
           </div>
         </div>
         <div className="page-actions">
+          {selectedId && (
+            <button className="admin-btn secondary" type="button" onClick={() => void handleDelete()} disabled={saving}>
+              Xóa danh mục
+            </button>
+          )}
           <button className="admin-btn" type="button" onClick={() => void handleSubmit()} disabled={saving}>
             {saving ? "Đang lưu..." : selectedId ? "Cập nhật danh mục" : "Tạo danh mục"}
           </button>

@@ -66,6 +66,10 @@ export async function deleteProductImage(productId: string, imageId: string) {
   });
 }
 
+export async function deleteProduct(id: string) {
+  return browserApiRequest<void>(adminEndpoints.productDetail(id), { method: "DELETE" });
+}
+
 export async function createCategory(input: Record<string, unknown>) {
   return browserApiRequest<CategoryResponse>(adminEndpoints.adminCategories, {
     method: "POST",
@@ -78,6 +82,10 @@ export async function updateCategory(id: string, input: Record<string, unknown>)
     method: "PATCH",
     body: JSON.stringify(input)
   });
+}
+
+export async function deleteCategory(id: string) {
+  return browserApiRequest<void>(adminEndpoints.adminCategory(id), { method: "DELETE" });
 }
 
 export async function createBrand(input: Record<string, unknown>) {
@@ -94,6 +102,10 @@ export async function updateBrand(id: string, input: Record<string, unknown>) {
   });
 }
 
+export async function deleteBrand(id: string) {
+  return browserApiRequest<void>(adminEndpoints.adminBrand(id), { method: "DELETE" });
+}
+
 export async function createPromotion(input: Record<string, unknown>) {
   return browserApiRequest<PromotionResponse>(adminEndpoints.promotions, {
     method: "POST",
@@ -108,7 +120,17 @@ export async function updatePromotion(id: string, input: Record<string, unknown>
   });
 }
 
-export type ProductPickItem = { id: string; name: string; slug: string; status: string };
+export type ProductPickItem = {
+  id: string;
+  name: string;
+  slug: string;
+  status: string;
+  thumbnail?: string | null;
+  brand?: { id: string; name: string } | null;
+  category?: { id: string; name: string } | null;
+  brandName?: string | null;
+  categoryName?: string | null;
+};
 
 export async function listProductsForPicker() {
   return browserApiRequest<ProductPickItem[]>(`${adminEndpoints.products}?limit=200`, { method: "GET" });
@@ -126,6 +148,14 @@ export async function listCouponsForAdmin() {
   return browserApiRequest<CouponResponse[]>(`${adminEndpoints.coupons}?limit=200`, { method: "GET" });
 }
 
+export async function listProductCollections(productId: string) {
+  return browserApiRequest<CollectionResponse[]>(adminEndpoints.productCollections(productId), { method: "GET" });
+}
+
+export async function listCollectionsForPicker() {
+  return browserApiRequest<CollectionResponse[]>(`${adminEndpoints.collections}?limit=100`, { method: "GET" });
+}
+
 export async function createCollection(input: Record<string, unknown>) {
   return browserApiRequest<CollectionResponse>(adminEndpoints.collections, {
     method: "POST",
@@ -138,6 +168,10 @@ export async function updateCollection(id: string, input: Record<string, unknown
     method: "PATCH",
     body: JSON.stringify(input)
   });
+}
+
+export async function deleteCollection(id: string) {
+  return browserApiRequest<void>(adminEndpoints.collection(id), { method: "DELETE" });
 }
 
 export async function addProductToCollection(productId: string, collectionId: string) {

@@ -17,4 +17,6 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, UUID> {
     List<OrderItem> findAllByOrderIdOrderByIdAsc(UUID orderId);
 
     List<OrderItem> findAllByOrderIdIn(List<UUID> orderIds);
+
+    boolean existsByVariantIdIn(List<UUID> variantIds);
 }

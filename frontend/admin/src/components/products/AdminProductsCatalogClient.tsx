@@ -2,15 +2,21 @@
 "use client";
 
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { memo, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { ApiRequestError } from "@/modules/api/common";
 import { toSlug } from "@/modules/utils/slug";
 import {
   addProductImage,
+  addProductToCollection,
   createAdminProduct,
   createVariant,
+  deleteProduct,
   deleteProductImage,
   fetchAdminProductDetail,
+  listCollectionsForPicker,
+  listProductCollections,
+  removeProductFromCollection,
   updateAdminProduct,
   updateVariant,
   uploadProductImage
@@ -18,6 +24,7 @@ import {
 import type {
   BrandResponse,
   CategoryResponse,
+  CollectionResponse,
   ProductDetailResponse,
   ProductImageResponse,
   ProductVariantResponse
@@ -118,6 +125,18 @@ function mapAdminStatus(status: ProductDetailResponse["status"], stock: number):
   }
 
   return "active";
+}
+
+function collectionStatusTone(status: string) {
+  if (status === "ACTIVE") return "success";
+  if (status === "ARCHIVED") return "muted";
+  return "warning";
+}
+
+function collectionStatusLabel(status: string) {
+  if (status === "ACTIVE") return "Hoạt động";
+  if (status === "ARCHIVED") return "Lưu trữ";
+  return "Nháp";
 }
 
 function createEmptyProductForm(categoryId = "", brandId = "") {
@@ -299,6 +318,7 @@ export function AdminProductsCatalogClient({
   categories: CategoryResponse[];
   brands: BrandResponse[];
 }) {
+  const router = useRouter();
   const [products, setProducts] = useState(initialProducts);
   const [selectedProductId, setSelectedProductId] = useState(initialProducts.find((item) => item.id)?.id ?? "");
   const [detail, setDetail] = useState<ProductDetailResponse | null>(null);
@@ -315,6 +335,15 @@ export function AdminProductsCatalogClient({
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | AdminProduct["status"] | "featured">("all");
   const deferredSearchTerm = useDeferredValue(searchTerm);
+
+  const [productCollections, setProductCollections] = useState<CollectionResponse[]>([]);
+  const [allCollections, setAllCollections] = useState<CollectionResponse[]>([]);
+  const [collectionSearch, setCollectionSearch] = useState("");
+  const [collectionsLoading, setCollectionsLoading] = useState(false);
+  const [collectionsPickerLoading, setCollectionsPickerLoading] = useState(false);
+  const [collectionMessage, setCollectionMessage] = useState<string | null>(null);
+  const allCollectionsFetchedRef = useRef(false);
+  const productCollectionsCacheRef = useRef<Record<string, CollectionResponse[]>>({});
 
   const selectedProduct = useMemo(() => products.find((item) => item.id === selectedProductId) ?? null, [products, selectedProductId]);
   const missingCategorySetup = categories.length === 0;
@@ -342,6 +371,62 @@ export function AdminProductsCatalogClient({
       return haystack.includes(keyword);
     });
   }, [deferredSearchTerm, products, statusFilter]);
+
+  useEffect(() => {
+    if (!message) return;
+    const timer = setTimeout(() => setMessage(null), 4000);
+    return () => clearTimeout(timer);
+  }, [message]);
+
+  useEffect(() => {
+    if (!collectionMessage) return;
+    const timer = setTimeout(() => setCollectionMessage(null), 4000);
+    return () => clearTimeout(timer);
+  }, [collectionMessage]);
+
+  useEffect(() => {
+    if (!selectedProductId) {
+      setProductCollections([]);
+      return;
+    }
+
+    const cached = productCollectionsCacheRef.current[selectedProductId];
+    if (cached) {
+      setProductCollections(cached);
+      return;
+    }
+
+    let active = true;
+    setCollectionsLoading(true);
+
+    listProductCollections(selectedProductId)
+      .then((data) => {
+        if (!active) return;
+        productCollectionsCacheRef.current[selectedProductId] = data;
+        setProductCollections(data);
+      })
+      .catch(() => {
+        if (!active) return;
+        setProductCollections([]);
+      })
+      .finally(() => {
+        if (active) setCollectionsLoading(false);
+      });
+
+    return () => { active = false; };
+  }, [selectedProductId]);
+
+  // Load all collections once on mount — not tied to selectedProductId so the active
+  // cleanup from switching products doesn't cancel it.
+  useEffect(() => {
+    if (allCollectionsFetchedRef.current) return;
+    allCollectionsFetchedRef.current = true;
+    setCollectionsPickerLoading(true);
+    listCollectionsForPicker()
+      .then((data) => setAllCollections(data))
+      .catch(() => { allCollectionsFetchedRef.current = false; })
+      .finally(() => setCollectionsPickerLoading(false));
+  }, []);
 
   useEffect(() => {
     if (!selectedProductId) {
@@ -390,6 +475,58 @@ export function AdminProductsCatalogClient({
       active = false;
     };
   }, [brands, categories, selectedProductId]);
+
+  const filteredAvailableCollections = useMemo(() => {
+    const assignedIds = new Set(productCollections.map((c) => c.id));
+    const keyword = collectionSearch.trim().toLowerCase();
+    return allCollections
+      .filter((c) => !assignedIds.has(c.id))
+      .filter((c) => !keyword || [c.name, c.slug, c.collectionType].join(" ").toLowerCase().includes(keyword))
+      .slice(0, 20);
+  }, [allCollections, productCollections, collectionSearch]);
+
+  async function ensureAllCollectionsLoaded() {
+    if (allCollectionsFetchedRef.current && allCollections.length > 0) return;
+    if (collectionsPickerLoading) return;
+    allCollectionsFetchedRef.current = true;
+    try {
+      setCollectionsPickerLoading(true);
+      const data = await listCollectionsForPicker();
+      setAllCollections(data);
+    } catch {
+      allCollectionsFetchedRef.current = false;
+    } finally {
+      setCollectionsPickerLoading(false);
+    }
+  }
+
+  async function handleAddToCollection(collection: CollectionResponse) {
+    if (!selectedProductId) return;
+    try {
+      setCollectionMessage(null);
+      await addProductToCollection(selectedProductId, collection.id);
+      const next = [...productCollections, collection];
+      setProductCollections(next);
+      productCollectionsCacheRef.current[selectedProductId] = next;
+      setCollectionMessage(`Đã thêm vào bộ sưu tập ${collection.name}.`);
+    } catch (error) {
+      setCollectionMessage(extractError(error, "Không thêm được vào bộ sưu tập"));
+    }
+  }
+
+  async function handleRemoveFromCollection(collectionId: string) {
+    if (!selectedProductId) return;
+    try {
+      setCollectionMessage(null);
+      await removeProductFromCollection(selectedProductId, collectionId);
+      const next = productCollections.filter((c) => c.id !== collectionId);
+      setProductCollections(next);
+      productCollectionsCacheRef.current[selectedProductId] = next;
+      setCollectionMessage("Đã gỡ khỏi bộ sưu tập.");
+    } catch (error) {
+      setCollectionMessage(extractError(error, "Không gỡ được khỏi bộ sưu tập"));
+    }
+  }
 
   function upsertProductCard(nextDetail: ProductDetailResponse) {
     const nextProduct = toAdminProduct(nextDetail, categories, brands);
@@ -447,6 +584,7 @@ export function AdminProductsCatalogClient({
         setDetail(updated);
         upsertProductCard(updated);
         setMessage(`Đã cập nhật sản phẩm ${updated.name}.`);
+        router.refresh();
         return;
       }
 
@@ -456,8 +594,30 @@ export function AdminProductsCatalogClient({
       setDetail(created);
       upsertProductCard(created);
       setMessage(`Đã tạo sản phẩm ${created.name}.`);
+      router.refresh();
     } catch (error) {
       setMessage(extractError(error, "Không lưu được sản phẩm"));
+    } finally {
+      setSaving(null);
+    }
+  }
+
+  async function handleDeleteProduct() {
+    if (!selectedProductId) return;
+    if (!window.confirm("Xóa sản phẩm này? Hành động không thể hoàn tác.")) return;
+    const idToDelete = selectedProductId;
+    const nextId = products.find((item) => item.id && item.id !== idToDelete)?.id ?? "";
+    try {
+      setSaving("product-delete");
+      await deleteProduct(idToDelete);
+      delete detailCacheRef.current[idToDelete];
+      setProducts((prev) => prev.filter((item) => item.id !== idToDelete));
+      setSelectedProductId(nextId);
+      setDetail(null);
+      setMessage("Đã xóa sản phẩm.");
+      router.refresh();
+    } catch (error) {
+      setMessage(extractError(error, "Không xóa được sản phẩm"));
     } finally {
       setSaving(null);
     }
@@ -753,6 +913,11 @@ export function AdminProductsCatalogClient({
             </div>
           </div>
           <div className="page-actions">
+            {selectedProductId && (
+              <button className="admin-btn secondary" type="button" onClick={() => void handleDeleteProduct()} disabled={saving !== null}>
+                {saving === "product-delete" ? "Đang xóa..." : "Xóa sản phẩm"}
+              </button>
+            )}
             <button className="admin-btn" type="button" onClick={() => void handleCreateOrUpdateProduct()} disabled={!canSubmitProduct}>
               {saving === "product" ? "Đang lưu..." : selectedProductId ? "Cập nhật sản phẩm" : "Tạo sản phẩm"}
             </button>
@@ -837,6 +1002,136 @@ export function AdminProductsCatalogClient({
             </div>
           ) : <div className="empty-state">Sản phẩm này chưa có ảnh.</div>}
         </section>
+      {selectedProductId ? (
+        <section className="card panel">
+          <div className="panel-header">
+            <div>
+              <h2>Bộ sưu tập</h2>
+              <p className="panel-copy">Gắn sản phẩm vào các bộ sưu tập để hiển thị trên storefront.</p>
+            </div>
+          </div>
+
+          {collectionMessage ? <p className="action-message">{collectionMessage}</p> : null}
+
+          <div style={{ marginBottom: 20 }}>
+            <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>
+              Đang thuộc bộ sưu tập ({productCollections.length})
+            </h3>
+            {collectionsLoading && productCollections.length === 0 ? (
+              <div className="loading-state">
+                <div className="skeleton" style={{ width: "60%", marginBottom: 8 }} />
+                <div className="skeleton" style={{ width: "80%" }} />
+              </div>
+            ) : productCollections.length === 0 ? (
+              <div className="empty-state">Sản phẩm này chưa thuộc bộ sưu tập nào.</div>
+            ) : (
+              <div className="admin-gallery">
+                {productCollections.map((c) => (
+                  <article key={c.id} className="admin-image-card">
+                    {c.coverImageUrl ? (
+                      <Image
+                        src={c.coverImageUrl}
+                        alt={c.name}
+                        width={96}
+                        height={96}
+                        style={{ width: 96, height: 96, borderRadius: 12, objectFit: "cover" }}
+                        unoptimized
+                      />
+                    ) : (
+                      <div style={{ width: 96, height: 96, borderRadius: 12, background: "var(--admin-line)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, flexShrink: 0 }}>
+                        🗂
+                      </div>
+                    )}
+                    <div>
+                      <strong style={{ display: "block", marginBottom: 2 }}>{c.name}</strong>
+                      <div className="table-subtle">
+                        {[c.collectionType, c.season, c.year].filter(Boolean).join(" · ")}
+                      </div>
+                      <div className="table-subtle">{c.slug}</div>
+                      <span className={`status-pill status-pill-${collectionStatusTone(c.status)}`} style={{ marginTop: 4, display: "inline-block" }}>
+                        {collectionStatusLabel(c.status)}
+                      </span>
+                    </div>
+                    <button
+                      className="admin-btn secondary"
+                      type="button"
+                      onClick={() => void handleRemoveFromCollection(c.id)}
+                    >
+                      Gỡ khỏi bộ sưu tập
+                    </button>
+                  </article>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>Thêm vào bộ sưu tập</h3>
+            <input
+              className="admin-input"
+              placeholder="Tìm bộ sưu tập để thêm..."
+              value={collectionSearch}
+              style={{ width: "100%", marginBottom: 12 }}
+              onFocus={() => void ensureAllCollectionsLoaded()}
+              onChange={(event) => {
+                void ensureAllCollectionsLoaded();
+                setCollectionSearch(event.target.value);
+              }}
+            />
+            {collectionsPickerLoading ? (
+              <div className="loading-state">
+                <div className="skeleton" style={{ width: "70%", marginBottom: 8 }} />
+                <div className="skeleton" style={{ width: "85%", marginBottom: 8 }} />
+                <div className="skeleton" style={{ width: "60%" }} />
+              </div>
+            ) : filteredAvailableCollections.length === 0 ? (
+              <div className="empty-state">
+                {allCollections.length === 0
+                  ? "Bấm vào ô tìm kiếm để tải danh sách bộ sưu tập."
+                  : "Không có bộ sưu tập nào khả dụng để thêm."}
+              </div>
+            ) : (
+              <div className="admin-gallery">
+                {filteredAvailableCollections.map((c) => (
+                  <article key={c.id} className="admin-image-card">
+                    {c.coverImageUrl ? (
+                      <Image
+                        src={c.coverImageUrl}
+                        alt={c.name}
+                        width={96}
+                        height={96}
+                        style={{ width: 96, height: 96, borderRadius: 12, objectFit: "cover" }}
+                        unoptimized
+                      />
+                    ) : (
+                      <div style={{ width: 96, height: 96, borderRadius: 12, background: "var(--admin-line)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, flexShrink: 0 }}>
+                        🗂
+                      </div>
+                    )}
+                    <div>
+                      <strong style={{ display: "block", marginBottom: 2 }}>{c.name}</strong>
+                      <div className="table-subtle">
+                        {[c.collectionType, c.season, c.year].filter(Boolean).join(" · ")}
+                      </div>
+                      <div className="table-subtle">{c.slug}</div>
+                      <span className={`status-pill status-pill-${collectionStatusTone(c.status)}`} style={{ marginTop: 4, display: "inline-block" }}>
+                        {collectionStatusLabel(c.status)}
+                      </span>
+                    </div>
+                    <button
+                      className="admin-btn"
+                      type="button"
+                      onClick={() => void handleAddToCollection(c)}
+                    >
+                      Thêm vào
+                    </button>
+                  </article>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+      ) : null}
       </div>
     </div>
   );

@@ -6,5 +6,8 @@ public record CollectionProductAssignmentResponse(
         UUID id,
         String name,
         String slug,
-        String status) {
+        String status,
+        String thumbnail,
+        String brandName,
+        String categoryName) {
 }

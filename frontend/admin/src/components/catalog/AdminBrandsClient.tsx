@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { extractAdminError } from "@/modules/api/admin-errors";
-import { createBrand, updateBrand } from "@/modules/catalog-admin/browser-api";
+import { createBrand, deleteBrand, updateBrand } from "@/modules/catalog-admin/browser-api";
 import type { BrandResponse } from "@/modules/catalog-admin/types";
 import { toSlug } from "@/modules/utils/slug";
 
@@ -102,6 +102,28 @@ export function AdminBrandsClient({ initialItems }: { initialItems: BrandRespons
     }
   }
 
+  async function handleDelete() {
+    if (!selectedId) return;
+    if (!window.confirm("Xóa thương hiệu này? Hành động không thể hoàn tác.")) return;
+    try {
+      setSaving(true);
+      await deleteBrand(selectedId);
+      const remaining = items.filter((item) => item.id !== selectedId);
+      setItems(remaining);
+      setSelectedId(remaining[0]?.id ?? "");
+      if (remaining[0]) {
+        setForm({ name: remaining[0].name, slug: remaining[0].slug, description: remaining[0].description ?? "", status: remaining[0].status });
+      } else {
+        setForm(createEmptyForm());
+      }
+      setMessage("Đã xóa thương hiệu.");
+    } catch (error) {
+      setMessage(extractAdminError(error, "Không xóa được thương hiệu"));
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <div className="admin-grid admin-grid-2">
       <section className="card panel">
@@ -183,6 +205,11 @@ export function AdminBrandsClient({ initialItems }: { initialItems: BrandRespons
           </div>
         </div>
         <div className="page-actions">
+          {selectedId && (
+            <button className="admin-btn secondary" type="button" onClick={() => void handleDelete()} disabled={saving}>
+              Xóa thương hiệu
+            </button>
+          )}
           <button className="admin-btn" type="button" onClick={() => void handleSubmit()} disabled={saving}>
             {saving ? "Đang lưu..." : selectedId ? "Cập nhật thương hiệu" : "Tạo thương hiệu"}
           </button>

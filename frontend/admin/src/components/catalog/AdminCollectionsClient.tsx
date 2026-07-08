@@ -1,24 +1,38 @@
 "use client";
 
+import Image from "next/image";
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { extractAdminError } from "@/modules/api/admin-errors";
 import {
   addProductToCollection,
   createCollection,
+  deleteCollection,
   listCollectionProducts,
   listProductsForPicker,
   removeProductFromCollection,
   updateCollection
 } from "@/modules/catalog-admin/browser-api";
+import type { ProductPickItem } from "@/modules/catalog-admin/browser-api";
 import type { CollectionResponse } from "@/modules/catalog-admin/types";
 import { toSlug } from "@/modules/utils/slug";
 
-type ProductPickItem = {
-  id: string;
-  name: string;
-  slug: string;
-  status: string;
-};
+const PLACEHOLDER_IMG = "https://placehold.co/96x96/f5f5f5/202020?text=SP";
+
+function getProductBrandName(product: ProductPickItem) {
+  return product.brandName ?? product.brand?.name ?? null;
+}
+
+function getProductCategoryName(product: ProductPickItem) {
+  return product.categoryName ?? product.category?.name ?? null;
+}
+
+function productStatusClass(status: string) {
+  switch (status) {
+    case "ACTIVE": return "active";
+    case "INACTIVE": return "draft";
+    default: return "draft";
+  }
+}
 
 const STATUS_OPTIONS = ["DRAFT", "ACTIVE", "ARCHIVED"] as const;
 const COLLECTION_TYPES = ["CAMPAIGN", "SEASONAL", "LOOKBOOK", "SPORT", "EDITORIAL"] as const;
@@ -305,6 +319,23 @@ export function AdminCollectionsClient({ initialItems }: { initialItems: Collect
     }
   }
 
+  async function handleDelete() {
+    if (!selectedId) return;
+    if (!window.confirm("Xóa bộ sưu tập này? Hành động không thể hoàn tác.")) return;
+    try {
+      setSaving(true);
+      await deleteCollection(selectedId);
+      const remaining = items.filter((item) => item.id !== selectedId);
+      setItems(remaining);
+      setSelectedId(remaining[0]?.id ?? "");
+      setMessage("Đã xóa bộ sưu tập.");
+    } catch (error) {
+      setMessage(extractAdminError(error, "Không xóa được bộ sưu tập"));
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function handleAddProduct(product: ProductPickItem) {
     if (!selectedId) return;
 
@@ -505,6 +536,11 @@ export function AdminCollectionsClient({ initialItems }: { initialItems: Collect
         </div>
 
         <div className="page-actions">
+          {selectedId && (
+            <button className="admin-btn secondary" type="button" onClick={() => void handleDelete()} disabled={saving}>
+              Xóa bộ sưu tập
+            </button>
+          )}
           <button className="admin-btn" type="button" onClick={() => void handleSubmit()} disabled={saving}>
             {saving ? "Đang lưu..." : selectedId ? "Cập nhật bộ sưu tập" : "Tạo bộ sưu tập"}
           </button>
@@ -537,31 +573,54 @@ export function AdminCollectionsClient({ initialItems }: { initialItems: Collect
             />
           </div>
 
-          <div className="panel-block">
-            <h3>Sản phẩm đang thuộc bộ sưu tập ({assigned.length})</h3>
+          <div style={{ marginBottom: 8 }}>
+            <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>
+              Sản phẩm đang thuộc bộ sưu tập ({assigned.length})
+            </h3>
             {loadingProducts && assigned.length === 0 ? (
               <div className="empty-state">Đang tải dữ liệu sản phẩm...</div>
             ) : assigned.length === 0 ? (
               <div className="empty-state">Bộ sưu tập này chưa có sản phẩm nào.</div>
             ) : (
-              <div className="stack-list">
-                {assigned.map((product) => (
-                  <div key={product.id} className="stack-list-item">
-                    <div>
-                      <strong>{product.name}</strong>
-                      <div className="table-subtle">{product.slug}</div>
-                    </div>
-                    <button className="admin-btn admin-btn-ghost" type="button" onClick={() => void handleRemoveProduct(product.id)}>
-                      Xóa
-                    </button>
-                  </div>
-                ))}
+              <div className="admin-gallery">
+                {assigned.map((product) => {
+                  const brandName = getProductBrandName(product);
+                  const categoryName = getProductCategoryName(product);
+                  const subtitle = [brandName, categoryName].filter(Boolean).join(" · ");
+                  return (
+                    <article key={product.id} className="admin-image-card">
+                      <Image
+                        src={product.thumbnail ?? PLACEHOLDER_IMG}
+                        alt={product.name}
+                        width={96}
+                        height={96}
+                        style={{ width: 96, height: 96, borderRadius: 12, objectFit: "cover" }}
+                        unoptimized
+                      />
+                      <div>
+                        <strong style={{ display: "block", marginBottom: 2 }}>{product.name}</strong>
+                        {subtitle ? <div className="table-subtle">{subtitle}</div> : null}
+                        <div className="table-subtle">{product.slug}</div>
+                        <span className={`status ${productStatusClass(product.status)}`} style={{ marginTop: 4, display: "inline-block" }}>
+                          {product.status}
+                        </span>
+                      </div>
+                      <button
+                        className="admin-btn secondary"
+                        type="button"
+                        onClick={() => void handleRemoveProduct(product.id)}
+                      >
+                        Gỡ khỏi bộ sưu tập
+                      </button>
+                    </article>
+                  );
+                })}
               </div>
             )}
           </div>
 
-          <div className="panel-block" style={{ marginTop: 20 }}>
-            <h3>Sản phẩm khả dụng để thêm</h3>
+          <div style={{ marginTop: 24 }}>
+            <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>Sản phẩm khả dụng để thêm</h3>
             {loadingProducts && allProducts.length === 0 ? (
               <div className="empty-state">Đang tải danh mục sản phẩm...</div>
             ) : filteredProducts.length === 0 ? (
@@ -571,20 +630,39 @@ export function AdminCollectionsClient({ initialItems }: { initialItems: Collect
                   : "Không tìm thấy sản phẩm phù hợp."}
               </div>
             ) : (
-              <div className="stack-list">
-                {filteredProducts.map((product) => (
-                  <div key={product.id} className="stack-list-item">
-                    <div>
-                      <strong>{product.name}</strong>
-                      <div className="table-subtle">
-                        {product.slug} · {product.status}
+              <div className="admin-gallery">
+                {filteredProducts.map((product) => {
+                  const brandName = getProductBrandName(product);
+                  const categoryName = getProductCategoryName(product);
+                  const subtitle = [brandName, categoryName].filter(Boolean).join(" · ");
+                  return (
+                    <article key={product.id} className="admin-image-card">
+                      <Image
+                        src={product.thumbnail ?? PLACEHOLDER_IMG}
+                        alt={product.name}
+                        width={96}
+                        height={96}
+                        style={{ width: 96, height: 96, borderRadius: 12, objectFit: "cover" }}
+                        unoptimized
+                      />
+                      <div>
+                        <strong style={{ display: "block", marginBottom: 2 }}>{product.name}</strong>
+                        {subtitle ? <div className="table-subtle">{subtitle}</div> : null}
+                        <div className="table-subtle">{product.slug}</div>
+                        <span className={`status ${productStatusClass(product.status)}`} style={{ marginTop: 4, display: "inline-block" }}>
+                          {product.status}
+                        </span>
                       </div>
-                    </div>
-                    <button className="admin-btn" type="button" onClick={() => void handleAddProduct(product)}>
-                      Thêm
-                    </button>
-                  </div>
-                ))}
+                      <button
+                        className="admin-btn"
+                        type="button"
+                        onClick={() => void handleAddProduct(product)}
+                      >
+                        Thêm vào
+                      </button>
+                    </article>
+                  );
+                })}
               </div>
             )}
           </div>

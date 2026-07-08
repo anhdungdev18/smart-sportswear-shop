@@ -113,6 +113,11 @@ public class AdminProductController {
         return ApiResponse.ok("Image deleted", productImageService.deleteImage(id, imageId));
     }
 
+    @GetMapping("/{id}/collections")
+    public ApiResponse<List<com.dunghaiquyen.ecommerce.modules.collection.dto.CollectionResponse>> listCollections(@PathVariable UUID id) {
+        return ApiResponse.ok(collectionService.listCollectionsForProduct(id));
+    }
+
     /** Catalog V2: link this product to an existing collection. 409 if the link already exists. */
     @PostMapping("/{id}/collections")
     public ResponseEntity<ApiResponse<Void>> addToCollection(
@@ -129,5 +134,11 @@ public class AdminProductController {
     public ApiResponse<Void> removeFromCollection(@PathVariable UUID id, @PathVariable UUID collectionId) {
         collectionService.unlinkProduct(id, collectionId);
         return ApiResponse.ok("Product removed from collection", null);
+    }
+
+    @DeleteMapping("/{id}")
+    public ApiResponse<Void> delete(@PathVariable UUID id) {
+        productService.delete(id);
+        return ApiResponse.ok("Product deleted", null);
     }
 }

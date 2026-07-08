@@ -60,6 +60,18 @@ public class BrandService {
 
     @CacheEvict(value = CacheConfig.BRANDS, allEntries = true)
     @Transactional
+    public void delete(UUID id) {
+        Brand brand = brandRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Brand not found"));
+        try {
+            brandRepository.delete(brand);
+        } catch (DataIntegrityViolationException ex) {
+            throw new BusinessRuleException("Không thể xóa thương hiệu đang được dùng bởi sản phẩm.");
+        }
+    }
+
+    @CacheEvict(value = CacheConfig.BRANDS, allEntries = true)
+    @Transactional
     public BrandResponse update(UUID id, BrandUpdateRequest request) {
         Brand brand = brandRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Brand not found"));

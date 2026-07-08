@@ -110,6 +110,17 @@ public class CollectionService {
     }
 
     @Transactional(readOnly = true)
+    public List<CollectionResponse> listCollectionsForProduct(UUID productId) {
+        if (!productRepository.existsById(productId)) {
+            throw new ResourceNotFoundException("Product not found");
+        }
+        return productCollectionRepository.findAllByProductIdOrderByCreatedAtAsc(productId).stream()
+                .map(ProductCollection::getCollection)
+                .map(this::toAdminResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public List<CollectionProductAssignmentResponse> listAssignedProducts(UUID collectionId) {
         if (!collectionRepository.existsById(collectionId)) {
             throw new ResourceNotFoundException("Collection not found");
@@ -117,11 +128,22 @@ public class CollectionService {
 
         return productCollectionRepository.findAllByCollectionIdOrderBySortOrderAsc(collectionId).stream()
                 .map(ProductCollection::getProduct)
-                .map(product -> new CollectionProductAssignmentResponse(
-                        product.getId(),
-                        product.getName(),
-                        product.getSlug(),
-                        product.getStatus().name()))
+                .map(product -> {
+                    String thumbnail = product.getImages().stream()
+                            .findFirst()
+                            .map(img -> img.getImageUrl())
+                            .orElse(null);
+                    String brandName = product.getBrand() != null ? product.getBrand().getName() : null;
+                    String categoryName = product.getCategory() != null ? product.getCategory().getName() : null;
+                    return new CollectionProductAssignmentResponse(
+                            product.getId(),
+                            product.getName(),
+                            product.getSlug(),
+                            product.getStatus().name(),
+                            thumbnail,
+                            brandName,
+                            categoryName);
+                })
                 .toList();
     }
 
@@ -189,6 +211,14 @@ public class CollectionService {
         if (request.isFeatured() != null) c.setFeatured(request.isFeatured());
 
         return toAdminResponse(collectionRepository.save(c));
+    }
+
+    @CacheEvict(value = CacheConfig.COLLECTIONS, allEntries = true)
+    @Transactional
+    public void delete(UUID id) {
+        Collection collection = collectionRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Collection not found"));
+        collectionRepository.delete(collection);
     }
 
     /**

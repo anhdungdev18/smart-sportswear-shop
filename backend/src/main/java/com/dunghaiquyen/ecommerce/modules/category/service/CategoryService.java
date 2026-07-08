@@ -97,6 +97,18 @@ public class CategoryService {
         return categoryMapper.toResponse(category);
     }
 
+    @CacheEvict(value = CacheConfig.CATEGORIES, allEntries = true)
+    @Transactional
+    public void delete(UUID id) {
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
+        try {
+            categoryRepository.delete(category);
+        } catch (DataIntegrityViolationException ex) {
+            throw new BusinessRuleException("Không thể xóa danh mục đang được dùng bởi sản phẩm.");
+        }
+    }
+
     private java.util.Optional<Category> tryFindActiveById(String slugOrId) {
         try {
             UUID id = UUID.fromString(slugOrId);
