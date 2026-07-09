@@ -2,7 +2,7 @@
 
 AI chatbot service cho sport shop — độc lập với Spring Boot backend.
 
-**Phase hiện tại: Phase 0 — Scaffold** (chưa có retrieval thật, chưa có graph thật)
+**Phase hiện tại: Phase 1 — Orchestration nền** (graph chạy thật, tools mock, chưa có retrieval thật)
 
 ---
 
@@ -11,41 +11,29 @@ AI chatbot service cho sport shop — độc lập với Spring Boot backend.
 ```bash
 cd chatbot-service
 
-# 1. Tạo virtualenv
 python -m venv .venv
 .venv\Scripts\activate        # Windows
 # source .venv/bin/activate   # macOS/Linux
 
-# 2. Cài dependencies
 pip install -r requirements.txt
 
-# 3. Tạo .env từ example
 cp .env.example .env
-# Điền ANTHROPIC_API_KEY nếu cần
 
-# 4. Chạy service
 python run.py
-# hoặc
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8001
+# hoặc: uvicorn app.main:app --reload --host 0.0.0.0 --port 8002
 ```
 
-Service sẽ chạy tại `http://localhost:8001`
+Service chạy tại `http://localhost:8002`
 
 ---
 
-## Endpoints hiện có
+## Endpoints
 
-| Method | Path      | Mô tả                        |
-|--------|-----------|------------------------------|
-| GET    | /health   | Health check                 |
-| POST   | /chat     | Chat endpoint (mock Phase 0) |
-| GET    | /docs     | Swagger UI (auto)            |
-
-### GET /health
-
-```json
-{ "status": "ok", "service": "chatbot-service" }
-```
+| Method | Path    | Mô tả                              |
+|--------|---------|------------------------------------|
+| GET    | /health | Health check                       |
+| POST   | /chat   | Chat — đi qua orchestration graph  |
+| GET    | /docs   | Swagger UI                         |
 
 ### POST /chat
 
@@ -54,37 +42,81 @@ Request:
 {
   "sessionId": "sess_123",
   "userId": "u_123",
-  "message": "Tôi cần giày chạy bộ dưới 1 triệu",
+  "message": "Tôi muốn mua giày chạy bộ dưới 1 triệu",
   "channel": "web"
 }
 ```
 
-Response (Phase 0 mock):
+Response (Phase 1):
 ```json
 {
-  "reply": "Đây là phản hồi mock từ chatbot-service Phase 0.",
-  "toolCalls": [],
+  "reply": "Tôi tìm thấy 2 sản phẩm phù hợp: Giày chạy bộ Dry-Fit, Áo thể thao thoáng khí.",
+  "toolCalls": [
+    { "tool": "search_products", "result": { "items": [...], "total": 2 } }
+  ],
   "suggestions": [],
-  "sessionState": { "sessionId": "sess_123" }
+  "sessionState": {
+    "sessionId": "sess_123",
+    "intent": "PRODUCT_SEARCH",
+    "selectedTool": "search_products"
+  }
 }
+```
+
+---
+
+## Intent đã support (Phase 1)
+
+| Intent           | Từ khóa kích hoạt                              | Tool được gọi        |
+|------------------|------------------------------------------------|----------------------|
+| PRODUCT_SEARCH   | tìm, muốn mua, giày, áo, quần, phụ kiện…      | search_products      |
+| KNOWLEDGE_QA     | chính sách, đổi trả, giao hàng, size…         | answer_knowledge     |
+| ORDER_STATUS     | đơn hàng, mã đơn, trạng thái đơn…             | get_order_status     |
+| ADD_TO_CART      | thêm vào giỏ, giỏ hàng…                       | add_to_cart          |
+| CANCEL_ORDER     | hủy đơn, cancel đơn…                          | cancel_order         |
+| UNKNOWN          | không match                                    | (none)               |
+
+---
+
+## Tools mock (Phase 1)
+
+| Tool               | Trả về                             | Thật từ phase |
+|--------------------|------------------------------------|---------------|
+| search_products    | 2 sản phẩm mock                    | Phase 3       |
+| answer_knowledge   | chính sách mock                    | Phase 4       |
+| get_order_status   | status mock PENDING_CONFIRMATION   | Phase 5       |
+| add_to_cart        | `{mock: true}`                     | Phase 5       |
+| cancel_order       | `{mock: true}`                     | Phase 5       |
+
+---
+
+## Orchestration flow (Phase 1)
+
+```
+POST /chat
+  -> intent_router_node   (rule-based keyword matching)
+  -> tool_selector_node   (intent -> tool name + args)
+  -> tool_executor_node   (registry lookup + run mock fn)
+  -> response_generator   (template reply per intent)
+  -> ChatResponse
 ```
 
 ---
 
 ## Biến môi trường
 
-| Biến                  | Default           | Ghi chú                        |
-|-----------------------|-------------------|--------------------------------|
-| CHATBOT_ENV           | development       |                                |
-| CHATBOT_HOST          | 0.0.0.0           |                                |
-| CHATBOT_PORT          | 8001              |                                |
-| MODEL_PROVIDER        | anthropic         |                                |
-| MODEL_NAME            | claude-sonnet-4-6 |                                |
-| DB_READ_URL           | (trống)           | Dùng từ Phase 3                |
-| BACKEND_API_BASE_URL  | localhost:8080    | Dùng từ Phase 5                |
-| REDIS_URL             | localhost:6379    | Dùng từ Phase 9                |
-| LOG_LEVEL             | INFO              |                                |
-| ANTHROPIC_API_KEY     | (trống)           | Bắt buộc từ Phase 1            |
+| Biến                 | Default           | Dùng từ phase |
+|----------------------|-------------------|---------------|
+| CHATBOT_ENV          | development       | Phase 0       |
+| CHATBOT_HOST         | 0.0.0.0           | Phase 0       |
+| CHATBOT_PORT         | 8002              | Phase 0       |
+| MODEL_PROVIDER       | anthropic         | Phase 1+      |
+| MODEL_NAME           | claude-sonnet-4-6 | Phase 1+      |
+| DB_READ_URL          | (trống)           | Phase 3       |
+| BACKEND_API_BASE_URL | localhost:8080    | Phase 5       |
+| REDIS_URL            | localhost:6379    | Phase 9       |
+| LOG_LEVEL            | INFO              | Phase 0       |
+| ANTHROPIC_API_KEY    | (trống)           | Phase 1+      |
 
 ---
 
@@ -94,30 +126,35 @@ Response (Phase 0 mock):
 app/
   api/            — FastAPI routers
   config/         — Settings (pydantic-settings)
-  graph/          — LangGraph orchestration (Phase 1+)
-  tools/          — Tool Registry + Executor (Phase 1+)
+  graph/
+    state.py      — AgentState TypedDict
+    chat_graph.py — Sequential node runner (→ LangGraph Phase 2)
+    nodes/        — intent_router, tool_selector, tool_executor, response_generator
+  tools/
+    registry.py   — ToolRegistry + ToolDefinition + setup_registry()
+    *_tool.py     — Mock tool adapters (5 tools)
   retrieval/
-    product/      — Product search retrieval (Phase 3+)
-    knowledge/    — FAQ/policy retrieval (Phase 4+)
-  services/       — Use-case business logic (Phase 3+)
-  repositories/   — Read-only DB access (Phase 3+)
-  clients/        — HTTP clients → Spring Boot (Phase 5+)
-  policy/         — Capability/auth/confirmation guards (Phase 2+)
-  memory/         — Session + conversation memory (Phase 9+)
-  observability/  — Logging, tracing, evaluation
-  schemas/        — Pydantic request/response schemas
+    product/      — Phase 3+
+    knowledge/    — Phase 4+
+  services/       — Phase 3+
+  repositories/   — Phase 3+
+  clients/        — Phase 5+ (HTTP → Spring Boot)
+  policy/         — Phase 2+
+  memory/         — Phase 9+
+  observability/  — Logging
+  schemas/        — Pydantic schemas
 ```
 
 ---
 
-## Roadmap phase
+## Roadmap
 
-| Phase | Nội dung                        |
-|-------|---------------------------------|
-| 0     | ✅ Scaffold, mock endpoint       |
-| 1     | LangGraph, intent router        |
-| 2     | Policy layer                    |
-| 3     | Product retrieval               |
-| 4     | Knowledge retrieval             |
-| 5     | Transaction tools (Spring Boot) |
-| 6-10  | Detail, recommendation, hybrid… |
+| Phase | Nội dung                         | Status   |
+|-------|----------------------------------|----------|
+| 0     | Scaffold, mock endpoint          | ✅ Done   |
+| 1     | Orchestration nền, tool mock     | ✅ Done   |
+| 2     | Policy layer                     | Planned  |
+| 3     | Product retrieval thật           | Planned  |
+| 4     | Knowledge retrieval thật         | Planned  |
+| 5     | Transaction tools (Spring Boot)  | Planned  |
+| 6-10  | Detail, recommendation, hybrid…  | Planned  |
