@@ -1,4 +1,7 @@
 package com.dunghaiquyen.ecommerce.modules.recommendation.entity;
 
-public class RebuildStatus {
+public enum RebuildStatus {
+    RUNNING,
+    SUCCESS,
+    FAILED
 }

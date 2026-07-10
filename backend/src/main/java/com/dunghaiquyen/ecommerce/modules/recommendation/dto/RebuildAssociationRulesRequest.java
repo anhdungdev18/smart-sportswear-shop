@@ -1,4 +1,9 @@
 package com.dunghaiquyen.ecommerce.modules.recommendation.dto;
 
-public class RebuildAssociationRulesRequest {
+public record RebuildAssociationRulesRequest(
+        Double minSupport,
+        Double minConfidence,
+        Double minLift,
+        Integer minTransactions
+) {
 }

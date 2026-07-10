@@ -1,6 +1,7 @@
 package com.dunghaiquyen.ecommerce.modules.recommendation.repository;
 
 import com.dunghaiquyen.ecommerce.modules.recommendation.entity.AssociationRule;
+import com.dunghaiquyen.ecommerce.modules.recommendation.entity.AssociationRuleStatus;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -51,4 +52,6 @@ public interface AssociationRuleRepository extends JpaRepository<AssociationRule
         where r.status = com.dunghaiquyen.ecommerce.modules.recommendation.entity.AssociationRuleStatus.ACTIVE
     """)
     int archiveActiveRules();
+
+    long countByModelVersionAndStatus(String modelVersion, AssociationRuleStatus status);
 }
