@@ -1,6 +1,6 @@
 package com.dunghaiquyen.ecommerce.modules.recommendation.entity;
 
-import com.dunghaiquyen.ecommerce.common.entity.AbstractEntity;
+import com.dunghaiquyen.ecommerce.common.entity.AbstractAuditEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -14,7 +14,7 @@ import lombok.Setter;
 @Table(name = "association_rule_rebuild_logs")
 @Getter
 @Setter
-public class AssociationRuleRebuildLog extends AbstractEntity {
+public class AssociationRuleRebuildLog extends AbstractAuditEntity {
 
     @Column(name = "model_version", nullable = false, length = 50)
     private String modelVersion;
