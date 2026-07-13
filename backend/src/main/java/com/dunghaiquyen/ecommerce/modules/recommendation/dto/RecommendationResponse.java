@@ -1,4 +1,11 @@
 package com.dunghaiquyen.ecommerce.modules.recommendation.dto;
 
-public class RecommendationResponse {
+import java.util.List;
+import java.util.UUID;
+
+public record RecommendationResponse(
+        UUID sourceProductId,
+        String type,
+        List<RecommendationItemResponse> items
+) {
 }
