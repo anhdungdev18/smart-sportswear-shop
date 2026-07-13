@@ -40,6 +40,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+
 @Service
 public class RecommendationService {
 
@@ -55,6 +56,7 @@ public class RecommendationService {
     private final ProductImageRepository imageRepository;
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
+    private final RecommendationCacheService recommendationCacheService;
 
     public RecommendationService(
             AssociationRuleRepository associationRuleRepository,
@@ -62,23 +64,39 @@ public class RecommendationService {
             ProductVariantRepository variantRepository,
             ProductImageRepository imageRepository,
             CartRepository cartRepository,
-            CartItemRepository cartItemRepository) {
+            CartItemRepository cartItemRepository,
+            RecommendationCacheService recommendationCacheService) {
         this.associationRuleRepository = associationRuleRepository;
         this.productRepository = productRepository;
         this.variantRepository = variantRepository;
         this.imageRepository = imageRepository;
         this.cartRepository = cartRepository;
         this.cartItemRepository = cartItemRepository;
+        this.recommendationCacheService = recommendationCacheService;
     }
 
     @Transactional(readOnly = true)
     public RecommendationResponse getFrequentlyBoughtTogether(UUID productId, Integer limit) {
         int resolvedLimit = resolveLimit(limit);
 
+        String cacheKey = recommendationCacheService.productFrequentlyBoughtTogetherKey(
+                productId,
+                resolvedLimit
+        );
+
+        Optional<RecommendationResponse> cachedResponse =
+                recommendationCacheService.get(cacheKey, RecommendationResponse.class);
+
+        if (cachedResponse.isPresent()) {
+            return cachedResponse.get();
+        }
+
         List<AssociationRule> rules = associationRuleRepository.findActiveRulesByAntecedentProductId(
                 productId,
                 PageRequest.of(0, resolvedLimit)
         );
+
+        RecommendationResponse response;
 
         if (!rules.isEmpty()) {
             List<RecommendationItemResponse> items = toRecommendationItems(
@@ -86,15 +104,27 @@ public class RecommendationService {
                     "Customers often buy this product together"
             );
 
-            return new RecommendationResponse(productId, FREQUENTLY_BOUGHT_TOGETHER, items);
+            response = new RecommendationResponse(
+                    productId,
+                    FREQUENTLY_BOUGHT_TOGETHER,
+                    items
+            );
+        } else {
+            List<RecommendationItemResponse> fallbackItems = buildProductDetailFallbackItems(
+                    productId,
+                    resolvedLimit
+            );
+
+            response = new RecommendationResponse(
+                    productId,
+                    FREQUENTLY_BOUGHT_TOGETHER,
+                    fallbackItems
+            );
         }
 
-        List<RecommendationItemResponse> fallbackItems = buildProductDetailFallbackItems(
-                productId,
-                resolvedLimit
-        );
+        recommendationCacheService.put(cacheKey, response);
 
-        return new RecommendationResponse(productId, FREQUENTLY_BOUGHT_TOGETHER, fallbackItems);
+        return response;
     }
 
     @Transactional(readOnly = true)
@@ -130,6 +160,19 @@ public class RecommendationService {
             );
         }
 
+        String cacheKey = recommendationCacheService.cartRecommendationKey(
+                cart.getId(),
+                sourceProductIds,
+                resolvedLimit
+        );
+
+        Optional<CartRecommendationResponse> cachedResponse =
+                recommendationCacheService.get(cacheKey, CartRecommendationResponse.class);
+
+        if (cachedResponse.isPresent()) {
+            return cachedResponse.get();
+        }
+
         Set<UUID> productIdsInCart = new HashSet<>(sourceProductIds);
 
         List<AssociationRule> rules =
@@ -155,12 +198,16 @@ public class RecommendationService {
             );
         }
 
-        return new CartRecommendationResponse(
+        CartRecommendationResponse response = new CartRecommendationResponse(
                 cart.getId(),
                 sourceProductIds,
                 CART_RECOMMENDATION,
                 items
         );
+
+        recommendationCacheService.put(cacheKey, response);
+
+        return response;
     }
 
     private Optional<Cart> findCart(CartOwner owner) {
