@@ -27,3 +27,8 @@ frontend/**/.playwright-mcp/
 
 # Old cloner template directory (content moved to frontend/storefront)
 ai-website-cloner-template/
+
+# Database backups
+backups/
+*.dump
+*.backup
