@@ -47,6 +47,7 @@ public class SecurityConfig {
     // JWT (auth is the checksum check inside the handler) - API_SPEC_PHASE1.md 8.2.
     private static final String[] PUBLIC_ANY_METHOD_ENDPOINTS = {
             "/api/v1/cart/**",
+            "/api/v1/recommendations/logs",
             "/api/v1/payments/callback",
             "/v3/api-docs/**",
             "/swagger-ui/**",
