@@ -5,6 +5,7 @@ import com.dunghaiquyen.ecommerce.common.exception.ResourceNotFoundException;
 import com.dunghaiquyen.ecommerce.common.response.PageMeta;
 import com.dunghaiquyen.ecommerce.common.time.AppTimeZone;
 import com.dunghaiquyen.ecommerce.config.AppShippingProperties;
+import com.dunghaiquyen.ecommerce.config.CacheConfig;
 import com.dunghaiquyen.ecommerce.modules.address.entity.Address;
 import com.dunghaiquyen.ecommerce.modules.address.repository.AddressRepository;
 import com.dunghaiquyen.ecommerce.modules.cart.entity.Cart;
@@ -55,6 +56,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -135,6 +138,11 @@ public class OrderService {
      * mutation behind.
      */
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = CacheConfig.REPORT_OVERVIEW, allEntries = true),
+            @CacheEvict(value = CacheConfig.REPORT_INVENTORY, allEntries = true),
+            @CacheEvict(value = CacheConfig.REPORT_PRODUCTS, allEntries = true)
+    })
     public OrderResponse createOrderFromCart(UUID userId, CreateOrderRequest request) {
         // Locked, not a plain read: two concurrent checkout requests for the same
         // user/cart would otherwise both read the same non-empty cart items before
@@ -321,6 +329,11 @@ public class OrderService {
     }
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = CacheConfig.REPORT_OVERVIEW, allEntries = true),
+            @CacheEvict(value = CacheConfig.REPORT_INVENTORY, allEntries = true),
+            @CacheEvict(value = CacheConfig.REPORT_PRODUCTS, allEntries = true)
+    })
     public AdminOrderResponse updateOrderStatus(UUID orderId, UpdateOrderStatusRequest request, User actor) {
         // Locked, not a plain read: two concurrent status-update calls for the
         // same order (admin double-click, or admin-confirm racing a
@@ -352,6 +365,11 @@ public class OrderService {
      * stock, which only a return/restock flow (out of scope) could undo safely.
      */
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = CacheConfig.REPORT_OVERVIEW, allEntries = true),
+            @CacheEvict(value = CacheConfig.REPORT_INVENTORY, allEntries = true),
+            @CacheEvict(value = CacheConfig.REPORT_PRODUCTS, allEntries = true)
+    })
     public OrderResponse cancelOwnOrder(UUID orderId, UUID customerId, String reason) {
         // Same race-prevention reasoning as updateOrderStatus - lock before
         // reading the status this decision depends on.

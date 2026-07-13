@@ -2,7 +2,7 @@
 import { listInventoryItems, listInventoryTransactions } from "@/modules/inventory/api";
 
 export default async function InventoryPage() {
-  const [items, transactions] = await Promise.all([listInventoryItems().catch(() => []), listInventoryTransactions().catch(() => [])]);
+  const [items, transactions] = await Promise.all([listInventoryItems(), listInventoryTransactions()]);
 
   return (
     <main className="workspace">

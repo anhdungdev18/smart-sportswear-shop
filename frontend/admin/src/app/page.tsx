@@ -93,6 +93,7 @@ async function DashboardCharts() {
         <article className="card panel">
           <div className="panel-header">
             <h2>Doanh thu theo thời gian</h2>
+            <span className="status low">DEMO DATA</span>
           </div>
           <RevenueChart data={dashboard.revenue} />
         </article>

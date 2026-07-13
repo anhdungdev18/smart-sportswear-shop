@@ -45,29 +45,24 @@ type InventoryReportResponse = {
 
 export async function getDashboardData() {
   if (!shouldUseMockApi()) {
-    try {
-      const [productReport, inventoryReport] = await Promise.all([
-        apiRequest<ProductReportResponse>(adminEndpoints.topProducts, { next: { revalidate: 30 } }),
-        apiRequest<InventoryReportResponse>(adminEndpoints.inventoryReport, { next: { revalidate: 30 } })
-      ]);
+    const [productReport, inventoryReport] = await Promise.all([
+      apiRequest<ProductReportResponse>(adminEndpoints.topProducts, { next: { revalidate: 30 } }),
+      apiRequest<InventoryReportResponse>(adminEndpoints.inventoryReport, { next: { revalidate: 30 } })
+    ]);
 
-      return {
-        revenue,
-        topProducts: productReport.bestSelling.slice(0, 4).map((item) => ({
-          name: item.productName,
-          sales: item.totalQuantitySold
-        })),
-        stockAlerts: inventoryReport.lowStockItems.slice(0, 8).map((item) => ({
-          sku: item.sku,
-          product: item.productName,
-          stock: item.availableQuantity,
-          forecast: item.stockQuantity + item.reservedQuantity,
-          status: item.availableQuantity <= Math.max(1, Math.floor(inventoryReport.lowStockThreshold / 2)) ? "critical" : "low"
-        }))
-      };
-    } catch {
-      return { revenue, topProducts, stockAlerts };
-    }
+    return {
+      revenue,
+      topProducts: productReport.bestSelling.slice(0, 4).map((item) => ({
+        name: item.productName,
+        sales: item.totalQuantitySold
+      })),
+      stockAlerts: inventoryReport.lowStockItems.slice(0, 8).map((item) => ({
+        sku: item.sku,
+        product: item.productName,
+        stock: item.availableQuantity,
+        status: item.availableQuantity <= Math.max(1, Math.floor(inventoryReport.lowStockThreshold / 2)) ? "critical" : "low"
+      }))
+    };
   }
 
   return { revenue, topProducts, stockAlerts };
@@ -75,18 +70,13 @@ export async function getDashboardData() {
 
 export async function listStockAlerts() {
   if (!shouldUseMockApi()) {
-    try {
-      const inventoryReport = await apiRequest<InventoryReportResponse>(adminEndpoints.inventoryReport, { next: { revalidate: 30 } });
-      return inventoryReport.lowStockItems.slice(0, 8).map((item) => ({
-        sku: item.sku,
-        product: item.productName,
-        stock: item.availableQuantity,
-        forecast: item.stockQuantity + item.reservedQuantity,
-        status: item.availableQuantity <= Math.max(1, Math.floor(inventoryReport.lowStockThreshold / 2)) ? "critical" : "low"
-      }));
-    } catch {
-      return stockAlerts;
-    }
+    const inventoryReport = await apiRequest<InventoryReportResponse>(adminEndpoints.inventoryReport, { next: { revalidate: 30 } });
+    return inventoryReport.lowStockItems.slice(0, 8).map((item) => ({
+      sku: item.sku,
+      product: item.productName,
+      stock: item.availableQuantity,
+      status: item.availableQuantity <= Math.max(1, Math.floor(inventoryReport.lowStockThreshold / 2)) ? "critical" : "low"
+    }));
   }
 
   return stockAlerts;
