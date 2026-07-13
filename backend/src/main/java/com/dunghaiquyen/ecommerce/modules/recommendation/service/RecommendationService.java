@@ -15,6 +15,7 @@ import com.dunghaiquyen.ecommerce.modules.product.entity.ProductImage;
 import com.dunghaiquyen.ecommerce.modules.product.entity.ProductVariant;
 import com.dunghaiquyen.ecommerce.modules.product.entity.VariantStatus;
 import com.dunghaiquyen.ecommerce.modules.product.repository.ProductImageRepository;
+import com.dunghaiquyen.ecommerce.modules.product.repository.ProductRepository;
 import com.dunghaiquyen.ecommerce.modules.product.repository.ProductVariantRepository;
 import com.dunghaiquyen.ecommerce.modules.product.util.ThumbnailResolver;
 import com.dunghaiquyen.ecommerce.modules.recommendation.dto.CartRecommendationResponse;
@@ -23,9 +24,11 @@ import com.dunghaiquyen.ecommerce.modules.recommendation.dto.RecommendationRespo
 import com.dunghaiquyen.ecommerce.modules.recommendation.entity.AssociationRule;
 import com.dunghaiquyen.ecommerce.modules.recommendation.repository.AssociationRuleRepository;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -47,6 +50,7 @@ public class RecommendationService {
     private static final String CART_RECOMMENDATION = "CART_RECOMMENDATION";
 
     private final AssociationRuleRepository associationRuleRepository;
+    private final ProductRepository productRepository;
     private final ProductVariantRepository variantRepository;
     private final ProductImageRepository imageRepository;
     private final CartRepository cartRepository;
@@ -54,11 +58,13 @@ public class RecommendationService {
 
     public RecommendationService(
             AssociationRuleRepository associationRuleRepository,
+            ProductRepository productRepository,
             ProductVariantRepository variantRepository,
             ProductImageRepository imageRepository,
             CartRepository cartRepository,
             CartItemRepository cartItemRepository) {
         this.associationRuleRepository = associationRuleRepository;
+        this.productRepository = productRepository;
         this.variantRepository = variantRepository;
         this.imageRepository = imageRepository;
         this.cartRepository = cartRepository;
@@ -74,12 +80,21 @@ public class RecommendationService {
                 PageRequest.of(0, resolvedLimit)
         );
 
-        List<RecommendationItemResponse> items = toRecommendationItems(
-                rules,
-                "Customers often buy this product together"
+        if (!rules.isEmpty()) {
+            List<RecommendationItemResponse> items = toRecommendationItems(
+                    rules,
+                    "Customers often buy this product together"
+            );
+
+            return new RecommendationResponse(productId, FREQUENTLY_BOUGHT_TOGETHER, items);
+        }
+
+        List<RecommendationItemResponse> fallbackItems = buildProductDetailFallbackItems(
+                productId,
+                resolvedLimit
         );
 
-        return new RecommendationResponse(productId, FREQUENTLY_BOUGHT_TOGETHER, items);
+        return new RecommendationResponse(productId, FREQUENTLY_BOUGHT_TOGETHER, fallbackItems);
     }
 
     @Transactional(readOnly = true)
@@ -126,10 +141,19 @@ public class RecommendationService {
                 resolvedLimit
         );
 
-        List<RecommendationItemResponse> items = toRecommendationItems(
-                selectedRules,
-                "Recommended based on products in your cart"
-        );
+        List<RecommendationItemResponse> items;
+
+        if (!selectedRules.isEmpty()) {
+            items = toRecommendationItems(
+                    selectedRules,
+                    "Recommended based on products in your cart"
+            );
+        } else {
+            items = buildCartFallbackItems(
+                    productIdsInCart,
+                    resolvedLimit
+            );
+        }
 
         return new CartRecommendationResponse(
                 cart.getId(),
@@ -184,6 +208,64 @@ public class RecommendationService {
                 .thenComparingLong(AssociationRule::getPairCount);
     }
 
+    private List<RecommendationItemResponse> buildProductDetailFallbackItems(UUID productId, int limit) {
+        Optional<Product> optionalSourceProduct = productRepository.findActiveByIdWithBrandAndCategory(productId);
+
+        if (optionalSourceProduct.isEmpty()) {
+            return List.of();
+        }
+
+        Product sourceProduct = optionalSourceProduct.get();
+
+        List<Product> fallbackProducts = new ArrayList<>(
+                productRepository.findSimilarActiveProducts(
+                        sourceProduct.getCategory().getId(),
+                        sourceProduct.getBrand().getId(),
+                        sourceProduct.getId(),
+                        PageRequest.of(0, limit)
+                )
+        );
+
+        if (fallbackProducts.size() < limit) {
+            Set<UUID> excludedProductIds = new LinkedHashSet<>();
+            excludedProductIds.add(sourceProduct.getId());
+            fallbackProducts.stream()
+                    .map(Product::getId)
+                    .forEach(excludedProductIds::add);
+
+            List<Product> extraProducts = productRepository.findActiveFallbackProductsExcluding(
+                    excludedProductIds,
+                    PageRequest.of(0, limit - fallbackProducts.size())
+            );
+
+            fallbackProducts.addAll(extraProducts);
+        }
+
+        return toFallbackItems(
+                fallbackProducts,
+                "Fallback: similar active products"
+        );
+    }
+
+    private List<RecommendationItemResponse> buildCartFallbackItems(
+            Set<UUID> productIdsInCart,
+            int limit) {
+
+        if (productIdsInCart.isEmpty()) {
+            return List.of();
+        }
+
+        List<Product> fallbackProducts = productRepository.findActiveFallbackProductsExcluding(
+                productIdsInCart,
+                PageRequest.of(0, limit)
+        );
+
+        return toFallbackItems(
+                fallbackProducts,
+                "Fallback: popular active products"
+        );
+    }
+
     private List<RecommendationItemResponse> toRecommendationItems(
             List<AssociationRule> rules,
             String reason) {
@@ -235,6 +317,45 @@ public class RecommendationService {
                 rule.getPairCount(),
                 reason
         );
+    }
+
+    private List<RecommendationItemResponse> toFallbackItems(
+            List<Product> products,
+            String reason) {
+
+        if (products.isEmpty()) {
+            return List.of();
+        }
+
+        List<UUID> productIds = products.stream()
+                .map(Product::getId)
+                .distinct()
+                .toList();
+
+        Map<UUID, List<ProductVariant>> variantsByProduct =
+                variantRepository.findAllByProductIdIn(productIds)
+                        .stream()
+                        .collect(Collectors.groupingBy(variant -> variant.getProduct().getId()));
+
+        Map<UUID, List<ProductImage>> imagesByProduct =
+                imageRepository.findAllByProductIdIn(productIds)
+                        .stream()
+                        .collect(Collectors.groupingBy(image -> image.getProduct().getId()));
+
+        return products.stream()
+                .map(product -> new RecommendationItemResponse(
+                        toProductListItem(
+                                product,
+                                variantsByProduct.getOrDefault(product.getId(), List.of()),
+                                imagesByProduct.getOrDefault(product.getId(), List.of())
+                        ),
+                        0.0,
+                        0.0,
+                        0.0,
+                        0L,
+                        reason
+                ))
+                .toList();
     }
 
     private ProductListItemResponse toProductListItem(
