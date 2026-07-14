@@ -39,5 +39,17 @@ def log_tool_call(
     tool_name: str,
     args: dict[str, Any],
 ) -> None:
-    # TODO Phase 1+: called by ToolExecutor after each tool dispatch
-    logger.debug(f"[{session_id}] tool_call | tool={tool_name} args={args}")
+    safe_args = {k: v for k, v in args.items() if k != "access_token"}
+    logger.debug(f"[{session_id}] tool_call | tool={tool_name} args={safe_args}")
+
+
+def log_pending_event(
+    logger: logging.Logger,
+    session_id: str,
+    event: str,
+    tool: str,
+    display: str = "",
+) -> None:
+    logger.info(
+        f"[{session_id}] pending_action | event={event} tool={tool} display={display!r}"
+    )

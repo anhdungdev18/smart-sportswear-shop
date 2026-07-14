@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 from app.tools.registry import ToolDefinition
+from app.services import product_search_service
 
 DEFINITION = ToolDefinition(
     name="search_products",
@@ -14,33 +15,6 @@ DEFINITION = ToolDefinition(
 
 
 async def run(args: dict[str, Any]) -> dict[str, Any]:
-    # TODO Phase 3: replace with ProductSearchService + ProductRepository
-    return {
-        "items": [
-            {
-                "productId": "mock-1",
-                "name": "Giày chạy bộ Dry-Fit",
-                "category": "Giày",
-                "sportType": "Chạy bộ",
-                "priceMin": 650000,
-                "priceMax": 890000,
-                "availableColors": ["Đen", "Trắng"],
-                "availableSizes": ["39", "40", "41", "42"],
-                "totalAvailable": 8,
-            },
-            {
-                "productId": "mock-2",
-                "name": "Áo thể thao thoáng khí",
-                "category": "Áo",
-                "sportType": "Đa năng",
-                "priceMin": 280000,
-                "priceMax": 390000,
-                "availableColors": ["Xanh", "Đỏ", "Đen"],
-                "availableSizes": ["S", "M", "L", "XL"],
-                "totalAvailable": 20,
-            },
-        ],
-        "total": 2,
-        "query": args.get("query", ""),
-        "_mock": True,
-    }
+    query = args.get("query", "")
+    result = await product_search_service.search(query, parsed_query=args.get("parsed_query"))
+    return result.model_dump()

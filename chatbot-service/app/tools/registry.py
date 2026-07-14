@@ -43,9 +43,17 @@ def setup_registry() -> None:
     from app.tools.get_order_status_tool import DEFINITION as d3, run as r3
     from app.tools.add_to_cart_tool import DEFINITION as d4, run as r4
     from app.tools.cancel_order_tool import DEFINITION as d5, run as r5
+    from app.tools.get_product_detail_tool import DEFINITION as d6, run as r6  # Phase 6
+    from app.tools.recommend_products_tool import DEFINITION as d7, run as r7  # Phase 7
+    from app.tools.size_advisor_tool import DEFINITION as d8, run as r8        # Phase 7
+    from app.tools.lookup_product_by_sku_tool import DEFINITION as d9, run as r9
 
     registry.register(d1, r1)
     registry.register(d2, r2)
     registry.register(d3, r3)
     registry.register(d4, r4)
     registry.register(d5, r5)
+    registry.register(d6, r6)
+    registry.register(d7, r7)
+    registry.register(d8, r8)
+    registry.register(d9, r9)

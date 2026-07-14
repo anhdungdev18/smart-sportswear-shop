@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 from app.tools.registry import ToolDefinition
+from app.services import order_action_service
 
 DEFINITION = ToolDefinition(
     name="cancel_order",
@@ -14,8 +15,8 @@ DEFINITION = ToolDefinition(
 
 
 async def run(args: dict[str, Any]) -> dict[str, Any]:
-    # TODO Phase 5: replace with OrderApiClient -> Spring Boot backend
-    return {
-        "mock": True,
-        "message": "Phase 1 mock — cancel action not wired to backend yet.",
-    }
+    order_code   = args.get("order_code") or ""
+    reason       = args.get("reason")
+    access_token = args.get("access_token")
+    result = await order_action_service.cancel_order(order_code, access_token, reason)
+    return result.model_dump()
