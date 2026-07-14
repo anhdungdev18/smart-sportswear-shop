@@ -46,6 +46,7 @@ public class RecommendationService {
 
     private static final int DEFAULT_LIMIT = 8;
     private static final int MAX_LIMIT = 20;
+    private static final int CANDIDATE_MULTIPLIER = 4;
 
     private static final String FREQUENTLY_BOUGHT_TOGETHER = "FREQUENTLY_BOUGHT_TOGETHER";
     private static final String CART_RECOMMENDATION = "CART_RECOMMENDATION";
@@ -79,6 +80,11 @@ public class RecommendationService {
     public RecommendationResponse getFrequentlyBoughtTogether(UUID productId, Integer limit) {
         int resolvedLimit = resolveLimit(limit);
 
+        productRepository.findActiveByIdWithBrandAndCategory(productId)
+                .orElseThrow(() -> new com.dunghaiquyen.ecommerce.common.exception.ResourceNotFoundException(
+                        "Product not found"
+                ));
+
         String cacheKey = recommendationCacheService.productFrequentlyBoughtTogetherKey(
                 productId,
                 resolvedLimit
@@ -88,12 +94,18 @@ public class RecommendationService {
                 recommendationCacheService.get(cacheKey, RecommendationResponse.class);
 
         if (cachedResponse.isPresent()) {
-            return cachedResponse.get();
+            RecommendationResponse cached = cachedResponse.get();
+            List<RecommendationItemResponse> refreshedItems = refreshCachedItems(cached.items());
+            if (cached.items() != null
+                    && !cached.items().isEmpty()
+                    && refreshedItems.size() == cached.items().size()) {
+                return new RecommendationResponse(cached.sourceProductId(), cached.type(), refreshedItems);
+            }
         }
 
         List<AssociationRule> rules = associationRuleRepository.findActiveRulesByAntecedentProductId(
                 productId,
-                PageRequest.of(0, resolvedLimit)
+                PageRequest.of(0, candidateLimit(resolvedLimit))
         );
 
         RecommendationResponse response;
@@ -101,8 +113,13 @@ public class RecommendationService {
         if (!rules.isEmpty()) {
             List<RecommendationItemResponse> items = toRecommendationItems(
                     rules,
-                    "Customers often buy this product together"
+                    "Customers often buy this product together",
+                    resolvedLimit
             );
+
+            if (items.isEmpty()) {
+                items = buildProductDetailFallbackItems(productId, resolvedLimit);
+            }
 
             response = new RecommendationResponse(
                     productId,
@@ -170,7 +187,18 @@ public class RecommendationService {
                 recommendationCacheService.get(cacheKey, CartRecommendationResponse.class);
 
         if (cachedResponse.isPresent()) {
-            return cachedResponse.get();
+            CartRecommendationResponse cached = cachedResponse.get();
+            List<RecommendationItemResponse> refreshedItems = refreshCachedItems(cached.items());
+            if (cached.items() != null
+                    && !cached.items().isEmpty()
+                    && refreshedItems.size() == cached.items().size()) {
+                return new CartRecommendationResponse(
+                        cached.cartId(),
+                        cached.sourceProductIds(),
+                        cached.type(),
+                        refreshedItems
+                );
+            }
         }
 
         Set<UUID> productIdsInCart = new HashSet<>(sourceProductIds);
@@ -189,8 +217,12 @@ public class RecommendationService {
         if (!selectedRules.isEmpty()) {
             items = toRecommendationItems(
                     selectedRules,
-                    "Recommended based on products in your cart"
+                    "Recommended based on products in your cart",
+                    resolvedLimit
             );
+            if (items.isEmpty()) {
+                items = buildCartFallbackItems(productIdsInCart, resolvedLimit);
+            }
         } else {
             items = buildCartFallbackItems(
                     productIdsInCart,
@@ -269,7 +301,7 @@ public class RecommendationService {
                         sourceProduct.getCategory().getId(),
                         sourceProduct.getBrand().getId(),
                         sourceProduct.getId(),
-                        PageRequest.of(0, limit)
+                        PageRequest.of(0, candidateLimit(limit))
                 )
         );
 
@@ -282,7 +314,7 @@ public class RecommendationService {
 
             List<Product> extraProducts = productRepository.findActiveFallbackProductsExcluding(
                     excludedProductIds,
-                    PageRequest.of(0, limit - fallbackProducts.size())
+                    PageRequest.of(0, candidateLimit(limit - fallbackProducts.size()))
             );
 
             fallbackProducts.addAll(extraProducts);
@@ -290,7 +322,8 @@ public class RecommendationService {
 
         return toFallbackItems(
                 fallbackProducts,
-                "Fallback: similar active products"
+                "Fallback: similar active products",
+                limit
         );
     }
 
@@ -304,18 +337,20 @@ public class RecommendationService {
 
         List<Product> fallbackProducts = productRepository.findActiveFallbackProductsExcluding(
                 productIdsInCart,
-                PageRequest.of(0, limit)
+                PageRequest.of(0, candidateLimit(limit))
         );
 
         return toFallbackItems(
                 fallbackProducts,
-                "Fallback: popular active products"
+                "Fallback: active catalog products",
+                limit
         );
     }
 
     private List<RecommendationItemResponse> toRecommendationItems(
             List<AssociationRule> rules,
-            String reason) {
+            String reason,
+            int limit) {
 
         if (rules.isEmpty()) {
             return List.of();
@@ -337,12 +372,16 @@ public class RecommendationService {
                         .collect(Collectors.groupingBy(image -> image.getProduct().getId()));
 
         return rules.stream()
+                .filter(rule -> hasAvailableVariant(
+                        variantsByProduct.getOrDefault(rule.getConsequentProduct().getId(), List.of())
+                ))
                 .map(rule -> toRecommendationItem(
                         rule,
                         variantsByProduct.getOrDefault(rule.getConsequentProduct().getId(), List.of()),
                         imagesByProduct.getOrDefault(rule.getConsequentProduct().getId(), List.of()),
                         reason
                 ))
+                .limit(limit)
                 .toList();
     }
 
@@ -368,7 +407,8 @@ public class RecommendationService {
 
     private List<RecommendationItemResponse> toFallbackItems(
             List<Product> products,
-            String reason) {
+            String reason,
+            int limit) {
 
         if (products.isEmpty()) {
             return List.of();
@@ -390,6 +430,9 @@ public class RecommendationService {
                         .collect(Collectors.groupingBy(image -> image.getProduct().getId()));
 
         return products.stream()
+                .filter(product -> hasAvailableVariant(
+                        variantsByProduct.getOrDefault(product.getId(), List.of())
+                ))
                 .map(product -> new RecommendationItemResponse(
                         toProductListItem(
                                 product,
@@ -402,6 +445,7 @@ public class RecommendationService {
                         0L,
                         reason
                 ))
+                .limit(limit)
                 .toList();
     }
 
@@ -411,7 +455,7 @@ public class RecommendationService {
             List<ProductImage> images) {
 
         List<BigDecimal> visiblePrices = variants.stream()
-                .filter(variant -> variant.getStatus() != VariantStatus.INACTIVE)
+                .filter(this::isAvailableVariant)
                 .map(ProductVariant::getPrice)
                 .toList();
 
@@ -444,6 +488,68 @@ public class RecommendationService {
 
     private CatalogRefResponse toRef(Category category) {
         return category == null ? null : new CatalogRefResponse(category.getId(), category.getName());
+    }
+
+    private List<RecommendationItemResponse> refreshCachedItems(
+            List<RecommendationItemResponse> cachedItems) {
+        if (cachedItems == null || cachedItems.isEmpty()) {
+            return List.of();
+        }
+
+        List<UUID> productIds = cachedItems.stream()
+                .map(item -> item.product().id())
+                .distinct()
+                .toList();
+
+        Map<UUID, Product> productsById = productRepository
+                .findActiveByIdInWithBrandAndCategory(productIds)
+                .stream()
+                .collect(Collectors.toMap(Product::getId, product -> product));
+
+        Map<UUID, List<ProductVariant>> variantsByProduct = variantRepository
+                .findAllByProductIdIn(productIds)
+                .stream()
+                .collect(Collectors.groupingBy(variant -> variant.getProduct().getId()));
+
+        Map<UUID, List<ProductImage>> imagesByProduct = imageRepository
+                .findAllByProductIdIn(productIds)
+                .stream()
+                .collect(Collectors.groupingBy(image -> image.getProduct().getId()));
+
+        return cachedItems.stream()
+                .filter(item -> productsById.containsKey(item.product().id()))
+                .filter(item -> hasAvailableVariant(
+                        variantsByProduct.getOrDefault(item.product().id(), List.of())
+                ))
+                .map(item -> {
+                    UUID productId = item.product().id();
+                    return new RecommendationItemResponse(
+                            toProductListItem(
+                                    productsById.get(productId),
+                                    variantsByProduct.getOrDefault(productId, List.of()),
+                                    imagesByProduct.getOrDefault(productId, List.of())
+                            ),
+                            item.support(),
+                            item.confidence(),
+                            item.lift(),
+                            item.pairCount(),
+                            item.reason()
+                    );
+                })
+                .toList();
+    }
+
+    private boolean hasAvailableVariant(List<ProductVariant> variants) {
+        return variants.stream().anyMatch(this::isAvailableVariant);
+    }
+
+    private boolean isAvailableVariant(ProductVariant variant) {
+        return variant.getStatus() == VariantStatus.ACTIVE
+                && variant.getStockQuantity() - variant.getReservedQuantity() > 0;
+    }
+
+    private int candidateLimit(int requestedLimit) {
+        return Math.min(requestedLimit * CANDIDATE_MULTIPLIER, MAX_LIMIT * CANDIDATE_MULTIPLIER);
     }
 
     private int resolveLimit(Integer limit) {

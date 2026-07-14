@@ -10,6 +10,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.support.NoOpCacheManager;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -38,7 +44,18 @@ import org.springframework.test.web.servlet.MvcResult;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@Import(AbstractIntegrationTest.NoCacheTestConfiguration.class)
 public abstract class AbstractIntegrationTest {
+
+    @TestConfiguration
+    static class NoCacheTestConfiguration {
+
+        @Bean
+        @Primary
+        CacheManager testCacheManager() {
+            return new NoOpCacheManager();
+        }
+    }
 
     @Autowired
     protected MockMvc mockMvc;

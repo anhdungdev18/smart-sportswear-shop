@@ -3,26 +3,35 @@ package com.dunghaiquyen.ecommerce.modules.recommendation.service;
 import com.dunghaiquyen.ecommerce.common.exception.BusinessRuleException;
 import com.dunghaiquyen.ecommerce.common.exception.ResourceNotFoundException;
 import com.dunghaiquyen.ecommerce.modules.cart.entity.Cart;
+import com.dunghaiquyen.ecommerce.modules.cart.entity.CartItem;
+import com.dunghaiquyen.ecommerce.modules.cart.repository.CartItemRepository;
+import com.dunghaiquyen.ecommerce.modules.cart.repository.CartRepository;
 import com.dunghaiquyen.ecommerce.modules.cart.web.CartOwner;
 import com.dunghaiquyen.ecommerce.modules.product.entity.Product;
+import com.dunghaiquyen.ecommerce.modules.product.entity.ProductStatus;
 import com.dunghaiquyen.ecommerce.modules.product.repository.ProductRepository;
 import com.dunghaiquyen.ecommerce.modules.recommendation.dto.RecommendationLogProductStatsResponse;
 import com.dunghaiquyen.ecommerce.modules.recommendation.dto.RecommendationLogRequest;
 import com.dunghaiquyen.ecommerce.modules.recommendation.dto.RecommendationLogResponse;
 import com.dunghaiquyen.ecommerce.modules.recommendation.dto.RecommendationLogSummaryResponse;
 import com.dunghaiquyen.ecommerce.modules.recommendation.entity.RecommendationAlgorithm;
+import com.dunghaiquyen.ecommerce.modules.recommendation.entity.AssociationRule;
 import com.dunghaiquyen.ecommerce.modules.recommendation.entity.RecommendationEventType;
 import com.dunghaiquyen.ecommerce.modules.recommendation.entity.RecommendationLog;
 import com.dunghaiquyen.ecommerce.modules.recommendation.entity.RecommendationSourceType;
 import com.dunghaiquyen.ecommerce.modules.recommendation.entity.RecommendationType;
 import com.dunghaiquyen.ecommerce.modules.recommendation.repository.RecommendationLogProductStatsProjection;
 import com.dunghaiquyen.ecommerce.modules.recommendation.repository.RecommendationLogRepository;
+import com.dunghaiquyen.ecommerce.modules.recommendation.repository.AssociationRuleRepository;
 import com.dunghaiquyen.ecommerce.modules.user.entity.User;
 import jakarta.persistence.EntityManager;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,14 +45,23 @@ public class RecommendationLogService {
 
     private final RecommendationLogRepository recommendationLogRepository;
     private final ProductRepository productRepository;
+    private final AssociationRuleRepository associationRuleRepository;
+    private final CartRepository cartRepository;
+    private final CartItemRepository cartItemRepository;
     private final EntityManager entityManager;
 
     public RecommendationLogService(
             RecommendationLogRepository recommendationLogRepository,
             ProductRepository productRepository,
+            AssociationRuleRepository associationRuleRepository,
+            CartRepository cartRepository,
+            CartItemRepository cartItemRepository,
             EntityManager entityManager) {
         this.recommendationLogRepository = recommendationLogRepository;
         this.productRepository = productRepository;
+        this.associationRuleRepository = associationRuleRepository;
+        this.cartRepository = cartRepository;
+        this.cartItemRepository = cartItemRepository;
         this.entityManager = entityManager;
     }
 
@@ -52,7 +70,22 @@ public class RecommendationLogService {
         validateLogRequest(request);
 
         Product recommendedProduct = productRepository.findById(request.recommendedProductId())
+                .filter(product -> product.getStatus() == ProductStatus.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException("Recommended product not found"));
+        VerifiedSource source = verifySource(owner, request);
+
+        if (source.productIds().contains(recommendedProduct.getId())) {
+            throw new BusinessRuleException(
+                    HttpStatus.BAD_REQUEST,
+                    "Recommended product must not already be in the recommendation source"
+            );
+        }
+
+        Optional<AssociationRule> matchedRule = associationRuleRepository.findBestActiveRule(
+                source.productIds(),
+                recommendedProduct.getId(),
+                PageRequest.of(0, 1)
+        ).stream().findFirst();
 
         RecommendationLog log = new RecommendationLog();
 
@@ -64,27 +97,13 @@ public class RecommendationLogService {
 
         log.setEventType(request.eventType());
         log.setSourceType(request.sourceType());
-        log.setRecommendationType(resolveRecommendationType(request));
+        log.setRecommendationType(source.recommendationType());
         log.setRecommendedProduct(recommendedProduct);
         log.setPositionIndex(request.position());
-        log.setAlgorithm(resolveAlgorithm(request));
-        log.setSupport(request.support());
-        log.setConfidence(request.confidence());
-        log.setLift(request.lift());
-        log.setPairCount(request.pairCount());
-        log.setReason(request.reason());
-
-        if (request.sourceProductId() != null) {
-            log.setSourceProduct(entityManager.getReference(Product.class, request.sourceProductId()));
-        }
-
-        if (request.sourceProductIds() != null) {
-            log.setSourceProductIds(request.sourceProductIds());
-        }
-
-        if (request.cartId() != null) {
-            log.setCart(entityManager.getReference(Cart.class, request.cartId()));
-        }
+        applyServerDerivedMetadata(log, matchedRule);
+        log.setSourceProduct(source.product());
+        log.setSourceProductIds(source.productIds());
+        log.setCart(source.cart());
 
         RecommendationLog savedLog = recommendationLogRepository.saveAndFlush(log);
 
@@ -168,57 +187,70 @@ public class RecommendationLogService {
         }
 
         if (request.sourceType() == RecommendationSourceType.CART
-                && (request.sourceProductIds() == null || request.sourceProductIds().isEmpty())) {
+                && request.cartId() == null) {
             throw new BusinessRuleException(
                     HttpStatus.BAD_REQUEST,
-                    "sourceProductIds is required for CART recommendation logs"
-            );
-        }
-
-        validateScore("support", request.support());
-        validateScore("confidence", request.confidence());
-        validateScore("lift", request.lift());
-
-        if (request.pairCount() != null && request.pairCount() < 0) {
-            throw new BusinessRuleException(
-                    HttpStatus.BAD_REQUEST,
-                    "pairCount must be greater than or equal to 0"
+                    "cartId is required for CART recommendation logs"
             );
         }
     }
 
-    private void validateScore(String fieldName, Double value) {
-        if (value != null && value < 0) {
-            throw new BusinessRuleException(
-                    HttpStatus.BAD_REQUEST,
-                    fieldName + " must be greater than or equal to 0"
+    private VerifiedSource verifySource(CartOwner owner, RecommendationLogRequest request) {
+        if (request.sourceType() == RecommendationSourceType.PRODUCT_DETAIL) {
+            Product sourceProduct = productRepository.findById(request.sourceProductId())
+                    .filter(product -> product.getStatus() == ProductStatus.ACTIVE)
+                    .orElseThrow(() -> new ResourceNotFoundException("Source product not found"));
+            return new VerifiedSource(
+                    null,
+                    sourceProduct,
+                    List.of(sourceProduct.getId()),
+                    RecommendationType.FREQUENTLY_BOUGHT_TOGETHER
             );
         }
+
+        Optional<Cart> ownedCart = owner.isUser()
+                ? cartRepository.findByUserId(owner.userId())
+                : cartRepository.findBySessionId(owner.sessionId());
+
+        Cart cart = ownedCart
+                .filter(candidate -> candidate.getId().equals(request.cartId()))
+                .orElseThrow(() -> new ResourceNotFoundException("Cart not found"));
+
+        List<UUID> productIds = cartItemRepository.findAllByCartIdWithVariantAndProduct(cart.getId())
+                .stream()
+                .map(CartItem::getVariant)
+                .map(variant -> variant.getProduct().getId())
+                .distinct()
+                .toList();
+
+        if (productIds.isEmpty()) {
+            throw new BusinessRuleException(HttpStatus.BAD_REQUEST, "Cart is empty");
+        }
+
+        return new VerifiedSource(
+                cart,
+                null,
+                productIds,
+                RecommendationType.CART_RECOMMENDATION
+        );
     }
 
-    private RecommendationType resolveRecommendationType(RecommendationLogRequest request) {
-        if (request.recommendationType() != null) {
-            return request.recommendationType();
+    private void applyServerDerivedMetadata(
+            RecommendationLog log,
+            Optional<AssociationRule> matchedRule) {
+        if (matchedRule.isEmpty()) {
+            log.setAlgorithm(RecommendationAlgorithm.FALLBACK);
+            log.setReason("Fallback recommendation");
+            return;
         }
 
-        if (request.sourceType() == RecommendationSourceType.CART) {
-            return RecommendationType.CART_RECOMMENDATION;
-        }
-
-        return RecommendationType.FREQUENTLY_BOUGHT_TOGETHER;
-    }
-
-    private RecommendationAlgorithm resolveAlgorithm(RecommendationLogRequest request) {
-        if (request.algorithm() != null) {
-            return request.algorithm();
-        }
-
-        boolean looksLikeAssociationRule =
-                request.pairCount() != null && request.pairCount() > 0;
-
-        return looksLikeAssociationRule
-                ? RecommendationAlgorithm.ASSOCIATION_RULE
-                : RecommendationAlgorithm.FALLBACK;
+        AssociationRule rule = matchedRule.get();
+        log.setAlgorithm(RecommendationAlgorithm.ASSOCIATION_RULE);
+        log.setSupport(rule.getSupport());
+        log.setConfidence(rule.getConfidence());
+        log.setLift(rule.getLift());
+        log.setPairCount(rule.getPairCount());
+        log.setReason("Association rule recommendation");
     }
 
     private int resolveDays(Integer days) {
@@ -253,5 +285,13 @@ public class RecommendationLogService {
 
     private long safeLong(Long value) {
         return value == null ? 0L : value;
+    }
+
+    private record VerifiedSource(
+            Cart cart,
+            Product product,
+            List<UUID> productIds,
+            RecommendationType recommendationType
+    ) {
     }
 }

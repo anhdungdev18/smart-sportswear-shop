@@ -45,6 +45,20 @@ public interface AssociationRuleRepository extends JpaRepository<AssociationRule
             @Param("productIds") Collection<UUID> productIds
     );
 
+    @Query("""
+        select r
+        from AssociationRule r
+        where r.antecedentProduct.id in :sourceProductIds
+          and r.consequentProduct.id = :recommendedProductId
+          and r.status = com.dunghaiquyen.ecommerce.modules.recommendation.entity.AssociationRuleStatus.ACTIVE
+        order by r.confidence desc, r.lift desc, r.support desc, r.pairCount desc
+    """)
+    List<AssociationRule> findBestActiveRule(
+            @Param("sourceProductIds") Collection<UUID> sourceProductIds,
+            @Param("recommendedProductId") UUID recommendedProductId,
+            Pageable pageable
+    );
+
     @Modifying
     @Query("""
         update AssociationRule r

@@ -11,10 +11,18 @@ import org.springframework.stereotype.Repository;
 @Repository
 public class AssociationRuleMiningRepository {
 
+    private static final String REBUILD_LOCK_NAME = "recommendation_association_rule_rebuild";
+
     private final NamedParameterJdbcTemplate jdbcTemplate;
 
     public AssociationRuleMiningRepository(NamedParameterJdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
+    }
+
+    public void acquireRebuildLock() {
+        jdbcTemplate.getJdbcTemplate().execute(
+                "SELECT pg_advisory_xact_lock(hashtext('" + REBUILD_LOCK_NAME + "'))"
+        );
     }
 
     public List<OrderProductRow> findOrderProductRowsForTraining(Collection<OrderStatus> orderStatuses) {

@@ -14,8 +14,6 @@ import com.dunghaiquyen.ecommerce.modules.recommendation.repository.AssociationR
 import com.dunghaiquyen.ecommerce.modules.recommendation.repository.AssociationRuleRepository;
 import jakarta.persistence.EntityManager;
 import java.time.Instant;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -38,45 +36,56 @@ public class AssociationRuleMiningService {
     private static final int DEFAULT_MIN_TRANSACTIONS = 2;
 
     private static final List<OrderStatus> TRAINING_ORDER_STATUSES = List.of(
-            OrderStatus.CONFIRMED,
-            OrderStatus.PACKING,
-            OrderStatus.SHIPPING,
             OrderStatus.DELIVERED
     );
-
-    private static final DateTimeFormatter MODEL_VERSION_FORMATTER =
-            DateTimeFormatter.ofPattern("yyyyMMddHHmmss").withZone(ZoneOffset.UTC);
 
     private final AssociationRuleMiningRepository miningRepository;
     private final AssociationRuleRepository associationRuleRepository;
     private final AssociationRuleRebuildLogRepository rebuildLogRepository;
+    private final AssociationRuleRebuildAuditService auditService;
     private final EntityManager entityManager;
 
     public AssociationRuleMiningService(
             AssociationRuleMiningRepository miningRepository,
             AssociationRuleRepository associationRuleRepository,
             AssociationRuleRebuildLogRepository rebuildLogRepository,
+            AssociationRuleRebuildAuditService auditService,
             EntityManager entityManager) {
         this.miningRepository = miningRepository;
         this.associationRuleRepository = associationRuleRepository;
         this.rebuildLogRepository = rebuildLogRepository;
+        this.auditService = auditService;
         this.entityManager = entityManager;
     }
 
     @Transactional
     public RebuildAssociationRulesResponse rebuildAssociationRules(RebuildAssociationRulesRequest request) {
         MiningConfig config = resolveConfig(request);
-        Instant startedAt = Instant.now();
-        String modelVersion = "assoc-" + MODEL_VERSION_FORMATTER.format(startedAt);
+        miningRepository.acquireRebuildLock();
 
-        AssociationRuleRebuildLog log = new AssociationRuleRebuildLog();
-        log.setModelVersion(modelVersion);
-        log.setStatus(RebuildStatus.RUNNING);
-        log.setMinSupport(config.minSupport());
-        log.setMinConfidence(config.minConfidence());
-        log.setMinLift(config.minLift());
-        log.setStartedAt(startedAt);
-        log = rebuildLogRepository.save(log);
+        Instant startedAt = Instant.now();
+        String modelVersion = "assoc-" + UUID.randomUUID();
+        UUID logId = auditService.createRunning(
+                modelVersion,
+                config.minSupport(),
+                config.minConfidence(),
+                config.minLift(),
+                startedAt
+        );
+
+        try {
+            return rebuildRules(config, startedAt, modelVersion, logId);
+        } catch (RuntimeException ex) {
+            auditService.markFailed(logId, ex);
+            throw ex;
+        }
+    }
+
+    private RebuildAssociationRulesResponse rebuildRules(
+            MiningConfig config,
+            Instant startedAt,
+            String modelVersion,
+            UUID logId) {
 
         List<AssociationRuleMiningRepository.OrderProductRow> rows =
                 miningRepository.findOrderProductRowsForTraining(TRAINING_ORDER_STATUSES);
@@ -98,6 +107,8 @@ public class AssociationRuleMiningService {
         }
 
         Instant finishedAt = Instant.now();
+        AssociationRuleRebuildLog log = rebuildLogRepository.findById(logId)
+                .orElseThrow(() -> new IllegalStateException("Rebuild audit log not found"));
         log.setStatus(RebuildStatus.SUCCESS);
         log.setTotalTransactions(totalTransactions);
         log.setTotalRules(newRules.size());
@@ -131,9 +142,7 @@ public class AssociationRuleMiningService {
                     .add(row.productId());
         }
 
-        return basketByOrderId.values().stream()
-                .filter(productIds -> productIds.size() >= 2)
-                .toList();
+        return List.copyOf(basketByOrderId.values());
     }
 
     private List<AssociationRule> buildAssociationRules(

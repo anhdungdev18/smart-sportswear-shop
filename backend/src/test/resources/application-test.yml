@@ -12,6 +12,8 @@
 # REQUIRES_NEW) does not flake on pool exhaustion under MockMvc's
 # thread-per-call execution.
 spring:
+  cache:
+    type: none
   datasource:
     url: jdbc:postgresql://localhost:5434/dunghaiquyen
     username: postgres

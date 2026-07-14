@@ -37,6 +37,16 @@ public interface ProductRepository extends JpaRepository<Product, UUID>, JpaSpec
         from Product p
         join fetch p.brand
         join fetch p.category
+        where p.id in :ids
+          and p.status = com.dunghaiquyen.ecommerce.modules.product.entity.ProductStatus.ACTIVE
+    """)
+    List<Product> findActiveByIdInWithBrandAndCategory(@Param("ids") Collection<UUID> ids);
+
+    @Query("""
+        select distinct p
+        from Product p
+        join fetch p.brand
+        join fetch p.category
         where p.status = com.dunghaiquyen.ecommerce.modules.product.entity.ProductStatus.ACTIVE
           and p.id <> :excludedProductId
           and (
