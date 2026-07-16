@@ -18,6 +18,7 @@ yarn-error.log*
 # Local runtime / temp
 tmp/
 temp/
+.tools/
 
 # Frontend build artifacts
 frontend/**/node_modules/

@@ -5,8 +5,8 @@ export function mapProductListItem(p: ProductListItem): Product {
     id: p.id,
     name: p.name,
     href: `/sanpham/${p.slug}`,
-    image: p.thumbnail ?? "/images/placeholder.png",
-    hoverImage: p.thumbnail ?? "/images/placeholder.png",
+    image: p.thumbnail ?? "https://placehold.co/400x500/f5f5f5/a0a0a0?text=No+Image",
+    hoverImage: p.thumbnail ?? "https://placehold.co/400x500/f5f5f5/a0a0a0?text=No+Image",
     price: p.minPrice,
     oldPrice: p.maxPrice > p.minPrice ? p.maxPrice : undefined,
     colors: [],
@@ -39,7 +39,7 @@ export function mapProductDetail(p: ProductDetail): {
     ).values(),
   ).map((v, idx) => ({
     id: v.id,
-    image: sortedImages[idx]?.imageUrl ?? "/images/placeholder.png",
+    image: sortedImages[idx]?.imageUrl ?? "https://placehold.co/400x500/f5f5f5/a0a0a0?text=No+Image",
     label: v.color ?? "",
     active: idx === 0,
   }));

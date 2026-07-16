@@ -1,8 +1,15 @@
 import { getAccessToken } from "@/lib/session";
 
-// Next.js inlines NEXT_PUBLIC_* at build time for both server and client code.
-const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ?? "http://localhost:8080";
+function getApiBase() {
+  const publicApiBase =
+    process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ?? "http://localhost:8080";
+
+  if (typeof window !== "undefined") {
+    return publicApiBase;
+  }
+
+  return process.env.SERVER_API_BASE_URL?.replace(/\/$/, "") ?? publicApiBase;
+}
 
 export type ApiEnvelope<T> = {
   data: T;
@@ -27,7 +34,7 @@ function buildUrl(
   path: string,
   query?: Record<string, QueryValue | QueryValue[]>,
 ): string {
-  const base = API_BASE.replace(/\/$/, "");
+  const base = getApiBase().replace(/\/$/, "");
   const pathname = path.startsWith("/") ? path : `/${path}`;
   const url = new URL(`${base}${pathname}`);
   for (const [k, v] of Object.entries(query ?? {})) {

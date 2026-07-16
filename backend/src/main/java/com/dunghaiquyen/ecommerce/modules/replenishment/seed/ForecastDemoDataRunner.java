@@ -1,4 +1,4 @@
-package com.dunghaiquyen.ecommerce.infra.seed;
+package com.dunghaiquyen.ecommerce.modules.replenishment.seed;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

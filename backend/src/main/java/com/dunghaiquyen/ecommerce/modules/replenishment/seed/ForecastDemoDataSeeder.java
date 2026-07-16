@@ -1,7 +1,8 @@
-package com.dunghaiquyen.ecommerce.infra.seed;
+package com.dunghaiquyen.ecommerce.modules.replenishment.seed;
 
 import com.dunghaiquyen.ecommerce.common.time.AppTimeZone;
-import com.dunghaiquyen.ecommerce.config.AppForecastDemoProperties;
+import com.dunghaiquyen.ecommerce.modules.replenishment.config.AppForecastDemoProperties;
+import com.dunghaiquyen.ecommerce.infra.seed.SeedDataService;
 import com.dunghaiquyen.ecommerce.modules.brand.entity.Brand;
 import com.dunghaiquyen.ecommerce.modules.brand.repository.BrandRepository;
 import com.dunghaiquyen.ecommerce.modules.category.entity.Category;

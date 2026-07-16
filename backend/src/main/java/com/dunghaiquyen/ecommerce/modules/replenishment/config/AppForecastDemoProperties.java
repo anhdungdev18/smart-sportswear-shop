@@ -1,4 +1,4 @@
-package com.dunghaiquyen.ecommerce.config;
+package com.dunghaiquyen.ecommerce.modules.replenishment.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
