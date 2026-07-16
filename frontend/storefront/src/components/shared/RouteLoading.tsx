@@ -14,7 +14,7 @@ function PulseBlock({ className }: { className: string }) {
 
 function CategoryLoading() {
   return (
-    <main className="site-main flex-1 border-b border-ivy-hairline pt-[78px]">
+    <main className="site-main page-below-header flex-1 border-b border-ivy-hairline">
       <div className="mx-auto max-w-[1368px] px-4 pb-16 md:px-0">
         <PulseBlock className="mt-6 h-4 w-52" />
         <div className="mt-8 flex flex-col gap-8 lg:flex-row">
@@ -58,7 +58,7 @@ function CategoryLoading() {
 
 function ProductLoading() {
   return (
-    <main className="site-main flex-1 border-b border-ivy-hairline pt-[78px]">
+    <main className="site-main page-below-header flex-1 border-b border-ivy-hairline">
       <div className="mx-auto max-w-[1368px] px-4 pb-16 md:px-0">
         <PulseBlock className="mt-6 h-4 w-48" />
         <div className="mt-8 grid grid-cols-1 gap-10 lg:grid-cols-[620px_minmax(0,1fr)] lg:gap-12">
@@ -103,7 +103,7 @@ function ProductLoading() {
 
 function DefaultLoading() {
   return (
-    <main className="site-main flex-1 border-b border-ivy-hairline pt-[78px]">
+    <main className="site-main page-below-header flex-1 border-b border-ivy-hairline">
       <div className="mx-auto max-w-[1368px] px-4 pb-16 md:px-0">
         <PulseBlock className="mt-10 h-[440px] w-full rounded-[32px]" />
         <div className="mt-14">
@@ -130,7 +130,7 @@ function DefaultLoading() {
 
 function CollectionLoading() {
   return (
-    <main className="site-main flex-1 border-b border-ivy-hairline pt-[78px]">
+    <main className="site-main page-below-header flex-1 border-b border-ivy-hairline">
       <div className="mx-auto max-w-[1368px] px-4 pb-16 md:px-0">
         <PulseBlock className="mt-6 h-4 w-48" />
         <PulseBlock className="mx-auto mt-10 h-6 w-36" />
@@ -150,7 +150,7 @@ function CollectionLoading() {
 
 function LookbookLoading() {
   return (
-    <main className="site-main flex-1 pt-[78px]">
+    <main className="site-main page-below-header flex-1">
       {/* Hero banner */}
       <PulseBlock className="h-[60vh] min-h-[400px] w-full" />
       <div className="mx-auto max-w-[1368px] px-4 pb-16 md:px-0">
@@ -184,7 +184,7 @@ function LookbookLoading() {
 
 function EditorialLoading() {
   return (
-    <main className="site-main flex-1 border-b border-ivy-hairline pt-[78px]">
+    <main className="site-main page-below-header flex-1 border-b border-ivy-hairline">
       <div className="mx-auto max-w-[1368px] px-4 pb-16 md:px-0">
         <PulseBlock className="mt-6 h-4 w-40" />
         {/* LIFESTYLE nav */}
@@ -228,7 +228,7 @@ function EditorialLoading() {
 
 function ArticleLoading() {
   return (
-    <main className="site-main flex-1 border-b border-ivy-hairline pt-[78px]">
+    <main className="site-main page-below-header flex-1 border-b border-ivy-hairline">
       <div className="mx-auto max-w-[1368px] px-4 pb-16 md:px-0">
         <PulseBlock className="mt-6 h-4 w-64" />
         <div className="mt-8 grid grid-cols-1 gap-10 lg:grid-cols-[220px_1fr_280px]">
@@ -284,7 +284,7 @@ function ArticleLoading() {
 
 function SearchLoading() {
   return (
-    <main className="site-main flex-1 border-b border-ivy-hairline pt-[78px]">
+    <main className="site-main page-below-header flex-1 border-b border-ivy-hairline">
       <div className="mx-auto max-w-[1368px] px-4 pb-16 md:px-0">
         <PulseBlock className="mt-6 h-4 w-40" />
         <div className="mt-6 flex items-center gap-4">

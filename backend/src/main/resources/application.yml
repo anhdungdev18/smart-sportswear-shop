@@ -104,6 +104,13 @@ app:
     from: ${MAIL_FROM:no-reply@dunghaiquyen.local}
   order:
     pending-payment-expiry-minutes: ${ORDER_PENDING_EXPIRY_MINUTES:30}
+  notifications:
+    stream:
+      # SSE fan-out across instances via Redis pub/sub. Default OFF so a single
+      # node starts with no Redis running — the broadcaster still delivers SSE
+      # to that node's own streams locally. Set NOTIFICATIONS_STREAM_REDIS=true
+      # only for a multi-instance deployment that actually has Redis available.
+      redis-enabled: ${NOTIFICATIONS_STREAM_REDIS:false}
   google:
     # Google OAuth2 client ID - must match the Web Client ID in Google Cloud
     # Console for your project. Frontend sends a Google ID token; backend

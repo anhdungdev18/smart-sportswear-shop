@@ -4,8 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { getApiErrorMessage } from "@/lib/api-errors";
-import { emitSessionChange } from "@/lib/session";
+import { emitSessionChange, getAccessToken, onSessionChange } from "@/lib/session";
 import { getCart, removeCartItem, updateCartItem } from "@/modules/cart/api";
+import { NO_IMAGE } from "@/modules/ui/placeholder";
 import type { CartResponse } from "@/modules/cart/types";
 
 export function CartPageClient() {
@@ -13,6 +14,7 @@ export function CartPageClient() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pendingItemId, setPendingItemId] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const loadCart = async () => {
     setLoading(true);
@@ -30,6 +32,18 @@ export function CartPageClient() {
 
   useEffect(() => {
     void loadCart();
+  }, []);
+
+  // Track login state so the "save cart" prompt only shows for guests. Deferred
+  // off the effect body to avoid a synchronous setState; kept in sync on login/logout.
+  useEffect(() => {
+    const sync = () => setIsAuthenticated(Boolean(getAccessToken()));
+    const timer = setTimeout(sync, 0);
+    const unsubscribe = onSessionChange(sync);
+    return () => {
+      clearTimeout(timer);
+      unsubscribe();
+    };
   }, []);
 
   const subtotal = useMemo(() => cart?.subtotal ?? 0, [cart]);
@@ -62,7 +76,7 @@ export function CartPageClient() {
   };
 
   return (
-    <main className="flex-1 border-b border-ivy-hairline pt-[78px]">
+    <main className="page-below-header flex-1 border-b border-ivy-hairline">
       <div className="mx-auto max-w-[1368px] px-4 py-12 md:px-0">
         <div className="mb-10">
           <p className="mb-3 text-[13px] uppercase tracking-[0.24em] text-ivy-text-muted">Storefront</p>
@@ -92,7 +106,7 @@ export function CartPageClient() {
                   >
                     <Link href={`/sanpham/${item.productId}`} className="relative aspect-[0.78] w-[120px] overflow-hidden bg-[#f5f5f5]">
                       <Image
-                        src={item.thumbnail || "/images/placeholder.png"}
+                        src={item.thumbnail || NO_IMAGE}
                         alt={item.productName}
                         fill
                         sizes="120px"
@@ -180,12 +194,14 @@ export function CartPageClient() {
               >
                 Tiến hành thanh toán
               </Link>
-              <Link
-                href="/dang-nhap"
-                className="flex h-12 items-center justify-center rounded-tl-[20px] rounded-br-[20px] border border-ivy-dark text-[14px] font-semibold uppercase tracking-[0.05em] text-ivy-dark"
-              >
-                Đăng nhập để lưu giỏ
-              </Link>
+              {!isAuthenticated ? (
+                <Link
+                  href="/dang-nhap"
+                  className="flex h-12 items-center justify-center rounded-tl-[20px] rounded-br-[20px] border border-ivy-dark text-[14px] font-semibold uppercase tracking-[0.05em] text-ivy-dark"
+                >
+                  Đăng nhập để lưu giỏ
+                </Link>
+              ) : null}
             </div>
           </aside>
         </div>

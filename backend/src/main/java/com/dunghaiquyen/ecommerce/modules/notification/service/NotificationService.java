@@ -34,6 +34,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 /**
  * Single entry point for every outbound notification (Phase O): builds the
@@ -71,12 +73,17 @@ public class NotificationService {
     private final NotificationRepository notificationRepository;
     private final MailService mailService;
     private final NotificationTemplates notificationTemplates;
+    private final NotificationBroadcaster broadcaster;
 
     public NotificationService(
-            NotificationRepository notificationRepository, MailService mailService, NotificationTemplates notificationTemplates) {
+            NotificationRepository notificationRepository,
+            MailService mailService,
+            NotificationTemplates notificationTemplates,
+            NotificationBroadcaster broadcaster) {
         this.notificationRepository = notificationRepository;
         this.mailService = mailService;
         this.notificationTemplates = notificationTemplates;
+        this.broadcaster = broadcaster;
     }
 
     public record ListResult(List<NotificationResponse> items, PageMeta meta) {
@@ -166,6 +173,36 @@ public class NotificationService {
         Page<Notification> page = notificationRepository.findAll(spec, pageable);
         List<NotificationResponse> items = page.getContent().stream().map(this::toResponse).toList();
         return new ListResult(items, PageMeta.from(page));
+    }
+
+    /** In-app unread badge count for the authenticated user. */
+    @Transactional(readOnly = true)
+    public long unreadCount(UUID userId) {
+        return notificationRepository.countByUserIdAndReadAtIsNull(userId);
+    }
+
+    /**
+     * Mark a single notification read. userId comes from the authenticated
+     * caller and is checked against the row's owner, so a user can never mark
+     * (or by extension probe the existence of) another user's notification -
+     * a foreign id is reported as not-found, identical to a missing one.
+     * Idempotent: re-reading an already-read row is a no-op, not an error.
+     */
+    @Transactional
+    public void markRead(UUID userId, UUID notificationId) {
+        Notification notification = notificationRepository.findById(notificationId)
+                .filter(n -> n.getUser() != null && n.getUser().getId().equals(userId))
+                .orElseThrow(() -> new ResourceNotFoundException("Notification not found"));
+        if (notification.getReadAt() == null) {
+            notification.setReadAt(Instant.now());
+            notificationRepository.save(notification);
+        }
+    }
+
+    /** Mark all of the user's unread notifications read in one statement; returns the count updated. */
+    @Transactional
+    public int markAllRead(UUID userId) {
+        return notificationRepository.markAllReadForUser(userId, Instant.now());
     }
 
     /**
@@ -286,6 +323,32 @@ public class NotificationService {
             notification.setErrorMessage(ex.getMessage());
         }
         notificationRepository.save(notification);
+        pushToStreamAfterCommit(notification);
+    }
+
+    /**
+     * Fire the real-time SSE push only AFTER the surrounding transaction commits,
+     * mirroring the same "never surface a notification the business action rolled
+     * back" guarantee the email path already relies on. The payload is captured
+     * eagerly (while the entity is still attached) so the after-commit callback
+     * touches no lazy associations. A no-op when the user has no open stream.
+     */
+    private void pushToStreamAfterCommit(Notification notification) {
+        if (notification.getUser() == null) {
+            return;
+        }
+        UUID userId = notification.getUser().getId();
+        NotificationResponse payload = toResponse(notification);
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    broadcaster.broadcast(userId, payload);
+                }
+            });
+        } else {
+            broadcaster.broadcast(userId, payload);
+        }
     }
 
     private int resolvePageIndex(Integer page) {
@@ -313,6 +376,7 @@ public class NotificationService {
                 notification.getErrorMessage(),
                 notification.getCreatedAt(),
                 notification.getSentAt(),
+                notification.getReadAt(),
                 notification.getResendOf() != null ? notification.getResendOf().getId() : null,
                 notification.getResendCount(),
                 notification.getLastResendAt());

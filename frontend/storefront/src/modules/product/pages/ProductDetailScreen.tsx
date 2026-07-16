@@ -5,6 +5,7 @@ import { ProductDescriptionTabs } from "@/modules/product/components/ProductDesc
 import { ProductGallery } from "@/modules/product/components/ProductGallery";
 import { ProductPurchasePanel } from "@/modules/product/components/ProductPurchasePanel";
 import { mapProductDetail } from "@/modules/product/mappers";
+import { NO_IMAGE } from "@/modules/ui/placeholder";
 import { fetchProductDetail } from "@/modules/product/queries";
 import type { ProductDetail } from "@/modules/product/types";
 
@@ -18,10 +19,10 @@ export async function ProductDetailScreen({
   if (!rawProduct) notFound();
 
   const product = mapProductDetail(rawProduct);
-  const galleryImages = product.images.length > 0 ? product.images : ["/images/placeholder.png"];
+  const galleryImages = product.images.length > 0 ? product.images : [NO_IMAGE];
 
   return (
-    <main className="site-main flex-1 border-b border-ivy-hairline pt-[78px]">
+    <main className="site-main page-below-header flex-1 border-b border-ivy-hairline">
       <Breadcrumb items={[{ label: "Trang chủ", href: "/" }, { label: product.name }]} />
       <div className="mx-auto max-w-[1368px] px-4 pb-16 md:px-0">
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-[620px_minmax(0,1fr)] lg:gap-12">

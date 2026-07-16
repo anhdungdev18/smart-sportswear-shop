@@ -54,7 +54,7 @@ export function OrderHistoryPageClient() {
 
   if (!getAccessToken()) {
     return (
-      <main className="site-main flex-1 border-b border-ivy-hairline pt-16 md:pt-20">
+      <main className="site-main page-below-header-spacious flex-1 border-b border-ivy-hairline">
         <div className="mx-auto max-w-[1380px] px-4 pb-24">
           <div className="border border-ivy-hairline px-6 py-10">
             <h1 className="text-[32px] font-semibold uppercase tracking-[0.06em] text-ivy-dark">Tra cứu đơn hàng</h1>
@@ -72,7 +72,7 @@ export function OrderHistoryPageClient() {
   }
 
   return (
-    <main className="site-main flex-1 border-b border-ivy-hairline pt-16 md:pt-20">
+    <main className="site-main page-below-header-spacious flex-1 border-b border-ivy-hairline">
       <div className="mx-auto max-w-[1380px] px-4 pb-24">
         <div className="mb-10">
           <p className="mb-3 text-[13px] uppercase tracking-[0.24em] text-ivy-text-muted">Khách hàng</p>

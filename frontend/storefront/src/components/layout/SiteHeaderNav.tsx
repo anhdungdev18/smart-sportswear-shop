@@ -8,23 +8,30 @@ import { HEADER_NAV_ITEMS } from "@/modules/content/data/layout";
 import { cn } from "@/lib/utils";
 
 function CategorySubMenu({ item }: { item: NavCategoryMenu }) {
+  const pathname = usePathname();
   return (
-    <div className="fixed left-0 top-31.5 z-30 w-full border-y border-ivy-hairline bg-white px-14 py-8 shadow-[0_10px_30px_rgba(34,31,32,0.06)]">
+    <div className="fixed left-0 top-[var(--site-header-height)] z-30 w-full border-y border-ivy-hairline bg-white px-14 py-8 shadow-[0_10px_30px_rgba(34,31,32,0.06)]">
       <div className="grid grid-cols-[220px_repeat(7,minmax(0,1fr))] gap-8">
         {item.quickLinks?.length ? (
           <div className="pr-3">
-            {item.quickLinks.map((quickLink) => (
-              <Link
-                key={quickLink.label}
-                href={quickLink.href}
-                className={cn(
-                  "mb-7 block text-[15px] font-semibold leading-6 text-ivy-dark last:mb-0",
-                  quickLink.highlight && "text-[#ff1f1f]",
-                )}
-              >
-                {quickLink.label}
-              </Link>
-            ))}
+            {item.quickLinks.map((quickLink) => {
+              // Red = an intentional promo accent (highlight) OR the category the
+              // user is currently viewing. Without the active check the left-column
+              // marker never follows navigation between sub-categories.
+              const isActive = quickLink.href !== "#" && pathname === quickLink.href;
+              return (
+                <Link
+                  key={quickLink.label}
+                  href={quickLink.href}
+                  className={cn(
+                    "mb-7 block text-[15px] font-semibold leading-6 text-ivy-dark last:mb-0",
+                    (quickLink.highlight || isActive) && "text-[#ff1f1f]",
+                  )}
+                >
+                  {quickLink.label}
+                </Link>
+              );
+            })}
           </div>
         ) : null}
 

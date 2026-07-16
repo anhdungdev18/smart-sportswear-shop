@@ -7,7 +7,7 @@ const sectionTitles: Record<string, string> = {
   reports: "Báo cáo",
   "chatbot-config": "Cấu hình chatbot",
   "users-roles": "Phân quyền",
-  "system-config": "Hệ thống"
+  "system-config": "Hệ thống",
 };
 
 type AdminSectionPageProps = {

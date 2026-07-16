@@ -43,7 +43,7 @@ export default async function LookbookPage({
           </div>
         </div>
       ) : (
-        <div className="pt-[78px]">
+        <div className="page-below-header">
           <Breadcrumb
             items={[
               { label: "Trang chủ", href: "/" },

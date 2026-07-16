@@ -4,10 +4,7 @@ import com.dunghaiquyen.ecommerce.common.response.ApiResponse;
 import com.dunghaiquyen.ecommerce.common.security.CustomUserDetails;
 import com.dunghaiquyen.ecommerce.modules.checkout.dto.CheckoutPreviewRequest;
 import com.dunghaiquyen.ecommerce.modules.checkout.dto.CheckoutPreviewResponse;
-import com.dunghaiquyen.ecommerce.modules.checkout.dto.CouponValidationResponse;
-import com.dunghaiquyen.ecommerce.modules.checkout.dto.ValidateCouponRequest;
 import com.dunghaiquyen.ecommerce.modules.checkout.service.CheckoutPreviewService;
-import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -31,15 +28,7 @@ public class CheckoutController {
     public ApiResponse<CheckoutPreviewResponse> preview(
             @AuthenticationPrincipal CustomUserDetails principal,
             @RequestBody(required = false) CheckoutPreviewRequest request) {
-        CheckoutPreviewRequest effective = request != null ? request : new CheckoutPreviewRequest(null, null);
+        CheckoutPreviewRequest effective = request != null ? request : new CheckoutPreviewRequest(null);
         return ApiResponse.ok(checkoutPreviewService.preview(principal.getUserId(), effective));
-    }
-
-    /** Always 200 - see CouponValidationResponse's javadoc for why a business-invalid coupon is not an HTTP error here. */
-    @PostMapping("/validate-coupon")
-    @PreAuthorize("hasRole('CUSTOMER')")
-    public ApiResponse<CouponValidationResponse> validateCoupon(
-            @AuthenticationPrincipal CustomUserDetails principal, @Valid @RequestBody ValidateCouponRequest request) {
-        return ApiResponse.ok(checkoutPreviewService.validateCoupon(principal.getUserId(), request.couponCode()));
     }
 }

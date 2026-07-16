@@ -20,6 +20,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -100,6 +101,27 @@ class OrderIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(status().isCreated());
     }
 
+    private void createCombo(AdminContext ctx, String name, int discountAmount, String... productIds) throws Exception {
+        String productIdsJson = java.util.Arrays.stream(productIds)
+                .map(id -> "\"" + id + "\"")
+                .collect(Collectors.joining(","));
+        mockMvc.perform(post("/api/v1/admin/combos")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + ctx.token())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(
+                                """
+                                {
+                                  "name":"%s",
+                                  "description":"test combo",
+                                  "discountAmount":%d,
+                                  "status":"ACTIVE",
+                                  "productIds":[%s]
+                                }
+                                """
+                                        .formatted(name, discountAmount, productIdsJson)))
+                .andExpect(status().isOk());
+    }
+
     private String createAddressForUser(String email) {
         var user = userRepository.findByEmail(email).orElseThrow();
         Address address = new Address();
@@ -115,6 +137,103 @@ class OrderIntegrationTest extends AbstractIntegrationTest {
 
     private String createOrderBody(String addressId) {
         return "{\"addressId\":\"" + addressId + "\",\"paymentMethod\":\"COD\",\"note\":\"Leave at door\"}";
+    }
+
+    @Test
+    void checkoutPreview_withApplicableCombo_returnsDiscountedTotal() throws Exception {
+        AdminContext ctx = setUpAdmin();
+        String productId1 = createActiveProduct(ctx, "Combo Shirt");
+        String variantId1 = createVariant(ctx, productId1, 120000, 10);
+        String productId2 = createActiveProduct(ctx, "Combo Shorts");
+        String variantId2 = createVariant(ctx, productId2, 80000, 10);
+        createCombo(ctx, "Summer Combo", 50000, productId1, productId2);
+
+        String email = uniqueEmail("combo-preview");
+        TokenPair buyer = registerUser(email);
+        addToCart(buyer.accessToken(), variantId1, 1);
+        addToCart(buyer.accessToken(), variantId2, 1);
+
+        MvcResult result = mockMvc.perform(post("/api/v1/checkout/preview")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + buyer.accessToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        JsonNode body = json(result.getResponse().getContentAsString());
+        assertThat(body.at("/data/subtotal").asDouble()).isEqualTo(200000.0);
+        assertThat(body.at("/data/discountAmount").asDouble()).isEqualTo(50000.0);
+        assertThat(body.at("/data/totalAmount").asDouble()).isEqualTo(150000.0);
+        assertThat(body.at("/data/canCheckout").asBoolean()).isTrue();
+    }
+
+    @Test
+    void createOrder_withApplicableCombo_persistsDiscountAmount() throws Exception {
+        AdminContext ctx = setUpAdmin();
+        String productId1 = createActiveProduct(ctx, "Combo Shoe");
+        String variantId1 = createVariant(ctx, productId1, 300000, 10);
+        String productId2 = createActiveProduct(ctx, "Combo Socks");
+        String variantId2 = createVariant(ctx, productId2, 50000, 10);
+        createCombo(ctx, "Match Day Combo", 70000, productId1, productId2);
+
+        String email = uniqueEmail("combo-order");
+        TokenPair buyer = registerUser(email);
+        addToCart(buyer.accessToken(), variantId1, 1);
+        addToCart(buyer.accessToken(), variantId2, 1);
+        String addressId = createAddressForUser(email);
+
+        MvcResult result = mockMvc.perform(post("/api/v1/orders")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + buyer.accessToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(createOrderBody(addressId)))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        JsonNode body = json(result.getResponse().getContentAsString());
+        assertThat(body.at("/data/subtotalAmount").asDouble()).isEqualTo(350000.0);
+        assertThat(body.at("/data/discountAmount").asDouble()).isEqualTo(70000.0);
+        assertThat(body.at("/data/totalAmount").asDouble()).isEqualTo(280000.0);
+    }
+
+    @Test
+    void createOrder_withoutFullCombo_doesNotApplyDiscount_andClampPreventsNegativeTotal() throws Exception {
+        AdminContext ctx = setUpAdmin();
+        String productId1 = createActiveProduct(ctx, "Clamp Tee");
+        String variantId1 = createVariant(ctx, productId1, 90000, 10);
+        String productId2 = createActiveProduct(ctx, "Clamp Shorts");
+        String variantId2 = createVariant(ctx, productId2, 60000, 10);
+        String productId3 = createActiveProduct(ctx, "Clamp Cap");
+        createCombo(ctx, "Need Three Products", 40000, productId1, productId2, productId3);
+        createCombo(ctx, "Huge Discount", 999999, productId1, productId2);
+
+        String email = uniqueEmail("combo-clamp");
+        TokenPair buyer = registerUser(email);
+        addToCart(buyer.accessToken(), variantId1, 1);
+        addToCart(buyer.accessToken(), variantId2, 1);
+        String addressId = createAddressForUser(email);
+
+        MvcResult preview = mockMvc.perform(post("/api/v1/checkout/preview")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + buyer.accessToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isOk())
+                .andReturn();
+        JsonNode previewBody = json(preview.getResponse().getContentAsString());
+        assertThat(previewBody.at("/data/subtotal").asDouble()).isEqualTo(150000.0);
+        assertThat(previewBody.at("/data/discountAmount").asDouble())
+                .as("only the fully matched combo should apply, and it must be clamped to subtotal")
+                .isEqualTo(150000.0);
+        assertThat(previewBody.at("/data/totalAmount").asDouble()).isEqualTo(0.0);
+
+        MvcResult order = mockMvc.perform(post("/api/v1/orders")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + buyer.accessToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(createOrderBody(addressId)))
+                .andExpect(status().isCreated())
+                .andReturn();
+        JsonNode orderBody = json(order.getResponse().getContentAsString());
+        assertThat(orderBody.at("/data/discountAmount").asDouble()).isEqualTo(150000.0);
+        assertThat(orderBody.at("/data/totalAmount").asDouble()).isEqualTo(0.0);
     }
 
     // ===== create order success: multiple items, snapshot correctness, stock reserved, cart cleared =====

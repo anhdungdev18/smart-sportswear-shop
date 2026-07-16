@@ -1,12 +1,3 @@
-export const revenue = [
-  { month: "T1", revenue: 420, orders: 120 },
-  { month: "T2", revenue: 460, orders: 138 },
-  { month: "T3", revenue: 510, orders: 151 },
-  { month: "T4", revenue: 580, orders: 170 },
-  { month: "T5", revenue: 620, orders: 188 },
-  { month: "T6", revenue: 715, orders: 214 }
-];
-
 export const topProducts = [
   { name: "Vapor 16 Pro", sales: 318 },
   { name: "Morelia Sala", sales: 242 },

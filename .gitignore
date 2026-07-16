@@ -18,12 +18,22 @@ yarn-error.log*
 # Local runtime / temp
 tmp/
 temp/
+tmp-auth/
+.worktrees/
 
 # Frontend build artifacts
 frontend/**/node_modules/
 frontend/**/.next/
 frontend/**/.env.local
 frontend/**/.playwright-mcp/
+frontend/**/tsconfig.tsbuildinfo
+
+# Local scratch / dumps
+QueryCatalogCounts.java
+QueryProducts.java
+db.sql
+*.backup
+image/
 
 # Old cloner template directory (content moved to frontend/storefront)
 ai-website-cloner-template/

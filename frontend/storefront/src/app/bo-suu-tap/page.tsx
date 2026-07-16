@@ -8,7 +8,7 @@ export default async function CollectionListPage() {
   const collections: CollectionSummary[] = await fetchCollections();
 
   return (
-    <main className="site-main flex-1 border-b border-ivy-hairline pt-[78px]">
+    <main className="site-main page-below-header flex-1 border-b border-ivy-hairline">
       <Breadcrumb
         items={[
           { label: "Trang chủ", href: "/" },

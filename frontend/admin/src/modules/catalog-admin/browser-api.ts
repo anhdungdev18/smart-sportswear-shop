@@ -4,13 +4,35 @@ import type {
   BrandResponse,
   CategoryResponse,
   CollectionResponse,
-  CouponResponse,
+  ComboInput,
+  ComboResponse,
   ProductDetailResponse,
   ProductImageResponse,
   ProductImageUploadResponse,
-  ProductVariantResponse,
-  PromotionResponse
+  ProductVariantResponse
 } from "@/modules/catalog-admin/types";
+
+export async function listCombos() {
+  return browserApiRequest<ComboResponse[]>(adminEndpoints.combos, { method: "GET" });
+}
+
+export async function createCombo(input: ComboInput) {
+  return browserApiRequest<ComboResponse>(adminEndpoints.combos, {
+    method: "POST",
+    body: JSON.stringify(input)
+  });
+}
+
+export async function updateCombo(id: string, input: ComboInput) {
+  return browserApiRequest<ComboResponse>(adminEndpoints.combo(id), {
+    method: "PUT",
+    body: JSON.stringify(input)
+  });
+}
+
+export async function deleteCombo(id: string) {
+  return browserApiRequest<void>(adminEndpoints.combo(id), { method: "DELETE" });
+}
 
 export async function createAdminProduct(input: Record<string, unknown>) {
   return browserApiRequest<ProductDetailResponse>(adminEndpoints.products, {
@@ -106,20 +128,6 @@ export async function deleteBrand(id: string) {
   return browserApiRequest<void>(adminEndpoints.adminBrand(id), { method: "DELETE" });
 }
 
-export async function createPromotion(input: Record<string, unknown>) {
-  return browserApiRequest<PromotionResponse>(adminEndpoints.promotions, {
-    method: "POST",
-    body: JSON.stringify(input)
-  });
-}
-
-export async function updatePromotion(id: string, input: Record<string, unknown>) {
-  return browserApiRequest<PromotionResponse>(adminEndpoints.promotion(id), {
-    method: "PATCH",
-    body: JSON.stringify(input)
-  });
-}
-
 export type ProductPickItem = {
   id: string;
   name: string;
@@ -136,16 +144,16 @@ export async function listProductsForPicker() {
   return browserApiRequest<ProductPickItem[]>(`${adminEndpoints.products}?limit=200`, { method: "GET" });
 }
 
+export async function listCategoriesForPicker() {
+  return browserApiRequest<CategoryResponse[]>(adminEndpoints.categories, { method: "GET" });
+}
+
+export async function listBrandsForPicker() {
+  return browserApiRequest<BrandResponse[]>(adminEndpoints.brands, { method: "GET" });
+}
+
 export async function listCollectionProducts(collectionId: string) {
   return browserApiRequest<ProductPickItem[]>(adminEndpoints.collectionProducts(collectionId), { method: "GET" });
-}
-
-export async function listPromotionsForPicker() {
-  return browserApiRequest<PromotionResponse[]>(`${adminEndpoints.promotions}?limit=200`, { method: "GET" });
-}
-
-export async function listCouponsForAdmin() {
-  return browserApiRequest<CouponResponse[]>(`${adminEndpoints.coupons}?limit=200`, { method: "GET" });
 }
 
 export async function listProductCollections(productId: string) {
@@ -184,19 +192,5 @@ export async function addProductToCollection(productId: string, collectionId: st
 export async function removeProductFromCollection(productId: string, collectionId: string) {
   return browserApiRequest<void>(adminEndpoints.productCollection(productId, collectionId), {
     method: "DELETE"
-  });
-}
-
-export async function createCoupon(input: Record<string, unknown>) {
-  return browserApiRequest<CouponResponse>(adminEndpoints.coupons, {
-    method: "POST",
-    body: JSON.stringify(input)
-  });
-}
-
-export async function updateCoupon(id: string, input: Record<string, unknown>) {
-  return browserApiRequest<CouponResponse>(adminEndpoints.coupon(id), {
-    method: "PATCH",
-    body: JSON.stringify(input)
   });
 }

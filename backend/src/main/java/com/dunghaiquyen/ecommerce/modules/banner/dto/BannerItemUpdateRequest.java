@@ -3,7 +3,7 @@ package com.dunghaiquyen.ecommerce.modules.banner.dto;
 import com.dunghaiquyen.ecommerce.common.validation.NullOrNotBlank;
 import java.util.UUID;
 
-/** Partial update (null = leave unchanged). productId has no way to be explicitly cleared back to null this phase - same accepted limitation PromotionUpdateRequest's own startsAt/endsAt already has. */
+/** Partial update (null = leave unchanged). productId cannot be explicitly cleared back to null in this phase. */
 public record BannerItemUpdateRequest(
         String title,
         String subtitle,

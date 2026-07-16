@@ -38,7 +38,7 @@ export function ResetPasswordPageClient({ token }: { token: string }) {
   };
 
   return (
-    <main className="flex-1 border-b border-ivy-hairline pt-[78px]">
+    <main className="page-below-header flex-1 border-b border-ivy-hairline">
       <div className="mx-auto max-w-[760px] px-4 py-16 md:px-0">
         <div className="border border-ivy-hairline px-6 py-8 md:px-10">
           <h1 className="text-[32px] font-semibold uppercase tracking-[0.06em] text-ivy-dark">Đặt lại mật khẩu</h1>

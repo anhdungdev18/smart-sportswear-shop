@@ -8,7 +8,6 @@ export const endpoints = {
   collections: "/api/v1/collections",
   collection: (slug: string) => `/api/v1/collections/${slug}`,
   banners: "/api/v1/banners/active",
-  promotions: "/api/v1/promotions/active",
   page: (slug: string) => `/api/v1/pages/${slug}`,
   settings: "/api/v1/settings/public",
   cart: "/api/v1/cart",
@@ -24,12 +23,18 @@ export const endpoints = {
   },
   checkout: {
     preview: "/api/v1/checkout/preview",
-    validateCoupon: "/api/v1/checkout/validate-coupon",
   },
   orders: {
     root: "/api/v1/orders",
     mine: "/api/v1/orders/me",
     detail: (id: string) => `/api/v1/orders/${id}`,
+  },
+  notifications: {
+    mine: "/api/v1/notifications/me",
+    unreadCount: "/api/v1/notifications/me/unread-count",
+    read: (id: string) => `/api/v1/notifications/me/${id}/read`,
+    readAll: "/api/v1/notifications/me/read-all",
+    stream: "/api/v1/notifications/me/stream",
   },
   auth: {
     login: "/api/v1/auth/login",

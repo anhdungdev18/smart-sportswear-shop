@@ -20,20 +20,13 @@ import org.springframework.test.web.servlet.MvcResult;
  * Spring Security filter chain (via MockMvc + spring-security-test, not a
  * @WebMvcTest slice), real Postgres - no service-layer mocking.
  *
- * Database: the docker-compose postgres service (localhost:5434, same
- * postgres:16-alpine image as docker-compose.yml; see application-test.yml).
- * Flyway runs the real V1 migration against it on context startup, same as
- * the dev profile.
+ * Database: supplied explicitly via TEST_DB_URL / TEST_DB_USERNAME /
+ * TEST_DB_PASSWORD. Flyway runs the real migrations against that database on
+ * context startup, same as the dev profile.
  *
  * Originally this used Testcontainers to spin up Postgres per run, which is
- * the more hermetic/self-contained choice. Switched to the long-lived
- * docker-compose container after Testcontainers proved unreliable in this
- * environment: running a single test class in isolation always passed, but
- * running a second class in the same JVM consistently got "Connection
- * refused" against the container's mapped port (verified, not a one-off) -
- * looks like a Docker Desktop stability issue on this machine rather than a
- * test-code bug. Precondition for running this suite: `docker compose up -d
- * postgres` (the same step local dev already requires).
+ * the more hermetic/self-contained choice. The current suite assumes a real
+ * Postgres target is provided by the caller instead.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @AutoConfigureMockMvc

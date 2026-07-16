@@ -7,7 +7,7 @@ import { ABOUT_IMAGES } from "@/modules/content/data/about";
 // of those real images.
 export default function AboutPage() {
   return (
-    <main className="site-main flex-1 border-b border-ivy-hairline pt-16 md:pt-20">
+    <main className="site-main page-below-header flex-1 border-b border-ivy-hairline">
       <Breadcrumb
         items={[
           { label: "Trang chủ", href: "/" },

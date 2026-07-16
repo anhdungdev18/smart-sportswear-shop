@@ -26,7 +26,7 @@ export async function SearchResultsPage({
   const mappedProducts = products.map(mapProductListItem);
 
   return (
-    <main className="site-main flex-1 border-b border-ivy-hairline pt-16 md:pt-20">
+    <main className="site-main page-below-header flex-1 border-b border-ivy-hairline">
       <div className="mx-auto flex max-w-[1380px] flex-col gap-8 px-4 pb-16 pt-6 lg:flex-row">
         <CategorySidebarFilter />
         <div className="flex-1">

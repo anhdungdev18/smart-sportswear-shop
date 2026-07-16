@@ -5,7 +5,7 @@ import { ContactForm } from "@/components/contact/ContactForm";
 
 export default function ContactPage() {
   return (
-    <main className="site-main flex-1 border-b border-ivy-hairline pt-16 md:pt-20">
+    <main className="site-main page-below-header flex-1 border-b border-ivy-hairline">
         <Breadcrumb
           items={[
             { label: "Trang chủ", href: "/" },
