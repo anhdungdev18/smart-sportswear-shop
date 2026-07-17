@@ -26,10 +26,9 @@ const EMPTY_ADDRESS_FORM = {
 
 export function CheckoutPageClient() {
   const [addresses, setAddresses] = useState<AddressResponse[]>([]);
-  const [selectedAddressId, setSelectedAddressId] = useState<string>("");
+  const [selectedAddressId, setSelectedAddressId] = useState("");
   const [addressForm, setAddressForm] = useState(EMPTY_ADDRESS_FORM);
   const [preview, setPreview] = useState<CheckoutPreviewResponse | null>(null);
-  const [couponCode, setCouponCode] = useState("");
   const [note, setNote] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("COD");
   const [loading, setLoading] = useState(true);
@@ -43,9 +42,9 @@ export function CheckoutPageClient() {
     [addresses, selectedAddressId],
   );
 
-  const refreshPreview = async (addressId?: string, nextCouponCode?: string) => {
+  const refreshPreview = async (addressId?: string) => {
     try {
-      const response = await previewCheckout(addressId, nextCouponCode);
+      const response = await previewCheckout(addressId);
       setPreview(response);
     } catch (err) {
       setError(getApiErrorMessage(err, "Không thể tải dữ liệu thanh toán."));
@@ -65,7 +64,7 @@ export function CheckoutPageClient() {
         const defaultAddress = addressList.find((item) => item.isDefault) ?? addressList[0];
         const defaultId = defaultAddress?.id ?? "";
         setSelectedAddressId(defaultId);
-        await refreshPreview(defaultId, couponCode);
+        await refreshPreview(defaultId);
       } catch (err) {
         setError(getApiErrorMessage(err, "Không thể tải địa chỉ hoặc giỏ hàng."));
       } finally {
@@ -80,13 +79,14 @@ export function CheckoutPageClient() {
     event.preventDefault();
     setCreatingAddress(true);
     setError(null);
+
     try {
       const address = await createAddress({ ...addressForm, isDefault: addresses.length === 0 });
       const nextAddresses = [address, ...addresses];
       setAddresses(nextAddresses);
       setSelectedAddressId(address.id);
       setAddressForm(EMPTY_ADDRESS_FORM);
-      await refreshPreview(address.id, couponCode);
+      await refreshPreview(address.id);
     } catch (err) {
       setError(getApiErrorMessage(err, "Không thể tạo địa chỉ mới."));
     } finally {
@@ -105,28 +105,24 @@ export function CheckoutPageClient() {
     }
   };
 
-  const handleApplyCoupon = async () => {
-    setError(null);
-    await refreshPreview(selectedAddressId || undefined, couponCode.trim());
-  };
-
   const handleCreateOrder = async () => {
     if (!selectedAddressId) {
       setError("Vui lòng chọn địa chỉ giao hàng.");
       return;
     }
+
     setSubmitting(true);
     setError(null);
     setSuccess(null);
+
     try {
       const order = await createOrder({
         addressId: selectedAddressId,
         paymentMethod,
         note: note || undefined,
-        couponCode: couponCode.trim() || undefined,
       });
       setSuccess(`Đặt hàng thành công. Mã đơn của bạn là ${order.orderCode}.`);
-      await refreshPreview(selectedAddressId, couponCode.trim());
+      await refreshPreview(selectedAddressId);
     } catch (err) {
       setError(getApiErrorMessage(err, "Không thể tạo đơn hàng."));
     } finally {
@@ -135,7 +131,7 @@ export function CheckoutPageClient() {
   };
 
   return (
-    <main className="flex-1 border-b border-ivy-hairline pt-[78px]">
+    <main className="page-below-header flex-1 border-b border-ivy-hairline">
       <div className="mx-auto max-w-[1368px] px-4 py-12 md:px-0">
         <div className="mb-10">
           <p className="mb-3 text-[13px] uppercase tracking-[0.24em] text-ivy-text-muted">Storefront</p>
@@ -172,7 +168,7 @@ export function CheckoutPageClient() {
                             checked={selectedAddressId === address.id}
                             onChange={() => {
                               setSelectedAddressId(address.id);
-                              void refreshPreview(address.id, couponCode.trim());
+                              void refreshPreview(address.id);
                             }}
                             className="mt-1 size-4 accent-ivy-dark"
                           />
@@ -180,7 +176,9 @@ export function CheckoutPageClient() {
                             <div className="flex items-center gap-3">
                               <p className="text-[16px] font-medium text-ivy-dark">{address.receiverName}</p>
                               {address.isDefault ? (
-                                <span className="text-[12px] uppercase tracking-[0.06em] text-[#257A4D]">Mặc định</span>
+                                <span className="text-[12px] uppercase tracking-[0.06em] text-[#257A4D]">
+                                  Mặc định
+                                </span>
                               ) : null}
                             </div>
                             <p className="mt-2 text-[14px] text-ivy-text">{address.phone}</p>
@@ -201,7 +199,9 @@ export function CheckoutPageClient() {
                       ))}
                     </div>
                   ) : (
-                    <p className="mb-6 text-[15px] text-ivy-text">Bạn chưa có địa chỉ nào. Tạo mới ngay bên dưới.</p>
+                    <p className="mb-6 text-[15px] text-ivy-text">
+                      Bạn chưa có địa chỉ nào. Tạo mới ngay bên dưới.
+                    </p>
                   )}
                 </div>
 
@@ -295,28 +295,9 @@ export function CheckoutPageClient() {
               </section>
 
               <aside className="h-fit border border-ivy-hairline px-6 py-8">
-                <h2 className="mb-6 text-[28px] font-semibold uppercase tracking-[0.04em] text-ivy-dark">Đơn hàng của bạn</h2>
-
-                <div className="mb-6 border border-ivy-hairline p-4">
-                  <label className="mb-2 block text-[13px] font-semibold uppercase tracking-[0.04em] text-ivy-dark">
-                    Mã ưu đãi
-                  </label>
-                  <div className="flex gap-3">
-                    <input
-                      value={couponCode}
-                      onChange={(e) => setCouponCode(e.target.value)}
-                      className="h-11 flex-1 border border-ivy-hairline px-4 text-[14px] outline-none"
-                      placeholder="Nhập coupon"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => void handleApplyCoupon()}
-                      className="h-11 rounded-tl-[16px] rounded-br-[16px] border border-ivy-dark px-5 text-[12px] font-semibold uppercase tracking-[0.05em] text-ivy-dark"
-                    >
-                      Áp dụng
-                    </button>
-                  </div>
-                </div>
+                <h2 className="mb-6 text-[28px] font-semibold uppercase tracking-[0.04em] text-ivy-dark">
+                  Đơn hàng của bạn
+                </h2>
 
                 <div className="space-y-5 border-b border-ivy-hairline pb-6">
                   {preview?.items?.map((item) => (
@@ -341,19 +322,16 @@ export function CheckoutPageClient() {
                     <span>Tạm tính</span>
                     <span>{(preview?.subtotal ?? 0).toLocaleString("vi-VN")}đ</span>
                   </div>
-                  <div className="flex items-center justify-between text-[15px] text-ivy-text">
-                    <span>Giảm giá</span>
-                    <span>-{(preview?.discountAmount ?? 0).toLocaleString("vi-VN")}đ</span>
-                  </div>
+                  {(preview?.discountAmount ?? 0) > 0 ? (
+                    <div className="flex items-center justify-between text-[15px] text-[#257A4D]">
+                      <span>Giảm giá combo</span>
+                      <span>-{(preview?.discountAmount ?? 0).toLocaleString("vi-VN")}đ</span>
+                    </div>
+                  ) : null}
                   <div className="flex items-center justify-between text-[15px] text-ivy-text">
                     <span>Phí vận chuyển</span>
                     <span>{(preview?.shippingFee ?? 0).toLocaleString("vi-VN")}đ</span>
                   </div>
-                  {preview?.couponError ? (
-                    <p className="text-[13px] text-[#C62127]">{preview.couponError}</p>
-                  ) : preview?.appliedCoupon ? (
-                    <p className="text-[13px] text-[#257A4D]">Đã áp dụng mã {preview.appliedCoupon.code}.</p>
-                  ) : null}
                 </div>
 
                 <div className="flex items-center justify-between border-t border-ivy-hairline pt-6 text-[24px] font-semibold text-ivy-dark">

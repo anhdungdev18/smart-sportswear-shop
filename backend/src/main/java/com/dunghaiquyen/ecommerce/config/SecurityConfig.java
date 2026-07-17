@@ -34,7 +34,6 @@ public class SecurityConfig {
             "/api/v1/categories/**",
             "/api/v1/brands/**",
             "/api/v1/shipping/methods",
-            "/api/v1/promotions/active",
             "/api/v1/banners/active",
             "/api/v1/pages/*",
             "/api/v1/settings/public",

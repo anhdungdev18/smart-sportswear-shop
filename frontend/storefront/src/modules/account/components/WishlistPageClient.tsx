@@ -6,6 +6,7 @@ import Link from "next/link";
 import { getApiErrorMessage } from "@/lib/api-errors";
 import { emitSessionChange, getAccessToken } from "@/lib/session";
 import { getWishlist, removeWishlistItem } from "@/modules/account/api";
+import { NO_IMAGE } from "@/modules/ui/placeholder";
 import type { WishlistResponse } from "@/modules/account/types";
 
 export function WishlistPageClient() {
@@ -43,7 +44,7 @@ export function WishlistPageClient() {
   };
 
   return (
-    <main className="flex-1 border-b border-ivy-hairline pt-[78px]">
+    <main className="page-below-header flex-1 border-b border-ivy-hairline">
       <div className="mx-auto max-w-[1368px] px-4 py-12 md:px-0">
         <div className="mb-10">
           <p className="mb-3 text-[13px] uppercase tracking-[0.24em] text-ivy-text-muted">Storefront</p>
@@ -69,7 +70,7 @@ export function WishlistPageClient() {
               <article key={item.id} className="group">
                 <Link href={`/sanpham/${item.productId}`} className="relative mb-4 block aspect-[0.78] overflow-hidden bg-[#f5f5f5]">
                   <Image
-                    src={item.thumbnail || "/images/placeholder.png"}
+                    src={item.thumbnail || NO_IMAGE}
                     alt={item.productName}
                     fill
                     sizes="(max-width: 768px) 50vw, 25vw"

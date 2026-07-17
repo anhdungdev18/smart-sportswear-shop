@@ -12,7 +12,7 @@ import org.springframework.data.repository.query.Param;
  * Dedicated repository for ProductReview, owned by the product module (same
  * "dedicated repository per consuming module" pattern as
  * modules/review/repository/ReviewOrderItemRepository and
- * modules/coupon/repository/CouponPromotionProductRepository): the review
+ * product module dependencies narrow: the review
  * module's own ProductReviewRepository is left untouched. Only used by
  * ProductService to build the PDP's review summary (Phase N4) - APPROVED
  * only, per the public-detail visibility rule already enforced for reviews

@@ -114,7 +114,7 @@ export const HEADER_NAV_ITEMS: HeaderNavItem[] = [
     variant: "category",
     quickLinks: [
       { label: "ĐỒ GYM NAM", href: `${SITE_ORIGIN}/danh-muc/do-gym-nam` },
-      { label: "ĐỒ GYM NỮ", href: `${SITE_ORIGIN}/danh-muc/do-gym-nu`, highlight: true },
+      { label: "ĐỒ GYM NỮ", href: `${SITE_ORIGIN}/danh-muc/do-gym-nu` },
     ],
     groups: [
       {

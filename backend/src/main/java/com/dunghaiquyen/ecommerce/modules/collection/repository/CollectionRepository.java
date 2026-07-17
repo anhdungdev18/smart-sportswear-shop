@@ -20,10 +20,9 @@ public interface CollectionRepository extends JpaRepository<Collection, UUID>, J
     Optional<Collection> findBySlug(String slug);
 
     /**
-     * Public listing: status=ACTIVE AND currently within its own time window
-     * (same null-means-unbounded convention used by PromotionRepository and
-     * BannerRepository). Ordered by sort_order ASC, then createdAt DESC for
-     * stable tie-breaking.
+     * Public listing: status=ACTIVE AND currently within its own time window.
+     * Null startsAt/endsAt means unbounded. Ordered by sort_order ASC, then
+     * createdAt DESC for stable tie-breaking.
      */
     @Query("select c from Collection c where c.status = :status "
             + "and (c.startsAt is null or c.startsAt <= :now) "

@@ -17,6 +17,7 @@ import { clearSession, getAccessToken, getRefreshToken, onSessionChange } from "
 import { getMe, logout } from "@/modules/auth/api";
 import { getWishlist } from "@/modules/account/api";
 import { getCart } from "@/modules/cart/api";
+import { NotificationBell } from "@/modules/notifications/NotificationBell";
 import { CUSTOMER_SERVICE_LINKS } from "@/modules/content/data/layout";
 
 const CS_ICON_MAP: Record<string, React.ElementType> = {
@@ -123,6 +124,8 @@ export function HeaderActionsLive() {
           </span>
         ) : null}
       </Link>
+
+      <NotificationBell />
 
       <Link href={isAuthenticated ? "/tai-khoan" : "/dang-nhap"} className="icon flex h-10 w-5 items-center justify-center text-ivy-dark" aria-label="Tài khoản">
         <AvatarIcon className="size-4.5" />

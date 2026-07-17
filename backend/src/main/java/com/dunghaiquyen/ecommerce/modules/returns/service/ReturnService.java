@@ -55,10 +55,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Owns both the Return lifecycle and the Refund actions a Return drives -
- * same one-service-per-tightly-coupled-pair shape CouponService already uses
- * for Coupon+Promotion. Refund money actions and Return status are kept in
- * sync from exactly one direction: completing a Refund moves its linked
+ * Owns both the Return lifecycle and the Refund actions a Return drives.
+ * Refund money actions and Return status are kept in sync from exactly one
+ * direction: completing a Refund moves its linked
  * Return to REFUNDED (see {@link #updateRefundStatus}) - a Return's own
  * status-update endpoint can never set REFUNDED directly, so there is only
  * one code path that can ever reach it.

@@ -12,7 +12,7 @@ import com.dunghaiquyen.ecommerce.modules.cart.entity.Cart;
 import com.dunghaiquyen.ecommerce.modules.cart.entity.CartItem;
 import com.dunghaiquyen.ecommerce.modules.cart.repository.CartItemRepository;
 import com.dunghaiquyen.ecommerce.modules.cart.repository.CartRepository;
-import com.dunghaiquyen.ecommerce.modules.coupon.service.CouponService;
+import com.dunghaiquyen.ecommerce.modules.combo.service.ComboService;
 import com.dunghaiquyen.ecommerce.modules.inventory.service.InventoryService;
 import com.dunghaiquyen.ecommerce.modules.notification.service.NotificationService;
 import com.dunghaiquyen.ecommerce.modules.order.dto.AdminOrderListQuery;
@@ -95,7 +95,7 @@ public class OrderService {
     private final UserRepository userRepository;
     private final InventoryService inventoryService;
     private final OrderMapper orderMapper;
-    private final CouponService couponService;
+    private final ComboService comboService;
     private final NotificationService notificationService;
     private final AppShippingProperties shippingProperties;
 
@@ -109,7 +109,7 @@ public class OrderService {
             UserRepository userRepository,
             InventoryService inventoryService,
             OrderMapper orderMapper,
-            CouponService couponService,
+            ComboService comboService,
             NotificationService notificationService,
             AppShippingProperties shippingProperties) {
         this.cartRepository = cartRepository;
@@ -121,7 +121,7 @@ public class OrderService {
         this.userRepository = userRepository;
         this.inventoryService = inventoryService;
         this.orderMapper = orderMapper;
-        this.couponService = couponService;
+        this.comboService = comboService;
         this.notificationService = notificationService;
         this.shippingProperties = shippingProperties;
     }
@@ -215,15 +215,15 @@ public class OrderService {
         // so preview and the real order always agree on this number.
         order.setShippingFee(calculateShippingFee(subtotal));
 
-        // Phase N2: optional coupon. Validated (and its row locked) BEFORE the
-        // order is written, same "validate everything before writing anything"
-        // discipline as the stock checks above - an invalid coupon must leave no
-        // order behind, just like insufficient stock does.
-        CouponService.AppliedCoupon appliedCoupon = null;
-        if (request.couponCode() != null && !request.couponCode().isBlank()) {
-            appliedCoupon = couponService.validate(user, request.couponCode(), subtotal, order.getItems());
-        }
-        BigDecimal discount = appliedCoupon != null ? appliedCoupon.discountAmount() : BigDecimal.ZERO;
+        // Combo (bundle) discount: every active combo whose full product set is
+        // present in this cart takes its flat amount off. Computed BEFORE the
+        // order is written, same "decide the final numbers before persisting"
+        // discipline as the stock checks above. Clamped to the subtotal so the
+        // total can never go negative.
+        java.util.Set<UUID> comboProductIds = order.getItems().stream()
+                .map(item -> item.getProduct().getId())
+                .collect(java.util.stream.Collectors.toSet());
+        BigDecimal discount = comboService.calculateDiscount(comboProductIds).totalDiscount().min(subtotal);
         order.setDiscountAmount(discount);
         order.setTotalAmount(subtotal.add(order.getShippingFee()).subtract(discount));
 
@@ -244,10 +244,6 @@ public class OrderService {
             // retry once with a freshly generated code rather than fail checkout.
             order.setOrderCode(generateOrderCode());
             order = orderRepository.saveAndFlush(order);
-        }
-
-        if (appliedCoupon != null) {
-            couponService.recordUsage(appliedCoupon, order, user);
         }
 
         // Phase 3: reserve stock for every line, reusing the SAME locked variant

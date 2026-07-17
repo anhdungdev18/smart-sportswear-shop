@@ -10,26 +10,12 @@ export interface CheckoutItemPreview {
   errorMessage?: string | null;
 }
 
-export interface AppliedCouponSummary {
-  code: string;
-  discountAmount: number;
-}
-
 export interface CheckoutPreviewResponse {
   items: CheckoutItemPreview[];
   subtotal: number;
+  // Combo (bundle) discount that applies to the current cart, if any.
   discountAmount: number;
   shippingFee: number;
   totalAmount: number;
-  appliedCoupon?: AppliedCouponSummary | null;
-  couponError?: string | null;
   canCheckout: boolean;
-}
-
-export interface CouponValidationResponse {
-  valid: boolean;
-  couponCode: string;
-  subtotal: number;
-  discountAmount: number;
-  message: string;
 }

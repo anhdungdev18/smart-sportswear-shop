@@ -55,42 +55,6 @@ export type BrandResponse = {
   status: string;
 };
 
-export type PromotionResponse = {
-  id: string;
-  name: string;
-  slug: string;
-  description: string | null;
-  type: string;
-  scope: string;
-  status: string;
-  discountPercent: number | null;
-  discountAmount: number | null;
-  minOrderAmount: number | null;
-  maxDiscountAmount: number | null;
-  startsAt: string | null;
-  endsAt: string | null;
-  usageLimit: number | null;
-  usageCount: number;
-  productIds: string[];
-  createdAt: string;
-  updatedAt: string;
-};
-
-export type CouponResponse = {
-  id: string;
-  promotionId: string;
-  code: string;
-  description: string | null;
-  status: string;
-  startsAt: string | null;
-  endsAt: string | null;
-  usageLimit: number | null;
-  usageCount: number;
-  perUserLimit: number | null;
-  createdAt: string;
-  updatedAt: string;
-};
-
 export type CollectionResponse = {
   id: string;
   name: string;
@@ -120,4 +84,29 @@ export type ProductImageUploadResponse = {
   sortOrder: number;
   width: number | null;
   height: number | null;
+};
+
+export type ComboProductResponse = {
+  productId: string;
+  productName: string;
+  quantity: number;
+};
+
+export type ComboResponse = {
+  id: string;
+  name: string;
+  description: string | null;
+  discountAmount: number;
+  status: "ACTIVE" | "INACTIVE";
+  products: ComboProductResponse[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type ComboInput = {
+  name: string;
+  description?: string | null;
+  discountAmount: number;
+  status?: "ACTIVE" | "INACTIVE";
+  productIds: string[];
 };

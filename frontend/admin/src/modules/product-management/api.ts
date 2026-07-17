@@ -1,6 +1,7 @@
 ﻿import { apiRequest, shouldUseMockApi, type ApiQuery } from "@/modules/api/client";
 import { adminEndpoints } from "@/modules/api/endpoints";
 import { adminProducts, productStats, type AdminProduct } from "@/modules/product-management/products";
+import { NO_IMAGE } from "@/modules/ui/placeholder";
 
 export type AdminProductListQuery = ApiQuery & {
   q?: string;
@@ -113,7 +114,7 @@ async function loadAdminProductDataset(query: AdminProductListQuery = {}) {
       sold: soldByProduct.get(item.id) ?? 0,
       status: mapAdminStatus(item.status, stock),
       isFeatured: item.isFeatured,
-      image: item.thumbnail ?? "https://placehold.co/96x96/f5f5f5/202020?text=SP"
+      image: item.thumbnail ?? NO_IMAGE
     } satisfies AdminProduct;
   });
 }

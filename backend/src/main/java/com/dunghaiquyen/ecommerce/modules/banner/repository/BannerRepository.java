@@ -17,7 +17,7 @@ public interface BannerRepository extends JpaRepository<Banner, UUID>, JpaSpecif
 
     boolean existsByCodeAndIdNot(String code, UUID id);
 
-    /** Same "active = status + within own time window" shape PromotionRepository.findAllActive already established. */
+    /** Public active banner = ACTIVE status and currently within its own time window. */
     @Query("select b from Banner b where b.status = :status and b.placement = :placement "
             + "and (b.startsAt is null or b.startsAt <= :now) and (b.endsAt is null or b.endsAt >= :now) "
             + "order by b.createdAt desc")

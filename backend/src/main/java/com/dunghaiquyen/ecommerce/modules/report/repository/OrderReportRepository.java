@@ -4,6 +4,7 @@ import com.dunghaiquyen.ecommerce.modules.order.entity.Order;
 import com.dunghaiquyen.ecommerce.modules.order.entity.OrderStatus;
 import com.dunghaiquyen.ecommerce.modules.payment.entity.PaymentStatus;
 import com.dunghaiquyen.ecommerce.modules.report.dto.OrderStatusCount;
+import com.dunghaiquyen.ecommerce.modules.report.dto.RevenueBucketRow;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
@@ -44,4 +45,28 @@ public interface OrderReportRepository extends JpaRepository<Order, UUID> {
             + "where o.createdAt >= :from and o.createdAt <= :to "
             + "group by o.orderStatus")
     List<OrderStatusCount> countByStatusInRange(@Param("from") Instant from, @Param("to") Instant to);
+
+    /**
+     * Gross revenue time series: SUM(total_amount) over PAID orders grouped into
+     * day/month/year buckets. created_at (timestamptz) is shifted into the shop
+     * timezone ({@link com.dunghaiquyen.ecommerce.common.time.AppTimeZone}) before
+     * truncating, so a bucket boundary is local midnight, not UTC midnight. The
+     * {@code :granularity} bind is the date_trunc field ("day"/"month"/"year").
+     * Postgres allows GROUP BY / ORDER BY on the select alias. Only buckets that
+     * actually have PAID orders are returned; the service fills the gaps with zero.
+     */
+    @Query(value = """
+            select cast(date_trunc(cast(:granularity as text), o.created_at at time zone 'Asia/Ho_Chi_Minh') as date) as bucket,
+                   coalesce(sum(o.total_amount), 0) as revenue,
+                   count(*) as "orderCount"
+            from orders o
+            where o.payment_status = 'PAID'
+              and o.created_at >= :from and o.created_at <= :to
+            group by bucket
+            order by bucket
+            """, nativeQuery = true)
+    List<RevenueBucketRow> sumRevenueByBucket(
+            @Param("granularity") String granularity,
+            @Param("from") Instant from,
+            @Param("to") Instant to);
 }

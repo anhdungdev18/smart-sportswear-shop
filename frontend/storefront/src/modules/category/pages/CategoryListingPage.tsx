@@ -55,7 +55,7 @@ export async function CategoryListingPage({
   const mappedProducts = products.map(mapProductListItem);
 
   return (
-    <main className="site-main flex-1 border-b border-ivy-hairline pt-[78px]">
+    <main className="site-main page-below-header flex-1 border-b border-ivy-hairline">
       <Breadcrumb items={[{ label: "Trang chủ", href: "/" }, { label: categoryName }]} />
       <div className="mx-auto flex max-w-[1368px] flex-col gap-8 px-4 pb-16 md:px-0 lg:flex-row">
         <CategorySidebarFilter

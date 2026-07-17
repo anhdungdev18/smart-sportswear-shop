@@ -5,7 +5,7 @@ import com.dunghaiquyen.ecommerce.modules.banner.entity.BannerPlacement;
 import com.dunghaiquyen.ecommerce.modules.banner.entity.BannerStatus;
 import java.time.Instant;
 
-/** Partial update (null = leave unchanged), same convention as CouponUpdateRequest/PromotionUpdateRequest. */
+/** Partial update (null = leave unchanged). */
 public record BannerUpdateRequest(
         @NullOrNotBlank String name,
         @NullOrNotBlank String code,

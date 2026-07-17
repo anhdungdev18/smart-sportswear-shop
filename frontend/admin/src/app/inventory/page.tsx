@@ -4,11 +4,16 @@ import { listInventoryItems, listInventoryTransactions } from "@/modules/invento
 import { listSuggestions } from "@/modules/replenishment/api";
 
 export default async function InventoryPage() {
-  const [items, transactions, suggestionsPage] = await Promise.all([
-    listInventoryItems(), 
+  const [itemsResult, transactionsResult, suggestionsResult] = await Promise.allSettled([
+    listInventoryItems(),
     listInventoryTransactions(),
     listSuggestions()
   ]);
+
+  const items = itemsResult.status === "fulfilled" ? itemsResult.value : [];
+  const transactions = transactionsResult.status === "fulfilled" ? transactionsResult.value : [];
+  const suggestionsPage = suggestionsResult.status === "fulfilled" ? suggestionsResult.value : { data: [] };
+  const loadFailed = itemsResult.status === "rejected";
 
   return (
     <main className="workspace">
@@ -19,8 +24,18 @@ export default async function InventoryPage() {
         </div>
       </section>
 
-      <ReplenishmentSuggestionTable initialSuggestions={suggestionsPage.data} />
-      <AdminInventoryClient initialItems={items} initialTransactions={transactions} />
+      {loadFailed ? (
+        <section className="card panel">
+          <div className="empty-state">
+            Không tải được dữ liệu tồn kho. Phiên đăng nhập có thể đã hết hạn – hãy tải lại trang hoặc đăng nhập lại.
+          </div>
+        </section>
+      ) : (
+        <>
+          <ReplenishmentSuggestionTable initialSuggestions={suggestionsPage.data} />
+          <AdminInventoryClient initialItems={items} initialTransactions={transactions} />
+        </>
+      )}
     </main>
   );
 }

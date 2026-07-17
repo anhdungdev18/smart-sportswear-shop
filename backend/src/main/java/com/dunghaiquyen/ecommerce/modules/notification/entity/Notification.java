@@ -66,6 +66,15 @@ public class Notification extends AbstractCreatedAtEntity {
     private Instant sentAt;
 
     /**
+     * In-app read state (Notification Operations): null = unread, a timestamp =
+     * when the recipient viewed it in the storefront inbox. Orthogonal to
+     * {@link #status}, which records the EMAIL send outcome, not whether the
+     * user has seen it in-app.
+     */
+    @Column(name = "read_at")
+    private Instant readAt;
+
+    /**
      * Set only on a row CREATED by a resend (points back to the original it
      * resends); null on every organic/original row. Resend always creates a
      * new row rather than mutating the original - see NotificationService.

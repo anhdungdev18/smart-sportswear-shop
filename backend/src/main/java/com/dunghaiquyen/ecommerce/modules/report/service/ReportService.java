@@ -16,13 +16,24 @@ import com.dunghaiquyen.ecommerce.modules.report.dto.OrderStatusCount;
 import com.dunghaiquyen.ecommerce.modules.report.dto.OverviewReportResponse;
 import com.dunghaiquyen.ecommerce.modules.report.dto.ProductReportQuery;
 import com.dunghaiquyen.ecommerce.modules.report.dto.ProductReportResponse;
+import com.dunghaiquyen.ecommerce.modules.report.dto.RevenueBucketRow;
+import com.dunghaiquyen.ecommerce.modules.report.dto.RevenueGranularity;
+import com.dunghaiquyen.ecommerce.modules.report.dto.RevenuePointResponse;
+import com.dunghaiquyen.ecommerce.modules.report.dto.RevenueReportQuery;
+import com.dunghaiquyen.ecommerce.modules.report.dto.RevenueReportResponse;
 import com.dunghaiquyen.ecommerce.modules.report.repository.OrderItemReportRepository;
 import com.dunghaiquyen.ecommerce.modules.report.repository.OrderReportRepository;
 import com.dunghaiquyen.ecommerce.modules.report.repository.ProductVariantReportRepository;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -52,6 +63,11 @@ public class ReportService {
     private static final int DEFAULT_PRODUCT_LIMIT = 10;
     private static final int MAX_PRODUCT_LIMIT = 50;
     private static final int MAX_LOW_STOCK_ITEMS = 50;
+
+    /** Safety cap so a wide custom range at DAY granularity can't produce a runaway series. */
+    private static final int MAX_REVENUE_BUCKETS = 366;
+    private static final DateTimeFormatter DAY_LABEL = DateTimeFormatter.ofPattern("dd/MM");
+    private static final DateTimeFormatter MONTH_LABEL = DateTimeFormatter.ofPattern("MM/yyyy");
 
     /**
      * Sentinel bounds used when dateFrom/dateTo is omitted - resolving "no
@@ -90,6 +106,79 @@ public class ReportService {
         long pendingOrders = orderReportRepository.countByOrderStatus(OrderStatus.PENDING_CONFIRMATION);
         long lowStockCount = productVariantReportRepository.countLowStock(VariantStatus.INACTIVE, lowStockThreshold());
         return new OverviewReportResponse(grossRevenue, realizedRevenue, totalOrders, pendingOrders, lowStockCount);
+    }
+
+    /**
+     * Gross-revenue time series (PAID orders) bucketed by day/month/year. When
+     * dateFrom/dateTo are omitted a window is derived from the granularity (last
+     * 30 days / 12 months / 5 years). Buckets with no PAID orders are emitted as
+     * zero so the chart draws a continuous line rather than skipping gaps.
+     */
+    @Transactional(readOnly = true)
+    public RevenueReportResponse getRevenueReport(RevenueReportQuery query) {
+        RevenueGranularity granularity = RevenueGranularity.from(query.granularity());
+        LocalDate today = LocalDate.now(AppTimeZone.ZONE);
+        LocalDate to = query.dateTo() != null ? query.dateTo() : today;
+        LocalDate from = query.dateFrom() != null ? query.dateFrom() : defaultFrom(granularity, to);
+        if (from.isAfter(to)) {
+            LocalDate swap = from;
+            from = to;
+            to = swap;
+        }
+
+        LocalDate firstBucket = truncate(granularity, from);
+        LocalDate lastBucket = truncate(granularity, to);
+        Instant fromInstant = from.atStartOfDay(AppTimeZone.ZONE).toInstant();
+        Instant toInstant = to.atTime(LocalTime.MAX).atZone(AppTimeZone.ZONE).toInstant();
+
+        Map<LocalDate, RevenueBucketRow> byBucket = orderReportRepository
+                .sumRevenueByBucket(granularity.sqlField(), fromInstant, toInstant).stream()
+                .collect(Collectors.toMap(RevenueBucketRow::getBucket, Function.identity(), (a, b) -> a));
+
+        List<RevenuePointResponse> points = new ArrayList<>();
+        LocalDate cursor = firstBucket;
+        int guard = 0;
+        while (!cursor.isAfter(lastBucket) && guard < MAX_REVENUE_BUCKETS) {
+            RevenueBucketRow row = byBucket.get(cursor);
+            BigDecimal revenue = row != null ? row.getRevenue() : BigDecimal.ZERO;
+            long orders = row != null ? row.getOrderCount() : 0L;
+            points.add(new RevenuePointResponse(label(granularity, cursor), cursor, revenue, orders));
+            cursor = step(granularity, cursor);
+            guard++;
+        }
+        return new RevenueReportResponse(granularity.name(), from, to, points);
+    }
+
+    private LocalDate defaultFrom(RevenueGranularity granularity, LocalDate to) {
+        return switch (granularity) {
+            case DAY -> to.minusDays(29);
+            case MONTH -> to.minusMonths(11).withDayOfMonth(1);
+            case YEAR -> to.minusYears(4).withDayOfYear(1);
+        };
+    }
+
+    private LocalDate truncate(RevenueGranularity granularity, LocalDate date) {
+        return switch (granularity) {
+            case DAY -> date;
+            case MONTH -> date.withDayOfMonth(1);
+            case YEAR -> date.withDayOfYear(1);
+        };
+    }
+
+    private LocalDate step(RevenueGranularity granularity, LocalDate date) {
+        return switch (granularity) {
+            case DAY -> date.plusDays(1);
+            case MONTH -> date.plusMonths(1);
+            case YEAR -> date.plusYears(1);
+        };
+    }
+
+    private String label(RevenueGranularity granularity, LocalDate date) {
+        return switch (granularity) {
+            case DAY -> date.format(DAY_LABEL);
+            case MONTH -> date.format(MONTH_LABEL);
+            case YEAR -> String.valueOf(date.getYear());
+        };
     }
 
     @Transactional(readOnly = true)

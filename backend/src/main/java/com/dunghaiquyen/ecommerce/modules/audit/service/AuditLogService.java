@@ -25,7 +25,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
  * GET /api/v1/admin/audit-logs (read side) is wired up and works for
  * anything written through {@link #record}. The WRITE side is deliberately
  * NOT retrofitted across every pre-existing admin action this phase (order
- * status changes, product/coupon/promotion CRUD, etc.) - doing so would mean
+ * status changes, product/catalog CRUD, etc.) - doing so would mean
  * touching many already-shipped, already-tested services just to add a
  * logging call, which is exactly the "refactor lan man ngoài phạm vi" this
  * whole effort was told to avoid. The first real callers are the brand-new

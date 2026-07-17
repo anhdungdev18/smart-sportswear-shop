@@ -12,7 +12,6 @@ import {
   ImageSquare,
   MagnifyingGlass,
   Package,
-  Percent,
   Receipt,
   Robot,
   Scroll,
@@ -25,8 +24,8 @@ import {
   Truck,
   Users,
 } from "@phosphor-icons/react";
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { adminLogout } from "@/modules/auth/api";
 import { clearAuthSession, getBrowserRefreshToken } from "@/modules/auth/session";
@@ -63,8 +62,7 @@ const navGroups: NavGroup[] = [
       { label: "Thương hiệu", href: "/brands", icon: Flag },
       { label: "Bộ sưu tập", href: "/collections", icon: Books },
       { label: "Banner", href: "/banners", icon: ImageSquare },
-      { label: "Khuyến mãi", href: "/promotions", icon: Percent },
-      { label: "Coupon", href: "/coupons", icon: Ticket },
+      { label: "Combo", href: "/combos", icon: Ticket },
     ],
   },
   {
@@ -88,8 +86,7 @@ function getPageMeta(pathname: string) {
     { prefix: "/brands", title: "Thương hiệu", subtitle: "Tập trung quản trị thương hiệu, nhận diện và trạng thái hiển thị." },
     { prefix: "/collections", title: "Bộ sưu tập", subtitle: "Tạo các cụm trưng bày theo mùa, chiến dịch và dòng sản phẩm." },
     { prefix: "/banners", title: "Banner", subtitle: "Điều phối hero banner, vị trí hiển thị và nội dung chiến dịch." },
-    { prefix: "/promotions", title: "Khuyến mãi", subtitle: "Cấu hình ưu đãi, phạm vi áp dụng và thời gian hiệu lực." },
-    { prefix: "/coupons", title: "Coupon", subtitle: "Quản lý mã giảm giá và điều kiện sử dụng trong checkout." },
+    { prefix: "/combos", title: "Combo", subtitle: "Tạo bộ sản phẩm mua kèm và mức giảm cố định khi mua đủ bộ." },
     { prefix: "/customers", title: "Khách hàng", subtitle: "Theo dõi tình trạng tài khoản và phân loại người dùng." },
     { prefix: "/pages", title: "Nội dung", subtitle: "Biên tập các trang tĩnh và nội dung truyền thông của hệ thống." },
     { prefix: "/reports", title: "Báo cáo", subtitle: "Xem snapshot kinh doanh theo thời gian thực từ backend." },
@@ -199,4 +196,3 @@ export function AdminTopbar() {
     </header>
   );
 }
-

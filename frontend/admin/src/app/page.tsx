@@ -1,7 +1,9 @@
 import { Suspense } from "react";
 import { CurrencyCircleDollar, Package, Receipt, Users } from "@phosphor-icons/react/dist/ssr";
-import { RevenueChart, TopProductChart } from "@/components/ui/AdminCharts";
-import { getDashboardData, getOverviewReport } from "@/modules/analytics/api";
+import { RevenuePanel } from "@/components/dashboard/RevenuePanel";
+import { TopProductChart } from "@/components/ui/AdminCharts";
+import { getDashboardData, getOverviewReport, getRevenueReport } from "@/modules/analytics/api";
+import type { RevenueReport } from "@/modules/analytics/api";
 
 function formatVND(amount: number): string {
   if (amount >= 1_000_000_000) return `${(amount / 1_000_000_000).toFixed(1)} tỷ`;
@@ -84,19 +86,23 @@ async function DashboardKpis() {
   );
 }
 
+const EMPTY_REVENUE_REPORT: RevenueReport = {
+  granularity: "MONTH",
+  dateFrom: "",
+  dateTo: "",
+  points: []
+};
+
 async function DashboardCharts() {
-  const dashboard = await getDashboardData();
+  const [dashboard, revenueReport] = await Promise.all([
+    getDashboardData(),
+    getRevenueReport("MONTH").catch(() => EMPTY_REVENUE_REPORT)
+  ]);
 
   return (
     <>
       <section className="dashboard-grid">
-        <article className="card panel">
-          <div className="panel-header">
-            <h2>Doanh thu theo thời gian</h2>
-            <span className="status low">DEMO DATA</span>
-          </div>
-          <RevenueChart data={dashboard.revenue} />
-        </article>
+        <RevenuePanel initialReport={revenueReport} />
 
         <article className="card panel">
           <div className="panel-header">

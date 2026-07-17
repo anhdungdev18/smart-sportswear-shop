@@ -21,6 +21,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private static final String BEARER_PREFIX = "Bearer ";
 
+    /**
+     * The one endpoint that may authenticate via an access_token query param:
+     * the SSE notification stream. Browsers' EventSource cannot set an
+     * Authorization header, so the token rides the URL — scoped to this single
+     * long-lived GET so token-in-URL exposure never applies to any other route.
+     */
+    private static final String SSE_STREAM_PATH = "/api/v1/notifications/me/stream";
+
     private final JwtTokenProvider jwtTokenProvider;
     private final UserRepository userRepository;
 
@@ -56,6 +64,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String header = request.getHeader("Authorization");
         if (header != null && header.startsWith(BEARER_PREFIX)) {
             return Optional.of(header.substring(BEARER_PREFIX.length()));
+        }
+        // SSE fallback: EventSource can't send headers — accept the token from the
+        // query string, but only on the notification stream endpoint.
+        if (SSE_STREAM_PATH.equals(request.getRequestURI())) {
+            String param = request.getParameter("access_token");
+            if (param != null && !param.isBlank()) {
+                return Optional.of(param);
+            }
         }
         return Optional.empty();
     }

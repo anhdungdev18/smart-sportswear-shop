@@ -1,23 +1,56 @@
 :root {
-  --admin-bg: #f5f5f7;
+  --admin-bg: #f5f6fb;
   --admin-surface: #ffffff;
-  --admin-sidebar: #0e1c22;
-  --admin-sidebar-soft: #15272f;
-  --admin-text: #0e1c22;
-  --admin-muted: #666666;
-  --admin-line: #e1e3e8;
-  --admin-accent: #d9121f;
-  --admin-accent-dark: #b90f19;
+  /* Light sidebar (was dark) */
+  --admin-sidebar: #ffffff;
+  --admin-sidebar-soft: #f3f5fd;
+  --admin-sidebar-text: #334155;
+  --admin-sidebar-muted: #94a3b8;
+  --admin-text: #0f1e3d;
+  --admin-muted: #64748b;
+  --admin-line: #e6e9f2;
+  /* Blue accent (was red) */
+  --admin-accent: #2563eb;
+  --admin-accent-dark: #1d4ed8;
+  --admin-accent-soft: #eef3ff;
   --admin-sale: #f76b1c;
   --admin-success: #16a34a;
   --admin-warning: #f59e0b;
-  --admin-danger: #dc2626;
-  --admin-info: #288ad6;
-  --admin-radius-sm: 3px;
-  --admin-radius-md: 6px;
-  --admin-radius-lg: 8px;
-  --admin-shadow: 0 12px 28px rgba(14, 28, 34, 0.08);
+  --admin-danger: #ef4444;
+  --admin-info: #3b82f6;
+  /* Softer, larger rounding */
+  --admin-radius-sm: 8px;
+  --admin-radius-md: 12px;
+  --admin-radius-lg: 16px;
+  --admin-shadow: 0 18px 40px rgba(37, 99, 235, 0.08);
   --admin-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --admin-duration-fast: 160ms;
   --admin-duration-base: 260ms;
+  /* Spacing scale — a 4px (0.25rem) base unit multiplied via calc(), so every
+     gap/padding is derived from one formula instead of hard-coded pixels. */
+  --space-unit: 0.25rem;
+  --space-1: var(--space-unit);
+  --space-2: calc(var(--space-unit) * 2);
+  --space-3: calc(var(--space-unit) * 3);
+  --space-4: calc(var(--space-unit) * 4);
+  --space-5: calc(var(--space-unit) * 5);
+  --space-6: calc(var(--space-unit) * 6);
+  --space-8: calc(var(--space-unit) * 8);
+  /* Interactive control sizing derived from the same unit */
+  --field-h: calc(var(--space-unit) * 11);       /* 2.75rem */
+  --field-pad-y: calc(var(--space-unit) * 2.5);  /* 0.625rem */
+  --field-pad-x: calc(var(--space-unit) * 3.5);  /* 0.875rem */
+  /* Pastel stat-card gradients (blue / purple / green / amber) */
+  --kpi-1-from: #e8f0ff;
+  --kpi-1-to: #f3f7ff;
+  --kpi-1-accent: #3b82f6;
+  --kpi-2-from: #efeaff;
+  --kpi-2-to: #f6f3ff;
+  --kpi-2-accent: #7c5cfc;
+  --kpi-3-from: #e6f8f0;
+  --kpi-3-to: #f2fbf7;
+  --kpi-3-accent: #16a34a;
+  --kpi-4-from: #fff2e6;
+  --kpi-4-to: #fff8f1;
+  --kpi-4-accent: #f97316;
 }

@@ -3,10 +3,10 @@ package com.dunghaiquyen.ecommerce.modules.checkout.dto;
 import java.util.UUID;
 
 /**
- * Both fields optional. addressId is only checked for ownership if provided
- * (Phase 1 has no address-dependent shipping rule, so a preview without one
- * still produces a fully usable subtotal/shipping/total) - couponCode is
- * validated by the exact same CouponService used at real checkout.
+ * addressId is optional and only checked for ownership when provided (there is
+ * no address-dependent shipping rule yet, so a preview without one still yields
+ * a usable subtotal/shipping/total). The combo discount is derived from the cart
+ * itself, so no discount input is needed here.
  */
-public record CheckoutPreviewRequest(UUID addressId, String couponCode) {
+public record CheckoutPreviewRequest(UUID addressId) {
 }

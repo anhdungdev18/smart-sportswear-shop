@@ -7,8 +7,8 @@ import { SearchIcon } from "@/components/shared/icons";
 export function Header() {
   return (
     <header className="fixed inset-x-0 top-0 z-40 bg-white">
-      <div className="border-b border-ivy-hairline px-8 md:px-12 lg:px-14">
-        <div className="grid h-20 grid-cols-[1fr_auto_1fr] items-center gap-4">
+      <div className="h-[var(--site-header-main-height)] border-b border-ivy-hairline px-8 md:px-12 lg:px-14">
+        <div className="grid h-full grid-cols-[1fr_auto_1fr] items-center gap-4">
           <Link href="/" className="flex items-center">
             <Image
               src="/images/logo-v2.png"
@@ -39,8 +39,8 @@ export function Header() {
           </div>
         </div>
       </div>
-      <div className="border-b border-ivy-hairline px-8 md:px-12 lg:px-14">
-        <div className="flex h-11 items-center">
+      <div className="h-[var(--site-header-nav-height)] border-b border-ivy-hairline px-8 md:px-12 lg:px-14">
+        <div className="flex h-full items-center">
           <SiteHeaderNav />
         </div>
       </div>

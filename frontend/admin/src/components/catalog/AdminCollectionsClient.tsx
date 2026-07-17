@@ -5,18 +5,22 @@ import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { extractAdminError } from "@/modules/api/admin-errors";
 import {
   addProductToCollection,
+  createAdminProduct,
   createCollection,
   deleteCollection,
+  listBrandsForPicker,
+  listCategoriesForPicker,
   listCollectionProducts,
   listProductsForPicker,
   removeProductFromCollection,
   updateCollection
 } from "@/modules/catalog-admin/browser-api";
 import type { ProductPickItem } from "@/modules/catalog-admin/browser-api";
-import type { CollectionResponse } from "@/modules/catalog-admin/types";
+import type { BrandResponse, CategoryResponse, CollectionResponse, ProductDetailResponse } from "@/modules/catalog-admin/types";
+import { NO_IMAGE } from "@/modules/ui/placeholder";
 import { toSlug } from "@/modules/utils/slug";
 
-const PLACEHOLDER_IMG = "https://placehold.co/96x96/f5f5f5/202020?text=SP";
+const PLACEHOLDER_IMG = NO_IMAGE;
 
 function getProductBrandName(product: ProductPickItem) {
   return product.brandName ?? product.brand?.name ?? null;
@@ -34,8 +38,37 @@ function productStatusClass(status: string) {
   }
 }
 
-const STATUS_OPTIONS = ["DRAFT", "ACTIVE", "ARCHIVED"] as const;
-const COLLECTION_TYPES = ["CAMPAIGN", "SEASONAL", "LOOKBOOK", "SPORT", "EDITORIAL"] as const;
+// Must match the backend CollectionStatus / CollectionType enums exactly, otherwise
+// Jackson rejects the create/update body with "Malformed request body".
+const STATUS_OPTIONS = ["DRAFT", "ACTIVE", "INACTIVE", "ARCHIVED"] as const;
+const COLLECTION_TYPES = ["SEASONAL", "SPORT", "CAMPAIGN", "CAPSULE", "NEW_ARRIVAL"] as const;
+const PRODUCT_STATUS_OPTIONS = ["DRAFT", "ACTIVE", "INACTIVE"] as const;
+const PRODUCT_GENDER_OPTIONS = ["MEN", "WOMEN", "UNISEX", "KIDS"] as const;
+
+function createEmptyProductForm() {
+  return {
+    name: "",
+    slug: "",
+    categoryId: "",
+    brandId: "",
+    gender: "",
+    sportType: "",
+    status: "DRAFT",
+    shortDescription: ""
+  };
+}
+
+function productDetailToPickItem(detail: ProductDetailResponse): ProductPickItem {
+  return {
+    id: detail.id,
+    name: detail.name,
+    slug: detail.slug,
+    status: detail.status,
+    thumbnail: detail.images[0]?.imageUrl ?? null,
+    brand: detail.brand ? { id: detail.brand.id, name: detail.brand.name } : null,
+    category: detail.category ? { id: detail.category.id, name: detail.category.name } : null
+  };
+}
 
 function createEmptyForm() {
   return {
@@ -43,7 +76,7 @@ function createEmptyForm() {
     slug: "",
     description: "",
     shortDescription: "",
-    collectionType: "LOOKBOOK",
+    collectionType: "SEASONAL",
     season: "",
     year: "",
     bannerImageUrl: "",
@@ -69,6 +102,8 @@ function toStatusLabel(status: string) {
   switch (status) {
     case "ACTIVE":
       return "Hoạt động";
+    case "INACTIVE":
+      return "Tạm ẩn";
     case "ARCHIVED":
       return "Lưu trữ";
     default:
@@ -80,6 +115,8 @@ function toStatusTone(status: string) {
   switch (status) {
     case "ACTIVE":
       return "success";
+    case "INACTIVE":
+      return "muted";
     case "ARCHIVED":
       return "muted";
     default:
@@ -100,6 +137,18 @@ export function AdminCollectionsClient({ initialItems }: { initialItems: Collect
   const [slugDirty, setSlugDirty] = useState(false);
   const [allProducts, setAllProducts] = useState<ProductPickItem[]>([]);
   const [assigned, setAssigned] = useState<ProductPickItem[]>([]);
+  // Products chosen while CREATING a new collection (no id yet): staged locally
+  // and attached right after the collection is created.
+  const [pending, setPending] = useState<ProductPickItem[]>([]);
+  // "Gắn sản phẩm" panel has two tabs: pick an existing product, or create a
+  // brand-new product that gets attached to this collection right away.
+  const [productTab, setProductTab] = useState<"existing" | "new">("existing");
+  const [categories, setCategories] = useState<CategoryResponse[]>([]);
+  const [brands, setBrands] = useState<BrandResponse[]>([]);
+  const [catalogLoaded, setCatalogLoaded] = useState(false);
+  const [newProduct, setNewProduct] = useState(createEmptyProductForm());
+  const [newProductSlugDirty, setNewProductSlugDirty] = useState(false);
+  const [creatingProduct, setCreatingProduct] = useState(false);
   const [productSearch, setProductSearch] = useState("");
   const [collectionSearch, setCollectionSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | string>("all");
@@ -110,6 +159,9 @@ export function AdminCollectionsClient({ initialItems }: { initialItems: Collect
   const assignedCacheRef = useRef<Record<string, ProductPickItem[]>>({});
 
   const selectedCollection = items.find((item) => item.id === selectedId) ?? null;
+  // In edit mode the chosen products come from the server (assigned); in create
+  // mode they are the locally staged ones (pending).
+  const chosenProducts = selectedId ? assigned : pending;
 
   useEffect(() => {
     if (initialItems.length === 0) {
@@ -190,8 +242,8 @@ export function AdminCollectionsClient({ initialItems }: { initialItems: Collect
 
   const filteredProducts = useMemo(() => {
     const query = deferredProductSearch.trim().toLowerCase();
-    const assignedIds = new Set(assigned.map((item) => item.id));
-    const candidates = allProducts.filter((item) => !assignedIds.has(item.id));
+    const chosenIds = new Set(chosenProducts.map((item) => item.id));
+    const candidates = allProducts.filter((item) => !chosenIds.has(item.id));
     if (!query) {
       return candidates.slice(0, 30);
     }
@@ -199,7 +251,7 @@ export function AdminCollectionsClient({ initialItems }: { initialItems: Collect
     return candidates
       .filter((item) => [item.name, item.slug, item.status].join(" ").toLowerCase().includes(query))
       .slice(0, 30);
-  }, [allProducts, assigned, deferredProductSearch]);
+  }, [allProducts, chosenProducts, deferredProductSearch]);
 
   async function ensureProductPickerLoaded() {
     if (allProducts.length > 0 || loadingProducts) {
@@ -222,6 +274,7 @@ export function AdminCollectionsClient({ initialItems }: { initialItems: Collect
     setSlugDirty(true);
     setMessage(null);
     setAssignMessage(null);
+    setPending([]);
     setForm({
       name: item.name,
       slug: item.slug,
@@ -246,6 +299,10 @@ export function AdminCollectionsClient({ initialItems }: { initialItems: Collect
     setAssignMessage(null);
     setProductSearch("");
     setAssigned([]);
+    setPending([]);
+    setProductTab("existing");
+    setNewProduct(createEmptyProductForm());
+    setNewProductSlugDirty(false);
     setForm(createEmptyForm());
     setMessage("Bạn đang tạo bộ sưu tập mới.");
   }
@@ -290,6 +347,20 @@ export function AdminCollectionsClient({ initialItems }: { initialItems: Collect
       }
 
       const created = await createCollection(payload);
+
+      // Attach any products staged during creation to the freshly created collection.
+      const staged = pending;
+      const attached: ProductPickItem[] = [];
+      let failedCount = 0;
+      for (const product of staged) {
+        try {
+          await addProductToCollection(product.id, created.id);
+          attached.push(product);
+        } catch {
+          failedCount += 1;
+        }
+      }
+
       setItems((current) => [created, ...current]);
       setSelectedId(created.id);
       setSlugDirty(true);
@@ -309,9 +380,14 @@ export function AdminCollectionsClient({ initialItems }: { initialItems: Collect
         sortOrder: String(created.sortOrder ?? 0),
         isFeatured: Boolean(created.isFeatured)
       });
-      assignedCacheRef.current[created.id] = [];
-      setAssigned([]);
-      setMessage(`Đã tạo bộ sưu tập ${created.name}.`);
+      assignedCacheRef.current[created.id] = attached;
+      setAssigned(attached);
+      setPending([]);
+      setMessage(
+        attached.length > 0
+          ? `Đã tạo bộ sưu tập ${created.name} và thêm ${attached.length} sản phẩm${failedCount > 0 ? ` (${failedCount} sản phẩm lỗi)` : ""}.`
+          : `Đã tạo bộ sưu tập ${created.name}.`
+      );
     } catch (error) {
       setMessage(extractAdminError(error, "Không thể lưu bộ sưu tập"));
     } finally {
@@ -337,7 +413,14 @@ export function AdminCollectionsClient({ initialItems }: { initialItems: Collect
   }
 
   async function handleAddProduct(product: ProductPickItem) {
-    if (!selectedId) return;
+    // Create mode: no collection id yet, so stage the product locally and attach
+    // it right after the collection is created.
+    if (!selectedId) {
+      if (pending.some((item) => item.id === product.id)) return;
+      setPending((current) => [product, ...current]);
+      setAssignMessage(`Đã chọn ${product.name}. Sản phẩm sẽ được thêm khi tạo bộ sưu tập.`);
+      return;
+    }
 
     try {
       setAssignMessage(null);
@@ -351,8 +434,72 @@ export function AdminCollectionsClient({ initialItems }: { initialItems: Collect
     }
   }
 
+  async function ensureCatalogRefsLoaded() {
+    if (catalogLoaded) return;
+    setCatalogLoaded(true);
+    try {
+      const [categoryList, brandList] = await Promise.all([listCategoriesForPicker(), listBrandsForPicker()]);
+      setCategories(categoryList);
+      setBrands(brandList);
+      setNewProduct((current) => ({
+        ...current,
+        categoryId: current.categoryId || categoryList[0]?.id || "",
+        brandId: current.brandId || brandList[0]?.id || ""
+      }));
+    } catch (error) {
+      setCatalogLoaded(false);
+      setAssignMessage(extractAdminError(error, "Không tải được danh mục / thương hiệu"));
+    }
+  }
+
+  async function handleCreateProduct() {
+    if (!newProduct.name.trim() || !newProduct.slug.trim()) {
+      setAssignMessage("Nhập tên và slug cho sản phẩm mới.");
+      return;
+    }
+    if (!newProduct.categoryId || !newProduct.brandId) {
+      setAssignMessage("Chọn danh mục và thương hiệu cho sản phẩm mới.");
+      return;
+    }
+
+    try {
+      setCreatingProduct(true);
+      setAssignMessage(null);
+      const created = await createAdminProduct({
+        name: newProduct.name.trim(),
+        slug: newProduct.slug.trim(),
+        shortDescription: newProduct.shortDescription.trim() || null,
+        description: null,
+        categoryId: newProduct.categoryId,
+        brandId: newProduct.brandId,
+        gender: newProduct.gender || null,
+        sportType: newProduct.sportType.trim() || null,
+        status: newProduct.status,
+        isFeatured: false
+      });
+      const pickItem = productDetailToPickItem(created);
+      setAllProducts((current) => [pickItem, ...current.filter((item) => item.id !== pickItem.id)]);
+      await handleAddProduct(pickItem);
+      setNewProduct(createEmptyProductForm());
+      setNewProductSlugDirty(false);
+      setAssignMessage(
+        selectedId
+          ? `Đã tạo sản phẩm ${created.name} và thêm vào bộ sưu tập.`
+          : `Đã tạo sản phẩm ${created.name}. Sản phẩm sẽ được thêm khi tạo bộ sưu tập.`
+      );
+      setProductTab("existing");
+    } catch (error) {
+      setAssignMessage(extractAdminError(error, "Không tạo được sản phẩm mới"));
+    } finally {
+      setCreatingProduct(false);
+    }
+  }
+
   async function handleRemoveProduct(productId: string) {
-    if (!selectedId) return;
+    if (!selectedId) {
+      setPending((current) => current.filter((item) => item.id !== productId));
+      return;
+    }
 
     try {
       setAssignMessage(null);
@@ -367,7 +514,7 @@ export function AdminCollectionsClient({ initialItems }: { initialItems: Collect
   }
 
   return (
-    <div className={`admin-grid ${selectedId ? "admin-grid-3" : "admin-grid-2"}`}>
+    <div className="admin-grid admin-grid-3">
       <section className="card panel">
         <div className="panel-header">
           <div>
@@ -547,19 +694,45 @@ export function AdminCollectionsClient({ initialItems }: { initialItems: Collect
         </div>
       </section>
 
-      {selectedId ? (
-        <section className="card panel">
+      <section className="card panel">
           <div className="panel-header">
             <div>
               <h2>Gắn sản phẩm</h2>
               <p className="panel-copy">
-                {selectedCollection ? `Sản phẩm đang thuộc bộ sưu tập ${selectedCollection.name}.` : "Quản lý sản phẩm trong bộ sưu tập."}
+                {selectedId
+                  ? selectedCollection
+                    ? `Sản phẩm đang thuộc bộ sưu tập ${selectedCollection.name}.`
+                    : "Quản lý sản phẩm trong bộ sưu tập."
+                  : "Chọn sản phẩm cho bộ sưu tập mới — sẽ được thêm ngay khi bạn bấm Tạo bộ sưu tập."}
               </p>
             </div>
           </div>
 
+          <div className="editor-tabs" role="tablist" style={{ marginBottom: 16 }}>
+            <button
+              type="button"
+              className={`editor-tab${productTab === "existing" ? " active" : ""}`}
+              onClick={() => setProductTab("existing")}
+            >
+              Sản phẩm có sẵn
+              {chosenProducts.length ? <span className="tab-count">{chosenProducts.length}</span> : null}
+            </button>
+            <button
+              type="button"
+              className={`editor-tab${productTab === "new" ? " active" : ""}`}
+              onClick={() => {
+                setProductTab("new");
+                void ensureCatalogRefsLoaded();
+              }}
+            >
+              Tạo sản phẩm mới
+            </button>
+          </div>
+
           {assignMessage ? <p className="action-message">{assignMessage}</p> : null}
 
+          {productTab === "existing" ? (
+          <>
           <div className="admin-form-grid" style={{ marginBottom: 16 }}>
             <input
               className="admin-input"
@@ -575,15 +748,19 @@ export function AdminCollectionsClient({ initialItems }: { initialItems: Collect
 
           <div style={{ marginBottom: 8 }}>
             <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>
-              Sản phẩm đang thuộc bộ sưu tập ({assigned.length})
+              {selectedId
+                ? `Sản phẩm đang thuộc bộ sưu tập (${chosenProducts.length})`
+                : `Sản phẩm đã chọn (${chosenProducts.length})`}
             </h3>
-            {loadingProducts && assigned.length === 0 ? (
+            {loadingProducts && chosenProducts.length === 0 ? (
               <div className="empty-state">Đang tải dữ liệu sản phẩm...</div>
-            ) : assigned.length === 0 ? (
-              <div className="empty-state">Bộ sưu tập này chưa có sản phẩm nào.</div>
+            ) : chosenProducts.length === 0 ? (
+              <div className="empty-state">
+                {selectedId ? "Bộ sưu tập này chưa có sản phẩm nào." : "Chưa chọn sản phẩm nào. Tìm và thêm ở danh sách bên dưới."}
+              </div>
             ) : (
               <div className="admin-gallery">
-                {assigned.map((product) => {
+                {chosenProducts.map((product) => {
                   const brandName = getProductBrandName(product);
                   const categoryName = getProductCategoryName(product);
                   const subtitle = [brandName, categoryName].filter(Boolean).join(" · ");
@@ -610,7 +787,7 @@ export function AdminCollectionsClient({ initialItems }: { initialItems: Collect
                         type="button"
                         onClick={() => void handleRemoveProduct(product.id)}
                       >
-                        Gỡ khỏi bộ sưu tập
+                        {selectedId ? "Gỡ khỏi bộ sưu tập" : "Bỏ chọn"}
                       </button>
                     </article>
                   );
@@ -666,8 +843,117 @@ export function AdminCollectionsClient({ initialItems }: { initialItems: Collect
               </div>
             )}
           </div>
+          </>
+          ) : (
+            <div className="admin-form-grid">
+              {categories.length === 0 || brands.length === 0 ? (
+                <div className="admin-form-full">
+                  <div className="empty-state">
+                    {!catalogLoaded
+                      ? "Đang tải danh mục và thương hiệu..."
+                      : "Cần có ít nhất 1 danh mục và 1 thương hiệu để tạo sản phẩm. Hãy tạo ở trang tương ứng trước."}
+                  </div>
+                </div>
+              ) : null}
+              <input
+                className="admin-input"
+                placeholder="Tên sản phẩm"
+                value={newProduct.name}
+                onChange={(event) => {
+                  const name = event.target.value;
+                  setNewProduct((current) => ({ ...current, name, ...(!newProductSlugDirty && { slug: toSlug(name) }) }));
+                }}
+              />
+              <input
+                className="admin-input"
+                placeholder="Slug"
+                value={newProduct.slug}
+                onChange={(event) => {
+                  setNewProductSlugDirty(true);
+                  setNewProduct((current) => ({ ...current, slug: event.target.value }));
+                }}
+              />
+              <select
+                className="select"
+                value={newProduct.categoryId}
+                onChange={(event) => setNewProduct((current) => ({ ...current, categoryId: event.target.value }))}
+              >
+                <option value="">-- Danh mục --</option>
+                {categories.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name}
+                  </option>
+                ))}
+              </select>
+              <select
+                className="select"
+                value={newProduct.brandId}
+                onChange={(event) => setNewProduct((current) => ({ ...current, brandId: event.target.value }))}
+              >
+                <option value="">-- Thương hiệu --</option>
+                {brands.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name}
+                  </option>
+                ))}
+              </select>
+              <select
+                className="select"
+                value={newProduct.gender}
+                onChange={(event) => setNewProduct((current) => ({ ...current, gender: event.target.value }))}
+              >
+                <option value="">Không chọn giới tính</option>
+                {PRODUCT_GENDER_OPTIONS.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
+              <select
+                className="select"
+                value={newProduct.status}
+                onChange={(event) => setNewProduct((current) => ({ ...current, status: event.target.value }))}
+              >
+                {PRODUCT_STATUS_OPTIONS.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
+              <div className="admin-form-full">
+                <input
+                  className="admin-input"
+                  placeholder="Môn thể thao (tùy chọn)"
+                  value={newProduct.sportType}
+                  onChange={(event) => setNewProduct((current) => ({ ...current, sportType: event.target.value }))}
+                />
+              </div>
+              <div className="admin-form-full">
+                <input
+                  className="admin-input"
+                  placeholder="Mô tả ngắn (tùy chọn)"
+                  value={newProduct.shortDescription}
+                  onChange={(event) => setNewProduct((current) => ({ ...current, shortDescription: event.target.value }))}
+                />
+              </div>
+              <div className="admin-form-full">
+                <p className="table-subtle" style={{ marginBottom: 12 }}>
+                  Sản phẩm mới sẽ được tạo (dạng nháp) và thêm ngay vào bộ sưu tập. Biến thể, ảnh có thể bổ sung sau ở trang Sản phẩm.
+                </p>
+                <div className="page-actions">
+                  <button
+                    className="admin-btn"
+                    type="button"
+                    onClick={() => void handleCreateProduct()}
+                    disabled={creatingProduct || categories.length === 0 || brands.length === 0}
+                  >
+                    {creatingProduct ? "Đang tạo..." : selectedId ? "Tạo & thêm vào bộ sưu tập" : "Tạo & chọn sản phẩm"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </section>
-      ) : null}
     </div>
   );
 }

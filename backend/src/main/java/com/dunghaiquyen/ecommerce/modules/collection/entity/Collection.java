@@ -15,8 +15,7 @@ import lombok.Setter;
  * and brands - see SPORTSWEAR_CATALOG_MODEL_V2.md section 3.3.
  *
  * <p>The time-window fields (startsAt/endsAt) let admin pre-schedule a
- * collection so it goes live automatically at a given moment, consistent
- * with how banners/promotions already work in this codebase. The public
+ * collection so it goes live automatically at a given moment. The public
  * listing uses both status == ACTIVE AND the time window before exposing a
  * collection, so even an ACTIVE status collection is hidden before its
  * startsAt or after its endsAt.

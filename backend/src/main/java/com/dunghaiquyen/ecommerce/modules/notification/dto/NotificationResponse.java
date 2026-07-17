@@ -19,6 +19,7 @@ public record NotificationResponse(
         String errorMessage,
         Instant createdAt,
         Instant sentAt,
+        Instant readAt,
         UUID resendOfId,
         int resendCount,
         Instant lastResendAt) {

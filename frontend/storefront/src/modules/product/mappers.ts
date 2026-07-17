@@ -1,12 +1,13 @@
 import type { Product, ProductDetail, ProductListItem } from "@/modules/product/types";
+import { NO_IMAGE } from "@/modules/ui/placeholder";
 
 export function mapProductListItem(p: ProductListItem): Product {
   return {
     id: p.id,
     name: p.name,
     href: `/sanpham/${p.slug}`,
-    image: p.thumbnail ?? "https://placehold.co/400x500/f5f5f5/a0a0a0?text=No+Image",
-    hoverImage: p.thumbnail ?? "https://placehold.co/400x500/f5f5f5/a0a0a0?text=No+Image",
+    image: p.thumbnail ?? NO_IMAGE,
+    hoverImage: p.thumbnail ?? NO_IMAGE,
     price: p.minPrice,
     oldPrice: p.maxPrice > p.minPrice ? p.maxPrice : undefined,
     colors: [],
@@ -39,7 +40,7 @@ export function mapProductDetail(p: ProductDetail): {
     ).values(),
   ).map((v, idx) => ({
     id: v.id,
-    image: sortedImages[idx]?.imageUrl ?? "https://placehold.co/400x500/f5f5f5/a0a0a0?text=No+Image",
+    image: sortedImages[idx]?.imageUrl ?? NO_IMAGE,
     label: v.color ?? "",
     active: idx === 0,
   }));

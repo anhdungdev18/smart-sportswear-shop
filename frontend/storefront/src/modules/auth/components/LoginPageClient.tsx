@@ -94,7 +94,7 @@ export function LoginPageClient() {
   };
 
   return (
-    <main className="flex-1 border-b border-ivy-hairline pt-[78px]">
+    <main className="page-below-header flex-1 border-b border-ivy-hairline">
       <div className="mx-auto max-w-[1180px] px-4 py-14 md:px-0">
         <div className="mb-10 text-center">
           <p className="mb-3 text-[13px] uppercase tracking-[0.24em] text-ivy-text-muted">Tài khoản IVY</p>

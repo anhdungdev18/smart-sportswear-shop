@@ -13,9 +13,6 @@ import com.dunghaiquyen.ecommerce.modules.cart.repository.CartRepository;
 import com.dunghaiquyen.ecommerce.modules.category.entity.Category;
 import com.dunghaiquyen.ecommerce.modules.category.entity.CategoryStatus;
 import com.dunghaiquyen.ecommerce.modules.category.repository.CategoryRepository;
-import com.dunghaiquyen.ecommerce.modules.coupon.dto.CouponCreateRequest;
-import com.dunghaiquyen.ecommerce.modules.coupon.repository.CouponRepository;
-import com.dunghaiquyen.ecommerce.modules.coupon.service.CouponService;
 import com.dunghaiquyen.ecommerce.modules.order.dto.CreateOrderRequest;
 import com.dunghaiquyen.ecommerce.modules.order.dto.UpdateOrderStatusRequest;
 import com.dunghaiquyen.ecommerce.modules.order.entity.OrderStatus;
@@ -35,12 +32,6 @@ import com.dunghaiquyen.ecommerce.modules.product.entity.VariantStatus;
 import com.dunghaiquyen.ecommerce.modules.product.repository.ProductImageRepository;
 import com.dunghaiquyen.ecommerce.modules.product.repository.ProductRepository;
 import com.dunghaiquyen.ecommerce.modules.product.repository.ProductVariantRepository;
-import com.dunghaiquyen.ecommerce.modules.promotion.dto.PromotionCreateRequest;
-import com.dunghaiquyen.ecommerce.modules.promotion.entity.PromotionScope;
-import com.dunghaiquyen.ecommerce.modules.promotion.entity.PromotionStatus;
-import com.dunghaiquyen.ecommerce.modules.promotion.entity.PromotionType;
-import com.dunghaiquyen.ecommerce.modules.promotion.repository.PromotionRepository;
-import com.dunghaiquyen.ecommerce.modules.promotion.service.PromotionService;
 import com.dunghaiquyen.ecommerce.modules.review.dto.CreateReviewRequest;
 import com.dunghaiquyen.ecommerce.modules.review.dto.UpdateReviewStatusRequest;
 import com.dunghaiquyen.ecommerce.modules.review.entity.ReviewStatus;
@@ -115,10 +106,6 @@ public class SeedDataService {
     private final VnpaySignatureService vnpaySignatureService;
     private final PasswordEncoder passwordEncoder;
     private final AppSeedProperties seedProperties;
-    private final PromotionRepository promotionRepository;
-    private final PromotionService promotionService;
-    private final CouponRepository couponRepository;
-    private final CouponService couponService;
     private final ProductReviewRepository productReviewRepository;
     private final ReviewService reviewService;
 
@@ -138,10 +125,6 @@ public class SeedDataService {
             VnpaySignatureService vnpaySignatureService,
             PasswordEncoder passwordEncoder,
             AppSeedProperties seedProperties,
-            PromotionRepository promotionRepository,
-            PromotionService promotionService,
-            CouponRepository couponRepository,
-            CouponService couponService,
             ProductReviewRepository productReviewRepository,
             ReviewService reviewService) {
         this.userRepository = userRepository;
@@ -155,10 +138,6 @@ public class SeedDataService {
         this.cartItemRepository = cartItemRepository;
         this.orderRepository = orderRepository;
         this.orderService = orderService;
-        this.promotionRepository = promotionRepository;
-        this.promotionService = promotionService;
-        this.couponRepository = couponRepository;
-        this.couponService = couponService;
         this.productReviewRepository = productReviewRepository;
         this.reviewService = reviewService;
         this.paymentService = paymentService;
@@ -310,15 +289,8 @@ public class SeedDataService {
         ensureVariant(
                 windbreaker, "SEED-WIND-BLK-L", "L", "Black", 690000, 790000, 11, VariantStatus.ACTIVE);
 
-        ensureImage(runningTee, "seed-running-tee-main", "https://picsum.photos/seed/run-tee/1200/1200", true, 0);
-        ensureImage(
-                footballBoots, "seed-football-boots-main", "https://picsum.photos/seed/boots/1200/1200", true, 0);
-        ensureImage(
-                trainingSocks, "seed-training-socks-main", "https://picsum.photos/seed/socks/1200/1200", true, 0);
-        ensureImage(
-                compressionTank, "seed-compression-tank-main", "https://picsum.photos/seed/tank/1200/1200", true, 0);
-        ensureImage(
-                windbreaker, "seed-windbreaker-main", "https://picsum.photos/seed/wind/1200/1200", true, 0);
+        // Seed products intentionally have no mock/stock image (was picsum.photos).
+        // They render the neutral "no image" placeholder until a real image is added.
 
         ensureSeedOrder(
                 "[SEED] pending-vnpay-paid",
@@ -357,12 +329,9 @@ public class SeedDataService {
                 false,
                 true);
 
-        // Phase N5: a small, illustrative amount of promotion/coupon/review data
-        // (per the explicit "khong nhoi seed qua lon" instruction) so a fresh
-        // local/demo environment already has something to look at on the PDP
-        // and in the admin promotion/coupon screens, without a separate manual
-        // setup step.
-        ensurePromotionAndCoupon();
+        // Phase N5: a small, illustrative amount of review data (per the explicit
+        // "khong nhoi seed qua lon" instruction) so a fresh local/demo environment
+        // already has something to look at on the PDP.
         ensureApprovedReview(customerThree, trainingSocks);
 
         return new SeedSummary(
@@ -370,36 +339,6 @@ public class SeedDataService {
                 countSeedProducts(),
                 countSeedVariants(),
                 countSeedOrders());
-    }
-
-    private static final String SEED_PROMOTION_SLUG = "seed-welcome-10";
-    private static final String SEED_COUPON_CODE = "WELCOME10";
-
-    /** Idempotent: skips creation entirely if the promotion (and thus its coupon) already exists from a previous seed run. */
-    private void ensurePromotionAndCoupon() {
-        if (promotionRepository.findAll().stream()
-                .anyMatch(p -> SEED_PROMOTION_SLUG.equals(p.getSlug()))) {
-            return;
-        }
-        var promotion = promotionService.create(new PromotionCreateRequest(
-                "Seed Welcome 10%",
-                SEED_PROMOTION_SLUG,
-                "Demo seed promotion - 10% off the whole order, no minimum.",
-                PromotionType.PERCENTAGE,
-                PromotionScope.ORDER,
-                PromotionStatus.ACTIVE,
-                BigDecimal.TEN,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null));
-        if (!couponRepository.existsByCode(SEED_COUPON_CODE)) {
-            couponService.create(new CouponCreateRequest(
-                    SEED_COUPON_CODE, promotion.id(), "Demo seed coupon - 10% off, no usage limit.", null, null, null, null, null));
-        }
     }
 
     /**
@@ -535,7 +474,7 @@ public class SeedDataService {
         cartItemRepository.save(cartItem);
 
         UUID orderId = orderService.createOrderFromCart(
-                        customer.getId(), new CreateOrderRequest(address.getId(), paymentMethod, note, null))
+                        customer.getId(), new CreateOrderRequest(address.getId(), paymentMethod, note))
                 .id();
 
         if (markPaid) {

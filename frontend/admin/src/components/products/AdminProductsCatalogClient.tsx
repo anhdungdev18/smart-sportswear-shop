@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { memo, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { ApiRequestError } from "@/modules/api/common";
+import { NO_IMAGE } from "@/modules/ui/placeholder";
 import { toSlug } from "@/modules/utils/slug";
 import {
   addProductImage,
@@ -31,6 +32,8 @@ import type {
 } from "@/modules/catalog-admin/types";
 import type { AdminProduct } from "@/modules/product-management/products";
 
+const PRODUCTS_PER_PAGE = 15;
+const PRODUCT_THUMB_FALLBACK = NO_IMAGE;
 const productStatusOptions = ["DRAFT", "ACTIVE", "INACTIVE"] as const;
 const genderOptions = ["MEN", "WOMEN", "UNISEX", "KIDS"] as const;
 const variantStatusOptions = ["ACTIVE", "OUT_OF_STOCK", "INACTIVE"] as const;
@@ -203,7 +206,7 @@ function toAdminProduct(detail: ProductDetailResponse, categories: CategoryRespo
     sold: 0,
     status: mapAdminStatus(detail.status, stock),
     isFeatured: detail.isFeatured,
-    image: detail.images[0]?.imageUrl ?? "https://placehold.co/96x96/f5f5f5/202020?text=SP"
+    image: detail.images[0]?.imageUrl ?? NO_IMAGE
   };
 }
 
@@ -334,6 +337,8 @@ export function AdminProductsCatalogClient({
   const [saving, setSaving] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | AdminProduct["status"] | "featured">("all");
+  const [activeTab, setActiveTab] = useState<"info" | "variants" | "images" | "collections">("info");
+  const [page, setPage] = useState(1);
   const deferredSearchTerm = useDeferredValue(searchTerm);
 
   const [productCollections, setProductCollections] = useState<CollectionResponse[]>([]);
@@ -371,6 +376,18 @@ export function AdminProductsCatalogClient({
       return haystack.includes(keyword);
     });
   }, [deferredSearchTerm, products, statusFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredProducts.length / PRODUCTS_PER_PAGE));
+  const currentPage = Math.min(page, totalPages);
+  const pagedProducts = useMemo(
+    () => filteredProducts.slice((currentPage - 1) * PRODUCTS_PER_PAGE, currentPage * PRODUCTS_PER_PAGE),
+    [filteredProducts, currentPage]
+  );
+
+  // Reset to the first page whenever the filter/search result set changes.
+  useEffect(() => {
+    setPage(1);
+  }, [deferredSearchTerm, statusFilter]);
 
   useEffect(() => {
     if (!message) return;
@@ -778,6 +795,7 @@ export function AdminProductsCatalogClient({
     setVariantDrafts({});
     setImageForm(createEmptyImageForm());
     setUploadForm(createEmptyUploadForm());
+    setActiveTab("info");
     setMessage("Bạn đang ở chế độ tạo sản phẩm mới.");
   }
   return (
@@ -814,325 +832,441 @@ export function AdminProductsCatalogClient({
         ) : filteredProducts.length === 0 ? (
           <div className="empty-state">Không có sản phẩm nào khớp bộ lọc hiện tại.</div>
         ) : (
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Sản phẩm</th>
-                <th>SKU</th>
-                <th>Tồn</th>
-                <th>Trạng thái</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredProducts.map((product) => (
-                <tr
-                  key={product.id ?? product.sku}
-                  className={selectedProductId && product.id === selectedProductId ? "row-selected" : ""}
-                  onClick={() => product.id && setSelectedProductId(product.id)}
-                >
-                  <td>
-                    <strong>{product.name}</strong>
-                    <div className="table-subtle">
-                      {product.category} · {product.brand}
-                      {product.isFeatured ? " · Nổi bật" : ""}
-                    </div>
-                  </td>
-                  <td>{product.sku}</td>
-                  <td>{product.stock}</td>
-                  <td>
-                    <span className={`status ${product.status}`}>{product.status}</span>
-                  </td>
+          <>
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Sản phẩm</th>
+                  <th>SKU</th>
+                  <th>Tồn</th>
+                  <th>Trạng thái</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {pagedProducts.map((product) => (
+                  <tr
+                    key={product.id ?? product.sku}
+                    className={selectedProductId && product.id === selectedProductId ? "row-selected" : ""}
+                    onClick={() => product.id && setSelectedProductId(product.id)}
+                  >
+                    <td>
+                      <div className="product-cell">
+                        <Image
+                          src={product.image}
+                          alt={product.name}
+                          width={52}
+                          height={52}
+                          unoptimized
+                          onError={(event) => {
+                            const img = event.currentTarget as HTMLImageElement;
+                            if (img.src !== PRODUCT_THUMB_FALLBACK) {
+                              img.src = PRODUCT_THUMB_FALLBACK;
+                            }
+                          }}
+                        />
+                        <div>
+                          <strong>{product.name}</strong>
+                          <div className="table-subtle">
+                            {product.category} · {product.brand}
+                            {product.isFeatured ? " · Nổi bật" : ""}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td>{product.sku}</td>
+                    <td>{product.stock}</td>
+                    <td>
+                      <span className={`status ${product.status}`}>{product.status}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            <div className="admin-pager">
+              <span className="admin-pager-info">
+                {(currentPage - 1) * PRODUCTS_PER_PAGE + 1}
+                –{Math.min(currentPage * PRODUCTS_PER_PAGE, filteredProducts.length)} / {filteredProducts.length} sản phẩm
+              </span>
+              <div className="admin-pager-controls">
+                <button
+                  type="button"
+                  className="admin-pager-btn"
+                  onClick={() => setPage((current) => Math.max(1, current - 1))}
+                  disabled={currentPage <= 1}
+                >
+                  Trước
+                </button>
+                <span className="admin-pager-page">
+                  Trang {currentPage}/{totalPages}
+                </span>
+                <button
+                  type="button"
+                  className="admin-pager-btn"
+                  onClick={() => setPage((current) => Math.min(totalPages, current + 1))}
+                  disabled={currentPage >= totalPages}
+                >
+                  Sau
+                </button>
+              </div>
+            </div>
+          </>
         )}
       </section>
 
-      <div className="admin-stack">
-        <section className="card panel">
-          <div className="panel-header">
-            <div>
-              <h2>{selectedProduct ? `Chỉnh sửa: ${selectedProduct.name}` : "Tạo sản phẩm mới"}</h2>
-              <p className="panel-copy">Form này gọi trực tiếp API admin product create/update.</p>
-            </div>
-          </div>
-          {message ? <p className="action-message">{message}</p> : null}
-          {detailLoading ? (
-            <div className="loading-state">
-              <div className="skeleton" style={{ width: "42%", marginBottom: 10 }} />
-              <div className="skeleton" style={{ width: "100%", marginBottom: 8 }} />
-              <div className="skeleton" style={{ width: "86%" }} />
-            </div>
-          ) : null}
-          {missingCategorySetup || missingBrandSetup ? (
-            <div className="empty-state" style={{ marginBottom: 16 }}>
-              {[
-                missingCategorySetup ? "Danh mục đang trống" : null,
-                missingBrandSetup ? "Thương hiệu đang trống" : null
-              ]
-                .filter(Boolean)
-                .join(" · ")}
-              . Hãy tạo dữ liệu nền ở trang quản trị tương ứng rồi quay lại đây.
-            </div>
-          ) : null}
-          <div className="admin-form-grid">
-            <input className="admin-input" placeholder="Tên sản phẩm" value={productForm.name} onChange={(event) => {
-              const name = event.target.value;
-              setProductForm((current) => ({ ...current, name, ...(!slugDirty && { slug: toSlug(name) }) }));
-            }} />
-            <input className="admin-input" placeholder="Slug" value={productForm.slug} onChange={(event) => {
-              setSlugDirty(true);
-              setProductForm((current) => ({ ...current, slug: event.target.value }));
-            }} />
-            <select className="select" value={productForm.categoryId} onChange={(event) => setProductForm((current) => ({ ...current, categoryId: event.target.value }))} disabled={missingCategorySetup}>
-              {missingCategorySetup ? <option value="">Chưa có danh mục</option> : null}
-              {categories.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}
-            </select>
-            <select className="select" value={productForm.brandId} onChange={(event) => setProductForm((current) => ({ ...current, brandId: event.target.value }))} disabled={missingBrandSetup}>
-              {missingBrandSetup ? <option value="">Chưa có thương hiệu</option> : null}
-              {brands.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}
-            </select>
-            <select className="select" value={productForm.gender} onChange={(event) => setProductForm((current) => ({ ...current, gender: event.target.value }))}>
-              <option value="">Không chọn giới tính</option>
-              {genderOptions.map((item) => <option value={item} key={item}>{item}</option>)}
-            </select>
-            <select className="select" value={productForm.status} onChange={(event) => setProductForm((current) => ({ ...current, status: event.target.value }))}>
-              {productStatusOptions.map((item) => <option value={item} key={item}>{item}</option>)}
-            </select>
-            <input className="admin-input" placeholder="Môn thể thao" value={productForm.sportType} onChange={(event) => setProductForm((current) => ({ ...current, sportType: event.target.value }))} />
-            <label className="admin-check">
-              <input type="checkbox" checked={productForm.isFeatured} onChange={(event) => setProductForm((current) => ({ ...current, isFeatured: event.target.checked }))} />
-              Sản phẩm nổi bật
-            </label>
-            <div className="admin-form-full">
-              <input className="admin-input" placeholder="Mô tả ngắn" value={productForm.shortDescription} onChange={(event) => setProductForm((current) => ({ ...current, shortDescription: event.target.value }))} />
-            </div>
-            <div className="admin-form-full">
-              <textarea className="admin-textarea" placeholder="Mô tả chi tiết" value={productForm.description} onChange={(event) => setProductForm((current) => ({ ...current, description: event.target.value }))} />
-            </div>
-          </div>
-          <div className="page-actions">
-            {selectedProductId && (
-              <button className="admin-btn secondary" type="button" onClick={() => void handleDeleteProduct()} disabled={saving !== null}>
-                {saving === "product-delete" ? "Đang xóa..." : "Xóa sản phẩm"}
-              </button>
-            )}
-            <button className="admin-btn" type="button" onClick={() => void handleCreateOrUpdateProduct()} disabled={!canSubmitProduct}>
-              {saving === "product" ? "Đang lưu..." : selectedProductId ? "Cập nhật sản phẩm" : "Tạo sản phẩm"}
-            </button>
-          </div>
-        </section>
-
-        <section className="card panel">
-          <div className="panel-header">
-            <div>
-              <h2>Biến thể</h2>
-              <p className="panel-copy">Thêm biến thể mới tại đây. Chỉnh tồn kho sau tạo dùng module tồn kho.</p>
-            </div>
-          </div>
-          <div className="admin-form-grid">
-            <input className="admin-input" placeholder="SKU" value={variantForm.sku} onChange={(event) => setVariantForm((current) => ({ ...current, sku: event.target.value }))} />
-            <input className="admin-input" placeholder="Size" value={variantForm.size} onChange={(event) => setVariantForm((current) => ({ ...current, size: event.target.value }))} />
-            <input className="admin-input" placeholder="Màu sắc" value={variantForm.color} onChange={(event) => setVariantForm((current) => ({ ...current, color: event.target.value }))} />
-            <input className="admin-input" type="number" min={0} placeholder="Giá bán" value={variantForm.price} onChange={(event) => setVariantForm((current) => ({ ...current, price: event.target.value }))} />
-            <input className="admin-input" type="number" min={0} placeholder="Giá so sánh" value={variantForm.compareAtPrice} onChange={(event) => setVariantForm((current) => ({ ...current, compareAtPrice: event.target.value }))} />
-            <input className="admin-input" type="number" min={0} placeholder="Tồn ban đầu" value={variantForm.stockQuantity} onChange={(event) => setVariantForm((current) => ({ ...current, stockQuantity: event.target.value }))} />
-            <select className="select" value={variantForm.status} onChange={(event) => setVariantForm((current) => ({ ...current, status: event.target.value }))}>
-              {variantStatusOptions.map((item) => <option value={item} key={item}>{item}</option>)}
-            </select>
-          </div>
-          <div className="page-actions">
-            <button className="admin-btn" type="button" onClick={() => void handleCreateVariant()} disabled={saving === "variant-create"}>
-              {saving === "variant-create" ? "Đang thêm..." : "Thêm biến thể"}
-            </button>
-          </div>
-          {detail?.variants.length ? (
-            <div className="admin-stack">
-              {detail.variants.map((variant) => {
-                const draft = variantDrafts[variant.id];
-                if (!draft) return null;
-                return <VariantEditorCard key={variant.id} variant={variant} draft={draft} saving={saving === `variant-${variant.id}`} onDraftChange={(patch) => setVariantDrafts((current) => ({ ...current, [variant.id]: { ...current[variant.id], ...patch } }))} onSave={() => void handleUpdateVariant(variant.id)} />;
-              })}
-            </div>
-          ) : <div className="empty-state">Sản phẩm này chưa có biến thể.</div>}
-        </section>
-
-        <section className="card panel">
-          <div className="panel-header">
-            <div>
-              <h2>Ảnh sản phẩm</h2>
-              <p className="panel-copy">Hỗ trợ cả thêm URL có sẵn và upload ảnh thật.</p>
-            </div>
-          </div>
-          <div className="admin-form-grid">
-            <div className="admin-form-full">
-              <input className="admin-input" placeholder="Image URL" value={imageForm.imageUrl} onChange={(event) => setImageForm((current) => ({ ...current, imageUrl: event.target.value }))} />
-            </div>
-            <input className="admin-input" placeholder="Cloudinary publicId (nếu có)" value={imageForm.publicId} onChange={(event) => setImageForm((current) => ({ ...current, publicId: event.target.value }))} />
-            <input className="admin-input" placeholder="Alt text" value={imageForm.altText} onChange={(event) => setImageForm((current) => ({ ...current, altText: event.target.value }))} />
-            <input className="admin-input" type="number" min={0} placeholder="Sort order" value={imageForm.sortOrder} onChange={(event) => setImageForm((current) => ({ ...current, sortOrder: event.target.value }))} />
-            <label className="admin-check">
-              <input type="checkbox" checked={imageForm.isPrimary} onChange={(event) => setImageForm((current) => ({ ...current, isPrimary: event.target.checked }))} />
-              Đặt làm ảnh chính
-            </label>
-          </div>
-          <div className="page-actions">
-            <button className="admin-btn secondary" type="button" onClick={() => void handleAddImageByUrl()} disabled={saving === "image-url"}>
-              {saving === "image-url" ? "Đang thêm..." : "Thêm ảnh bằng URL"}
-            </button>
-          </div>
-          <div className="admin-form-grid">
-            <input className="admin-input admin-form-full" type="file" accept="image/*" onChange={(event) => setUploadForm((current) => ({ ...current, file: event.target.files?.[0] ?? null }))} />
-            <input className="admin-input" placeholder="Alt text upload" value={uploadForm.altText} onChange={(event) => setUploadForm((current) => ({ ...current, altText: event.target.value }))} />
-            <input className="admin-input" type="number" min={0} placeholder="Sort order" value={uploadForm.sortOrder} onChange={(event) => setUploadForm((current) => ({ ...current, sortOrder: event.target.value }))} />
-            <label className="admin-check">
-              <input type="checkbox" checked={uploadForm.isPrimary} onChange={(event) => setUploadForm((current) => ({ ...current, isPrimary: event.target.checked }))} />
-              Ảnh chính khi upload
-            </label>
-          </div>
-          <div className="page-actions">
-            <button className="admin-btn" type="button" onClick={() => void handleUploadImage()} disabled={saving === "image-upload"}>
-              {saving === "image-upload" ? "Đang upload..." : "Upload ảnh"}
-            </button>
-          </div>
-          {detail?.images.length ? (
-            <div className="admin-gallery">
-              {detail.images.map((image) => <ProductImageCard key={image.id} image={image} productName={detail.name} saving={saving === `image-delete-${image.id}`} onDelete={() => void handleDeleteImage(image)} />)}
-            </div>
-          ) : <div className="empty-state">Sản phẩm này chưa có ảnh.</div>}
-        </section>
-      {selectedProductId ? (
-        <section className="card panel">
-          <div className="panel-header">
-            <div>
-              <h2>Bộ sưu tập</h2>
-              <p className="panel-copy">Gắn sản phẩm vào các bộ sưu tập để hiển thị trên storefront.</p>
-            </div>
-          </div>
-
-          {collectionMessage ? <p className="action-message">{collectionMessage}</p> : null}
-
-          <div style={{ marginBottom: 20 }}>
-            <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>
-              Đang thuộc bộ sưu tập ({productCollections.length})
-            </h3>
-            {collectionsLoading && productCollections.length === 0 ? (
-              <div className="loading-state">
-                <div className="skeleton" style={{ width: "60%", marginBottom: 8 }} />
-                <div className="skeleton" style={{ width: "80%" }} />
-              </div>
-            ) : productCollections.length === 0 ? (
-              <div className="empty-state">Sản phẩm này chưa thuộc bộ sưu tập nào.</div>
-            ) : (
-              <div className="admin-gallery">
-                {productCollections.map((c) => (
-                  <article key={c.id} className="admin-image-card">
-                    {c.coverImageUrl ? (
-                      <Image
-                        src={c.coverImageUrl}
-                        alt={c.name}
-                        width={96}
-                        height={96}
-                        style={{ width: 96, height: 96, borderRadius: 12, objectFit: "cover" }}
-                        unoptimized
-                      />
-                    ) : (
-                      <div style={{ width: 96, height: 96, borderRadius: 12, background: "var(--admin-line)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, flexShrink: 0 }}>
-                        🗂
-                      </div>
-                    )}
-                    <div>
-                      <strong style={{ display: "block", marginBottom: 2 }}>{c.name}</strong>
-                      <div className="table-subtle">
-                        {[c.collectionType, c.season, c.year].filter(Boolean).join(" · ")}
-                      </div>
-                      <div className="table-subtle">{c.slug}</div>
-                      <span className={`status-pill status-pill-${collectionStatusTone(c.status)}`} style={{ marginTop: 4, display: "inline-block" }}>
-                        {collectionStatusLabel(c.status)}
-                      </span>
-                    </div>
-                    <button
-                      className="admin-btn secondary"
-                      type="button"
-                      onClick={() => void handleRemoveFromCollection(c.id)}
-                    >
-                      Gỡ khỏi bộ sưu tập
-                    </button>
-                  </article>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div>
-            <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>Thêm vào bộ sưu tập</h3>
-            <input
-              className="admin-input"
-              placeholder="Tìm bộ sưu tập để thêm..."
-              value={collectionSearch}
-              style={{ width: "100%", marginBottom: 12 }}
-              onFocus={() => void ensureAllCollectionsLoaded()}
-              onChange={(event) => {
-                void ensureAllCollectionsLoaded();
-                setCollectionSearch(event.target.value);
-              }}
+      <section className="card product-editor">
+        <div className="editor-head">
+          {selectedProduct ? (
+            <Image
+              className="editor-thumb"
+              src={selectedProduct.image}
+              alt={selectedProduct.name}
+              width={56}
+              height={56}
+              unoptimized
             />
-            {collectionsPickerLoading ? (
+          ) : (
+            <span className="editor-thumb placeholder">＋</span>
+          )}
+          <div className="editor-identity">
+            <h2>{selectedProduct ? selectedProduct.name : "Sản phẩm mới"}</h2>
+            <div className="table-subtle">
+              {selectedProduct
+                ? [selectedProduct.category, selectedProduct.brand, selectedProduct.sku].filter(Boolean).join(" · ")
+                : "Điền thông tin và lưu để mở khoá biến thể, hình ảnh, bộ sưu tập."}
+            </div>
+          </div>
+          {selectedProduct ? <span className={`status ${selectedProduct.status}`}>{selectedProduct.status}</span> : null}
+        </div>
+
+        <div className="editor-tabs" role="tablist">
+          <button type="button" className={`editor-tab${activeTab === "info" ? " active" : ""}`} onClick={() => setActiveTab("info")}>
+            Thông tin
+          </button>
+          <button type="button" className={`editor-tab${activeTab === "variants" ? " active" : ""}`} onClick={() => setActiveTab("variants")}>
+            Biến thể
+            {detail?.variants.length ? <span className="tab-count">{detail.variants.length}</span> : null}
+          </button>
+          <button type="button" className={`editor-tab${activeTab === "images" ? " active" : ""}`} onClick={() => setActiveTab("images")}>
+            Hình ảnh
+            {detail?.images.length ? <span className="tab-count">{detail.images.length}</span> : null}
+          </button>
+          <button type="button" className={`editor-tab${activeTab === "collections" ? " active" : ""}`} onClick={() => setActiveTab("collections")}>
+            Bộ sưu tập
+            {selectedProductId && productCollections.length ? <span className="tab-count">{productCollections.length}</span> : null}
+          </button>
+        </div>
+
+        {message ? <p className="action-message">{message}</p> : null}
+
+        {activeTab === "info" ? (
+          <div className="editor-panel">
+            <div className="editor-section-head">
+              <h3>Thông tin sản phẩm</h3>
+              <p className="table-subtle">Tên, phân loại và mô tả hiển thị trên storefront.</p>
+            </div>
+            {detailLoading ? (
               <div className="loading-state">
-                <div className="skeleton" style={{ width: "70%", marginBottom: 8 }} />
-                <div className="skeleton" style={{ width: "85%", marginBottom: 8 }} />
-                <div className="skeleton" style={{ width: "60%" }} />
+                <div className="skeleton" style={{ width: "42%", marginBottom: 10 }} />
+                <div className="skeleton" style={{ width: "100%", marginBottom: 8 }} />
+                <div className="skeleton" style={{ width: "86%" }} />
               </div>
-            ) : filteredAvailableCollections.length === 0 ? (
+            ) : null}
+            {missingCategorySetup || missingBrandSetup ? (
               <div className="empty-state">
-                {allCollections.length === 0
-                  ? "Bấm vào ô tìm kiếm để tải danh sách bộ sưu tập."
-                  : "Không có bộ sưu tập nào khả dụng để thêm."}
+                {[
+                  missingCategorySetup ? "Danh mục đang trống" : null,
+                  missingBrandSetup ? "Thương hiệu đang trống" : null
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+                . Hãy tạo dữ liệu nền ở trang quản trị tương ứng rồi quay lại đây.
               </div>
+            ) : null}
+            <div className="admin-form-grid">
+              <input className="admin-input" placeholder="Tên sản phẩm" value={productForm.name} onChange={(event) => {
+                const name = event.target.value;
+                setProductForm((current) => ({ ...current, name, ...(!slugDirty && { slug: toSlug(name) }) }));
+              }} />
+              <input className="admin-input" placeholder="Slug" value={productForm.slug} onChange={(event) => {
+                setSlugDirty(true);
+                setProductForm((current) => ({ ...current, slug: event.target.value }));
+              }} />
+              <select className="select" value={productForm.categoryId} onChange={(event) => setProductForm((current) => ({ ...current, categoryId: event.target.value }))} disabled={missingCategorySetup}>
+                {missingCategorySetup ? <option value="">Chưa có danh mục</option> : null}
+                {categories.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}
+              </select>
+              <select className="select" value={productForm.brandId} onChange={(event) => setProductForm((current) => ({ ...current, brandId: event.target.value }))} disabled={missingBrandSetup}>
+                {missingBrandSetup ? <option value="">Chưa có thương hiệu</option> : null}
+                {brands.map((item) => <option value={item.id} key={item.id}>{item.name}</option>)}
+              </select>
+              <select className="select" value={productForm.gender} onChange={(event) => setProductForm((current) => ({ ...current, gender: event.target.value }))}>
+                <option value="">Không chọn giới tính</option>
+                {genderOptions.map((item) => <option value={item} key={item}>{item}</option>)}
+              </select>
+              <select className="select" value={productForm.status} onChange={(event) => setProductForm((current) => ({ ...current, status: event.target.value }))}>
+                {productStatusOptions.map((item) => <option value={item} key={item}>{item}</option>)}
+              </select>
+              <input className="admin-input" placeholder="Môn thể thao" value={productForm.sportType} onChange={(event) => setProductForm((current) => ({ ...current, sportType: event.target.value }))} />
+              <label className="admin-check">
+                <input type="checkbox" checked={productForm.isFeatured} onChange={(event) => setProductForm((current) => ({ ...current, isFeatured: event.target.checked }))} />
+                Sản phẩm nổi bật
+              </label>
+              <div className="admin-form-full">
+                <input className="admin-input" placeholder="Mô tả ngắn" value={productForm.shortDescription} onChange={(event) => setProductForm((current) => ({ ...current, shortDescription: event.target.value }))} />
+              </div>
+              <div className="admin-form-full">
+                <textarea className="admin-textarea" placeholder="Mô tả chi tiết" value={productForm.description} onChange={(event) => setProductForm((current) => ({ ...current, description: event.target.value }))} />
+              </div>
+            </div>
+            <div className="page-actions">
+              {selectedProductId && (
+                <button className="admin-btn secondary" type="button" onClick={() => void handleDeleteProduct()} disabled={saving !== null}>
+                  {saving === "product-delete" ? "Đang xóa..." : "Xóa sản phẩm"}
+                </button>
+              )}
+              <button className="admin-btn" type="button" onClick={() => void handleCreateOrUpdateProduct()} disabled={!canSubmitProduct}>
+                {saving === "product" ? "Đang lưu..." : selectedProductId ? "Cập nhật sản phẩm" : "Tạo sản phẩm"}
+              </button>
+            </div>
+          </div>
+        ) : null}
+
+        {activeTab === "variants" ? (
+          <div className="editor-panel">
+            <div className="editor-section-head">
+              <h3>Biến thể</h3>
+              <p className="table-subtle">Thêm biến thể mới tại đây. Chỉnh tồn kho sau tạo dùng module tồn kho.</p>
+            </div>
+            {!selectedProductId ? (
+              <div className="empty-state">Hãy lưu sản phẩm ở tab Thông tin trước khi thêm biến thể.</div>
             ) : (
-              <div className="admin-gallery">
-                {filteredAvailableCollections.map((c) => (
-                  <article key={c.id} className="admin-image-card">
-                    {c.coverImageUrl ? (
-                      <Image
-                        src={c.coverImageUrl}
-                        alt={c.name}
-                        width={96}
-                        height={96}
-                        style={{ width: 96, height: 96, borderRadius: 12, objectFit: "cover" }}
-                        unoptimized
-                      />
-                    ) : (
-                      <div style={{ width: 96, height: 96, borderRadius: 12, background: "var(--admin-line)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, flexShrink: 0 }}>
-                        🗂
-                      </div>
-                    )}
-                    <div>
-                      <strong style={{ display: "block", marginBottom: 2 }}>{c.name}</strong>
-                      <div className="table-subtle">
-                        {[c.collectionType, c.season, c.year].filter(Boolean).join(" · ")}
-                      </div>
-                      <div className="table-subtle">{c.slug}</div>
-                      <span className={`status-pill status-pill-${collectionStatusTone(c.status)}`} style={{ marginTop: 4, display: "inline-block" }}>
-                        {collectionStatusLabel(c.status)}
-                      </span>
-                    </div>
-                    <button
-                      className="admin-btn"
-                      type="button"
-                      onClick={() => void handleAddToCollection(c)}
-                    >
-                      Thêm vào
-                    </button>
-                  </article>
-                ))}
-              </div>
+              <>
+                <div className="admin-form-grid">
+                  <input className="admin-input" placeholder="SKU" value={variantForm.sku} onChange={(event) => setVariantForm((current) => ({ ...current, sku: event.target.value }))} />
+                  <input className="admin-input" placeholder="Size" value={variantForm.size} onChange={(event) => setVariantForm((current) => ({ ...current, size: event.target.value }))} />
+                  <input className="admin-input" placeholder="Màu sắc" value={variantForm.color} onChange={(event) => setVariantForm((current) => ({ ...current, color: event.target.value }))} />
+                  <input className="admin-input" type="number" min={0} placeholder="Giá bán" value={variantForm.price} onChange={(event) => setVariantForm((current) => ({ ...current, price: event.target.value }))} />
+                  <input className="admin-input" type="number" min={0} placeholder="Giá so sánh" value={variantForm.compareAtPrice} onChange={(event) => setVariantForm((current) => ({ ...current, compareAtPrice: event.target.value }))} />
+                  <input className="admin-input" type="number" min={0} placeholder="Tồn ban đầu" value={variantForm.stockQuantity} onChange={(event) => setVariantForm((current) => ({ ...current, stockQuantity: event.target.value }))} />
+                  <select className="select" value={variantForm.status} onChange={(event) => setVariantForm((current) => ({ ...current, status: event.target.value }))}>
+                    {variantStatusOptions.map((item) => <option value={item} key={item}>{item}</option>)}
+                  </select>
+                </div>
+                <div className="page-actions">
+                  <button className="admin-btn" type="button" onClick={() => void handleCreateVariant()} disabled={saving === "variant-create"}>
+                    {saving === "variant-create" ? "Đang thêm..." : "Thêm biến thể"}
+                  </button>
+                </div>
+                <hr className="editor-divider" />
+                {detail?.variants.length ? (
+                  <div className="admin-stack">
+                    {detail.variants.map((variant) => {
+                      const draft = variantDrafts[variant.id];
+                      if (!draft) return null;
+                      return <VariantEditorCard key={variant.id} variant={variant} draft={draft} saving={saving === `variant-${variant.id}`} onDraftChange={(patch) => setVariantDrafts((current) => ({ ...current, [variant.id]: { ...current[variant.id], ...patch } }))} onSave={() => void handleUpdateVariant(variant.id)} />;
+                    })}
+                  </div>
+                ) : <div className="empty-state">Sản phẩm này chưa có biến thể.</div>}
+              </>
             )}
           </div>
-        </section>
-      ) : null}
-      </div>
+        ) : null}
+
+        {activeTab === "images" ? (
+          <div className="editor-panel">
+            <div className="editor-section-head">
+              <h3>Hình ảnh</h3>
+              <p className="table-subtle">Hỗ trợ cả thêm URL có sẵn và upload ảnh thật.</p>
+            </div>
+            {!selectedProductId ? (
+              <div className="empty-state">Hãy lưu sản phẩm ở tab Thông tin trước khi thêm hình ảnh.</div>
+            ) : (
+              <>
+                <div className="admin-subcard">
+                  <div className="editor-subcard-title">Thêm bằng URL</div>
+                  <div className="admin-form-grid">
+                    <div className="admin-form-full">
+                      <input className="admin-input" placeholder="Image URL" value={imageForm.imageUrl} onChange={(event) => setImageForm((current) => ({ ...current, imageUrl: event.target.value }))} />
+                    </div>
+                    <input className="admin-input" placeholder="Cloudinary publicId (nếu có)" value={imageForm.publicId} onChange={(event) => setImageForm((current) => ({ ...current, publicId: event.target.value }))} />
+                    <input className="admin-input" placeholder="Alt text" value={imageForm.altText} onChange={(event) => setImageForm((current) => ({ ...current, altText: event.target.value }))} />
+                    <input className="admin-input" type="number" min={0} placeholder="Sort order" value={imageForm.sortOrder} onChange={(event) => setImageForm((current) => ({ ...current, sortOrder: event.target.value }))} />
+                    <label className="admin-check">
+                      <input type="checkbox" checked={imageForm.isPrimary} onChange={(event) => setImageForm((current) => ({ ...current, isPrimary: event.target.checked }))} />
+                      Đặt làm ảnh chính
+                    </label>
+                  </div>
+                  <div className="page-actions">
+                    <button className="admin-btn secondary" type="button" onClick={() => void handleAddImageByUrl()} disabled={saving === "image-url"}>
+                      {saving === "image-url" ? "Đang thêm..." : "Thêm ảnh bằng URL"}
+                    </button>
+                  </div>
+                </div>
+                <div className="admin-subcard">
+                  <div className="editor-subcard-title">Upload ảnh thật</div>
+                  <div className="admin-form-grid">
+                    <input className="admin-input admin-form-full" type="file" accept="image/*" onChange={(event) => setUploadForm((current) => ({ ...current, file: event.target.files?.[0] ?? null }))} />
+                    <input className="admin-input" placeholder="Alt text upload" value={uploadForm.altText} onChange={(event) => setUploadForm((current) => ({ ...current, altText: event.target.value }))} />
+                    <input className="admin-input" type="number" min={0} placeholder="Sort order" value={uploadForm.sortOrder} onChange={(event) => setUploadForm((current) => ({ ...current, sortOrder: event.target.value }))} />
+                    <label className="admin-check">
+                      <input type="checkbox" checked={uploadForm.isPrimary} onChange={(event) => setUploadForm((current) => ({ ...current, isPrimary: event.target.checked }))} />
+                      Ảnh chính khi upload
+                    </label>
+                  </div>
+                  <div className="page-actions">
+                    <button className="admin-btn" type="button" onClick={() => void handleUploadImage()} disabled={saving === "image-upload"}>
+                      {saving === "image-upload" ? "Đang upload..." : "Upload ảnh"}
+                    </button>
+                  </div>
+                </div>
+                <hr className="editor-divider" />
+                {detail?.images.length ? (
+                  <div className="admin-gallery">
+                    {detail.images.map((image) => <ProductImageCard key={image.id} image={image} productName={detail.name} saving={saving === `image-delete-${image.id}`} onDelete={() => void handleDeleteImage(image)} />)}
+                  </div>
+                ) : <div className="empty-state">Sản phẩm này chưa có ảnh.</div>}
+              </>
+            )}
+          </div>
+        ) : null}
+
+        {activeTab === "collections" ? (
+          <div className="editor-panel">
+            <div className="editor-section-head">
+              <h3>Bộ sưu tập</h3>
+              <p className="table-subtle">Gắn sản phẩm vào các bộ sưu tập để hiển thị trên storefront.</p>
+            </div>
+            {!selectedProductId ? (
+              <div className="empty-state">Hãy lưu sản phẩm ở tab Thông tin trước khi gắn bộ sưu tập.</div>
+            ) : (
+              <>
+                {collectionMessage ? <p className="action-message">{collectionMessage}</p> : null}
+
+                <div>
+                  <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>
+                    Đang thuộc bộ sưu tập ({productCollections.length})
+                  </h3>
+                  {collectionsLoading && productCollections.length === 0 ? (
+                    <div className="loading-state">
+                      <div className="skeleton" style={{ width: "60%", marginBottom: 8 }} />
+                      <div className="skeleton" style={{ width: "80%" }} />
+                    </div>
+                  ) : productCollections.length === 0 ? (
+                    <div className="empty-state">Sản phẩm này chưa thuộc bộ sưu tập nào.</div>
+                  ) : (
+                    <div className="admin-gallery">
+                      {productCollections.map((c) => (
+                        <article key={c.id} className="admin-image-card">
+                          {c.coverImageUrl ? (
+                            <Image
+                              src={c.coverImageUrl}
+                              alt={c.name}
+                              width={96}
+                              height={96}
+                              style={{ width: 96, height: 96, borderRadius: 12, objectFit: "cover" }}
+                              unoptimized
+                            />
+                          ) : (
+                            <div style={{ width: 96, height: 96, borderRadius: 12, background: "var(--admin-line)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, flexShrink: 0 }}>
+                              🗂
+                            </div>
+                          )}
+                          <div>
+                            <strong style={{ display: "block", marginBottom: 2 }}>{c.name}</strong>
+                            <div className="table-subtle">
+                              {[c.collectionType, c.season, c.year].filter(Boolean).join(" · ")}
+                            </div>
+                            <div className="table-subtle">{c.slug}</div>
+                            <span className={`status-pill status-pill-${collectionStatusTone(c.status)}`} style={{ marginTop: 4, display: "inline-block" }}>
+                              {collectionStatusLabel(c.status)}
+                            </span>
+                          </div>
+                          <button
+                            className="admin-btn secondary"
+                            type="button"
+                            onClick={() => void handleRemoveFromCollection(c.id)}
+                          >
+                            Gỡ khỏi bộ sưu tập
+                          </button>
+                        </article>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <hr className="editor-divider" />
+
+                <div>
+                  <h3 style={{ fontSize: 14, fontWeight: 700, marginBottom: 12 }}>Thêm vào bộ sưu tập</h3>
+                  <input
+                    className="admin-input"
+                    placeholder="Tìm bộ sưu tập để thêm..."
+                    value={collectionSearch}
+                    style={{ width: "100%", marginBottom: 12 }}
+                    onFocus={() => void ensureAllCollectionsLoaded()}
+                    onChange={(event) => {
+                      void ensureAllCollectionsLoaded();
+                      setCollectionSearch(event.target.value);
+                    }}
+                  />
+                  {collectionsPickerLoading ? (
+                    <div className="loading-state">
+                      <div className="skeleton" style={{ width: "70%", marginBottom: 8 }} />
+                      <div className="skeleton" style={{ width: "85%", marginBottom: 8 }} />
+                      <div className="skeleton" style={{ width: "60%" }} />
+                    </div>
+                  ) : filteredAvailableCollections.length === 0 ? (
+                    <div className="empty-state">
+                      {allCollections.length === 0
+                        ? "Bấm vào ô tìm kiếm để tải danh sách bộ sưu tập."
+                        : "Không có bộ sưu tập nào khả dụng để thêm."}
+                    </div>
+                  ) : (
+                    <div className="admin-gallery">
+                      {filteredAvailableCollections.map((c) => (
+                        <article key={c.id} className="admin-image-card">
+                          {c.coverImageUrl ? (
+                            <Image
+                              src={c.coverImageUrl}
+                              alt={c.name}
+                              width={96}
+                              height={96}
+                              style={{ width: 96, height: 96, borderRadius: 12, objectFit: "cover" }}
+                              unoptimized
+                            />
+                          ) : (
+                            <div style={{ width: 96, height: 96, borderRadius: 12, background: "var(--admin-line)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 32, flexShrink: 0 }}>
+                              🗂
+                            </div>
+                          )}
+                          <div>
+                            <strong style={{ display: "block", marginBottom: 2 }}>{c.name}</strong>
+                            <div className="table-subtle">
+                              {[c.collectionType, c.season, c.year].filter(Boolean).join(" · ")}
+                            </div>
+                            <div className="table-subtle">{c.slug}</div>
+                            <span className={`status-pill status-pill-${collectionStatusTone(c.status)}`} style={{ marginTop: 4, display: "inline-block" }}>
+                              {collectionStatusLabel(c.status)}
+                            </span>
+                          </div>
+                          <button
+                            className="admin-btn"
+                            type="button"
+                            onClick={() => void handleAddToCollection(c)}
+                          >
+                            Thêm vào
+                          </button>
+                        </article>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        ) : null}
+      </section>
     </div>
   );
 }

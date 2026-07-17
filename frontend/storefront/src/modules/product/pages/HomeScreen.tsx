@@ -12,7 +12,7 @@ export async function HomeScreen() {
   ]);
 
   return (
-    <main className="site-main flex-1 border-b border-ivy-hairline pt-31.5">
+    <main className="site-main page-below-header flex-1 border-b border-ivy-hairline">
       <HomeBanner slides={bannerSlides} />
       <div className="mx-auto max-w-342 px-4 md:px-0">
         <ProductRail title="Sản phẩm mới" products={newProducts.map(mapProductListItem)} />

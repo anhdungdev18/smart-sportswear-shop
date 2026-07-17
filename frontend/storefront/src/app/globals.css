@@ -57,6 +57,10 @@
 }
 
 :root {
+  --site-header-main-height: 5rem;
+  --site-header-nav-height: 2.75rem;
+  --site-header-height: calc(var(--site-header-main-height) + var(--site-header-nav-height));
+  --site-content-top-gap: clamp(1.5rem, 2.5vw, 2.5rem);
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -154,5 +158,15 @@
   }
   html {
     @apply font-sans;
+  }
+}
+
+@layer components {
+  .page-below-header {
+    padding-top: var(--site-header-height);
+  }
+
+  .page-below-header-spacious {
+    padding-top: calc(var(--site-header-height) + var(--site-content-top-gap));
   }
 }
