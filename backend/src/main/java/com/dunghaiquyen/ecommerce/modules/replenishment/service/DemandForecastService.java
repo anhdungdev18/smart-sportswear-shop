@@ -104,14 +104,29 @@ public class DemandForecastService {
         run.setConfidence(backtestResult.confidence());
         run.setGeneratedAt(java.time.Instant.now());
 
-        run = forecastRunRepository.save(run);
+        final ForecastRun savedRun = forecastRunRepository.save(run);
 
         ReplenishmentRecommendation recommendation = 
-                replenishmentService.generateRecommendation(variant, run, policy);
+                replenishmentService.generateRecommendation(variant, savedRun, policy);
 
         // Only save recommendation if suggestedQuantity > 0 or it's a critical item
         if (recommendation.getSuggestedQuantity() > 0 || "CRITICAL".equals(recommendation.getPriority().name())) {
-            recommendationRepository.save(recommendation);
+            recommendationRepository.findByVariantIdAndStatus(variantId, com.dunghaiquyen.ecommerce.modules.replenishment.entity.ReplenishmentStatus.PENDING)
+                .ifPresentOrElse(
+                    existing -> {
+                        existing.setForecastRun(savedRun);
+                        existing.setAvailableQuantity(recommendation.getAvailableQuantity());
+                        existing.setIncomingQuantity(recommendation.getIncomingQuantity());
+                        existing.setReorderPoint(recommendation.getReorderPoint());
+                        existing.setSafetyStock(recommendation.getSafetyStock());
+                        existing.setSuggestedQuantity(recommendation.getSuggestedQuantity());
+                        existing.setEstimatedStockoutDays(recommendation.getEstimatedStockoutDays());
+                        existing.setPriority(recommendation.getPriority());
+                        existing.setExplanation(recommendation.getExplanation());
+                        recommendationRepository.save(existing);
+                    },
+                    () -> recommendationRepository.save(recommendation)
+                );
         }
     }
 }

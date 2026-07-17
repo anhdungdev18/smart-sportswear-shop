@@ -1,4 +1,9 @@
 package com.dunghaiquyen.ecommerce.modules.replenishment.dto;
 
-public record ReplenishmentActionRequest() {
+import lombok.Data;
+
+@Data
+public class ReplenishmentActionRequest {
+    private Integer quantity; // Cho trường hợp adjust
+    private String note;
 }
