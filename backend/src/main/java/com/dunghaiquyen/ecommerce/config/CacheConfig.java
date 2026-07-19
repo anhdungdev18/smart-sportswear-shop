@@ -33,7 +33,8 @@ public class CacheConfig {
         // TTL 5 min, max 500 entries per cache
         manager.setCaffeine(Caffeine.newBuilder()
                 .expireAfterWrite(5, TimeUnit.MINUTES)
-                .maximumSize(500));
+                .maximumSize(500)
+                .recordStats());
         return manager;
     }
 }

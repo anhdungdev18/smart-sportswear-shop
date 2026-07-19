@@ -1,5 +1,4 @@
-import { AdminInventoryClient } from "@/components/inventory/AdminInventoryClient";
-import { ReplenishmentSuggestionTable } from "@/components/inventory/ReplenishmentSuggestionTable";
+import { InventoryWorkspace } from "@/components/inventory/InventoryWorkspace";
 import { listInventoryItems, listInventoryTransactions } from "@/modules/inventory/api";
 import { listSuggestions } from "@/modules/replenishment/api";
 
@@ -12,7 +11,7 @@ export default async function InventoryPage() {
 
   const items = itemsResult.status === "fulfilled" ? itemsResult.value : [];
   const transactions = transactionsResult.status === "fulfilled" ? transactionsResult.value : [];
-  const suggestionsPage = suggestionsResult.status === "fulfilled" ? suggestionsResult.value : { data: [] };
+  const suggestionsPage = suggestionsResult.status === "fulfilled" ? suggestionsResult.value : { content: [] };
   const loadFailed = itemsResult.status === "rejected";
 
   return (
@@ -32,8 +31,7 @@ export default async function InventoryPage() {
         </section>
       ) : (
         <>
-          <ReplenishmentSuggestionTable initialSuggestions={suggestionsPage.data} />
-          <AdminInventoryClient initialItems={items} initialTransactions={transactions} />
+          <InventoryWorkspace initialItems={items} initialTransactions={transactions} initialSuggestions={suggestionsPage.content} />
         </>
       )}
     </main>

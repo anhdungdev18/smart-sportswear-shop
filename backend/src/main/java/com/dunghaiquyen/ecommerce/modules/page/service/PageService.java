@@ -48,7 +48,7 @@ public class PageService {
 
     @Transactional(readOnly = true)
     public ListResult list(PageListQuery query) {
-        Specification<Page> spec = Specification.where(null);
+        Specification<Page> spec = Specification.unrestricted();
         if (query.status() != null) {
             spec = spec.and((root, q, cb) -> cb.equal(root.get("status"), query.status()));
         }

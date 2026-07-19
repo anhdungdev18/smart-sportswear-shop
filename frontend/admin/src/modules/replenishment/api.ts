@@ -1,9 +1,9 @@
-import { apiRequest } from "@/modules/api/client";
-import type { PageResponse } from "@/modules/api/types";
-import type { ReplenishmentSuggestionResponse, ReplenishmentSuggestionDetailResponse } from "./types";
+import { aiApiRequest } from "@/modules/ai-api/client";
+import type { ApiQuery } from "@/modules/api/common";
+import type { PageResponse, ReplenishmentSuggestionResponse } from "./types";
 
-export async function listSuggestions(query?: Record<string, any>) {
-  return apiRequest<PageResponse<ReplenishmentSuggestionResponse>>("/api/v1/admin/replenishment/suggestions", {
+export async function listSuggestions(query?: ApiQuery) {
+  return aiApiRequest<PageResponse<ReplenishmentSuggestionResponse>>("/api/v1/admin/replenishment/suggestions", {
     query,
     next: { revalidate: 0 } // no cache
   });

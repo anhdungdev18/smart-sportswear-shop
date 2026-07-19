@@ -1,9 +1,10 @@
-﻿"use client";
+"use client";
 
-import { useDeferredValue, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { ApiRequestError } from "@/modules/api/common";
 import { adjustStock, exportStock, importStock } from "@/modules/inventory/browser-api";
 import type { InventoryItemResponse, InventoryTransactionResponse } from "@/modules/inventory/types";
+import type { InventoryImportDraft } from "./InventoryWorkspace";
 
 function extractError(error: unknown, fallback: string) {
   if (error instanceof ApiRequestError) {
@@ -18,10 +19,12 @@ type ActionType = "IMPORT" | "EXPORT" | "ADJUSTMENT_UP" | "ADJUSTMENT_DOWN";
 
 export function AdminInventoryClient({
   initialItems,
-  initialTransactions
+  initialTransactions,
+  importDraft
 }: {
   initialItems: InventoryItemResponse[];
   initialTransactions: InventoryTransactionResponse[];
+  importDraft: InventoryImportDraft | null;
 }) {
   const [items, setItems] = useState(initialItems);
   const [transactions, setTransactions] = useState(initialTransactions);
@@ -33,6 +36,16 @@ export function AdminInventoryClient({
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
   const deferredSearch = useDeferredValue(search);
+
+  useEffect(() => {
+    if (!importDraft) return;
+    setVariantId(importDraft.variantId);
+    setQuantity(Math.max(1, importDraft.quantity));
+    setActionType("IMPORT");
+    setNote(`[AI_REPLENISHMENT:${importDraft.recommendationId}] ${importDraft.sku}`);
+    setMessage("Đã điền đề xuất AI vào form. Hãy kiểm tra số lượng rồi nhấn Xác nhận để nhập kho.");
+    document.getElementById("inventory-action-form")?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [importDraft]);
 
   const filteredItems = useMemo(() => {
     const query = deferredSearch.trim().toLowerCase();
@@ -85,7 +98,7 @@ export function AdminInventoryClient({
 
   return (
     <>
-      <section className="card panel">
+      <section id="inventory-action-form" className="card panel">
         <div className="panel-header">
           <h2>Thao tác kho</h2>
         </div>

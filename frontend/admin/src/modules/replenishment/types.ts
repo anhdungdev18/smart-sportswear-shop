@@ -1,3 +1,4 @@
+export interface PageResponse<T> { content: T[]; totalElements: number; totalPages: number; number: number; size: number; }
 export type ReplenishmentPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
 export type ReplenishmentStatus = 'PENDING' | 'ACCEPTED' | 'ADJUSTED' | 'DISMISSED' | 'RECEIVED';
 
@@ -30,15 +31,26 @@ export interface DailyChartData {
   date: string;
   actual: number | null;
   forecast: number | null;
+  backtestPeriod: boolean;
+}
+
+export interface ForecastModelMetric {
+  algorithm: string;
+  mae: number;
+  wape: number | null;
+  selected: boolean;
 }
 
 export interface ReplenishmentSuggestionDetailResponse extends ReplenishmentSuggestionResponse {
   policyLeadTimeDays: number;
   policyTargetCoverDays: number;
   policyServiceLevel: number;
-  explanationJson: Record<string, any>;
+  explanationJson: { summary?: string; reasons?: string[]; formula?: Record<string, number>; [key: string]: unknown };
   historyData: DailyChartData[];
   futureForecastData: DailyChartData[];
+  modelMetrics: ForecastModelMetric[];
+  selectedModel: string;
+  selectionReason: string;
 }
 
 export interface InventoryPolicyRequest {

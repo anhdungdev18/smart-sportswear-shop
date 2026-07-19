@@ -12,6 +12,11 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
@@ -20,18 +25,29 @@ import org.springframework.test.web.servlet.MvcResult;
  * Spring Security filter chain (via MockMvc + spring-security-test, not a
  * @WebMvcTest slice), real Postgres - no service-layer mocking.
  *
- * Database: supplied explicitly via TEST_DB_URL / TEST_DB_USERNAME /
- * TEST_DB_PASSWORD. Flyway runs the real migrations against that database on
- * context startup, same as the dev profile.
+ * Database: an isolated PostgreSQL Testcontainer. Flyway runs the real migrations
+ * against the disposable database on context startup. Environment DB variables
+ * cannot redirect tests to Supabase or another shared database.
  *
- * Originally this used Testcontainers to spin up Postgres per run, which is
- * the more hermetic/self-contained choice. The current suite assumes a real
- * Postgres target is provided by the caller instead.
+ * The container is shared by the Spring test context and removed automatically.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@Testcontainers
 public abstract class AbstractIntegrationTest {
+
+    @Container
+    static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("pgvector/pgvector:pg16")
+            .withInitScript("init-pgvector.sql");
+
+    @DynamicPropertySource
+    static void databaseProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
+        registry.add("spring.datasource.username", POSTGRES::getUsername);
+        registry.add("spring.datasource.password", POSTGRES::getPassword);
+        registry.add("spring.flyway.enabled", () -> "true");
+    }
 
     @Autowired
     protected MockMvc mockMvc;

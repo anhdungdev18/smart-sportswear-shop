@@ -76,7 +76,7 @@ public class AuditLogService {
 
     @Transactional(readOnly = true)
     public ListResult list(AdminAuditLogListQuery query) {
-        Specification<AuditLog> spec = Specification.where(null);
+        Specification<AuditLog> spec = Specification.unrestricted();
         if (query.actorUserId() != null) {
             spec = spec.and(AuditLogSpecifications.byActor(query.actorUserId()));
         }
