@@ -55,8 +55,13 @@ import org.springframework.transaction.annotation.Transactional;
  *   adjust methods below all take a variant id and lock it themselves - none
  *   of their callers have a pre-existing lock to reuse.
  */
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @Service
 public class InventoryService {
+
+    private static final Logger log = LoggerFactory.getLogger(InventoryService.class);
 
     private static final int DEFAULT_LIMIT = 20;
     private static final int MAX_LIMIT = 100;
@@ -164,6 +169,12 @@ public class InventoryService {
                 beforeReserved,
                 actor,
                 request.note());
+
+        if (request.note() != null && request.note().contains("[AI_REPLENISHMENT:")) {
+            log.info("[AUDIT] AI Replenishment IMPORT by user {}: variant={}, qty={}, note={}",
+                    actor != null ? actor.getId() : "system", variant.getId(), request.quantity(), request.note());
+        }
+
         return toItemResponse(variant);
     }
 

@@ -109,6 +109,9 @@ public class DemandForecastService {
         ReplenishmentRecommendation recommendation = 
                 replenishmentService.generateRecommendation(variant, savedRun, policy);
 
+        org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(DemandForecastService.class);
+        log.info("Generating forecast for variant: {}, active policy: {}", variantId, policy.isActive());
+
         // Only save recommendation if suggestedQuantity > 0 or it's a critical item
         if (recommendation.getSuggestedQuantity() > 0 || "CRITICAL".equals(recommendation.getPriority().name())) {
             recommendationRepository.findByVariantIdAndStatus(variantId, com.dunghaiquyen.ecommerce.modules.replenishment.entity.ReplenishmentStatus.PENDING)
@@ -124,9 +127,21 @@ public class DemandForecastService {
                         existing.setPriority(recommendation.getPriority());
                         existing.setExplanation(recommendation.getExplanation());
                         recommendationRepository.save(existing);
+                        log.info("Updated existing PENDING recommendation for variant: {}", variantId);
                     },
-                    () -> recommendationRepository.save(recommendation)
+                    () -> {
+                        recommendationRepository.save(recommendation);
+                        log.info("Created new PENDING recommendation for variant: {}", variantId);
+                    }
                 );
+        } else {
+            recommendationRepository.findByVariantIdAndStatus(variantId, com.dunghaiquyen.ecommerce.modules.replenishment.entity.ReplenishmentStatus.PENDING)
+                .ifPresent(existing -> {
+                    existing.setStatus(com.dunghaiquyen.ecommerce.modules.replenishment.entity.ReplenishmentStatus.DISMISSED);
+                    existing.setAdminNote("Tự động hủy do dữ liệu mới cho thấy không còn cần nhập hàng");
+                    recommendationRepository.save(existing);
+                    log.info("Auto-dismissed unneeded PENDING recommendation for variant: {}", variantId);
+                });
         }
     }
 }

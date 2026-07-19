@@ -25,4 +25,14 @@ class EwmaForecastAlgorithmTest {
         // S2 = 0.3 * 30 + 0.7 * 13 = 9 + 9.1 = 18.1
         assertThat(result.averageDailyDemand()).isCloseTo(18.1, org.assertj.core.data.Offset.offset(0.001));
     }
+
+    @Test
+    void testForecast_doesNotReturnNaN() {
+        java.util.List<Integer> demand = new java.util.ArrayList<>();
+        demand.add(null);
+        demand.add(20);
+        ForecastResult result = algorithm.forecast(demand, 1);
+        assertThat(result.averageDailyDemand()).isNotNaN();
+        assertThat(result.averageDailyDemand()).isGreaterThan(0.0);
+    }
 }

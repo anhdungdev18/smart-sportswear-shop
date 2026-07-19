@@ -71,3 +71,11 @@ export interface ReplenishmentActionRequest {
 export interface GenerateForecastRequest {
   variantIds?: string[];
 }
+
+export interface ForecastGenerationResult {
+  requested: number;
+  succeeded: number;
+  failed: number;
+  durationMillis: number;
+  failedVariantIds: string[];
+}

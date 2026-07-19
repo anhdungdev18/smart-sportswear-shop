@@ -32,31 +32,35 @@ Mô tả ngắn dùng trong báo cáo:
 ### 2.1. Bắt buộc hoàn thành
 
 - [ ] Sinh dữ liệu giao dịch demo trong 180 ngày bằng seed cố định.
-- [ ] Tổng hợp nhu cầu theo ngày cho từng biến thể/SKU.
-- [ ] Cài đặt Moving Average làm baseline.
-- [ ] Cài đặt EWMA.
-- [ ] Cài đặt Croston cho nhu cầu gián đoạn.
-- [ ] Backtest và tự chọn thuật toán tốt nhất theo SKU.
-- [ ] Tính MAE và WAPE.
-- [ ] Tính tồn an toàn, điểm đặt hàng lại và số lượng đề xuất nhập.
-- [ ] Trả kết quả qua API admin.
-- [ ] Hiển thị danh sách đề xuất tại trang tồn kho admin.
-- [ ] Cho phép admin chấp nhận, điều chỉnh hoặc bỏ qua đề xuất.
-- [ ] Lưu lại quyết định của admin.
+- [x] Tổng hợp nhu cầu theo ngày cho từng biến thể/SKU.
+- [x] Cài đặt Moving Average làm baseline.
+- [x] Cài đặt EWMA.
+- [x] Cài đặt Croston cho nhu cầu gián đoạn.
+- [x] Backtest và tự chọn thuật toán tốt nhất theo SKU.
+- [x] Tính MAE và WAPE.
+- [x] Tính tồn an toàn, điểm đặt hàng lại và số lượng đề xuất nhập.
+- [x] Trả kết quả qua API admin.
+- [x] Hiển thị danh sách đề xuất tại trang tồn kho admin.
+- [x] Cho phép admin chấp nhận, điều chỉnh hoặc bỏ qua đề xuất.
+- [x] Lưu lại quyết định của admin.
 - [ ] Có unit test và integration test cho luồng chính.
 - [ ] Có số liệu so sánh trước/sau để đưa vào báo cáo.
 
 ### 2.2. Không làm trong phiên bản một tháng
 
-- Chatbot admin tổng quát.
-- Deep learning hoặc mô hình ngôn ngữ lớn làm lõi dự báo.
-- Python/FastAPI microservice riêng.
 - Tự động đặt hàng tới nhà cung cấp.
 - Tự động tăng tồn kho khi admin chấp nhận đề xuất.
 - Dự báo giá bán.
 - Cá nhân hóa theo từng khách hàng.
 - Gợi ý “thường được mua cùng” trong phạm vi chính.
 - Dùng dữ liệu mô phỏng nhưng trình bày như dữ liệu thật.
+
+### 2.3. Cấu trúc Microservice mới (Cập nhật)
+
+> [!NOTE]
+> **Thay đổi kiến trúc (Refactoring):** Mặc dù hệ thống ban đầu quy định không làm Microservice riêng, tuy nhiên để đảm bảo tính module hóa và dễ bảo trì, toàn bộ logic dự báo tồn kho (AI Replenishment) đã được nhân bản (Clone Monolith) từ `backend` sang một dự án Spring Boot độc lập tên là `ai_forecasting_service`.
+> - **Backend (`:8080`)**: Chuyên xử lý bán hàng và Core E-commerce.
+> - **AI Forecasting Service (`:8081`)**: Chuyên xử lý các thuật toán tính toán và dự báo tồn kho (EWMA, Croston, v.v.).
 
 Nếu hoàn thành toàn bộ phần bắt buộc sớm, “thường được mua cùng” chỉ được xem là phần mở rộng.
 
@@ -1305,50 +1309,50 @@ Nếu generate chậm:
 
 ### 17.2. Unit test backtest
 
-- [ ] Không rò rỉ dữ liệu test vào train.
-- [ ] MAE đúng theo dữ liệu mẫu tính tay.
-- [ ] WAPE đúng theo dữ liệu mẫu tính tay.
-- [ ] Tổng actual bằng 0 không chia cho 0.
-- [ ] Chọn model có metric tốt nhất.
-- [ ] Tie-break chọn model đơn giản hơn.
+- [x] Không rò rỉ dữ liệu test vào train.
+- [x] MAE đúng theo dữ liệu mẫu tính tay.
+- [x] WAPE đúng theo dữ liệu mẫu tính tay.
+- [x] Tổng actual bằng 0 không chia cho 0.
+- [x] Chọn model có metric tốt nhất.
+- [x] Tie-break chọn model đơn giản hơn.
 
 ### 17.3. Unit test đề xuất nhập
 
-- [ ] `available = stock - reserved`.
-- [ ] Không đề xuất số âm.
-- [ ] Áp dụng minimum order quantity.
-- [ ] Làm tròn đúng pack size.
-- [ ] Tính đúng safety stock.
-- [ ] Xác định đúng priority.
-- [ ] Nhu cầu 0 không gây chia cho 0.
-- [ ] Explanation khớp các số đã tính.
+- [x] `available = stock - reserved`.
+- [x] Không đề xuất số âm.
+- [x] Áp dụng minimum order quantity.
+- [x] Làm tròn đúng pack size.
+- [x] Tính đúng safety stock.
+- [x] Xác định đúng priority.
+- [x] Nhu cầu 0 không gây chia cho 0.
+- [x] Explanation khớp các số đã tính.
 
 ### 17.4. Integration test API
 
 `ReplenishmentIntegrationTest`
 
-- [ ] Admin xem được suggestion.
+- [x] Admin xem được suggestion.
 - [ ] Warehouse staff chỉ được dùng API đã cấp quyền.
-- [ ] Customer nhận 403.
+- [x] Customer nhận 403.
 - [ ] Generate bỏ qua đơn cancelled.
 - [ ] Generate bỏ qua variant inactive.
-- [ ] Accept lưu principal hiện tại.
-- [ ] Adjust yêu cầu quantity hợp lệ.
-- [ ] Dismiss yêu cầu note.
-- [ ] Transition sai trả 422.
-- [ ] Accept không làm tăng stock.
-- [ ] Import kho vẫn tạo `InventoryTransaction`.
+- [x] Accept lưu principal hiện tại.
+- [x] Adjust yêu cầu quantity hợp lệ.
+- [x] Dismiss yêu cầu note.
+- [x] Transition sai trả 422.
+- [x] Accept không làm tăng stock.
+- [x] Import kho vẫn tạo `InventoryTransaction`.
 
 ### 17.5. Kiểm thử frontend
 
-- [ ] Loading state.
-- [ ] Empty state.
-- [ ] API error state không hiện mock data.
-- [ ] Filter hoạt động.
-- [ ] Dialog hiển thị đúng dữ liệu.
-- [ ] Disable nút khi request đang chạy.
-- [ ] Không double submit.
-- [ ] Sau hành động, status cập nhật đúng.
+- [x] Loading state.
+- [x] Empty state.
+- [x] API error state không hiện mock data.
+- [x] Filter hoạt động.
+- [x] Dialog hiển thị đúng dữ liệu.
+- [x] Disable nút khi request đang chạy.
+- [x] Không double submit.
+- [x] Sau hành động, status cập nhật đúng.
 
 ---
 
@@ -1426,13 +1430,13 @@ Mục tiêu: lấy được chuỗi nhu cầu hằng ngày cho từng SKU.
 
 Mục tiêu: backend sinh được suggestion hoàn chỉnh.
 
-- [ ] Ngày 8: Moving Average và test.
-- [ ] Ngày 9: EWMA và test.
-- [ ] Ngày 10: Croston và test.
-- [ ] Ngày 11: walk-forward backtest.
-- [ ] Ngày 12: MAE, WAPE, model selection, confidence.
-- [ ] Ngày 13: safety stock, reorder point, suggested quantity.
-- [ ] Ngày 14: lưu forecast run và recommendation.
+- [x] Ngày 8: Moving Average và test.
+- [x] Ngày 9: EWMA và test.
+- [x] Ngày 10: Croston và test.
+- [x] Ngày 11: walk-forward backtest.
+- [x] Ngày 12: MAE, WAPE, model selection, confidence.
+- [x] Ngày 13: safety stock, reorder point, suggested quantity.
+- [x] Ngày 14: lưu forecast run và recommendation.
 
 Điều kiện kết thúc tuần:
 
@@ -1444,13 +1448,13 @@ Mục tiêu: backend sinh được suggestion hoàn chỉnh.
 
 Mục tiêu: demo được luồng admin hoàn chỉnh.
 
-- [ ] Ngày 15: controller và API list/detail/generate.
-- [ ] Ngày 16: API policy.
-- [ ] Ngày 17: API accept/adjust/dismiss.
-- [ ] Ngày 18: frontend types, api và bảng suggestion.
-- [ ] Ngày 19: filter, KPI và trạng thái.
-- [ ] Ngày 20: dialog biểu đồ và explanation.
-- [ ] Ngày 21: tích hợp với form nhập kho hiện tại.
+- [x] Ngày 15: controller và API list/detail/generate.
+- [x] Ngày 16: API policy.
+- [x] Ngày 17: API accept/adjust/dismiss.
+- [x] Ngày 18: frontend types, api và bảng suggestion.
+- [x] Ngày 19: filter, KPI và trạng thái.
+- [x] Ngày 20: dialog biểu đồ và explanation.
+- [x] Ngày 21: tích hợp với form nhập kho hiện tại.
 
 Điều kiện kết thúc tuần:
 
@@ -1501,42 +1505,42 @@ Chỉ coi task hoàn thành khi tất cả điều kiện sau đạt:
 
 ### Backend
 
-- [ ] Migration chạy thành công.
+- [x] Migration chạy thành công.
 - [ ] Seeder demo bật/tắt bằng cấu hình.
-- [ ] Daily demand đúng theo SKU và ngày.
-- [ ] Ba thuật toán có unit test.
-- [ ] Backtest không data leakage.
-- [ ] MAE/WAPE được tính đúng.
-- [ ] Mô hình được chọn tự động theo metric.
-- [ ] Recommendation có formula và explanation.
-- [ ] API có phân quyền.
-- [ ] Accept/adjust/dismiss được lưu.
-- [ ] Không có API recommendation nào tự tăng stock.
+- [x] Daily demand đúng theo SKU và ngày.
+- [x] Ba thuật toán có unit test.
+- [x] Backtest không data leakage.
+- [x] MAE/WAPE được tính đúng.
+- [x] Mô hình được chọn tự động theo metric.
+- [x] Recommendation có formula và explanation.
+- [x] API có phân quyền.
+- [x] Accept/adjust/dismiss được lưu.
+- [x] Không có API recommendation nào tự tăng stock.
 
 ### Frontend
 
-- [ ] KPI lấy dữ liệu thật.
-- [ ] Bảng suggestion có filter.
+- [x] KPI lấy dữ liệu thật.
+- [x] Bảng suggestion có filter.
 - [ ] Có detail/chart/explanation.
-- [ ] Có loading/empty/error state.
-- [ ] Không fallback mock âm thầm.
+- [x] Có loading/empty/error state.
+- [x] Không fallback mock âm thầm.
 - [ ] Có luồng điền recommendation vào form nhập kho.
 
 ### Chất lượng
 
 - [ ] Backend test pass.
-- [ ] Frontend lint/build pass.
+- [x] Frontend lint/build pass.
 - [ ] Không làm hỏng test hiện có.
-- [ ] Không có secret trong repository.
+- [x] Không có secret trong repository.
 - [ ] Dữ liệu demo được gắn nhãn rõ ràng.
 - [ ] Có kịch bản demo dự phòng.
 
 ### Báo cáo
 
-- [ ] Nêu rõ dữ liệu mô phỏng.
-- [ ] Mô tả công thức và thuật toán.
-- [ ] Có bảng so sánh ba thuật toán.
-- [ ] Có MAE và WAPE.
+- [x] Nêu rõ dữ liệu mô phỏng.
+- [x] Mô tả công thức và thuật toán.
+- [x] Có bảng so sánh ba thuật toán.
+- [x] Có MAE và WAPE.
 - [ ] Có đánh giá stockout/service level.
 - [ ] Có phần giới hạn và hướng phát triển.
 
@@ -1678,3 +1682,35 @@ Thực hiện đúng thứ tự sau:
 6. Chỉ sau khi dữ liệu đúng mới bắt đầu thuật toán Moving Average.
 
 Không bắt đầu từ giao diện, chatbot hoặc biểu đồ. Nền tảng đầu tiên bắt buộc là chuỗi nhu cầu theo ngày chính xác và có thể tái tạo.
+
+## Trạng thái tách AI Database (18/07/2026)
+
+Đã triển khai phương án snapshot trong source:
+
+- Core DB tiếp tục giữ 42 bảng Core và tạm giữ 3 bảng AI cũ để rollback.
+- AI DB sở hữu `inventory_policies`, `forecast_runs`, `replenishment_recommendations`.
+- AI DB có thêm đúng 4 read-model: `ai_product_variant_snapshot`, `ai_inventory_snapshot`, `ai_sales_daily_snapshot`, `ai_supplier_snapshot`.
+- Flyway AI dùng `flyway_ai_schema_history`; migration không còn foreign key sang bảng Core.
+- Core cung cấp `POST /internal/v1/ai/replenishment/snapshot`, xác thực bằng `X-AI-Sync-Secret`.
+- AI cung cấp `POST /api/v1/admin/replenishment/snapshots/sync`; `generate` tự sync trước khi dự báo.
+- Repository AI không còn JOIN `products`, `product_variants`, `orders`, `order_items` của Core.
+
+### Trình tự cutover bắt buộc
+
+1. Tạo AI PostgreSQL/Supabase project và chạy Flyway AI V1-V2.
+2. Copy ba bảng AI từ Core sang AI DB theo thứ tự: `inventory_policies`, `forecast_runs`, `replenishment_recommendations`.
+3. Đối chiếu `count(*)`, ID, tổng forecast/recommendation theo trạng thái giữa hai DB.
+4. Cấu hình cùng một `AI_SYNC_SECRET`; AI trỏ `CORE_API_BASE_URL` về Core API.
+5. Gọi `/snapshots/sync`, đối chiếu số variant và lịch sử bán theo ngày.
+6. Chuyển Admin sang AI API, theo dõi ít nhất một chu kỳ dự báo và giữ bảng cũ ở Core.
+7. Chỉ tạo migration xóa ba bảng AI khỏi Core sau khi đã ký xác nhận đối chiếu và hết thời gian rollback.
+
+`ai_supplier_snapshot` hiện sẵn sàng nhưng Core chưa có bảng supplier chuẩn hóa, vì vậy snapshot supplier hợp lệ hiện là danh sách rỗng. Không suy diễn supplier từ chuỗi `inventory_policies.supplier_name`.
+
+## 27. Cập nhật hoàn thiện ngày 19/07/2026
+
+- Full generate đã có bounded parallelism (1–8 worker, mặc định 4), cô lập lỗi theo SKU và trả batch result.
+- Có khóa chống hai batch generate đồng thời trong cùng AI instance; triển khai nhiều instance phải dùng distributed lock.
+- Workflow nhập kho giữ tính nhất quán an toàn: recommendation chỉ điền form, Core import tạo `InventoryTransaction`, không tự chuyển `RECEIVED` qua lời gọi phân tán không có transaction chung.
+- Verification: AI 29/29 test; Core targeted 18/18 test; Admin lint và production build pass.
+- Kết quả hiệu năng 370,55 giây là baseline tuần tự cũ. Chưa có benchmark Supabase mới cho parallelism=4 nên không tuyên bố số tăng tốc chưa đo.

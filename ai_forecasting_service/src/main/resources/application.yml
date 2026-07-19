@@ -15,6 +15,7 @@ spring:
     properties:
       hibernate:
         jdbc.time_zone: UTC
+        default_batch_fetch_size: 100
   flyway:
     enabled: true
     locations: classpath:db/ai-migration
@@ -35,6 +36,8 @@ management:
         enabled: true
 
 app:
+  forecast:
+    generation-parallelism: ${FORECAST_GENERATION_PARALLELISM:4}
   core:
     base-url: ${CORE_API_BASE_URL:http://localhost:8080}
     sync-secret: ${AI_SYNC_SECRET:dev-only-ai-sync-secret-change-me}

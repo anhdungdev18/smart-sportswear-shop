@@ -10,9 +10,9 @@ import com.dunghaiquyen.ecommerce.modules.replenishment.entity.ReplenishmentReco
 import com.dunghaiquyen.ecommerce.modules.replenishment.entity.ReplenishmentStatus;
 import com.dunghaiquyen.ecommerce.modules.replenishment.repository.InventoryPolicyRepository;
 import com.dunghaiquyen.ecommerce.modules.replenishment.repository.ReplenishmentRecommendationRepository;
-import com.dunghaiquyen.ecommerce.modules.replenishment.service.DemandForecastService;
 import com.dunghaiquyen.ecommerce.modules.replenishment.service.DailyDemandService;
 import com.dunghaiquyen.ecommerce.modules.replenishment.service.ForecastBacktestService;
+import com.dunghaiquyen.ecommerce.modules.replenishment.service.ForecastGenerationService;
 import jakarta.validation.Valid;
 import com.dunghaiquyen.ecommerce.modules.replenishment.service.CoreSnapshotSyncService;
 import com.dunghaiquyen.ecommerce.modules.replenishment.repository.VariantReadRepository;
@@ -32,33 +32,38 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @RestController
 @RequestMapping("/api/v1/admin/replenishment")
 @PreAuthorize("hasAuthority('ROLE_ADMIN')")
 public class AdminReplenishmentController {
 
-    private final DemandForecastService demandForecastService;
+    private static final Logger log = LoggerFactory.getLogger(AdminReplenishmentController.class);
+
     private final CoreSnapshotSyncService snapshotSyncService;
     private final ReplenishmentRecommendationRepository recommendationRepository;
     private final InventoryPolicyRepository policyRepository;
     private final VariantReadRepository variantRepository;
     private final DailyDemandService dailyDemandService;
     private final ForecastBacktestService forecastBacktestService;
+    private final ForecastGenerationService forecastGenerationService;
 
-    public AdminReplenishmentController(DemandForecastService demandForecastService,
-                                        CoreSnapshotSyncService snapshotSyncService,
+    public AdminReplenishmentController(                                        CoreSnapshotSyncService snapshotSyncService,
                                         ReplenishmentRecommendationRepository recommendationRepository,
                                         InventoryPolicyRepository policyRepository,
                                         VariantReadRepository variantRepository,
                                         DailyDemandService dailyDemandService,
-                                        ForecastBacktestService forecastBacktestService) {
-        this.demandForecastService = demandForecastService;
+                                        ForecastBacktestService forecastBacktestService,
+                                        ForecastGenerationService forecastGenerationService) {
         this.snapshotSyncService = snapshotSyncService;
         this.recommendationRepository = recommendationRepository;
         this.policyRepository = policyRepository;
         this.variantRepository = variantRepository;
         this.dailyDemandService = dailyDemandService;
         this.forecastBacktestService = forecastBacktestService;
+        this.forecastGenerationService = forecastGenerationService;
     }
 
     @GetMapping("/suggestions")
@@ -69,11 +74,15 @@ public class AdminReplenishmentController {
             @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int limit) {
-        
+
         Pageable pageable = PageRequest.of(page - 1, limit);
         Page<ReplenishmentRecommendation> result = recommendationRepository.searchRecommendations(status, priority, keyword, pageable);
-        
-        Page<ReplenishmentSuggestionResponse> responsePage = result.map(this::mapToResponse);
+
+        List<UUID> variantIds = result.getContent().stream().map(ReplenishmentRecommendation::getVariantId).toList();
+        Map<UUID, VariantSnapshot> variantMap = new HashMap<>();
+        variantRepository.findAllByIds(variantIds).forEach(v -> variantMap.put(v.id(), v));
+
+        Page<ReplenishmentSuggestionResponse> responsePage = result.map(rec -> mapToResponse(rec, variantMap.get(rec.getVariantId())));
         return ApiResponse.ok(responsePage);
     }
 
@@ -82,10 +91,12 @@ public class AdminReplenishmentController {
     public ApiResponse<ReplenishmentSuggestionDetailResponse> getDetail(@PathVariable UUID id) {
         ReplenishmentRecommendation rec = recommendationRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Recommendation not found"));
-        
+
         ReplenishmentSuggestionDetailResponse detail = new ReplenishmentSuggestionDetailResponse();
-        mapToResponse(rec, detail);
-        
+        VariantSnapshot variant = variantRepository.findById(rec.getVariantId())
+                .orElseThrow(() -> new IllegalStateException("Core variant no longer exists: " + rec.getVariantId()));
+        mapToResponse(rec, detail, variant);
+
         InventoryPolicy policy = policyRepository.findByVariantId(rec.getVariantId())
                 .orElse(null);
         if (policy != null) {
@@ -93,10 +104,10 @@ public class AdminReplenishmentController {
             detail.setPolicyTargetCoverDays(policy.getTargetCoverDays());
             detail.setPolicyServiceLevel(policy.getServiceLevel().doubleValue());
         }
-        
+
         detail.setExplanationJson(rec.getExplanation());
         populateForecastDetail(detail, rec);
-        
+
         return ApiResponse.ok(detail);
     }
 
@@ -109,31 +120,24 @@ public class AdminReplenishmentController {
     }
 
     @PostMapping("/generate")
-    public ApiResponse<Void> generate(@RequestBody(required = false) GenerateForecastRequest request) {
-        List<UUID> variantIds;
-        if (request != null && request.getVariantIds() != null && !request.getVariantIds().isEmpty()) {
-            variantIds = request.getVariantIds();
-        } else {
-            variantIds = variantRepository.findAllActiveIds();
-        }
-        
+    public ApiResponse<ForecastGenerationService.GenerationResult> generate(
+            @RequestBody(required = false) GenerateForecastRequest request) {
+        List<UUID> requestedIds = request == null ? List.of() : request.getVariantIds();
         LocalDate today = LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh"));
         LocalDate from = today.minusDays(180);
-        
-        snapshotSyncService.sync(from, today, variantIds);
 
-        for (UUID variantId : variantIds) {
-            demandForecastService.generateForecastAndRecommendation(variantId, from, today);
-        }
-        
-        return ApiResponse.ok(null);
+        snapshotSyncService.sync(from, today, requestedIds);
+        List<UUID> variantIds = requestedIds == null || requestedIds.isEmpty()
+                ? variantRepository.findAllActiveIds()
+                : requestedIds;
+        return ApiResponse.ok(forecastGenerationService.generate(variantIds, from, today));
     }
 
     @PutMapping("/policies/{variantId}")
     public ApiResponse<Void> updatePolicy(@PathVariable UUID variantId, @Valid @RequestBody InventoryPolicyRequest request) {
         InventoryPolicy policy = policyRepository.findByVariantId(variantId)
                 .orElseThrow(() -> new IllegalArgumentException("Policy not found"));
-        
+
         policy.setLeadTimeDays(request.getLeadTimeDays());
         policy.setTargetCoverDays(request.getTargetCoverDays());
         policy.setServiceLevel(request.getServiceLevel());
@@ -141,7 +145,10 @@ public class AdminReplenishmentController {
         policy.setPackSize(request.getPackSize());
         policy.setSupplierName(request.getSupplierName());
         policy.setActive(request.isActive());
-        
+
+        log.info("[AUDIT] AI Policy updated by Admin for variantId: {}, leadTime={}, targetCover={}, serviceLevel={}, MOQ={}, packSize={}",
+                variantId, request.getLeadTimeDays(), request.getTargetCoverDays(), request.getServiceLevel(), request.getMinimumOrderQuantity(), request.getPackSize());
+
         policyRepository.save(policy);
         return ApiResponse.ok(null);
     }
@@ -151,7 +158,7 @@ public class AdminReplenishmentController {
             @PathVariable UUID id,
             @RequestBody(required = false) ReplenishmentActionRequest request,
             @AuthenticationPrincipal CustomUserDetails principal) {
-        
+
         ReplenishmentRecommendation rec = recommendationRepository.findById(id).orElseThrow();
         if (rec.getStatus() != ReplenishmentStatus.PENDING) {
             throw new IllegalArgumentException("Invalid state transition");
@@ -163,8 +170,11 @@ public class AdminReplenishmentController {
         }
         rec.setActedBy(principal.getUserId());
         rec.setActedAt(Instant.now());
+
+        log.info("[AUDIT] Recommendation {} ACCEPTED by user {}, variant={}, qty={}, note={}",
+                id, principal.getUserId(), rec.getVariantId(), rec.getAdminQuantity(), rec.getAdminNote());
+
         recommendationRepository.save(rec);
-        
         return ApiResponse.ok(null);
     }
 
@@ -173,7 +183,7 @@ public class AdminReplenishmentController {
             @PathVariable UUID id,
             @RequestBody ReplenishmentActionRequest request,
             @AuthenticationPrincipal CustomUserDetails principal) {
-        
+
         ReplenishmentRecommendation rec = recommendationRepository.findById(id).orElseThrow();
         if (rec.getStatus() != ReplenishmentStatus.PENDING) {
             throw new IllegalArgumentException("Invalid state transition");
@@ -181,14 +191,17 @@ public class AdminReplenishmentController {
         if (request.getQuantity() == null || request.getQuantity() < 0) {
             throw new IllegalArgumentException("Quantity is invalid");
         }
-        
+
         rec.setStatus(ReplenishmentStatus.ADJUSTED);
         rec.setAdminQuantity(request.getQuantity());
         rec.setAdminNote(request.getNote());
         rec.setActedBy(principal.getUserId());
         rec.setActedAt(Instant.now());
+
+        log.info("[AUDIT] Recommendation {} ADJUSTED by user {}, variant={}, new_qty={}, note={}",
+                id, principal.getUserId(), rec.getVariantId(), rec.getAdminQuantity(), rec.getAdminNote());
+
         recommendationRepository.save(rec);
-        
         return ApiResponse.ok(null);
     }
 
@@ -197,7 +210,7 @@ public class AdminReplenishmentController {
             @PathVariable UUID id,
             @RequestBody ReplenishmentActionRequest request,
             @AuthenticationPrincipal CustomUserDetails principal) {
-        
+
         ReplenishmentRecommendation rec = recommendationRepository.findById(id).orElseThrow();
         if (rec.getStatus() != ReplenishmentStatus.PENDING) {
             throw new IllegalArgumentException("Invalid state transition");
@@ -209,8 +222,11 @@ public class AdminReplenishmentController {
         rec.setAdminNote(request.getNote());
         rec.setActedBy(principal.getUserId());
         rec.setActedAt(Instant.now());
+
+        log.info("[AUDIT] Recommendation {} DISMISSED by user {}, variant={}, note={}",
+                id, principal.getUserId(), rec.getVariantId(), rec.getAdminNote());
+
         recommendationRepository.save(rec);
-        
         return ApiResponse.ok(null);
     }
 
@@ -251,16 +267,17 @@ public class AdminReplenishmentController {
         detail.setSelectedModel(run.getAlgorithm().name());
         detail.setSelectionReason("Mô hình có WAPE thấp nhất trên 30 ngày backtest walk-forward; nếu hòa, ưu tiên mô hình đơn giản hơn.");
     }
-    private ReplenishmentSuggestionResponse mapToResponse(ReplenishmentRecommendation rec) {
+    private ReplenishmentSuggestionResponse mapToResponse(ReplenishmentRecommendation rec, VariantSnapshot variant) {
         ReplenishmentSuggestionResponse res = new ReplenishmentSuggestionResponse();
-        mapToResponse(rec, res);
+        if (variant == null) {
+            throw new IllegalStateException("Core variant no longer exists: " + rec.getVariantId());
+        }
+        mapToResponse(rec, res, variant);
         return res;
     }
-    
-    private void mapToResponse(ReplenishmentRecommendation rec, ReplenishmentSuggestionResponse res) {
+
+    private void mapToResponse(ReplenishmentRecommendation rec, ReplenishmentSuggestionResponse res, VariantSnapshot variant) {
         res.setId(rec.getId());
-        VariantSnapshot variant = variantRepository.findById(rec.getVariantId())
-                .orElseThrow(() -> new IllegalStateException("Core variant no longer exists: " + rec.getVariantId()));
         res.setVariantId(variant.id());
         res.setProductId(variant.productId());
         res.setSku(variant.sku());

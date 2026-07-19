@@ -34,12 +34,14 @@ import org.springframework.test.web.servlet.MvcResult;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-@Testcontainers
 public abstract class AbstractIntegrationTest {
 
-    @Container
     static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("pgvector/pgvector:pg16")
             .withInitScript("init-pgvector.sql");
+
+    static {
+        POSTGRES.start();
+    }
 
     @DynamicPropertySource
     static void databaseProperties(DynamicPropertyRegistry registry) {

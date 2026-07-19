@@ -43,9 +43,11 @@ export function ReplenishmentSuggestionTable({ initialSuggestions, onFillImport 
     if (generating) return;
     setGenerating(true); setError(null); setMessage(null);
     try {
-      await generateForecast();
+      const result = await generateForecast();
       await refresh();
-      setMessage("Đã đồng bộ dữ liệu và sinh đề xuất mới thành công.");
+      setMessage(result.failed === 0
+        ? `Đã dự báo thành công ${result.succeeded}/${result.requested} SKU trong ${(result.durationMillis / 1000).toFixed(1)} giây.`
+        : `Đã dự báo ${result.succeeded}/${result.requested} SKU; ${result.failed} SKU lỗi đã được cô lập và ghi log.`);
     } catch (cause) {
       console.error(cause);
       setError("Không thể sinh đề xuất. Hãy kiểm tra phiên Admin và trạng thái AI service.");
