@@ -139,7 +139,7 @@ class AdminReplenishmentControllerIntegrationTest {
                         .header("Authorization", bearer(ADMIN_ID, "ADMIN"))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"note\":\"too late\"}"))
-                .andExpect(status().isUnprocessableEntity());
+                .andExpect(status().isConflict());
     }
 
     private ReplenishmentRecommendation pendingRecommendation(UUID variantId, int suggestedQuantity) {

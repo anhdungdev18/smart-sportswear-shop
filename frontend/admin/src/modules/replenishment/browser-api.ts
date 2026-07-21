@@ -1,5 +1,5 @@
 import { browserAiApiRequest } from "@/modules/ai-api/browser-client";
-import type { ForecastGenerationResult, GenerateForecastRequest, InventoryPolicyRequest, PageResponse, ReplenishmentActionRequest, ReplenishmentSuggestionDetailResponse, ReplenishmentSuggestionResponse } from "./types";
+import type { ForecastGenerationStatus, GenerateForecastRequest, InventoryPolicyRequest, PageResponse, ReplenishmentActionRequest, ReplenishmentSuggestionDetailResponse, ReplenishmentSuggestionResponse } from "./types";
 
 export async function listSuggestions() {
   return browserAiApiRequest<PageResponse<ReplenishmentSuggestionResponse>>("/api/v1/admin/replenishment/suggestions");
@@ -10,10 +10,14 @@ export async function getSuggestionDetail(id: string) {
 }
 
 export async function generateForecast(request?: GenerateForecastRequest) {
-  return browserAiApiRequest<ForecastGenerationResult>("/api/v1/admin/replenishment/generate", {
+  return browserAiApiRequest<void>("/api/v1/admin/replenishment/generate", {
     method: "POST",
     body: JSON.stringify(request || {})
   });
+}
+
+export async function getForecastGenerationStatus() {
+  return browserAiApiRequest<ForecastGenerationStatus>("/api/v1/admin/replenishment/generate/status");
 }
 
 export async function updatePolicy(variantId: string, request: InventoryPolicyRequest) {

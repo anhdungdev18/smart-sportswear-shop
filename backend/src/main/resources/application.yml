@@ -168,6 +168,15 @@ app:
     # app start. Run with --app.seed.enabled=true when you explicitly want it.
     enabled: ${APP_SEED_ENABLED:false}
     demo-password: ${APP_SEED_DEMO_PASSWORD:Password123}
+  forecast-demo:
+    enabled: ${FORECAST_DEMO_ENABLED:false}
+    random-seed: ${FORECAST_DEMO_RANDOM_SEED:2026}
+    anchor-date: ${FORECAST_DEMO_ANCHOR_DATE:2026-07-16}
+    history-days: ${FORECAST_DEMO_HISTORY_DAYS:180}
+    order-count: ${FORECAST_DEMO_ORDER_COUNT:3000}
+    variant-count: ${FORECAST_DEMO_VARIANT_COUNT:50}
+    marker: ${FORECAST_DEMO_MARKER:[FORECAST_DEMO]}
+    cleanup-before-seed: ${FORECAST_DEMO_CLEANUP:true}
   storage:
     provider: ${APP_STORAGE_PROVIDER:none}
   cloudinary:

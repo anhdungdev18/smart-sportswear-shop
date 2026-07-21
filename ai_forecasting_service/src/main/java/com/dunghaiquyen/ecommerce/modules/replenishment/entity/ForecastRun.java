@@ -61,4 +61,8 @@ public class ForecastRun extends AbstractEntity {
     @CreatedDate
     @Column(name = "generated_at", nullable = false, updatable = false)
     private Instant generatedAt;
+
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.JSON)
+    @Column(name = "daily_forecast", columnDefinition = "jsonb")
+    private java.util.List<Double> dailyForecast;
 }

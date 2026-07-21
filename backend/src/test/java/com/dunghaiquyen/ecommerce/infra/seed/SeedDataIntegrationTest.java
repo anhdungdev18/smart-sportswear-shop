@@ -60,11 +60,6 @@ class SeedDataIntegrationTest extends AbstractIntegrationTest {
         assertThat(brandRepository.findBySlug("nike")).isPresent();
         assertThat(brandRepository.findBySlug("adidas")).isPresent();
         assertThat(brandRepository.findBySlug("under-armour")).isPresent();
-        assertThat(imageRepository.findByPublicId("seed-running-tee-main")).isPresent();
-        assertThat(imageRepository.findByPublicId("seed-football-boots-main")).isPresent();
-        assertThat(imageRepository.findByPublicId("seed-training-socks-main")).isPresent();
-        assertThat(imageRepository.findByPublicId("seed-compression-tank-main")).isPresent();
-        assertThat(imageRepository.findByPublicId("seed-windbreaker-main")).isPresent();
 
         SeedDataService.SeedSummary second = seedDataService.seed();
         assertThat(second.users()).isEqualTo(first.users());

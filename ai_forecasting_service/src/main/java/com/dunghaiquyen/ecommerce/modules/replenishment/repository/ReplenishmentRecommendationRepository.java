@@ -11,6 +11,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 public interface ReplenishmentRecommendationRepository extends JpaRepository<ReplenishmentRecommendation, UUID> {
     Optional<ReplenishmentRecommendation> findByVariantIdAndStatus(UUID variantId, ReplenishmentStatus status);
+    java.util.List<ReplenishmentRecommendation> findAllByVariantIdInAndStatus(java.util.List<UUID> variantIds, ReplenishmentStatus status);
     @Query(value="""
         select r.* from replenishment_recommendations r join ai_product_variant_snapshot v on v.variant_id=r.variant_id
         where (cast(:status as text) is null or r.status=cast(:status as text)) and (cast(:priority as text) is null or r.priority=cast(:priority as text))

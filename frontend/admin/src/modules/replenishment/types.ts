@@ -79,3 +79,15 @@ export interface ForecastGenerationResult {
   durationMillis: number;
   failedVariantIds: string[];
 }
+
+export type GenerationStatusType = 'IDLE' | 'SYNCING' | 'FORECASTING' | 'COMPLETED' | 'FAILED';
+
+export interface ForecastGenerationStatus {
+  status: GenerationStatusType;
+  requested: number;
+  processed: number;
+  succeeded: number;
+  failed: number;
+  durationMillis: number;
+  failedVariantIds: string[];
+}

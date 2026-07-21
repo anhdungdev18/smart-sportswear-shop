@@ -37,7 +37,7 @@ import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/api/v1/admin/replenishment")
-@PreAuthorize("hasAuthority('ROLE_ADMIN')")
+@PreAuthorize("hasRole('ADMIN')")
 public class AdminReplenishmentController {
 
     private static final Logger log = LoggerFactory.getLogger(AdminReplenishmentController.class);
@@ -90,7 +90,7 @@ public class AdminReplenishmentController {
     @Transactional(readOnly = true)
     public ApiResponse<ReplenishmentSuggestionDetailResponse> getDetail(@PathVariable UUID id) {
         ReplenishmentRecommendation rec = recommendationRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Recommendation not found"));
+                .orElseThrow(() -> new java.util.NoSuchElementException("Recommendation not found"));
 
         ReplenishmentSuggestionDetailResponse detail = new ReplenishmentSuggestionDetailResponse();
         VariantSnapshot variant = variantRepository.findById(rec.getVariantId())
@@ -120,23 +120,64 @@ public class AdminReplenishmentController {
     }
 
     @PostMapping("/generate")
-    public ApiResponse<ForecastGenerationService.GenerationResult> generate(
+    public ApiResponse<Void> generate(
             @RequestBody(required = false) GenerateForecastRequest request) {
         List<UUID> requestedIds = request == null ? List.of() : request.getVariantIds();
         LocalDate today = LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh"));
         LocalDate from = today.minusDays(180);
 
-        snapshotSyncService.sync(from, today, requestedIds);
-        List<UUID> variantIds = requestedIds == null || requestedIds.isEmpty()
-                ? variantRepository.findAllActiveIds()
-                : requestedIds;
-        return ApiResponse.ok(forecastGenerationService.generate(variantIds, from, today));
+        forecastGenerationService.startSync();
+
+        java.util.concurrent.CompletableFuture.runAsync(() -> {
+            try {
+                snapshotSyncService.sync(from, today, requestedIds);
+                List<UUID> variantIds = requestedIds == null || requestedIds.isEmpty()
+                        ? variantRepository.findAllActiveIds()
+                        : requestedIds;
+                forecastGenerationService.startGenerationAsync(variantIds, from, today);
+            } catch (Exception e) {
+                log.error("Failed during sync phase", e);
+                forecastGenerationService.failBatch();
+            }
+        });
+
+        return ApiResponse.ok(null);
+    }
+
+    @PostMapping("/evaluate")
+    public ApiResponse<Void> evaluate(
+            @RequestBody(required = false) GenerateForecastRequest request) {
+        List<UUID> requestedIds = request == null ? List.of() : request.getVariantIds();
+        LocalDate today = LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh"));
+        LocalDate from = today.minusDays(180);
+
+        forecastGenerationService.startSync();
+
+        java.util.concurrent.CompletableFuture.runAsync(() -> {
+            try {
+                snapshotSyncService.sync(from, today, requestedIds);
+                List<UUID> variantIds = requestedIds == null || requestedIds.isEmpty()
+                        ? variantRepository.findAllActiveIds()
+                        : requestedIds;
+                forecastGenerationService.startEvaluationAsync(variantIds, from, today);
+            } catch (Exception e) {
+                log.error("Failed during sync phase", e);
+                forecastGenerationService.failBatch();
+            }
+        });
+
+        return ApiResponse.ok(null);
+    }
+
+    @GetMapping("/generate/status")
+    public ApiResponse<com.dunghaiquyen.ecommerce.modules.replenishment.dto.ForecastGenerationStatus> getGenerationStatus() {
+        return ApiResponse.ok(forecastGenerationService.getStatus());
     }
 
     @PutMapping("/policies/{variantId}")
     public ApiResponse<Void> updatePolicy(@PathVariable UUID variantId, @Valid @RequestBody InventoryPolicyRequest request) {
         InventoryPolicy policy = policyRepository.findByVariantId(variantId)
-                .orElseThrow(() -> new IllegalArgumentException("Policy not found"));
+                .orElseThrow(() -> new java.util.NoSuchElementException("Policy not found"));
 
         policy.setLeadTimeDays(request.getLeadTimeDays());
         policy.setTargetCoverDays(request.getTargetCoverDays());
@@ -161,7 +202,7 @@ public class AdminReplenishmentController {
 
         ReplenishmentRecommendation rec = recommendationRepository.findById(id).orElseThrow();
         if (rec.getStatus() != ReplenishmentStatus.PENDING) {
-            throw new IllegalArgumentException("Invalid state transition");
+            throw new IllegalStateException("Invalid state transition");
         }
         rec.setStatus(ReplenishmentStatus.ACCEPTED);
         rec.setAdminQuantity(rec.getSuggestedQuantity());
@@ -186,7 +227,7 @@ public class AdminReplenishmentController {
 
         ReplenishmentRecommendation rec = recommendationRepository.findById(id).orElseThrow();
         if (rec.getStatus() != ReplenishmentStatus.PENDING) {
-            throw new IllegalArgumentException("Invalid state transition");
+            throw new IllegalStateException("Invalid state transition");
         }
         if (request.getQuantity() == null || request.getQuantity() < 0) {
             throw new IllegalArgumentException("Quantity is invalid");
@@ -213,7 +254,7 @@ public class AdminReplenishmentController {
 
         ReplenishmentRecommendation rec = recommendationRepository.findById(id).orElseThrow();
         if (rec.getStatus() != ReplenishmentStatus.PENDING) {
-            throw new IllegalArgumentException("Invalid state transition");
+            throw new IllegalStateException("Invalid state transition");
         }
         if (request.getNote() == null || request.getNote().isBlank()) {
             throw new IllegalArgumentException("Note is required for dismissal");
@@ -254,11 +295,19 @@ public class AdminReplenishmentController {
                         points.get(index).date().toString(), (double) points.get(index).quantity(),
                         predictions.get(index), index >= firstBacktestIndex))
                 .toList());
-        double dailyForecast = run.getAverageDailyDemand().doubleValue();
-        detail.setFutureForecastData(java.util.stream.IntStream.rangeClosed(1, run.getForecastHorizonDays())
-                .mapToObj(day -> new ReplenishmentSuggestionDetailResponse.DailyChartData(
-                        run.getTrainingTo().plusDays(day).toString(), null, dailyForecast, false))
-                .toList());
+        List<Double> persistedForecast = run.getDailyForecast();
+        if (persistedForecast != null && persistedForecast.size() == run.getForecastHorizonDays()) {
+            detail.setFutureForecastData(java.util.stream.IntStream.rangeClosed(1, run.getForecastHorizonDays())
+                    .mapToObj(day -> new ReplenishmentSuggestionDetailResponse.DailyChartData(
+                            run.getTrainingTo().plusDays(day).toString(), null, persistedForecast.get(day - 1), false))
+                    .toList());
+        } else {
+            double dailyForecast = run.getAverageDailyDemand().doubleValue();
+            detail.setFutureForecastData(java.util.stream.IntStream.rangeClosed(1, run.getForecastHorizonDays())
+                    .mapToObj(day -> new ReplenishmentSuggestionDetailResponse.DailyChartData(
+                            run.getTrainingTo().plusDays(day).toString(), null, dailyForecast, false))
+                    .toList());
+        }
         detail.setModelMetrics(backtest.allMetrics().stream()
                 .map(metric -> new ReplenishmentSuggestionDetailResponse.ModelMetric(
                         metric.algorithm().name(), metric.mae(), metric.wape(),
