@@ -2,6 +2,7 @@ package com.dunghaiquyen.ecommerce.modules.product.service;
 
 import com.dunghaiquyen.ecommerce.common.exception.BusinessRuleException;
 import com.dunghaiquyen.ecommerce.common.exception.ResourceNotFoundException;
+import com.dunghaiquyen.ecommerce.config.CacheConfig;
 import com.dunghaiquyen.ecommerce.modules.product.dto.ProductVariantResponse;
 import com.dunghaiquyen.ecommerce.modules.product.dto.VariantCreateRequest;
 import com.dunghaiquyen.ecommerce.modules.product.dto.VariantUpdateRequest;
@@ -13,6 +14,8 @@ import com.dunghaiquyen.ecommerce.modules.product.repository.ProductRepository;
 import com.dunghaiquyen.ecommerce.modules.product.repository.ProductVariantRepository;
 import java.util.UUID;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,6 +42,10 @@ public class ProductVariantService {
     }
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = CacheConfig.REPORT_OVERVIEW, allEntries = true),
+            @CacheEvict(value = CacheConfig.REPORT_INVENTORY, allEntries = true)
+    })
     public ProductVariantResponse create(UUID productId, VariantCreateRequest request) {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
@@ -66,6 +73,10 @@ public class ProductVariantService {
     }
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = CacheConfig.REPORT_OVERVIEW, allEntries = true),
+            @CacheEvict(value = CacheConfig.REPORT_INVENTORY, allEntries = true)
+    })
     public ProductVariantResponse update(UUID variantId, VariantUpdateRequest request) {
         ProductVariant variant = variantRepository.findById(variantId)
                 .orElseThrow(() -> new ResourceNotFoundException("Variant not found"));

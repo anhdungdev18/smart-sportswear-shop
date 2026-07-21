@@ -17,11 +17,13 @@ export function NavigationProgress() {
     prevPathname.current = pathname;
 
     clearInterval(tickRef.current);
-    setWidth(100);
     hideRef.current = setTimeout(() => {
-      setVisible(false);
-      setWidth(0);
-    }, 220);
+      setWidth(100);
+      hideRef.current = setTimeout(() => {
+        setVisible(false);
+        setWidth(0);
+      }, 220);
+    }, 0);
   }, [pathname]);
 
   // Listen for anchor clicks to start the bar

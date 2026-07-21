@@ -67,7 +67,7 @@ public class BannerService {
 
     @Transactional(readOnly = true)
     public ListResult list(BannerListQuery query) {
-        Specification<Banner> spec = Specification.where(null);
+        Specification<Banner> spec = Specification.unrestricted();
         if (query.status() != null) {
             spec = spec.and(BannerSpecifications.hasStatus(query.status()));
         }

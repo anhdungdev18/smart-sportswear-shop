@@ -208,7 +208,7 @@ public class ReturnService {
 
     @Transactional(readOnly = true)
     public ListResult<ReturnResponse> listForAdmin(AdminReturnListQuery query) {
-        Specification<Return> spec = Specification.where(null);
+        Specification<Return> spec = Specification.unrestricted();
         if (query.status() != null) {
             spec = spec.and(ReturnSpecifications.hasStatus(query.status()));
         }

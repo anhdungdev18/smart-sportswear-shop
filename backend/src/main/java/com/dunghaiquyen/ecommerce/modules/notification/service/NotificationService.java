@@ -123,7 +123,7 @@ public class NotificationService {
 
     @Transactional(readOnly = true)
     public ListResult list(AdminNotificationListQuery query) {
-        Specification<Notification> spec = Specification.where(null);
+        Specification<Notification> spec = Specification.unrestricted();
         if (query.type() != null) {
             spec = spec.and(NotificationSpecifications.hasType(query.type()));
         }
