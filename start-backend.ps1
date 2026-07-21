@@ -1,13 +1,36 @@
-# Load .env vars and start Spring Boot backend
+$ErrorActionPreference = "Stop"
+
 $envFile = Join-Path $PSScriptRoot "backend\.env"
+if (-not (Test-Path $envFile)) { throw "Missing $envFile" }
+
 Get-Content $envFile | ForEach-Object {
-    if ($_ -match '^([^#=][^=]*)=(.*)$') {
-        [System.Environment]::SetEnvironmentVariable($Matches[1].Trim(), $Matches[2].Trim(), 'Process')
+    $line = $_.Trim()
+    if ($line -and -not $line.StartsWith("#")) {
+        $parts = $line -split "=", 2
+        if ($parts.Count -eq 2) {
+            [Environment]::SetEnvironmentVariable($parts[0].Trim(), $parts[1].Trim(), "Process")
+        }
+    }
+}
+
+$port = if ($env:SERVER_PORT) { [int]$env:SERVER_PORT } else { 8080 }
+$healthUrl = "http://localhost:$port/actuator/health"
+try {
+    $health = Invoke-RestMethod -Uri $healthUrl -TimeoutSec 3
+    if ($health.status -eq "UP") {
+        Write-Host "Backend is already running and healthy at http://localhost:$port" -ForegroundColor Green
+        exit 0
+    }
+} catch {
+    $listener = Get-NetTCPConnection -State Listen -LocalPort $port -ErrorAction SilentlyContinue
+    if ($listener) {
+        Write-Error "Port $port is occupied by PID $($listener[0].OwningProcess), but backend health is unavailable."
+        exit 1
     }
 }
 
 Write-Host "DB: $env:DB_HOST`:$env:DB_PORT/$env:DB_NAME" -ForegroundColor Cyan
-Write-Host "Starting backend..." -ForegroundColor Green
-
-Set-Location "$PSScriptRoot\backend"
-.\mvnw.cmd spring-boot:run
+Write-Host "Starting backend at http://localhost:$port ..." -ForegroundColor Green
+Set-Location (Join-Path $PSScriptRoot "backend")
+& .\mvnw.cmd spring-boot:run
+exit $LASTEXITCODE

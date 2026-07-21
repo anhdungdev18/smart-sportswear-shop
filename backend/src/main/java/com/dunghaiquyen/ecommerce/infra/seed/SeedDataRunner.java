@@ -4,9 +4,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 @Component
+@Order(10)
 @ConditionalOnProperty(prefix = "app.seed", name = "enabled", havingValue = "true")
 public class SeedDataRunner implements CommandLineRunner {
 
@@ -14,10 +16,12 @@ public class SeedDataRunner implements CommandLineRunner {
 
     private final SeedDataService seedDataService;
     private final FashionProductSeeder fashionProductSeeder;
+    private final ForecastDemoDataSeeder forecastDemoDataSeeder;
 
-    public SeedDataRunner(SeedDataService seedDataService, FashionProductSeeder fashionProductSeeder) {
+    public SeedDataRunner(SeedDataService seedDataService, FashionProductSeeder fashionProductSeeder, @org.springframework.beans.factory.annotation.Autowired(required = false) ForecastDemoDataSeeder forecastDemoDataSeeder) {
         this.seedDataService = seedDataService;
         this.fashionProductSeeder = fashionProductSeeder;
+        this.forecastDemoDataSeeder = forecastDemoDataSeeder;
     }
 
     @Override
@@ -32,6 +36,10 @@ public class SeedDataRunner implements CommandLineRunner {
                 summary.products(),
                 summary.variants(),
                 summary.orders());
+
+        if (forecastDemoDataSeeder != null) {
+            forecastDemoDataSeeder.seed();
+        }
 
         log.info(
                 "Demo credentials: {} / {}",

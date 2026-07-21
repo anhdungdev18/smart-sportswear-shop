@@ -4,6 +4,7 @@ import com.dunghaiquyen.ecommerce.common.exception.BusinessRuleException;
 import com.dunghaiquyen.ecommerce.common.exception.ResourceNotFoundException;
 import com.dunghaiquyen.ecommerce.common.response.PageMeta;
 import com.dunghaiquyen.ecommerce.common.time.AppTimeZone;
+import com.dunghaiquyen.ecommerce.config.CacheConfig;
 import com.dunghaiquyen.ecommerce.modules.inventory.dto.AdjustStockRequest;
 import com.dunghaiquyen.ecommerce.modules.inventory.dto.ExportStockRequest;
 import com.dunghaiquyen.ecommerce.modules.inventory.dto.ImportStockRequest;
@@ -28,6 +29,8 @@ import java.time.LocalTime;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -52,8 +55,13 @@ import org.springframework.transaction.annotation.Transactional;
  *   adjust methods below all take a variant id and lock it themselves - none
  *   of their callers have a pre-existing lock to reuse.
  */
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 @Service
 public class InventoryService {
+
+    private static final Logger log = LoggerFactory.getLogger(InventoryService.class);
 
     private static final int DEFAULT_LIMIT = 20;
     private static final int MAX_LIMIT = 100;
@@ -71,6 +79,10 @@ public class InventoryService {
     }
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = CacheConfig.REPORT_OVERVIEW, allEntries = true),
+            @CacheEvict(value = CacheConfig.REPORT_INVENTORY, allEntries = true)
+    })
     public void recordReserve(ProductVariant lockedVariant, int quantity, Order order, User actor) {
         int beforeStock = lockedVariant.getStockQuantity();
         int beforeReserved = lockedVariant.getReservedQuantity();
@@ -89,6 +101,10 @@ public class InventoryService {
     }
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = CacheConfig.REPORT_OVERVIEW, allEntries = true),
+            @CacheEvict(value = CacheConfig.REPORT_INVENTORY, allEntries = true)
+    })
     public void confirmDeduct(UUID variantId, int quantity, Order order, User actor) {
         ProductVariant variant = lockVariant(variantId);
         int beforeStock = variant.getStockQuantity();
@@ -109,6 +125,10 @@ public class InventoryService {
     }
 
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = CacheConfig.REPORT_OVERVIEW, allEntries = true),
+            @CacheEvict(value = CacheConfig.REPORT_INVENTORY, allEntries = true)
+    })
     public void release(UUID variantId, int quantity, Order order, User actor) {
         ProductVariant variant = lockVariant(variantId);
         int beforeStock = variant.getStockQuantity();
@@ -129,6 +149,10 @@ public class InventoryService {
 
     /** Manual warehouse receipt - never touches reservedQuantity (TASK_BREAKDOWN_PHASE1.md I2). */
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = CacheConfig.REPORT_OVERVIEW, allEntries = true),
+            @CacheEvict(value = CacheConfig.REPORT_INVENTORY, allEntries = true)
+    })
     public InventoryItemResponse importStock(ImportStockRequest request, User actor) {
         ProductVariant variant = lockVariant(request.variantId());
         int beforeStock = variant.getStockQuantity();
@@ -145,6 +169,12 @@ public class InventoryService {
                 beforeReserved,
                 actor,
                 request.note());
+
+        if (request.note() != null && request.note().contains("[AI_REPLENISHMENT:")) {
+            log.info("[AUDIT] AI Replenishment IMPORT by user {}: variant={}, qty={}, note={}",
+                    actor != null ? actor.getId() : "system", variant.getId(), request.quantity(), request.note());
+        }
+
         return toItemResponse(variant);
     }
 
@@ -158,6 +188,10 @@ public class InventoryService {
      * Same invariant used everywhere else stock is checked in this codebase.
      */
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = CacheConfig.REPORT_OVERVIEW, allEntries = true),
+            @CacheEvict(value = CacheConfig.REPORT_INVENTORY, allEntries = true)
+    })
     public InventoryItemResponse exportStock(ExportStockRequest request, User actor) {
         ProductVariant variant = lockVariant(request.variantId());
         int beforeStock = variant.getStockQuantity();
@@ -191,6 +225,10 @@ public class InventoryService {
      * "không âm" alone is not sufficient to stay constraint-safe).
      */
     @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = CacheConfig.REPORT_OVERVIEW, allEntries = true),
+            @CacheEvict(value = CacheConfig.REPORT_INVENTORY, allEntries = true)
+    })
     public InventoryItemResponse adjustStock(AdjustStockRequest request, User actor) {
         if (request.type() != InventoryTransactionType.ADJUSTMENT_UP
                 && request.type() != InventoryTransactionType.ADJUSTMENT_DOWN) {

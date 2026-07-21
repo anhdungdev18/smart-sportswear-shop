@@ -46,6 +46,7 @@ class GoogleLoginIntegrationTest extends AbstractIntegrationTest {
     @DynamicPropertySource
     static void configureGoogleTokenInfoUrl(DynamicPropertyRegistry registry) {
         registry.add("app.google.tokeninfo-url", googleStub::baseUrl);
+        registry.add("app.google.client-id", () -> "");
     }
 
     private void stubValidToken(String email, String name) {

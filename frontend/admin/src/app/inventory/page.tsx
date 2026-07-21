@@ -1,14 +1,17 @@
-﻿import { AdminInventoryClient } from "@/components/inventory/AdminInventoryClient";
+import { InventoryWorkspace } from "@/components/inventory/InventoryWorkspace";
 import { listInventoryItems, listInventoryTransactions } from "@/modules/inventory/api";
+import { listSuggestions } from "@/modules/replenishment/api";
 
 export default async function InventoryPage() {
-  const [itemsResult, transactionsResult] = await Promise.allSettled([
+  const [itemsResult, transactionsResult, suggestionsResult] = await Promise.allSettled([
     listInventoryItems(),
-    listInventoryTransactions()
+    listInventoryTransactions(),
+    listSuggestions()
   ]);
 
   const items = itemsResult.status === "fulfilled" ? itemsResult.value : [];
   const transactions = transactionsResult.status === "fulfilled" ? transactionsResult.value : [];
+  const suggestionsPage = suggestionsResult.status === "fulfilled" ? suggestionsResult.value : { content: [] };
   const loadFailed = itemsResult.status === "rejected";
 
   return (
@@ -23,11 +26,13 @@ export default async function InventoryPage() {
       {loadFailed ? (
         <section className="card panel">
           <div className="empty-state">
-            Không tải được dữ liệu tồn kho. Phiên đăng nhập có thể đã hết hạn — hãy tải lại trang hoặc đăng nhập lại.
+            Không tải được dữ liệu tồn kho. Phiên đăng nhập có thể đã hết hạn – hãy tải lại trang hoặc đăng nhập lại.
           </div>
         </section>
       ) : (
-        <AdminInventoryClient initialItems={items} initialTransactions={transactions} />
+        <>
+          <InventoryWorkspace initialItems={items} initialTransactions={transactions} initialSuggestions={suggestionsPage.content} />
+        </>
       )}
     </main>
   );

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import Image from "next/image";
@@ -7,7 +7,8 @@ import { cn } from "@/lib/utils";
 import { HeartIcon, ShoppingBagIcon } from "@/components/shared/icons";
 import type { Product } from "@/modules/product/types";
 
-function formatPrice(price: number): string {
+function formatPrice(price: number | null | undefined): string {
+  if (price == null) return "Liên hệ";
   return `${price.toLocaleString("vi-VN")}đ`;
 }
 

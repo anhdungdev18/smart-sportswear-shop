@@ -20,13 +20,23 @@ export class ApiRequestError extends Error {
   }
 }
 
-export const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ?? "";
+const publicApiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ?? "";
+const serverApiBaseUrl = process.env.SERVER_API_BASE_URL?.replace(/\/$/, "") ?? "";
+
+export function getApiBaseUrl() {
+  if (typeof window !== "undefined") {
+    return publicApiBaseUrl;
+  }
+
+  return serverApiBaseUrl || publicApiBaseUrl;
+}
 
 export function shouldUseMockApi() {
-  return !apiBaseUrl;
+  return !getApiBaseUrl();
 }
 
 export function buildApiUrl(path: string, query?: ApiQuery) {
+  const apiBaseUrl = getApiBaseUrl();
   const pathname = path.startsWith("/") ? path : `/${path}`;
   const url = new URL(`${apiBaseUrl}${pathname}`, apiBaseUrl || "http://localhost");
 

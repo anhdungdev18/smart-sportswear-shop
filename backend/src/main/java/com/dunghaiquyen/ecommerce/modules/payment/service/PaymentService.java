@@ -3,6 +3,7 @@ package com.dunghaiquyen.ecommerce.modules.payment.service;
 import com.dunghaiquyen.ecommerce.common.exception.BusinessRuleException;
 import com.dunghaiquyen.ecommerce.common.exception.ResourceNotFoundException;
 import com.dunghaiquyen.ecommerce.config.AppVnpayProperties;
+import com.dunghaiquyen.ecommerce.config.CacheConfig;
 import com.dunghaiquyen.ecommerce.modules.order.entity.Order;
 import com.dunghaiquyen.ecommerce.modules.order.entity.OrderStatus;
 import com.dunghaiquyen.ecommerce.modules.order.entity.PaymentMethod;
@@ -26,6 +27,7 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -160,6 +162,7 @@ public class PaymentService {
      * per outcome, so there is nothing implicit to keep in sync.
      */
     @Transactional
+    @CacheEvict(value = CacheConfig.REPORT_OVERVIEW, allEntries = true)
     public Map<String, Object> handleCallback(Map<String, String> params) {
         if (!signatureService.verify(params)) {
             throw new BusinessRuleException(HttpStatus.BAD_REQUEST, "Invalid checksum");

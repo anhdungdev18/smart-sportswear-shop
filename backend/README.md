@@ -145,7 +145,7 @@ Từ thư mục `backend/`:
 .\mvnw.cmd spring-boot:run
 ```
 
-App mặc định chạy ở `http://localhost:8080`.
+App mặc định dùng cổng `8080`; cấu hình local của repository dùng `http://localhost:8082` để tránh xung đột PostgreSQL Enterprise Manager.
 
 ## Biến môi trường chính
 
@@ -161,10 +161,10 @@ Xem file [.env.example](./.env.example). Các biến quan trọng nhất:
 - `APP_SEED_ENABLED`, `APP_SEED_DEMO_PASSWORD`
 
 ## Database
-
 - Flyway tự chạy migration khi app start
 - `spring.jpa.hibernate.ddl-auto=validate`
 - Schema được quản lý bằng migration, không dùng auto-create/auto-update
+- **Lưu ý:** Hiện tại dự án đang chạy ở chế độ **shared-database**, nghĩa là `backend` và `ai_forecasting_service` dùng chung một Supabase project nhưng phân chia ownership rõ ràng ở mức code/read-model. Hãy giữ `SPRING_FLYWAY_ENABLED=false` cho AI service trên production nếu chưa có phương án cutover.
 
 Migration hiện có:
 
