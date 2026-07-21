@@ -1,9 +1,11 @@
 ﻿"use client";
 
-import { useDeferredValue, useMemo, useState } from "react";
+import Image from "next/image";
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { ApiRequestError } from "@/modules/api/common";
 import { adjustStock, exportStock, importStock } from "@/modules/inventory/browser-api";
 import type { InventoryItemResponse, InventoryTransactionResponse } from "@/modules/inventory/types";
+import { NO_IMAGE } from "@/modules/ui/placeholder";
 
 function extractError(error: unknown, fallback: string) {
   if (error instanceof ApiRequestError) {
@@ -15,6 +17,110 @@ function extractError(error: unknown, fallback: string) {
 }
 
 type ActionType = "IMPORT" | "EXPORT" | "ADJUSTMENT_UP" | "ADJUSTMENT_DOWN";
+
+function variantLabel(item: InventoryItemResponse) {
+  const variant = item.size || item.color ? ` · ${item.size ?? "-"}/${item.color ?? "-"}` : "";
+  return `${item.sku} · ${item.productName}${variant}`;
+}
+
+// Single search box that doubles as the dropdown trigger: typing filters the
+// option list shown right below the input instead of relying on a separate
+// search field next to a plain <select>.
+function VariantCombobox({
+  options,
+  value,
+  onChange
+}: {
+  options: InventoryItemResponse[];
+  value: string;
+  onChange: (variantId: string) => void;
+}) {
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const deferredQuery = useDeferredValue(query);
+
+  const selected = options.find((item) => item.variantId === value) ?? null;
+
+  const filtered = useMemo(() => {
+    const q = deferredQuery.trim().toLowerCase();
+    if (!q) return options;
+    return options.filter((item) => [item.sku, item.productName, item.size ?? "", item.color ?? ""].join(" ").toLowerCase().includes(q));
+  }, [deferredQuery, options]);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  function selectItem(item: InventoryItemResponse) {
+    onChange(item.variantId);
+    setQuery("");
+    setOpen(false);
+  }
+
+  return (
+    <div className="combobox" ref={containerRef}>
+      <input
+        className="admin-input combobox-input"
+        placeholder="Tìm SKU, sản phẩm, size, màu..."
+        value={open ? query : (selected ? variantLabel(selected) : "")}
+        onFocus={() => {
+          setQuery("");
+          setOpen(true);
+        }}
+        onChange={(event) => {
+          setQuery(event.target.value);
+          setOpen(true);
+        }}
+      />
+      {open ? (
+        <div className="combobox-list">
+          {filtered.length === 0 ? (
+            <div className="combobox-empty">Không tìm thấy biến thể phù hợp</div>
+          ) : (
+            filtered.map((item) => (
+              <button
+                type="button"
+                key={item.variantId}
+                className={`combobox-option${item.variantId === value ? " active" : ""}`}
+                onClick={() => selectItem(item)}
+              >
+                <Image
+                  className="combobox-thumb"
+                  src={item.thumbnail || NO_IMAGE}
+                  alt={item.productName}
+                  width={40}
+                  height={40}
+                  unoptimized
+                  onError={(event) => {
+                    const img = event.currentTarget as HTMLImageElement;
+                    if (img.src !== NO_IMAGE) {
+                      img.src = NO_IMAGE;
+                    }
+                  }}
+                />
+                <span className="combobox-option-text">
+                  <strong>{item.productName}</strong>
+                  <span className="table-subtle">
+                    {item.sku}
+                    {item.size || item.color ? ` · ${item.size ?? "-"}/${item.color ?? "-"}` : ""}
+                  </span>
+                </span>
+              </button>
+            ))
+          )}
+        </div>
+      ) : null}
+    </div>
+  );
+}
 
 export function AdminInventoryClient({
   initialItems,
@@ -91,13 +197,9 @@ export function AdminInventoryClient({
         </div>
         {message ? <p className="action-message">{message}</p> : null}
         <div className="admin-inline-form wrap">
-          <select className="select" value={variantId} onChange={(event) => setVariantId(event.target.value)}>
-            {items.map((item) => (
-              <option value={item.variantId} key={item.variantId}>
-                {item.sku} · {item.productName}
-              </option>
-            ))}
-          </select>
+          <div style={{ width: 460, maxWidth: "100%" }}>
+            <VariantCombobox options={items} value={variantId} onChange={setVariantId} />
+          </div>
           <select className="select" value={actionType} onChange={(event) => setActionType(event.target.value as ActionType)}>
             <option value="IMPORT">Nhập kho</option>
             <option value="EXPORT">Xuất kho</option>
@@ -106,7 +208,12 @@ export function AdminInventoryClient({
           </select>
           <input className="admin-input" type="number" min={1} value={quantity} onChange={(event) => setQuantity(Number(event.target.value) || 1)} />
           <input className="admin-input" placeholder="Ghi chú" value={note} onChange={(event) => setNote(event.target.value)} />
-          <button className="admin-btn" type="button" onClick={() => void handleSubmit()} disabled={saving}>
+          <button
+            className="admin-btn"
+            type="button"
+            onClick={() => void handleSubmit()}
+            disabled={saving || !variantId || items.length === 0}
+          >
             {saving ? "Đang lưu..." : "Xác nhận"}
           </button>
         </div>

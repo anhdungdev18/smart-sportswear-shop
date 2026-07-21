@@ -435,7 +435,7 @@ public class ProductService {
     private Specification<Product> applyCommonFilters(
             Specification<Product> spec, ProductListQuery q, UUID resolvedCategoryId, UUID resolvedBrandId) {
         if (resolvedCategoryId != null) {
-            spec = spec.and(ProductSpecifications.hasCategoryId(resolvedCategoryId));
+            spec = spec.and(ProductSpecifications.hasCategoryIdOrParentId(resolvedCategoryId));
         }
         if (resolvedBrandId != null) {
             spec = spec.and(ProductSpecifications.hasBrandId(resolvedBrandId));

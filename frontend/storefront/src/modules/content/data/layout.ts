@@ -22,7 +22,6 @@ export const HEADER_NAV_ITEMS: HeaderNavItem[] = [
     variant: "category",
     quickLinks: [
       { label: "TẤT CẢ SẢN PHẨM", href: `${SITE_ORIGIN}/danh-muc/ao-da-bong` },
-      { label: "MÙA GIẢI 2024/25 - HÀNG MỚI VỀ", href: `${SITE_ORIGIN}/danh-muc/ao-da-bong`, highlight: true },
     ],
     groups: [
       {

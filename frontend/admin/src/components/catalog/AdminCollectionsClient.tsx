@@ -77,6 +77,7 @@ function createEmptyForm() {
     description: "",
     shortDescription: "",
     collectionType: "SEASONAL",
+    brandId: "",
     season: "",
     year: "",
     bannerImageUrl: "",
@@ -152,6 +153,7 @@ export function AdminCollectionsClient({ initialItems }: { initialItems: Collect
   const [productSearch, setProductSearch] = useState("");
   const [collectionSearch, setCollectionSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | string>("all");
+  const [brandFilter, setBrandFilter] = useState<"all" | string>("all");
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [assignMessage, setAssignMessage] = useState<string | null>(null);
   const deferredProductSearch = useDeferredValue(productSearch);
@@ -177,6 +179,7 @@ export function AdminCollectionsClient({ initialItems }: { initialItems: Collect
       description: first.description ?? "",
       shortDescription: first.shortDescription ?? "",
       collectionType: first.collectionType,
+      brandId: first.brand?.id ?? "",
       season: first.season ?? "",
       year: first.year != null ? String(first.year) : "",
       bannerImageUrl: first.bannerImageUrl ?? "",
@@ -188,6 +191,12 @@ export function AdminCollectionsClient({ initialItems }: { initialItems: Collect
       isFeatured: Boolean(first.isFeatured)
     });
   }, [initialItems]);
+
+  // Load brands once so the collection form's brand-tag select is populated.
+  useEffect(() => {
+    void ensureCatalogRefsLoaded();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!selectedId) {
@@ -232,13 +241,20 @@ export function AdminCollectionsClient({ initialItems }: { initialItems: Collect
     return items.filter((item) => {
       const matchesStatus = statusFilter === "all" ? true : item.status === statusFilter;
       if (!matchesStatus) return false;
+      const matchesBrand =
+        brandFilter === "all"
+          ? true
+          : brandFilter === "none"
+            ? item.brand == null
+            : item.brand?.id === brandFilter;
+      if (!matchesBrand) return false;
       if (!query) return true;
-      return [item.name, item.slug, item.season ?? "", String(item.year ?? ""), item.collectionType]
+      return [item.name, item.slug, item.season ?? "", String(item.year ?? ""), item.collectionType, item.brand?.name ?? ""]
         .join(" ")
         .toLowerCase()
         .includes(query);
     });
-  }, [deferredCollectionSearch, items, statusFilter]);
+  }, [deferredCollectionSearch, items, statusFilter, brandFilter]);
 
   const filteredProducts = useMemo(() => {
     const query = deferredProductSearch.trim().toLowerCase();
@@ -281,6 +297,7 @@ export function AdminCollectionsClient({ initialItems }: { initialItems: Collect
       description: item.description ?? "",
       shortDescription: item.shortDescription ?? "",
       collectionType: item.collectionType,
+      brandId: item.brand?.id ?? "",
       season: item.season ?? "",
       year: item.year != null ? String(item.year) : "",
       bannerImageUrl: item.bannerImageUrl ?? "",
@@ -328,6 +345,7 @@ export function AdminCollectionsClient({ initialItems }: { initialItems: Collect
         description: form.description.trim() || null,
         shortDescription: form.shortDescription.trim() || null,
         collectionType: form.collectionType,
+        brandId: form.brandId || null,
         season: form.season.trim() || null,
         year: form.year.trim() ? Number(form.year) : null,
         bannerImageUrl: form.bannerImageUrl.trim() || null,
@@ -370,6 +388,7 @@ export function AdminCollectionsClient({ initialItems }: { initialItems: Collect
         description: created.description ?? "",
         shortDescription: created.shortDescription ?? "",
         collectionType: created.collectionType,
+        brandId: created.brand?.id ?? "",
         season: created.season ?? "",
         year: created.year != null ? String(created.year) : "",
         bannerImageUrl: created.bannerImageUrl ?? "",
@@ -541,6 +560,15 @@ export function AdminCollectionsClient({ initialItems }: { initialItems: Collect
               </option>
             ))}
           </select>
+          <select className="select" value={brandFilter} onChange={(event) => setBrandFilter(event.target.value)}>
+            <option value="all">Tất cả hãng</option>
+            <option value="none">Chưa gắn hãng</option>
+            {brands.map((brand) => (
+              <option key={brand.id} value={brand.id}>
+                {brand.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         {filteredCollections.length === 0 ? (
@@ -550,6 +578,7 @@ export function AdminCollectionsClient({ initialItems }: { initialItems: Collect
             <thead>
               <tr>
                 <th>Bộ sưu tập</th>
+                <th>Hãng</th>
                 <th>Mùa</th>
                 <th>Trạng thái</th>
               </tr>
@@ -561,6 +590,7 @@ export function AdminCollectionsClient({ initialItems }: { initialItems: Collect
                     <strong>{item.name}</strong>
                     <div className="table-subtle">{item.slug}</div>
                   </td>
+                  <td>{item.brand?.name ?? "-"}</td>
                   <td>{[item.season, item.year].filter(Boolean).join(" ") || "-"}</td>
                   <td>
                     <span className={`status-pill status-pill-${toStatusTone(item.status)}`}>{toStatusLabel(item.status)}</span>
@@ -611,6 +641,18 @@ export function AdminCollectionsClient({ initialItems }: { initialItems: Collect
             {STATUS_OPTIONS.map((status) => (
               <option key={status} value={status}>
                 {status}
+              </option>
+            ))}
+          </select>
+          <select
+            className="select"
+            value={form.brandId}
+            onChange={(event) => setForm((current) => ({ ...current, brandId: event.target.value }))}
+          >
+            <option value="">— Không gắn hãng —</option>
+            {brands.map((brand) => (
+              <option key={brand.id} value={brand.id}>
+                {brand.name}
               </option>
             ))}
           </select>

@@ -10,6 +10,7 @@ import com.dunghaiquyen.ecommerce.modules.brand.entity.Brand;
 import com.dunghaiquyen.ecommerce.modules.brand.entity.BrandStatus;
 import com.dunghaiquyen.ecommerce.modules.brand.repository.BrandRepository;
 import com.dunghaiquyen.ecommerce.modules.category.entity.Category;
+import com.dunghaiquyen.ecommerce.modules.category.entity.CategoryNodeType;
 import com.dunghaiquyen.ecommerce.modules.category.entity.CategoryStatus;
 import com.dunghaiquyen.ecommerce.modules.category.repository.CategoryRepository;
 import com.dunghaiquyen.ecommerce.modules.collection.entity.Collection;
@@ -214,28 +215,33 @@ public class FashionProductSeeder {
         Brand ua = brand("under-armour",   "Under Armour", "I Will – Trang phục thể thao hiệu suất cao.");
 
         // ─── CATEGORIES ───────────────────────────────────────────────────────────
+        Category rootAo = catGroup("ao", "Ao", null, 10);
+        Category rootQuan = catGroup("quan", "Quan", null, 20);
+        Category rootGiay = catGroup("giay", "Giay", null, 30);
+        Category rootPhuKien = catGroup("phu-kien", "Phu kien", null, 40);
+
         // Bóng đá
-        Category cAoDbong    = cat("ao-da-bong",        "Áo Đá Bóng");
-        Category cQuanDbong  = cat("quan-da-bong",      "Quần Đá Bóng");
-        Category cGiayFG     = cat("giay-da-bong-fg",   "Giày Đá Bóng Cỏ Thật (FG)");
-        Category cGiayTF     = cat("giay-da-bong-tf",   "Giày Đá Bóng Cỏ Nhân Tạo (TF)");
-        Category cGiayFutsal = cat("giay-futsal",       "Giày Futsal (IC)");
-        Category cPhuKienDB  = cat("phu-kien-da-bong",  "Phụ Kiện Đá Bóng");
-        Category cGangTay    = cat("gang-tay-thu-mon",  "Găng Tay Thủ Môn");
-        Category cBong       = cat("bong-the-thao",     "Bóng Thể Thao");
+        Category cAoDbong    = cat("ao-da-bong",        "Áo Đá Bóng", rootAo, 110);
+        Category cQuanDbong  = cat("quan-da-bong",      "Quần Đá Bóng", rootQuan, 120);
+        Category cGiayFG     = cat("giay-da-bong-fg",   "Giày Đá Bóng Cỏ Thật (FG)", rootGiay, 130);
+        Category cGiayTF     = cat("giay-da-bong-tf",   "Giày Đá Bóng Cỏ Nhân Tạo (TF)", rootGiay, 140);
+        Category cGiayFutsal = cat("giay-futsal",       "Giày Futsal (IC)", rootGiay, 150);
+        Category cPhuKienDB  = cat("phu-kien-da-bong",  "Phụ Kiện Đá Bóng", rootPhuKien, 160);
+        Category cGangTay    = cat("gang-tay-thu-mon",  "Găng Tay Thủ Môn", rootPhuKien, 170);
+        Category cBong       = cat("bong-the-thao",     "Bóng Thể Thao", rootPhuKien, 180);
         // Chạy bộ
-        Category cAoChay     = cat("ao-chay-bo",        "Áo Chạy Bộ");
-        Category cQuanChay   = cat("quan-chay-bo",      "Quần Chạy Bộ");
-        Category cGiayChay   = cat("giay-chay-bo",      "Giày Chạy Bộ");
+        Category cAoChay     = cat("ao-chay-bo",        "Áo Chạy Bộ", rootAo, 210);
+        Category cQuanChay   = cat("quan-chay-bo",      "Quần Chạy Bộ", rootQuan, 220);
+        Category cGiayChay   = cat("giay-chay-bo",      "Giày Chạy Bộ", rootGiay, 230);
         // Bóng rổ
-        Category cAoBR       = cat("ao-bong-ro",        "Áo Bóng Rổ");
-        Category cGiayBR     = cat("giay-bong-ro",      "Giày Bóng Rổ");
+        Category cAoBR       = cat("ao-bong-ro",        "Áo Bóng Rổ", rootAo, 310);
+        Category cGiayBR     = cat("giay-bong-ro",      "Giày Bóng Rổ", rootGiay, 320);
         // Gym
-        Category cGymNam     = cat("do-gym-nam",        "Đồ Gym Nam");
-        Category cGymNu      = cat("do-gym-nu",         "Đồ Gym Nữ");
+        Category cGymNam     = cat("do-gym-nam",        "Đồ Gym Nam", rootAo, 410);
+        Category cGymNu      = cat("do-gym-nu",         "Đồ Gym Nữ", rootAo, 420);
         // Cầu lông & Tennis
-        Category cAoCauLong  = cat("ao-cau-long-tennis","Áo Cầu Lông & Tennis");
-        Category cGiayCauLong= cat("giay-cau-long",     "Giày Cầu Lông & Tennis");
+        Category cAoCauLong  = cat("ao-cau-long-tennis","Áo Cầu Lông & Tennis", rootAo, 510);
+        Category cGiayCauLong= cat("giay-cau-long",     "Giày Cầu Lông & Tennis", rootGiay, 520);
 
         // ─── COLLECTIONS ──────────────────────────────────────────────────────────
         Collection cMuaGiai  = col("mua-giai-2024-25",   "Mùa Giải 2024/25",             1);
@@ -833,9 +839,21 @@ public class FashionProductSeeder {
         return brandRepository.save(b);
     }
 
-    private Category cat(String slug, String name) {
+    private Category catGroup(String slug, String name, Category parent, int sortOrder) {
         Category c = categoryRepository.findBySlug(slug).orElseGet(Category::new);
         c.setSlug(slug); c.setName(name); c.setStatus(CategoryStatus.ACTIVE);
+        c.setParent(parent);
+        c.setNodeType(CategoryNodeType.GROUP);
+        c.setSortOrder(sortOrder);
+        return categoryRepository.save(c);
+    }
+
+    private Category cat(String slug, String name, Category parent, int sortOrder) {
+        Category c = categoryRepository.findBySlug(slug).orElseGet(Category::new);
+        c.setSlug(slug); c.setName(name); c.setStatus(CategoryStatus.ACTIVE);
+        c.setParent(parent);
+        c.setNodeType(CategoryNodeType.LEAF);
+        c.setSortOrder(sortOrder);
         return categoryRepository.save(c);
     }
 

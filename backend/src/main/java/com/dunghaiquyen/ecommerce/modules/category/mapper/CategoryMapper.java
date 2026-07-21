@@ -1,11 +1,40 @@
 package com.dunghaiquyen.ecommerce.modules.category.mapper;
 
 import com.dunghaiquyen.ecommerce.modules.category.dto.CategoryResponse;
+import com.dunghaiquyen.ecommerce.modules.category.dto.CategoryTreeResponse;
 import com.dunghaiquyen.ecommerce.modules.category.entity.Category;
-import org.mapstruct.Mapper;
+import java.util.List;
+import org.springframework.stereotype.Component;
 
-@Mapper(componentModel = "spring")
-public interface CategoryMapper {
+@Component
+public class CategoryMapper {
 
-    CategoryResponse toResponse(Category category);
+    public CategoryResponse toResponse(Category category) {
+        return new CategoryResponse(
+                category.getId(),
+                category.getName(),
+                category.getSlug(),
+                category.getDescription(),
+                category.getStatus(),
+                category.getParent() != null ? category.getParent().getId() : null,
+                category.getParent() != null ? category.getParent().getName() : null,
+                category.getParent() != null ? category.getParent().getSlug() : null,
+                category.getNodeType(),
+                category.getSortOrder());
+    }
+
+    public CategoryTreeResponse toTreeResponse(Category category, List<CategoryTreeResponse> children) {
+        return new CategoryTreeResponse(
+                category.getId(),
+                category.getName(),
+                category.getSlug(),
+                category.getDescription(),
+                category.getStatus(),
+                category.getParent() != null ? category.getParent().getId() : null,
+                category.getParent() != null ? category.getParent().getName() : null,
+                category.getParent() != null ? category.getParent().getSlug() : null,
+                category.getNodeType(),
+                category.getSortOrder(),
+                children);
+    }
 }

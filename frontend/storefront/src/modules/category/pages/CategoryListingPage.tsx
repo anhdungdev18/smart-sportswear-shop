@@ -2,7 +2,7 @@ import { Breadcrumb } from "@/components/shared/Breadcrumb";
 import { Pagination } from "@/components/shared/Pagination";
 import { CategorySidebarFilter } from "@/modules/category/components/CategorySidebarFilter";
 import { CategoryToolbar } from "@/modules/category/components/CategoryToolbar";
-import { fetchCategoryListing, fetchCategoryName } from "@/modules/category/queries";
+import { fetchCategoryDetail, fetchCategoryListing } from "@/modules/category/queries";
 import type { PageMeta } from "@/modules/category/types";
 import { ProductCard } from "@/modules/product/components/ProductCard";
 import { mapProductListItem } from "@/modules/product/mappers";
@@ -33,9 +33,9 @@ export async function CategoryListingPage({
   const { page: pageParam, sort, sortBy, sortOrder, size, color, minPrice, maxPrice } = resolvedSearchParams;
   const currentPage = Math.max(1, Number(pageParam ?? 1));
 
-  const [{ products, meta }, categoryName]: [
+  const [{ products, meta }, category]: [
     { products: ProductListItem[]; meta: PageMeta },
-    string,
+    Awaited<ReturnType<typeof fetchCategoryDetail>>,
   ] = await Promise.all([
     fetchCategoryListing({
       categorySlug: slug,
@@ -49,14 +49,22 @@ export async function CategoryListingPage({
       minPrice: minPrice || undefined,
       maxPrice: maxPrice || undefined,
     }),
-    fetchCategoryName(slug),
+    fetchCategoryDetail(slug),
   ]);
 
   const mappedProducts = products.map(mapProductListItem);
+  const categoryName = category?.name ?? slug.replace(/-/g, " ");
+  const breadcrumbItems = [
+    { label: "Trang chủ", href: "/" },
+    ...(category?.parentSlug
+      ? [{ label: category.parentName ?? category.parentSlug.replace(/-/g, " "), href: `/danh-muc/${category.parentSlug}` }]
+      : []),
+    { label: categoryName },
+  ];
 
   return (
     <main className="site-main page-below-header flex-1 border-b border-ivy-hairline">
-      <Breadcrumb items={[{ label: "Trang chủ", href: "/" }, { label: categoryName }]} />
+      <Breadcrumb items={breadcrumbItems} />
       <div className="mx-auto flex max-w-[1368px] flex-col gap-8 px-4 pb-16 md:px-0 lg:flex-row">
         <CategorySidebarFilter
           initialSize={size}

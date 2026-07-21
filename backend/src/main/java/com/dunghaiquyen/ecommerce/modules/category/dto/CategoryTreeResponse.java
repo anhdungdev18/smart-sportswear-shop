@@ -2,9 +2,10 @@ package com.dunghaiquyen.ecommerce.modules.category.dto;
 
 import com.dunghaiquyen.ecommerce.modules.category.entity.CategoryNodeType;
 import com.dunghaiquyen.ecommerce.modules.category.entity.CategoryStatus;
+import java.util.List;
 import java.util.UUID;
 
-public record CategoryResponse(
+public record CategoryTreeResponse(
         UUID id,
         String name,
         String slug,
@@ -14,5 +15,6 @@ public record CategoryResponse(
         String parentName,
         String parentSlug,
         CategoryNodeType nodeType,
-        int sortOrder) {
+        int sortOrder,
+        List<CategoryTreeResponse> children) {
 }

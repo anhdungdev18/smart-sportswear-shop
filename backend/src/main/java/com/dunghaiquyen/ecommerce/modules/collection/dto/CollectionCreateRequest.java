@@ -8,6 +8,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.time.Instant;
+import java.util.UUID;
 
 public record CollectionCreateRequest(
 
@@ -27,6 +28,8 @@ public record CollectionCreateRequest(
 
         @NotNull(message = "Collection type is required")
         CollectionType collectionType,
+
+        UUID brandId,
 
         @Size(max = 50, message = "Season must be at most 50 characters")
         String season,

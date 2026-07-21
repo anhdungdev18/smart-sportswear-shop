@@ -14,6 +14,7 @@ import {
   createVariant,
   deleteProduct,
   deleteProductImage,
+  setPrimaryProductImage,
   fetchAdminProductDetail,
   listCollectionsForPicker,
   listProductCollections,
@@ -282,15 +283,19 @@ const ProductImageCard = memo(function ProductImageCard({
   image,
   productName,
   saving,
-  onDelete
+  settingPrimary,
+  onDelete,
+  onSetPrimary
 }: {
   image: ProductImageResponse;
   productName: string;
   saving: boolean;
+  settingPrimary: boolean;
   onDelete: () => void;
+  onSetPrimary: () => void;
 }) {
   return (
-    <article className="admin-image-card">
+    <article className={`admin-image-card${image.isPrimary ? " is-primary" : ""}`}>
       <Image
         src={image.imageUrl}
         alt={image.altText ?? productName}
@@ -302,12 +307,26 @@ const ProductImageCard = memo(function ProductImageCard({
       <div>
         <strong>{image.altText ?? "Không có alt text"}</strong>
         <div className="table-subtle">
-          {image.isPrimary ? "Ảnh chính" : "Ảnh phụ"} · Thứ tự {image.sortOrder}
+          {image.isPrimary ? "Ảnh chính (nổi bật)" : "Ảnh phụ"} · Thứ tự {image.sortOrder}
         </div>
       </div>
-      <button className="admin-btn secondary" type="button" onClick={onDelete} disabled={saving}>
-        {saving ? "Đang xóa..." : "Xóa ảnh"}
-      </button>
+      <div className="admin-image-actions">
+        {image.isPrimary ? (
+          <span className="status active">Ảnh nổi bật</span>
+        ) : (
+          <button
+            className="admin-btn secondary"
+            type="button"
+            onClick={onSetPrimary}
+            disabled={settingPrimary || saving}
+          >
+            {settingPrimary ? "Đang đặt..." : "Đặt làm ảnh nổi bật"}
+          </button>
+        )}
+        <button className="admin-btn secondary" type="button" onClick={onDelete} disabled={saving || settingPrimary}>
+          {saving ? "Đang xóa..." : "Xóa ảnh"}
+        </button>
+      </div>
     </article>
   );
 });
@@ -786,6 +805,24 @@ export function AdminProductsCatalogClient({
     }
   }
 
+  async function handleSetPrimaryImage(image: ProductImageResponse) {
+    if (!selectedProductId || image.isPrimary) {
+      return;
+    }
+
+    try {
+      setSaving(`image-primary-${image.id}`);
+      setMessage(null);
+      await setPrimaryProductImage(selectedProductId, image.id);
+      await refreshDetail(selectedProductId);
+      setMessage("Đã đặt ảnh nổi bật cho sản phẩm.");
+    } catch (error) {
+      setMessage(extractError(error, "Không đặt được ảnh nổi bật"));
+    } finally {
+      setSaving(null);
+    }
+  }
+
   function startCreateProduct() {
     setSelectedProductId("");
     setDetail(null);
@@ -1123,7 +1160,17 @@ export function AdminProductsCatalogClient({
                 <hr className="editor-divider" />
                 {detail?.images.length ? (
                   <div className="admin-gallery">
-                    {detail.images.map((image) => <ProductImageCard key={image.id} image={image} productName={detail.name} saving={saving === `image-delete-${image.id}`} onDelete={() => void handleDeleteImage(image)} />)}
+                    {detail.images.map((image) => (
+                      <ProductImageCard
+                        key={image.id}
+                        image={image}
+                        productName={detail.name}
+                        saving={saving === `image-delete-${image.id}`}
+                        settingPrimary={saving === `image-primary-${image.id}`}
+                        onDelete={() => void handleDeleteImage(image)}
+                        onSetPrimary={() => void handleSetPrimaryImage(image)}
+                      />
+                    ))}
                   </div>
                 ) : <div className="empty-state">Sản phẩm này chưa có ảnh.</div>}
               </>

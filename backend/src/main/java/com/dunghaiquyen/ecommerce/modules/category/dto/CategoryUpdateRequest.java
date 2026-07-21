@@ -2,9 +2,11 @@ package com.dunghaiquyen.ecommerce.modules.category.dto;
 
 import com.dunghaiquyen.ecommerce.common.validation.NullOrNotBlank;
 import com.dunghaiquyen.ecommerce.common.validation.Patterns;
+import com.dunghaiquyen.ecommerce.modules.category.entity.CategoryNodeType;
 import com.dunghaiquyen.ecommerce.modules.category.entity.CategoryStatus;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import java.util.UUID;
 
 /**
  * PATCH semantics: every field optional, null means "leave unchanged". Note
@@ -23,5 +25,13 @@ public record CategoryUpdateRequest(
 
         String description,
 
-        CategoryStatus status) {
+        CategoryStatus status,
+
+        UUID parentId,
+
+        Boolean clearParent,
+
+        CategoryNodeType nodeType,
+
+        Integer sortOrder) {
 }

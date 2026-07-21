@@ -45,6 +45,11 @@ export type CategoryResponse = {
   slug: string;
   description: string | null;
   status: string;
+  parentId?: string | null;
+  parentName?: string | null;
+  parentSlug?: string | null;
+  nodeType?: "GROUP" | "LEAF";
+  sortOrder?: number;
 };
 
 export type BrandResponse = {
@@ -62,6 +67,7 @@ export type CollectionResponse = {
   description: string | null;
   shortDescription: string | null;
   collectionType: string;
+  brand: { id: string; name: string } | null;
   season: string | null;
   year: number | null;
   bannerImageUrl: string | null;

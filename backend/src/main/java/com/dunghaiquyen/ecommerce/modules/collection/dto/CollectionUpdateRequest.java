@@ -7,8 +7,13 @@ import com.dunghaiquyen.ecommerce.modules.collection.entity.CollectionType;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.time.Instant;
+import java.util.UUID;
 
-/** PATCH semantics: null means "leave unchanged" for every field. */
+/**
+ * PATCH semantics: null means "leave unchanged" for every field EXCEPT
+ * {@code brandId}, which the admin form always submits explicitly, so there null
+ * means "clear the brand tag" (see CollectionService.update).
+ */
 public record CollectionUpdateRequest(
 
         @NullOrNotBlank(message = "Name must not be blank")
@@ -25,6 +30,8 @@ public record CollectionUpdateRequest(
         String shortDescription,
 
         CollectionType collectionType,
+
+        UUID brandId,
 
         @Size(max = 50, message = "Season must be at most 50 characters")
         String season,

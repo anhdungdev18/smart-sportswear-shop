@@ -129,6 +129,32 @@ public class ProductImageService {
     }
 
     /**
+     * Promote an already-uploaded image to the product's primary/featured image.
+     * Unsets the current primary first and flushes before setting the new one, so
+     * the partial unique index (V2, "max 1 primary per product") is never even
+     * momentarily violated - the same ordering {@link #insertImageRow} relies on.
+     */
+    @Transactional
+    public List<ProductImageResponse> setPrimary(UUID productId, UUID imageId) {
+        ProductImage target = imageRepository.findById(imageId)
+                .orElseThrow(() -> new ResourceNotFoundException("Image not found"));
+        if (!target.getProduct().getId().equals(productId)) {
+            throw new ResourceNotFoundException("Image not found");
+        }
+        if (!target.isPrimary()) {
+            List<ProductImage> currentPrimaries = imageRepository.findAllByProductIdAndPrimaryTrue(productId);
+            currentPrimaries.forEach(img -> img.setPrimary(false));
+            imageRepository.saveAll(currentPrimaries);
+            imageRepository.flush();
+            target.setPrimary(true);
+            imageRepository.save(target);
+        }
+        return imageRepository.findAllByProductIdOrderBySortOrderAsc(productId).stream()
+                .map(productMapper::toImageResponse)
+                .toList();
+    }
+
+    /**
      * ERD_PHASE1.md 6.9: "mỗi product nên có tối đa 1 ảnh primary". The unset-old-
      * primary step below is a read-modify-write, which by itself cannot close a
      * concurrency race: two requests adding a primary image for the same product

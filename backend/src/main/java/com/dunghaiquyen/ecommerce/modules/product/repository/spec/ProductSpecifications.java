@@ -58,6 +58,17 @@ public final class ProductSpecifications {
         return (root, query, cb) -> cb.equal(root.get("category").get("id"), categoryId);
     }
 
+    /**
+     * Taxonomy V2: allows filtering by a GROUP category while products still
+     * point at leaf categories. A match occurs when product.category.id is the
+     * requested id OR product.category.parent.id is that id.
+     */
+    public static Specification<Product> hasCategoryIdOrParentId(UUID categoryId) {
+        return (root, query, cb) -> cb.or(
+                cb.equal(root.get("category").get("id"), categoryId),
+                cb.equal(root.get("category").get("parent").get("id"), categoryId));
+    }
+
     public static Specification<Product> hasBrandId(UUID brandId) {
         return (root, query, cb) -> cb.equal(root.get("brand").get("id"), brandId);
     }

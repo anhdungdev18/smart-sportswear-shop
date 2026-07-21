@@ -10,6 +10,14 @@ export async function login(payload: { email: string; password: string }) {
   return result.data;
 }
 
+export async function googleLogin(credential: string) {
+  const result = await apiFetch<AuthResponse>(endpoints.auth.google, {
+    method: "POST",
+    body: JSON.stringify({ credential }),
+  });
+  return result.data;
+}
+
 export async function register(payload: {
   fullName: string;
   email: string;

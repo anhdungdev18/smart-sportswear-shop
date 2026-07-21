@@ -18,6 +18,9 @@ import com.dunghaiquyen.ecommerce.modules.collection.entity.CollectionStatus;
 import com.dunghaiquyen.ecommerce.modules.collection.entity.ProductCollection;
 import com.dunghaiquyen.ecommerce.modules.collection.repository.CollectionRepository;
 import com.dunghaiquyen.ecommerce.modules.collection.repository.ProductCollectionRepository;
+import com.dunghaiquyen.ecommerce.modules.brand.entity.Brand;
+import com.dunghaiquyen.ecommerce.modules.brand.repository.BrandRepository;
+import com.dunghaiquyen.ecommerce.modules.product.dto.CatalogRefResponse;
 import com.dunghaiquyen.ecommerce.modules.product.dto.ProductListItemResponse;
 import com.dunghaiquyen.ecommerce.modules.product.entity.Product;
 import com.dunghaiquyen.ecommerce.modules.product.entity.ProductStatus;
@@ -45,16 +48,28 @@ public class CollectionService {
     private final ProductCollectionRepository productCollectionRepository;
     private final ProductRepository productRepository;
     private final ProductService productService;
+    private final BrandRepository brandRepository;
 
     public CollectionService(
             CollectionRepository collectionRepository,
             ProductCollectionRepository productCollectionRepository,
             ProductRepository productRepository,
-            ProductService productService) {
+            ProductService productService,
+            BrandRepository brandRepository) {
         this.collectionRepository = collectionRepository;
         this.productCollectionRepository = productCollectionRepository;
         this.productRepository = productRepository;
         this.productService = productService;
+        this.brandRepository = brandRepository;
+    }
+
+    /** Resolve the optional brand tag, 404-ing on a bad id (null id = no tag). */
+    private Brand resolveBrand(UUID brandId) {
+        if (brandId == null) {
+            return null;
+        }
+        return brandRepository.findById(brandId)
+                .orElseThrow(() -> new ResourceNotFoundException("Brand not found"));
     }
 
     public record AdminListResult(List<CollectionResponse> items, PageMeta meta) {
@@ -161,6 +176,7 @@ public class CollectionService {
         c.setDescription(request.description());
         c.setShortDescription(request.shortDescription());
         c.setCollectionType(request.collectionType());
+        c.setBrand(resolveBrand(request.brandId()));
         c.setSeason(request.season());
         c.setYear(request.year());
         c.setBannerImageUrl(request.bannerImageUrl());
@@ -200,6 +216,9 @@ public class CollectionService {
         if (request.description() != null) c.setDescription(request.description());
         if (request.shortDescription() != null) c.setShortDescription(request.shortDescription());
         if (request.collectionType() != null) c.setCollectionType(request.collectionType());
+        // brandId is applied as given (null clears the tag) - the admin form always
+        // submits it explicitly, so it is not part of the null=unchanged contract.
+        c.setBrand(resolveBrand(request.brandId()));
         if (request.season() != null) c.setSeason(request.season());
         if (request.year() != null) c.setYear(request.year());
         if (request.bannerImageUrl() != null) c.setBannerImageUrl(request.bannerImageUrl());
@@ -319,9 +338,11 @@ public class CollectionService {
     }
 
     private CollectionResponse toAdminResponse(Collection c) {
+        Brand brand = c.getBrand();
+        CatalogRefResponse brandRef = brand == null ? null : new CatalogRefResponse(brand.getId(), brand.getName());
         return new CollectionResponse(
                 c.getId(), c.getName(), c.getSlug(), c.getDescription(), c.getShortDescription(),
-                c.getCollectionType(), c.getSeason(), c.getYear(), c.getBannerImageUrl(), c.getCoverImageUrl(),
+                c.getCollectionType(), brandRef, c.getSeason(), c.getYear(), c.getBannerImageUrl(), c.getCoverImageUrl(),
                 c.getStatus(), c.getStartsAt(), c.getEndsAt(), c.getSortOrder(), c.isFeatured(),
                 c.getCreatedAt(), c.getUpdatedAt());
     }

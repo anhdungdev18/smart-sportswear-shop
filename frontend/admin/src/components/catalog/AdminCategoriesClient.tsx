@@ -11,12 +11,19 @@ function createEmptyForm() {
     name: "",
     slug: "",
     description: "",
-    status: "ACTIVE"
+    status: "ACTIVE",
+    parentId: "",
+    nodeType: "LEAF",
+    sortOrder: 0
   };
 }
 
 function toStatusLabel(status: string) {
   return status === "ACTIVE" ? "Hoạt động" : "Ẩn";
+}
+
+function toNodeTypeLabel(nodeType?: string) {
+  return nodeType === "GROUP" ? "Nhóm" : "Lá";
 }
 
 export function AdminCategoriesClient({ initialItems }: { initialItems: CategoryResponse[] }) {
@@ -35,12 +42,15 @@ export function AdminCategoriesClient({ initialItems }: { initialItems: Category
     const first = initialItems[0];
     setSelectedId(first.id);
     setSlugDirty(true);
-    setForm({
-      name: first.name,
-      slug: first.slug,
-      description: first.description ?? "",
-      status: first.status
-    });
+      setForm({
+        name: first.name,
+        slug: first.slug,
+        description: first.description ?? "",
+        status: first.status,
+        parentId: first.parentId ?? "",
+        nodeType: first.nodeType ?? "LEAF",
+        sortOrder: first.sortOrder ?? 0
+      });
   }, [initialItems]);
 
   function handleSelect(item: CategoryResponse) {
@@ -50,7 +60,10 @@ export function AdminCategoriesClient({ initialItems }: { initialItems: Category
       name: item.name,
       slug: item.slug,
       description: item.description ?? "",
-      status: item.status
+      status: item.status,
+      parentId: item.parentId ?? "",
+      nodeType: item.nodeType ?? "LEAF",
+      sortOrder: item.sortOrder ?? 0
     });
     setMessage(null);
   }
@@ -72,7 +85,11 @@ export function AdminCategoriesClient({ initialItems }: { initialItems: Category
           name: form.name,
           slug: form.slug,
           description: form.description || null,
-          status: form.status
+          status: form.status,
+          parentId: form.parentId || null,
+          clearParent: !form.parentId,
+          nodeType: form.nodeType,
+          sortOrder: Number(form.sortOrder) || 0
         });
         setItems((current) => current.map((item) => (item.id === updated.id ? updated : item)));
         setMessage(`Đã cập nhật danh mục ${updated.name}.`);
@@ -83,7 +100,10 @@ export function AdminCategoriesClient({ initialItems }: { initialItems: Category
         name: form.name,
         slug: form.slug,
         description: form.description || null,
-        status: form.status
+        status: form.status,
+        parentId: form.parentId || null,
+        nodeType: form.nodeType,
+        sortOrder: Number(form.sortOrder) || 0
       });
       setItems((current) => [created, ...current]);
       setSelectedId(created.id);
@@ -92,7 +112,10 @@ export function AdminCategoriesClient({ initialItems }: { initialItems: Category
         name: created.name,
         slug: created.slug,
         description: created.description ?? "",
-        status: created.status
+        status: created.status,
+        parentId: created.parentId ?? "",
+        nodeType: created.nodeType ?? "LEAF",
+        sortOrder: created.sortOrder ?? 0
       });
       setMessage(`Đã tạo danh mục ${created.name}.`);
     } catch (error) {
@@ -112,7 +135,15 @@ export function AdminCategoriesClient({ initialItems }: { initialItems: Category
       setItems(remaining);
       setSelectedId(remaining[0]?.id ?? "");
       if (remaining[0]) {
-        setForm({ name: remaining[0].name, slug: remaining[0].slug, description: remaining[0].description ?? "", status: remaining[0].status });
+        setForm({
+          name: remaining[0].name,
+          slug: remaining[0].slug,
+          description: remaining[0].description ?? "",
+          status: remaining[0].status,
+          parentId: remaining[0].parentId ?? "",
+          nodeType: remaining[0].nodeType ?? "LEAF",
+          sortOrder: remaining[0].sortOrder ?? 0
+        });
       } else {
         setForm(createEmptyForm());
       }
@@ -144,6 +175,8 @@ export function AdminCategoriesClient({ initialItems }: { initialItems: Category
             <thead>
               <tr>
                 <th>Tên</th>
+                <th>Loại</th>
+                <th>Cha</th>
                 <th>Slug</th>
                 <th>Trạng thái</th>
               </tr>
@@ -155,6 +188,8 @@ export function AdminCategoriesClient({ initialItems }: { initialItems: Category
                     <strong>{item.name}</strong>
                     {item.description ? <div className="table-subtle">{item.description}</div> : null}
                   </td>
+                  <td>{toNodeTypeLabel(item.nodeType)}</td>
+                  <td>{items.find((parent) => parent.id === item.parentId)?.name ?? "—"}</td>
                   <td>{item.slug}</td>
                   <td>{toStatusLabel(item.status)}</td>
                 </tr>
@@ -172,6 +207,9 @@ export function AdminCategoriesClient({ initialItems }: { initialItems: Category
           </div>
         </div>
         {message ? <p className="action-message">{message}</p> : null}
+        {(() => {
+          const parentOptions = items.filter((item) => item.id !== selectedId && (item.nodeType ?? "LEAF") === "GROUP");
+          return (
         <div className="admin-form-grid">
           <input
             className="admin-input"
@@ -195,6 +233,25 @@ export function AdminCategoriesClient({ initialItems }: { initialItems: Category
             <option value="ACTIVE">ACTIVE</option>
             <option value="INACTIVE">INACTIVE</option>
           </select>
+          <select className="select" value={form.nodeType} onChange={(event) => setForm((current) => ({ ...current, nodeType: event.target.value as "GROUP" | "LEAF" }))}>
+            <option value="LEAF">LEAF</option>
+            <option value="GROUP">GROUP</option>
+          </select>
+          <select className="select" value={form.parentId} onChange={(event) => setForm((current) => ({ ...current, parentId: event.target.value }))}>
+            <option value="">Không có danh mục cha</option>
+            {parentOptions.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.name}
+              </option>
+            ))}
+          </select>
+          <input
+            className="admin-input"
+            type="number"
+            placeholder="Thứ tự sắp xếp"
+            value={form.sortOrder}
+            onChange={(event) => setForm((current) => ({ ...current, sortOrder: Number(event.target.value || 0) }))}
+          />
           <div className="admin-form-full">
             <textarea
               className="admin-textarea"
@@ -204,6 +261,8 @@ export function AdminCategoriesClient({ initialItems }: { initialItems: Category
             />
           </div>
         </div>
+          );
+        })()}
         <div className="page-actions">
           {selectedId && (
             <button className="admin-btn secondary" type="button" onClick={() => void handleDelete()} disabled={saving}>

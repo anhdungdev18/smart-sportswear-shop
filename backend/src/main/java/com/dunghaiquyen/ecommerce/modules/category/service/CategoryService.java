@@ -5,12 +5,18 @@ import com.dunghaiquyen.ecommerce.common.exception.ResourceNotFoundException;
 import com.dunghaiquyen.ecommerce.config.CacheConfig;
 import com.dunghaiquyen.ecommerce.modules.category.dto.CategoryCreateRequest;
 import com.dunghaiquyen.ecommerce.modules.category.dto.CategoryResponse;
+import com.dunghaiquyen.ecommerce.modules.category.dto.CategoryTreeResponse;
 import com.dunghaiquyen.ecommerce.modules.category.dto.CategoryUpdateRequest;
 import com.dunghaiquyen.ecommerce.modules.category.entity.Category;
+import com.dunghaiquyen.ecommerce.modules.category.entity.CategoryNodeType;
 import com.dunghaiquyen.ecommerce.modules.category.entity.CategoryStatus;
 import com.dunghaiquyen.ecommerce.modules.category.mapper.CategoryMapper;
 import com.dunghaiquyen.ecommerce.modules.category.repository.CategoryRepository;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -29,12 +35,18 @@ public class CategoryService {
         this.categoryMapper = categoryMapper;
     }
 
-    @Cacheable(CacheConfig.CATEGORIES)
+    @Cacheable(value = CacheConfig.CATEGORIES, key = "'flat'")
     @Transactional(readOnly = true)
     public List<CategoryResponse> listActive() {
-        return categoryRepository.findAllByStatusOrderByNameAsc(CategoryStatus.ACTIVE).stream()
+        return categoryRepository.findAllByStatusOrderBySortOrderAscNameAsc(CategoryStatus.ACTIVE).stream()
                 .map(categoryMapper::toResponse)
                 .toList();
+    }
+
+    @Cacheable(value = CacheConfig.CATEGORIES, key = "'tree'")
+    @Transactional(readOnly = true)
+    public List<CategoryTreeResponse> listActiveTree() {
+        return buildTree(categoryRepository.findAllActiveWithParent(CategoryStatus.ACTIVE));
     }
 
     @Transactional(readOnly = true)
@@ -52,11 +64,16 @@ public class CategoryService {
             throw new BusinessRuleException("Slug already exists: " + request.slug());
         }
 
+        CategoryNodeType nodeType = request.nodeType() != null ? request.nodeType() : CategoryNodeType.LEAF;
+
         Category category = new Category();
         category.setName(request.name().trim());
         category.setSlug(request.slug());
         category.setDescription(request.description());
         category.setStatus(request.status() != null ? request.status() : CategoryStatus.ACTIVE);
+        category.setNodeType(nodeType);
+        category.setSortOrder(request.sortOrder() != null ? request.sortOrder() : 0);
+        category.setParent(resolveParent(request.parentId(), null));
 
         try {
             category = categoryRepository.save(category);
@@ -88,6 +105,20 @@ public class CategoryService {
         if (request.status() != null) {
             category.setStatus(request.status());
         }
+        if (request.sortOrder() != null) {
+            category.setSortOrder(request.sortOrder());
+        }
+        if (request.nodeType() != null) {
+            category.setNodeType(request.nodeType());
+        }
+        if (Boolean.TRUE.equals(request.clearParent())) {
+            category.setParent(null);
+        } else if (request.parentId() != null) {
+            category.setParent(resolveParent(request.parentId(), id));
+        }
+        if (category.getNodeType() == CategoryNodeType.LEAF && categoryRepository.existsByParentId(id)) {
+            throw new BusinessRuleException("Category with children cannot become LEAF.");
+        }
 
         try {
             category = categoryRepository.save(category);
@@ -102,19 +133,80 @@ public class CategoryService {
     public void delete(UUID id) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found"));
+        if (categoryRepository.existsByParentId(id)) {
+            throw new BusinessRuleException("Khong the xoa danh muc dang co danh muc con.");
+        }
         try {
             categoryRepository.delete(category);
         } catch (DataIntegrityViolationException ex) {
-            throw new BusinessRuleException("Không thể xóa danh mục đang được dùng bởi sản phẩm.");
+            throw new BusinessRuleException("Khong the xoa danh muc dang duoc dung boi san pham.");
         }
     }
 
-    private java.util.Optional<Category> tryFindActiveById(String slugOrId) {
+    private Optional<Category> tryFindActiveById(String slugOrId) {
         try {
             UUID id = UUID.fromString(slugOrId);
             return categoryRepository.findByIdAndStatus(id, CategoryStatus.ACTIVE);
         } catch (IllegalArgumentException ignored) {
-            return java.util.Optional.empty();
+            return Optional.empty();
         }
+    }
+
+    private Category resolveParent(UUID parentId, UUID selfId) {
+        if (parentId == null) {
+            return null;
+        }
+        if (selfId != null && selfId.equals(parentId)) {
+            throw new BusinessRuleException("Category cannot be its own parent.");
+        }
+
+        Category parent = categoryRepository.findById(parentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Parent category not found"));
+        if (parent.getNodeType() == CategoryNodeType.LEAF) {
+            throw new BusinessRuleException("Parent category must be GROUP.");
+        }
+        if (createsCycle(parent, selfId)) {
+            throw new BusinessRuleException("Parent category creates a cycle.");
+        }
+        return parent;
+    }
+
+    private boolean createsCycle(Category parent, UUID selfId) {
+        if (selfId == null) {
+            return false;
+        }
+        Category cursor = parent;
+        while (cursor != null) {
+            if (selfId.equals(cursor.getId())) {
+                return true;
+            }
+            cursor = cursor.getParent();
+        }
+        return false;
+    }
+
+    private List<CategoryTreeResponse> buildTree(List<Category> categories) {
+        Map<UUID, List<Category>> childrenByParent = new LinkedHashMap<>();
+        List<Category> roots = new ArrayList<>();
+
+        for (Category category : categories) {
+            if (category.getParent() == null) {
+                roots.add(category);
+            } else {
+                childrenByParent.computeIfAbsent(category.getParent().getId(), ignored -> new ArrayList<>())
+                        .add(category);
+            }
+        }
+
+        return roots.stream()
+                .map(root -> toTree(root, childrenByParent))
+                .toList();
+    }
+
+    private CategoryTreeResponse toTree(Category category, Map<UUID, List<Category>> childrenByParent) {
+        List<CategoryTreeResponse> children = childrenByParent.getOrDefault(category.getId(), List.of()).stream()
+                .map(child -> toTree(child, childrenByParent))
+                .toList();
+        return categoryMapper.toTreeResponse(category, children);
     }
 }

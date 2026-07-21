@@ -1,10 +1,12 @@
 package com.dunghaiquyen.ecommerce.modules.category.dto;
 
 import com.dunghaiquyen.ecommerce.common.validation.Patterns;
+import com.dunghaiquyen.ecommerce.modules.category.entity.CategoryNodeType;
 import com.dunghaiquyen.ecommerce.modules.category.entity.CategoryStatus;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import java.util.UUID;
 
 public record CategoryCreateRequest(
 
@@ -19,5 +21,11 @@ public record CategoryCreateRequest(
 
         String description,
 
-        CategoryStatus status) {
+        CategoryStatus status,
+
+        UUID parentId,
+
+        CategoryNodeType nodeType,
+
+        Integer sortOrder) {
 }

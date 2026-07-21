@@ -3,8 +3,12 @@ import Link from "next/link";
 import { SiteHeaderNav } from "@/components/layout/SiteHeaderNav";
 import { HeaderActionsLive } from "@/components/layout/HeaderActionsLive";
 import { SearchIcon } from "@/components/shared/icons";
+import { buildHeaderNavItems } from "@/modules/category/navigation";
+import { fetchCategoryTree } from "@/modules/category/queries";
 
-export function Header() {
+export async function Header() {
+  const navigationItems = buildHeaderNavItems(await fetchCategoryTree());
+
   return (
     <header className="fixed inset-x-0 top-0 z-40 bg-white">
       <div className="h-[var(--site-header-main-height)] border-b border-ivy-hairline px-8 md:px-12 lg:px-14">
@@ -41,7 +45,7 @@ export function Header() {
       </div>
       <div className="h-[var(--site-header-nav-height)] border-b border-ivy-hairline px-8 md:px-12 lg:px-14">
         <div className="flex h-full items-center">
-          <SiteHeaderNav />
+          <SiteHeaderNav items={navigationItems} />
         </div>
       </div>
     </header>

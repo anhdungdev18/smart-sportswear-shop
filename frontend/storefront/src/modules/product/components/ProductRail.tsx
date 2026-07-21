@@ -60,7 +60,10 @@ export function ProductRail({ title, tabs, products }: ProductRailProps) {
             style={{ scrollbarWidth: "none" }}
           >
             {visibleProducts.map((product) => (
-              <div key={product.id} className="w-[220px] shrink-0 sm:w-[248px] lg:w-[292px] xl:w-[320px]">
+              <div
+                key={product.id}
+                className="w-[calc((100%-1.25rem)/2)] shrink-0 sm:w-[calc((100%-2.5rem)/3)] md:w-[calc((100%-5.25rem)/4)] lg:w-[calc((100%-7rem)/5)]"
+              >
                 <ProductCard product={product} />
               </div>
             ))}

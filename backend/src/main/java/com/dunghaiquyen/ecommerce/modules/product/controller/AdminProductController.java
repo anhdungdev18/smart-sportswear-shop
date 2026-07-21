@@ -113,6 +113,11 @@ public class AdminProductController {
         return ApiResponse.ok("Image deleted", productImageService.deleteImage(id, imageId));
     }
 
+    @PatchMapping("/{id}/images/{imageId}/primary")
+    public ApiResponse<List<ProductImageResponse>> setPrimaryImage(@PathVariable UUID id, @PathVariable UUID imageId) {
+        return ApiResponse.ok("Primary image updated", productImageService.setPrimary(id, imageId));
+    }
+
     @GetMapping("/{id}/collections")
     public ApiResponse<List<com.dunghaiquyen.ecommerce.modules.collection.dto.CollectionResponse>> listCollections(@PathVariable UUID id) {
         return ApiResponse.ok(collectionService.listCollectionsForProduct(id));

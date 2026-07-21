@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 public interface CategoryRepository extends JpaRepository<Category, UUID> {
 
@@ -19,5 +20,16 @@ public interface CategoryRepository extends JpaRepository<Category, UUID> {
 
     boolean existsBySlugAndIdNot(String slug, UUID id);
 
-    List<Category> findAllByStatusOrderByNameAsc(CategoryStatus status);
+    List<Category> findAllByStatusOrderBySortOrderAscNameAsc(CategoryStatus status);
+
+    boolean existsByParentId(UUID parentId);
+
+    @Query("""
+            select c
+            from Category c
+            left join fetch c.parent
+            where c.status = :status
+            order by c.sortOrder asc, c.name asc
+            """)
+    List<Category> findAllActiveWithParent(CategoryStatus status);
 }

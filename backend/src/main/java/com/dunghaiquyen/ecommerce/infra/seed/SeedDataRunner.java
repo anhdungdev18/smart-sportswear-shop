@@ -14,16 +14,22 @@ public class SeedDataRunner implements CommandLineRunner {
 
     private final SeedDataService seedDataService;
     private final FashionProductSeeder fashionProductSeeder;
+    private final RealRunningCatalogSeeder realRunningCatalogSeeder;
 
-    public SeedDataRunner(SeedDataService seedDataService, FashionProductSeeder fashionProductSeeder) {
+    public SeedDataRunner(
+            SeedDataService seedDataService,
+            FashionProductSeeder fashionProductSeeder,
+            RealRunningCatalogSeeder realRunningCatalogSeeder) {
         this.seedDataService = seedDataService;
         this.fashionProductSeeder = fashionProductSeeder;
+        this.realRunningCatalogSeeder = realRunningCatalogSeeder;
     }
 
     @Override
     public void run(String... args) {
-        // Sports seeder must run first — it clears old data before SeedDataService re-creates its own fixtures.
+        // Base sports catalog runs first because it resets the demo catalog.
         fashionProductSeeder.seed();
+        realRunningCatalogSeeder.seed();
 
         SeedDataService.SeedSummary summary = seedDataService.seed();
         log.info(
