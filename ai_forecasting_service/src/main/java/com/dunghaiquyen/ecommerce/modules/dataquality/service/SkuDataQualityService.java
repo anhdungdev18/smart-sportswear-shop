@@ -2,6 +2,7 @@ package com.dunghaiquyen.ecommerce.modules.dataquality.service;
 
 import com.dunghaiquyen.ecommerce.config.AiDataQualityProperties;
 import com.dunghaiquyen.ecommerce.modules.dataquality.dto.DataQualitySummaryResponse;
+import com.dunghaiquyen.ecommerce.modules.dataquality.dto.DataQualitySourceSummaryResponse;
 import com.dunghaiquyen.ecommerce.modules.dataquality.dto.SkuDataQualityLevel;
 import com.dunghaiquyen.ecommerce.modules.dataquality.dto.SkuDataQualityResponse;
 import com.dunghaiquyen.ecommerce.modules.dataquality.repository.SkuDataQualityRepository;
@@ -11,6 +12,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,7 +56,8 @@ public class SkuDataQualityService {
                 countLevel(rows, SkuDataQualityLevel.INSUFFICIENT),
                 (int) rows.stream().filter(row -> !row.supplierConfigured()).count(),
                 (int) rows.stream().filter(row -> row.missingDays() > 0).count(),
-                (int) rows.stream().filter(row -> row.inventorySnapshotDays() < properties.minHistoryDays()).count());
+                (int) rows.stream().filter(row -> row.inventorySnapshotDays() < properties.minHistoryDays()).count(),
+                summarizeBySource(rows));
     }
 
     private SkuDataQualityResponse map(SkuDataQualityRow row, LocalDate fromInclusive, LocalDate toInclusive,
@@ -85,6 +88,7 @@ public class SkuDataQualityService {
                 row.variantId(),
                 row.sku(),
                 row.productName(),
+                row.dataSource(),
                 fromInclusive,
                 toInclusive,
                 expectedDays,
@@ -129,6 +133,25 @@ public class SkuDataQualityService {
         return SkuDataQualityLevel.LOW;
     }
 
+    private List<DataQualitySourceSummaryResponse> summarizeBySource(List<SkuDataQualityResponse> rows) {
+        return rows.stream()
+                .collect(Collectors.groupingBy(SkuDataQualityResponse::dataSource, Collectors.toList()))
+                .entrySet().stream()
+                .sorted(java.util.Map.Entry.comparingByKey())
+                .map(entry -> new DataQualitySourceSummaryResponse(
+                        entry.getKey(),
+                        entry.getValue().size(),
+                        countLevel(entry.getValue(), SkuDataQualityLevel.HIGH),
+                        countLevel(entry.getValue(), SkuDataQualityLevel.MEDIUM),
+                        countLevel(entry.getValue(), SkuDataQualityLevel.LOW),
+                        countLevel(entry.getValue(), SkuDataQualityLevel.INSUFFICIENT),
+                        (int) entry.getValue().stream().filter(row -> !row.supplierConfigured()).count(),
+                        (int) entry.getValue().stream().filter(row -> row.missingDays() > 0).count(),
+                        (int) entry.getValue().stream()
+                                .filter(row -> row.inventorySnapshotDays() < properties.minHistoryDays()).count()))
+                .toList();
+    }
+
     private int countLevel(List<SkuDataQualityResponse> rows, SkuDataQualityLevel level) {
         return (int) rows.stream().filter(row -> row.qualityLevel() == level).count();
     }
@@ -143,3 +166,4 @@ public class SkuDataQualityService {
         return (int) ChronoUnit.DAYS.between(fromInclusive, toInclusive) + 1;
     }
 }
+

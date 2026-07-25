@@ -63,6 +63,8 @@ class CoreSnapshotSyncServiceIntegrationTest {
         assertThat(count("ai_product_variant_snapshot")).isEqualTo(1);
         assertThat(count("ai_inventory_snapshot")).isEqualTo(1);
         assertThat(count("ai_sales_daily_snapshot")).isEqualTo(2);
+        assertThat(jdbc.sql("select count(*) from ai_sales_daily_snapshot where data_source='DEMO'")
+                .query(Long.class).single()).isEqualTo(2);
         assertThat(count("inventory_policies")).isEqualTo(1);
 
         UUID variantId = UUID.fromString("11111111-1111-1111-1111-111111111111");
@@ -85,11 +87,12 @@ class CoreSnapshotSyncServiceIntegrationTest {
                   "variants":[{"id":"11111111-1111-1111-1111-111111111111",
                     "productId":"22222222-2222-2222-2222-222222222222","sku":"FD-TEST-01",
                     "productName":"Áo chạy bộ","size":"M","color":"Đen",
-                    "stockQuantity":20,"reservedQuantity":3}],
+                    "stockQuantity":20,"reservedQuantity":3,"dataSource":"DEMO"}],
                   "dailyDemand":[
-                    {"variantId":"11111111-1111-1111-1111-111111111111","demandDate":"2026-01-01","quantity":2},
-                    {"variantId":"11111111-1111-1111-1111-111111111111","demandDate":"2026-01-02","quantity":4}],
+                    {"variantId":"11111111-1111-1111-1111-111111111111","demandDate":"2026-01-01","quantity":2,"dataSource":"DEMO"},
+                    {"variantId":"11111111-1111-1111-1111-111111111111","demandDate":"2026-01-02","quantity":4,"dataSource":"DEMO"}],
                   "suppliers":[]}}
                 """;
     }
 }
+

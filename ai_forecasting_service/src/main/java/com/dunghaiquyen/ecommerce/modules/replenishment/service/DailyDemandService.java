@@ -1,6 +1,7 @@
 package com.dunghaiquyen.ecommerce.modules.replenishment.service;
 
 import com.dunghaiquyen.ecommerce.common.time.AppTimeZone;
+import com.dunghaiquyen.ecommerce.config.ForecastDataSourceProperties;
 import com.dunghaiquyen.ecommerce.modules.replenishment.repository.DailyVariantDemandProjection;
 import com.dunghaiquyen.ecommerce.modules.replenishment.repository.SalesHistoryRepository;
 import java.time.Instant;
@@ -18,9 +19,12 @@ import org.springframework.transaction.annotation.Transactional;
 public class DailyDemandService {
 
     private final SalesHistoryRepository salesHistoryRepository;
+    private final ForecastDataSourceProperties forecastDataSourceProperties;
 
-    public DailyDemandService(SalesHistoryRepository salesHistoryRepository) {
+    public DailyDemandService(SalesHistoryRepository salesHistoryRepository,
+            ForecastDataSourceProperties forecastDataSourceProperties) {
         this.salesHistoryRepository = salesHistoryRepository;
+        this.forecastDataSourceProperties = forecastDataSourceProperties;
     }
 
     public record DailyDemandPoint(LocalDate date, long quantity) {
@@ -44,7 +48,7 @@ public class DailyDemandService {
         Instant from = fromInclusive.atStartOfDay(AppTimeZone.ZONE).toInstant();
         Instant toExclusive = toInclusive.plusDays(1).atStartOfDay(AppTimeZone.ZONE).toInstant();
         List<DailyVariantDemandProjection> rows = salesHistoryRepository.aggregateDailyDemand(
-                from, toExclusive, requestedIds.toArray(UUID[]::new));
+                from, toExclusive, requestedIds.toArray(UUID[]::new), forecastDataSourceProperties.dataSource());
 
         Map<UUID, Map<LocalDate, Long>> quantities = new LinkedHashMap<>();
         for (UUID variantId : requestedIds) {
@@ -69,3 +73,5 @@ public class DailyDemandService {
         return result;
     }
 }
+
+

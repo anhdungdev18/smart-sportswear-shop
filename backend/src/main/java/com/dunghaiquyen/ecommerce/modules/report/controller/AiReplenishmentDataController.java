@@ -25,10 +25,14 @@ public class AiReplenishmentDataController {
     private static final ZoneId BUSINESS_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
     private final JdbcClient jdbc;
     private final String syncSecret;
+    private final String forecastDemoMarker;
 
-    public AiReplenishmentDataController(JdbcClient jdbc, @Value("${app.ai.sync-secret}") String syncSecret) {
+    public AiReplenishmentDataController(JdbcClient jdbc,
+            @Value("${app.ai.sync-secret}") String syncSecret,
+            @Value("${app.forecast-demo.marker:[FORECAST_DEMO_V2]}") String forecastDemoMarker) {
         this.jdbc = jdbc;
         this.syncSecret = syncSecret;
+        this.forecastDemoMarker = forecastDemoMarker;
     }
 
     @PostMapping("/snapshot")
@@ -48,25 +52,35 @@ public class AiReplenishmentDataController {
         boolean allActive = ids.length == 0;
         List<VariantData> variants = jdbc.sql("""
                 select v.id, v.product_id, v.sku, p.name product_name, v.size, v.color,
-                       v.stock_quantity, v.reserved_quantity
-                from product_variants v join products p on p.id = v.product_id
+                       v.stock_quantity, v.reserved_quantity,
+                       case when fds.variant_id is not null then 'DEMO' else 'REAL' end data_source
+                from product_variants v
+                join products p on p.id = v.product_id
+                left join forecast_demo_scenarios fds on fds.variant_id = v.id and fds.marker = :demoMarker
                 where (:allActive and v.status = 'ACTIVE') or v.id = any(:ids)
                 order by v.id
-                """).param("allActive", allActive).param("ids", ids).query(VariantData.class).list();
+                """).param("demoMarker", forecastDemoMarker)
+                .param("allActive", allActive)
+                .param("ids", ids)
+                .query(VariantData.class)
+                .list();
         UUID[] selectedIds = variants.stream().map(VariantData::id).toArray(UUID[]::new);
         List<DemandData> demand = selectedIds.length == 0 ? List.of() : jdbc.sql("""
                 select oi.variant_id, (o.created_at at time zone 'Asia/Ho_Chi_Minh')::date demand_date,
-                       sum(oi.quantity) quantity
+                       coalesce(o.data_source, 'REAL') data_source, sum(oi.quantity) quantity
                 from order_items oi join orders o on o.id = oi.order_id
-                where o.order_status in ('CONFIRMED', 'PACKING', 'SHIPPING', 'DELIVERED')
+                where o.order_status <> 'CANCELLED'
                   and o.created_at >= :fromInclusive and o.created_at < :toExclusive
                   and oi.variant_id = any(:ids)
-                group by oi.variant_id, demand_date order by oi.variant_id, demand_date
+                group by oi.variant_id, demand_date, data_source
+                order by oi.variant_id, demand_date, data_source
                 """).param("fromInclusive", Timestamp.from(atStart(request.fromInclusive())))
                 .param("toExclusive", Timestamp.from(atStart(request.toInclusive().plusDays(1))))
                 .param("ids", selectedIds)
                 .query((rs, row) -> new DemandData(rs.getObject("variant_id", UUID.class),
-                        rs.getObject("demand_date", Date.class).toLocalDate(), rs.getLong("quantity"))).list();
+                        rs.getObject("demand_date", Date.class).toLocalDate(), rs.getLong("quantity"),
+                        rs.getString("data_source")))
+                .list();
         return ApiResponse.ok(new SnapshotResponse(Instant.now(), variants, demand, List.of()));
     }
 
@@ -75,8 +89,8 @@ public class AiReplenishmentDataController {
     public record SnapshotResponse(Instant generatedAt, List<VariantData> variants,
                                    List<DemandData> dailyDemand, List<SupplierData> suppliers) {}
     public record VariantData(UUID id, UUID productId, String sku, String productName, String size,
-                              String color, int stockQuantity, int reservedQuantity) {}
-    public record DemandData(UUID variantId, LocalDate demandDate, long quantity) {}
+                              String color, int stockQuantity, int reservedQuantity, String dataSource) {}
+    public record DemandData(UUID variantId, LocalDate demandDate, long quantity, String dataSource) {}
     public record SupplierData(UUID id, String code, String name, boolean active,
                                Integer defaultLeadTimeDays, Instant updatedAt) {}
 }

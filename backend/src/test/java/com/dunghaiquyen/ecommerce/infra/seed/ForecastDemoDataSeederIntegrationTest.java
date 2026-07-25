@@ -106,12 +106,13 @@ public class ForecastDemoDataSeederIntegrationTest extends AbstractIntegrationTe
         assertThat(count("select count(distinct pack_size) from forecast_demo_scenarios where marker = ?", MARKER)).isGreaterThan(1L);
         assertThat(count("select count(*) from order_items where line_total <> unit_price_snapshot * quantity")).isZero();
         assertThat(count("select count(*) from orders where note = ? and order_status = 'CANCELLED'", MARKER)).isGreaterThan(0L);
+        assertThat(count("select count(*) from orders where note = ? and data_source = 'DEMO'", MARKER)).isEqualTo(240L);
 
         Long validUnits = count("""
                 select coalesce(sum(oi.quantity), 0)
                 from order_items oi
                 join orders o on o.id = oi.order_id
-                where o.note = ? and o.order_status in ('CONFIRMED', 'PACKING', 'SHIPPING', 'DELIVERED')
+                where o.note = ? and o.order_status <> 'CANCELLED'
                 """, MARKER);
         Long scenarioValidUnits = count("select coalesce(sum(expected_valid_units), 0) from forecast_demo_scenarios where marker = ?", MARKER);
         assertThat(scenarioValidUnits).isEqualTo(validUnits);

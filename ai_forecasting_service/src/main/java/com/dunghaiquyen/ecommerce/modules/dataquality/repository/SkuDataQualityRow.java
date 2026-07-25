@@ -7,6 +7,7 @@ public record SkuDataQualityRow(
         UUID variantId,
         String sku,
         String productName,
+        String dataSource,
         int salesRows,
         int nonZeroDays,
         long totalUnits,

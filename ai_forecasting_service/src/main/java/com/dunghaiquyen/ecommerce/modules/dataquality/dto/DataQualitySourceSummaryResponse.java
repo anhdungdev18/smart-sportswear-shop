@@ -1,8 +1,7 @@
 package com.dunghaiquyen.ecommerce.modules.dataquality.dto;
 
-import java.util.List;
-
-public record DataQualitySummaryResponse(
+public record DataQualitySourceSummaryResponse(
+        String dataSource,
         int totalVariants,
         int highQualityVariants,
         int mediumQualityVariants,
@@ -10,6 +9,5 @@ public record DataQualitySummaryResponse(
         int insufficientVariants,
         int variantsMissingSupplier,
         int variantsWithMissingSalesDays,
-        int variantsWithInventoryGaps,
-        List<DataQualitySourceSummaryResponse> bySource) {
+        int variantsWithInventoryGaps) {
 }

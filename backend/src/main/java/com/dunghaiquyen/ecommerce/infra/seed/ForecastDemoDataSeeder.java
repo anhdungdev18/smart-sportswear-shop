@@ -33,7 +33,6 @@ import org.springframework.transaction.annotation.Transactional;
 @ConditionalOnProperty(prefix = "app.forecast-demo", name = "enabled", havingValue = "true")
 public class ForecastDemoDataSeeder {
     private static final Logger log = LoggerFactory.getLogger(ForecastDemoDataSeeder.class);
-    private static final List<String> VALID_DEMAND_STATUSES = List.of("CONFIRMED", "PACKING", "SHIPPING", "DELIVERED");
 
     private final JdbcTemplate jdbcTemplate;
     private final ProductVariantRepository variantRepository;
@@ -114,7 +113,7 @@ public class ForecastDemoDataSeeder {
             LocalDate orderDate = randomOrderDate(random, startDate);
             Timestamp createdAt = Timestamp.valueOf(LocalDateTime.of(
                     orderDate,
-                    java.time.LocalTime.of(random.nextInt(24), random.nextInt(60), random.nextInt(60))));
+                    java.time.LocalTime.NOON));
             String status = determineStatus(random);
             User user = users.get(random.nextInt(users.size()));
             String orderCode = "FDV2-" + properties.randomSeed() + "-" + String.format("%05d", i + 1);
@@ -127,7 +126,7 @@ public class ForecastDemoDataSeeder {
 
             ScenarioTotals scenarioTotals = totals.get(variant.getId());
             scenarioTotals.totalUnits += quantity;
-            if (VALID_DEMAND_STATUSES.contains(status)) {
+            if (!"CANCELLED".equals(status)) {
                 scenarioTotals.validUnits += quantity;
             }
 
@@ -138,7 +137,7 @@ public class ForecastDemoDataSeeder {
             orderBatch.add(new Object[]{
                     orderId, orderCode, user.getId(), status, "COD", "UNPAID",
                     properties.marker(), "{}", lineTotal, 0, 0, lineTotal,
-                    createdAt, createdAt
+                    createdAt, createdAt, "DEMO"
             });
         }
 
@@ -146,8 +145,8 @@ public class ForecastDemoDataSeeder {
             insert into orders (
                 id, order_code, user_id, order_status, payment_method, payment_status,
                 note, address_snapshot_json, subtotal_amount, shipping_fee, discount_amount, total_amount,
-                created_at, updated_at
-            ) values (?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?, ?, ?, ?, ?, ?)
+                created_at, updated_at, data_source
+            ) values (?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?, ?, ?, ?, ?, ?, ?)
         """, orderBatch);
 
         jdbcTemplate.batchUpdate("""
@@ -403,3 +402,8 @@ public class ForecastDemoDataSeeder {
         private int validUnits;
     }
 }
+
+
+
+
+

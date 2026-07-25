@@ -38,6 +38,7 @@ management:
 app:
   forecast:
     generation-parallelism: ${FORECAST_GENERATION_PARALLELISM:4}
+    data-source: ${AI_FORECAST_DATA_SOURCE:REAL}
   core:
     base-url: ${CORE_API_BASE_URL:http://localhost:8080}
     sync-secret: ${AI_SYNC_SECRET:dev-only-ai-sync-secret-change-me}
@@ -58,3 +59,4 @@ ai:
 logging:
   level:
     com.dunghaiquyen.ecommerce: ${LOG_LEVEL:INFO}
+

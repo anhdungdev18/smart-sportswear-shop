@@ -8,6 +8,7 @@ public record SkuDataQualityResponse(
         UUID variantId,
         String sku,
         String productName,
+        String dataSource,
         LocalDate fromDate,
         LocalDate toDate,
         int historyDays,

@@ -26,7 +26,7 @@ class SkuDataQualityServiceTest {
         LocalDate from = LocalDate.of(2026, 1, 1);
         LocalDate to = LocalDate.of(2026, 6, 29);
         when(repository.findQualityRow(variantId, from, to)).thenReturn(Optional.of(new SkuDataQualityRow(
-                variantId, "SKU-1", "Product", 179, 35, 120, to.minusDays(1), 180, "Supplier")));
+                variantId, "SKU-1", "Product", "DEMO", 179, 35, 120, to.minusDays(1), 180, "Supplier")));
 
         var result = service.getVariant(variantId, from, to);
 
@@ -42,7 +42,7 @@ class SkuDataQualityServiceTest {
         LocalDate from = LocalDate.of(2026, 1, 1);
         LocalDate to = LocalDate.of(2026, 6, 29);
         when(repository.findQualityRow(variantId, from, to)).thenReturn(Optional.of(new SkuDataQualityRow(
-                variantId, "SKU-2", "Product", 180, 40, 300, to, 180, "Supplier")));
+                variantId, "SKU-2", "Product", "REAL", 180, 40, 300, to, 180, "Supplier")));
 
         var result = service.getVariant(variantId, from, to);
 
@@ -58,8 +58,8 @@ class SkuDataQualityServiceTest {
         LocalDate from = LocalDate.of(2026, 1, 1);
         LocalDate to = LocalDate.of(2026, 6, 29);
         when(repository.findQualityRows(from, to)).thenReturn(List.of(
-                new SkuDataQualityRow(UUID.randomUUID(), "SKU-1", "Product", 180, 40, 300, to, 180, "Supplier"),
-                new SkuDataQualityRow(UUID.randomUUID(), "SKU-2", "Product", 180, 20, 60, to.minusDays(10), 20, null)));
+                new SkuDataQualityRow(UUID.randomUUID(), "SKU-1", "Product", "REAL", 180, 40, 300, to, 180, "Supplier"),
+                new SkuDataQualityRow(UUID.randomUUID(), "SKU-2", "Product", "DEMO", 180, 20, 60, to.minusDays(10), 20, null)));
 
         var summary = service.summarize(from, to);
 
@@ -67,5 +67,7 @@ class SkuDataQualityServiceTest {
         assertThat(summary.highQualityVariants()).isEqualTo(1);
         assertThat(summary.variantsMissingSupplier()).isEqualTo(1);
         assertThat(summary.variantsWithInventoryGaps()).isEqualTo(1);
+        assertThat(summary.bySource()).extracting("dataSource").containsExactly("DEMO", "REAL");
     }
 }
+
