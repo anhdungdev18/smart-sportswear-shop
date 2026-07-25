@@ -56,24 +56,24 @@ public class CoreSnapshotSyncService {
         List<Object[]> inventory = new ArrayList<>(variants.size());
         List<Object[]> policies = new ArrayList<>(variants.size());
         for (VariantData v : variants) {
-            products.add(new Object[] {v.id(), v.productId(), v.sku(), v.productName(), v.size(), v.color(), capturedAt});
-            inventory.add(new Object[] {v.id(), v.stockQuantity(), v.reservedQuantity(), capturedAt});
+            products.add(new Object[] {v.id(), v.productId(), v.sku(), v.productName(), v.size(), v.color(), capturedAt, v.dataSource()});
+            inventory.add(new Object[] {v.id(), v.stockQuantity(), v.reservedQuantity(), capturedAt, v.dataSource()});
             policies.add(new Object[] {UUID.randomUUID(), v.id(), capturedAt, capturedAt});
         }
         jdbc.batchUpdate("""
                 insert into ai_product_variant_snapshot
-                    (variant_id, product_id, sku, product_name, size, color, captured_at)
-                values (?, ?, ?, ?, ?, ?, ?)
+                    (variant_id, product_id, sku, product_name, size, color, captured_at, data_source)
+                values (?, ?, ?, ?, ?, ?, ?, ?)
                 on conflict (variant_id) do update set product_id=excluded.product_id, sku=excluded.sku,
                     product_name=excluded.product_name, size=excluded.size, color=excluded.color,
-                    captured_at=excluded.captured_at
+                    captured_at=excluded.captured_at, data_source=excluded.data_source
                 """, products);
         jdbc.batchUpdate("""
                 insert into ai_inventory_snapshot
-                    (variant_id, stock_quantity, reserved_quantity, captured_at)
-                values (?, ?, ?, ?)
+                    (variant_id, stock_quantity, reserved_quantity, captured_at, data_source)
+                values (?, ?, ?, ?, ?)
                 on conflict (variant_id, captured_at) do update set
-                    stock_quantity=excluded.stock_quantity, reserved_quantity=excluded.reserved_quantity
+                    stock_quantity=excluded.stock_quantity, reserved_quantity=excluded.reserved_quantity, data_source=excluded.data_source
                 """, inventory);
         jdbc.batchUpdate("""
                 insert into inventory_policies
@@ -87,13 +87,13 @@ public class CoreSnapshotSyncService {
     private void batchDailyDemand(List<DemandData> demand, Timestamp capturedAt) {
         if (demand.isEmpty()) return;
         List<Object[]> rows = demand.stream()
-                .map(d -> new Object[] {d.variantId(), d.demandDate(), d.quantity(), capturedAt})
+                .map(d -> new Object[] {d.variantId(), d.demandDate(), d.quantity(), capturedAt, d.dataSource()})
                 .toList();
         jdbc.batchUpdate("""
-                insert into ai_sales_daily_snapshot (variant_id, sales_date, quantity, captured_at)
-                values (?, ?, ?, ?)
-                on conflict (variant_id, sales_date) do update set quantity=excluded.quantity,
-                    captured_at=excluded.captured_at
+                insert into ai_sales_daily_snapshot (variant_id, sales_date, quantity, captured_at, data_source)
+                values (?, ?, ?, ?, ?)
+                on conflict (variant_id, sales_date, data_source) do update set quantity=excluded.quantity,
+                    captured_at=excluded.captured_at, data_source=excluded.data_source
                 """, rows);
     }
 
@@ -117,9 +117,13 @@ public class CoreSnapshotSyncService {
     public record SnapshotPayload(Instant generatedAt, List<VariantData> variants,
                                   List<DemandData> dailyDemand, List<SupplierData> suppliers) {}
     public record VariantData(UUID id, UUID productId, String sku, String productName, String size,
-                              String color, int stockQuantity, int reservedQuantity) {}
-    public record DemandData(UUID variantId, LocalDate demandDate, long quantity) {}
+                              String color, int stockQuantity, int reservedQuantity, String dataSource) {}
+    public record DemandData(UUID variantId, LocalDate demandDate, long quantity, String dataSource) {}
     public record SupplierData(UUID id, String code, String name, boolean active,
                                Integer defaultLeadTimeDays, Instant updatedAt) {}
     public record SyncResult(Instant capturedAt, int variants, int dailySalesRows, int suppliers) {}
 }
+
+
+
+
