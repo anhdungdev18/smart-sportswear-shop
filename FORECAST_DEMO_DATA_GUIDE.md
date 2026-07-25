@@ -6,10 +6,10 @@ with the team.
 
 ## Safety boundary
 
-- Forecast demo orders are synthetic data, marked with `[FORECAST_DEMO]`.
+- Forecast demo orders are synthetic data, marked with `[FORECAST_DEMO_V2]`.
 - The forecast seed is disabled by default.
 - Run it only against a disposable local/demo database.
-- Never enable `APP_SEED_ENABLED` or `APP_FORECAST_DEMO_ENABLED` on production.
+- Never enable `APP_SEED_ENABLED` or `FORECAST_DEMO_ENABLED` on production.
 - Flyway V13 creates empty replenishment tables when deployed; it does not seed
   orders by itself.
 
@@ -22,7 +22,7 @@ automatically synchronized with any cloud database.
 Source data:
 
 - `product_variants`: 30 controlled SKUs with the `FD-` prefix.
-- `orders`: about 3,000 synthetic orders marked `[FORECAST_DEMO]`.
+- `orders`: about 12,000 synthetic orders marked `[FORECAST_DEMO_V2]`.
 - `order_items`: quantity sold for each variant/order.
 
 Replenishment schema created by Flyway V13:
@@ -46,12 +46,19 @@ Copy `backend/.env.example` to `backend/.env`, then set:
 
 ```dotenv
 APP_SEED_ENABLED=true
-APP_FORECAST_DEMO_ENABLED=true
+FORECAST_DEMO_ENABLED=true
+FORECAST_DEMO_RANDOM_SEED=20260725
+FORECAST_DEMO_ANCHOR_DATE=2026-07-24
+FORECAST_DEMO_HISTORY_DAYS=180
+FORECAST_DEMO_ORDER_COUNT=12000
+FORECAST_DEMO_VARIANT_COUNT=120
+FORECAST_DEMO_MARKER=[FORECAST_DEMO_V2]
+FORECAST_DEMO_CLEANUP=true
 ```
 
 Start the backend using the team's existing IDE/local workflow. The core seed
 runs first, followed by the forecast demo runner. Re-running the backend
-replaces only orders whose note is exactly `[FORECAST_DEMO]`; it does not
+replaces only orders whose note is exactly `[FORECAST_DEMO_V2]`; it does not
 delete user-created orders. Do not commit `backend/.env`.
 
 ## Open PostgreSQL
@@ -78,11 +85,11 @@ order by sku;
 -- Demo order count, date range, and status distribution.
 select count(*) as orders, min(created_at), max(created_at)
 from orders
-where note = '[FORECAST_DEMO]';
+where note = '[FORECAST_DEMO_V2]';
 
 select order_status, count(*)
 from orders
-where note = '[FORECAST_DEMO]'
+where note = '[FORECAST_DEMO_V2]'
 group by order_status
 order by order_status;
 
@@ -94,7 +101,7 @@ select
     sum(oi.quantity) as quantity
 from order_items oi
 join orders o on o.id = oi.order_id
-where o.note = '[FORECAST_DEMO]'
+where o.note = '[FORECAST_DEMO_V2]'
   and o.order_status in ('CONFIRMED', 'PACKING', 'SHIPPING', 'DELIVERED')
 group by oi.sku_snapshot, demand_date
 order by oi.sku_snapshot, demand_date;
@@ -128,7 +135,7 @@ The local Docker volume and a cloud PostgreSQL instance are independent.
 - Keep both flags `false` in production.
 
 For a shared demonstration, prefer one separately named demo database or let
-each teammate generate the same data locally with random seed `2026`. Do not
+each teammate generate the same data locally with random seed `20260725`. Do not
 copy synthetic orders into the production database.
 
 ## Team handoff checklist
@@ -170,7 +177,7 @@ git push -u origin feat/replenishment-week1
 
 The pull request should state:
 
-- Data is synthetic and reproducible with seed `2026`.
+- Data is synthetic and reproducible with seed `20260725`.
 - Demo seed is disabled by default and must stay disabled in production.
 - Flyway V13 adds three tables.
 - Backend: 391 tests pass.

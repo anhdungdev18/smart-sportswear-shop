@@ -31,6 +31,8 @@ services:
   backend:
     build: ./backend
     env_file: ./backend/.env
+    # Docker mode intentionally overrides database settings from backend/.env
+    # so Compose always uses the local PostgreSQL service.
     environment:
       SERVER_PORT: 8080
       DB_HOST: postgres
@@ -47,7 +49,17 @@ services:
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:3001}
       APP_MAIL_PROVIDER: ${APP_MAIL_PROVIDER:-logging}
       APP_STORAGE_PROVIDER: ${APP_STORAGE_PROVIDER:-none}
-      APP_SEED_ENABLED: ${APP_SEED_ENABLED:-true}
+      SYNTHETIC_DATA_ALLOWED: ${SYNTHETIC_DATA_ALLOWED:-false}
+      SYNTHETIC_DATA_ENVIRONMENT: ${SYNTHETIC_DATA_ENVIRONMENT:-demo}
+      APP_SEED_ENABLED: ${APP_SEED_ENABLED:-false}
+      FORECAST_DEMO_ENABLED: ${FORECAST_DEMO_ENABLED:-false}
+      FORECAST_DEMO_RANDOM_SEED: ${FORECAST_DEMO_RANDOM_SEED:-20260725}
+      FORECAST_DEMO_ANCHOR_DATE: ${FORECAST_DEMO_ANCHOR_DATE:-2026-07-24}
+      FORECAST_DEMO_HISTORY_DAYS: ${FORECAST_DEMO_HISTORY_DAYS:-180}
+      FORECAST_DEMO_ORDER_COUNT: ${FORECAST_DEMO_ORDER_COUNT:-12000}
+      FORECAST_DEMO_VARIANT_COUNT: ${FORECAST_DEMO_VARIANT_COUNT:-120}
+      FORECAST_DEMO_MARKER: "${FORECAST_DEMO_MARKER:-[FORECAST_DEMO_V2]}"
+      FORECAST_DEMO_CLEANUP: ${FORECAST_DEMO_CLEANUP:-true}
       AI_SYNC_SECRET: ${AI_SYNC_SECRET:-dev-only-ai-sync-secret-change-me}
       VNPAY_TMN_CODE: ${VNPAY_TMN_CODE:-DEVTMNCODE}
       VNPAY_HASH_SECRET: ${VNPAY_HASH_SECRET:-dev-only-vnpay-hash-secret-change-me-please}
