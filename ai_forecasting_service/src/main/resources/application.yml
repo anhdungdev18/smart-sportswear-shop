@@ -17,7 +17,7 @@ spring:
         jdbc.time_zone: UTC
         default_batch_fetch_size: 100
   flyway:
-    enabled: true
+    enabled: ${SPRING_FLYWAY_ENABLED:true}
     locations: classpath:db/ai-migration
     table: flyway_ai_schema_history
     baseline-on-migrate: true
@@ -49,8 +49,12 @@ app:
     access-token-ttl-minutes: ${JWT_ACCESS_TTL_MINUTES:15}
     refresh-token-ttl-days: ${JWT_REFRESH_TTL_DAYS:30}
 
+ai:
+  data-quality:
+    min-history-days: ${AI_DATA_QUALITY_MIN_HISTORY_DAYS:60}
+    high-history-days: ${AI_DATA_QUALITY_HIGH_HISTORY_DAYS:120}
+    min-non-zero-days: ${AI_DATA_QUALITY_MIN_NONZERO_DAYS:12}
+    high-non-zero-days: ${AI_DATA_QUALITY_HIGH_NONZERO_DAYS:30}
 logging:
   level:
     com.dunghaiquyen.ecommerce: ${LOG_LEVEL:INFO}
-
-
