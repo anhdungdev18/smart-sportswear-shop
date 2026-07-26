@@ -1,6 +1,12 @@
 package com.dunghaiquyen.ecommerce.modules.replenishment.service;
 
+import com.dunghaiquyen.ecommerce.config.AiForecastEvaluationProperties;
+import com.dunghaiquyen.ecommerce.config.ForecastDataSourceProperties;
+import com.dunghaiquyen.ecommerce.modules.demand.dto.DemandClassificationResponse;
+import com.dunghaiquyen.ecommerce.modules.demand.dto.DemandPattern;
+import com.dunghaiquyen.ecommerce.modules.demand.repository.DemandClassificationRepository;
 import com.dunghaiquyen.ecommerce.modules.replenishment.entity.ForecastAlgorithmType;
+import com.dunghaiquyen.ecommerce.modules.replenishment.entity.ForecastConfidence;
 import com.dunghaiquyen.ecommerce.modules.replenishment.entity.ForecastModelEvaluation;
 import com.dunghaiquyen.ecommerce.modules.replenishment.entity.ForecastRun;
 import com.dunghaiquyen.ecommerce.modules.replenishment.entity.InventoryPolicy;
@@ -18,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -38,6 +45,9 @@ public class DemandForecastService {
     private final InventoryPolicyRepository policyRepository;
     private final VariantReadRepository variantRepository;
     private final ForecastModelEvaluationRepository evaluationRepository;
+    private final DemandClassificationRepository demandClassificationRepository;
+    private final ForecastDataSourceProperties dataSourceProperties;
+    private final AiForecastEvaluationProperties evaluationProperties;
     private final List<com.dunghaiquyen.ecommerce.modules.replenishment.forecasting.ForecastAlgorithm> algorithms;
 
     public DemandForecastService(
@@ -49,6 +59,9 @@ public class DemandForecastService {
             InventoryPolicyRepository policyRepository,
             VariantReadRepository variantRepository,
             ForecastModelEvaluationRepository evaluationRepository,
+            DemandClassificationRepository demandClassificationRepository,
+            ForecastDataSourceProperties dataSourceProperties,
+            AiForecastEvaluationProperties evaluationProperties,
             List<com.dunghaiquyen.ecommerce.modules.replenishment.forecasting.ForecastAlgorithm> algorithms) {
         this.dailyDemandService = dailyDemandService;
         this.forecastBacktestService = forecastBacktestService;
@@ -58,6 +71,9 @@ public class DemandForecastService {
         this.policyRepository = policyRepository;
         this.variantRepository = variantRepository;
         this.evaluationRepository = evaluationRepository;
+        this.demandClassificationRepository = demandClassificationRepository;
+        this.dataSourceProperties = dataSourceProperties;
+        this.evaluationProperties = evaluationProperties;
         this.algorithms = algorithms;
     }
 
@@ -71,6 +87,11 @@ public class DemandForecastService {
 
         long backtestStart = System.currentTimeMillis();
         List<ForecastModelEvaluation> evaluations = new ArrayList<>();
+        Map<UUID, DemandClassificationResponse> classificationMap = demandClassificationRepository
+                .findSaved(dataSourceProperties.dataSource())
+                .stream()
+                .filter(row -> variantIds.contains(row.variantId()))
+                .collect(Collectors.toMap(DemandClassificationResponse::variantId, row -> row, (first, second) -> first));
         
         for (UUID variantId : variantIds) {
             List<DailyDemandService.DailyDemandPoint> demandPoints = demandMap.get(variantId);
@@ -80,9 +101,10 @@ public class DemandForecastService {
                     .map(p -> (int) p.quantity())
                     .toList();
             
-            int testWindowDays = 30;
-            ForecastBacktestService.BacktestResult backtestResult = 
-                    forecastBacktestService.runBacktest(dailyDemand, testWindowDays);
+            int testWindowDays = evaluationProperties.testWindowDays();
+            DemandClassificationResponse classification = classificationMap.get(variantId);
+            ForecastBacktestService.BacktestResult backtestResult = forecastBacktestService.runBacktest(
+                    dailyDemand, testWindowDays, candidateAlgorithms(classification != null ? classification.classification() : null));
             
             ForecastBacktestService.BacktestMetric bestMetric = backtestResult.bestMetric();
             
@@ -91,7 +113,14 @@ public class DemandForecastService {
             eval.setBestAlgorithm(backtestResult.bestAlgorithm());
             eval.setConfidence(backtestResult.confidence());
             eval.setLastEvaluatedAt(Instant.now());
-            eval.setAlgorithmVersion(1);
+            eval.setAlgorithmVersion(2);
+            eval.setDataSource(classification != null ? classification.dataSource() : dataSourceProperties.dataSource());
+            eval.setDemandPattern(classification != null ? classification.classification().name() : null);
+            eval.setBacktestWindows(bestMetric != null ? bestMetric.windows() : 0);
+            eval.setTestWindowDays(testWindowDays);
+            eval.setTrainingFrom(fromInclusive);
+            eval.setTrainingTo(toInclusive);
+            eval.setSelectionReason(backtestResult.reason());
             
             if (bestMetric != null) {
                 eval.setMae(BigDecimal.valueOf(bestMetric.mae()));
@@ -99,6 +128,20 @@ public class DemandForecastService {
                     eval.setWape(BigDecimal.valueOf(bestMetric.wape()));
                 }
                 eval.setResidualStdDev(BigDecimal.valueOf(bestMetric.residualStdDev()));
+                eval.setBias(BigDecimal.valueOf(bestMetric.bias()));
+            }
+            if (backtestResult.benchmarkMetric() != null) {
+                eval.setBenchmarkAlgorithm(backtestResult.benchmarkMetric().algorithm());
+                eval.setBenchmarkMae(BigDecimal.valueOf(backtestResult.benchmarkMetric().mae()));
+                if (backtestResult.benchmarkMetric().wape() != null) {
+                    eval.setBenchmarkWape(BigDecimal.valueOf(backtestResult.benchmarkMetric().wape()));
+                }
+            }
+            if (classification != null && classification.classification() == DemandPattern.NO_DEMAND) {
+                eval.setFallbackReason("NO_DEMAND: khong forecast; dung policy/rule cho SKU khong co demand.");
+                eval.setConfidence(ForecastConfidence.INSUFFICIENT);
+            } else if (backtestResult.confidence() == ForecastConfidence.INSUFFICIENT) {
+                eval.setFallbackReason(backtestResult.reason());
             }
             
             evaluations.add(eval);
@@ -160,6 +203,11 @@ public class DemandForecastService {
 
             ForecastModelEvaluation eval = evaluationMap.get(variantId);
             ForecastAlgorithmType bestAlgoType = eval != null ? eval.getBestAlgorithm() : ForecastAlgorithmType.MOVING_AVERAGE;
+            if (eval != null && eval.getConfidence() == ForecastConfidence.INSUFFICIENT) {
+                log.info("Skipping forecast generation for variant {} because evaluation is insufficient: {}",
+                        variantId, eval.getFallbackReason());
+                continue;
+            }
             
             ForecastRun run = new ForecastRun();
             run.setVariantId(variant.id());
@@ -194,7 +242,7 @@ public class DemandForecastService {
                 run.setResidualStdDev(eval.getResidualStdDev());
                 run.setConfidence(eval.getConfidence());
             } else {
-                run.setConfidence(com.dunghaiquyen.ecommerce.modules.replenishment.entity.ForecastConfidence.LOW);
+                run.setConfidence(ForecastConfidence.LOW);
             }
             run.setGeneratedAt(Instant.now());
 
@@ -260,5 +308,19 @@ public class DemandForecastService {
 
         log.info("Forecast chunk metrics: variants={}, loadVariants={}ms, loadPolicies={}ms, loadDemand={}ms, loadEvaluation={}ms, forecastCompute={}ms, forecastInsert={}ms, recCompute={}ms, recUpsert={}ms, total={}ms", 
                  activeVariantIds.size(), loadVariantsMillis, loadPoliciesMillis, loadDemandMillis, loadEvaluationMillis, forecastComputeMillis, forecastInsertMillis, recommendationComputeMillis, recommendationUpsertMillis, totalMillis);
+    }
+
+    private Set<ForecastAlgorithmType> candidateAlgorithms(DemandPattern pattern) {
+        if (pattern == null) {
+            return Set.of(ForecastAlgorithmType.NAIVE, ForecastAlgorithmType.MOVING_AVERAGE, ForecastAlgorithmType.EWMA);
+        }
+        return switch (pattern) {
+            case NO_DEMAND, INSUFFICIENT_DATA -> Set.of(ForecastAlgorithmType.NAIVE);
+            case NEW_ITEM -> Set.of(ForecastAlgorithmType.NAIVE, ForecastAlgorithmType.MOVING_AVERAGE);
+            case INTERMITTENT -> Set.of(ForecastAlgorithmType.NAIVE, ForecastAlgorithmType.CROSTON, ForecastAlgorithmType.ROBUST_MEDIAN);
+            case ERRATIC -> Set.of(ForecastAlgorithmType.NAIVE, ForecastAlgorithmType.ROBUST_MEDIAN, ForecastAlgorithmType.MOVING_AVERAGE);
+            case SMOOTH -> Set.of(ForecastAlgorithmType.NAIVE, ForecastAlgorithmType.MOVING_AVERAGE, ForecastAlgorithmType.EWMA);
+            case GROWING, DECLINING -> Set.of(ForecastAlgorithmType.NAIVE, ForecastAlgorithmType.EWMA, ForecastAlgorithmType.MOVING_AVERAGE);
+        };
     }
 }

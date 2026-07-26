@@ -64,6 +64,13 @@ ai:
     erratic-cv-squared-threshold: ${AI_DEMAND_CLASSIFICATION_ERRATIC_CV_SQUARED_THRESHOLD:0.49}
     trend-slope-threshold: ${AI_DEMAND_CLASSIFICATION_TREND_SLOPE_THRESHOLD:0.03}
     algorithm-version: ${AI_DEMAND_CLASSIFICATION_ALGORITHM_VERSION:demand-classification-v1}
+  forecast-evaluation:
+    test-window-days: ${AI_FORECAST_TEST_WINDOW_DAYS:30}
+    min-backtest-windows: ${AI_FORECAST_MIN_BACKTEST_WINDOWS:3}
+    max-wape-high-confidence: ${AI_FORECAST_MAX_WAPE_HIGH_CONFIDENCE:0.30}
+    max-wape-medium-confidence: ${AI_FORECAST_MAX_WAPE_MEDIUM_CONFIDENCE:0.60}
+    max-abs-bias-high-confidence: ${AI_FORECAST_MAX_ABS_BIAS_HIGH_CONFIDENCE:0.25}
+    algorithm-version: ${AI_FORECAST_EVALUATION_ALGORITHM_VERSION:forecast-evaluation-v2}
 logging:
   level:
     com.dunghaiquyen.ecommerce: ${LOG_LEVEL:INFO}

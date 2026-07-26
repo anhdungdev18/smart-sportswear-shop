@@ -17,6 +17,19 @@ public class ReplenishmentSuggestionDetailResponse extends ReplenishmentSuggesti
     private List<ModelMetric> modelMetrics;
     private String selectedModel;
     private String selectionReason;
+    private String dataSource;
+    private String demandPattern;
+    private String forecastConfidence;
+    private Double bias;
+    private Double residualStdDev;
+    private Integer backtestWindows;
+    private Integer testWindowDays;
+    private String trainingFrom;
+    private String trainingTo;
+    private String benchmarkAlgorithm;
+    private Double benchmarkMae;
+    private Double benchmarkWape;
+    private String fallbackReason;
 
     @Data
     public static class DailyChartData {
@@ -38,12 +51,26 @@ public class ReplenishmentSuggestionDetailResponse extends ReplenishmentSuggesti
         private String algorithm;
         private double mae;
         private Double wape;
+        private Double bias;
+        private Double residualStdDev;
+        private boolean benchmark;
         private boolean selected;
 
         public ModelMetric(String algorithm, double mae, Double wape, boolean selected) {
             this.algorithm = algorithm;
             this.mae = mae;
             this.wape = wape;
+            this.selected = selected;
+        }
+
+        public ModelMetric(String algorithm, double mae, Double wape, Double bias,
+                           Double residualStdDev, boolean benchmark, boolean selected) {
+            this.algorithm = algorithm;
+            this.mae = mae;
+            this.wape = wape;
+            this.bias = bias;
+            this.residualStdDev = residualStdDev;
+            this.benchmark = benchmark;
             this.selected = selected;
         }
     }
