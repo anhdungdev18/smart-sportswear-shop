@@ -3,6 +3,7 @@ package com.dunghaiquyen.ecommerce.modules.replenishment.controller;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.dunghaiquyen.ecommerce.modules.replenishment.entity.ReplenishmentPriority;
@@ -59,6 +60,7 @@ class AdminReplenishmentControllerIntegrationTest {
     void cleanDatabase() {
         recommendationRepository.deleteAll();
         jdbc.sql("delete from ai_inventory_snapshot").update();
+        jdbc.sql("delete from ai_product_variant_snapshot").update();
     }
 
     @Test
@@ -142,7 +144,49 @@ class AdminReplenishmentControllerIntegrationTest {
                 .andExpect(status().isConflict());
     }
 
+    @Test
+    void listSuggestionsFiltersByStatusPriorityAndKeyword() throws Exception {
+        UUID pendingHighVariant = UUID.randomUUID();
+        UUID dismissedHighVariant = UUID.randomUUID();
+        UUID pendingLowVariant = UUID.randomUUID();
+        insertVariantSnapshot(pendingHighVariant, "SKU-PENDING-HIGH", "Compression Tee");
+        insertVariantSnapshot(dismissedHighVariant, "SKU-DISMISSED-HIGH", "Dismissed Shorts");
+        insertVariantSnapshot(pendingLowVariant, "SKU-PENDING-LOW", "Recovery Hoodie");
+        recommendation(pendingHighVariant, 18, ReplenishmentPriority.HIGH, ReplenishmentStatus.PENDING);
+        recommendation(dismissedHighVariant, 12, ReplenishmentPriority.HIGH, ReplenishmentStatus.DISMISSED);
+        recommendation(pendingLowVariant, 6, ReplenishmentPriority.LOW, ReplenishmentStatus.PENDING);
+
+        mockMvc.perform(get("/api/v1/admin/replenishment/suggestions")
+                        .param("status", "PENDING")
+                        .param("limit", "100")
+                        .header("Authorization", bearer(ADMIN_ID, "ADMIN")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.totalElements").value(2));
+
+        mockMvc.perform(get("/api/v1/admin/replenishment/suggestions")
+                        .param("priority", "HIGH")
+                        .param("limit", "100")
+                        .header("Authorization", bearer(ADMIN_ID, "ADMIN")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.totalElements").value(2));
+
+        mockMvc.perform(get("/api/v1/admin/replenishment/suggestions")
+                        .param("status", "PENDING")
+                        .param("keyword", "compression")
+                        .param("limit", "100")
+                        .header("Authorization", bearer(ADMIN_ID, "ADMIN")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.totalElements").value(1))
+                .andExpect(jsonPath("$.data.content[0].sku").value("SKU-PENDING-HIGH"));
+    }
+
     private ReplenishmentRecommendation pendingRecommendation(UUID variantId, int suggestedQuantity) {
+        return recommendation(variantId, suggestedQuantity, ReplenishmentPriority.HIGH, ReplenishmentStatus.PENDING);
+    }
+
+    private ReplenishmentRecommendation recommendation(UUID variantId, int suggestedQuantity,
+                                                       ReplenishmentPriority priority,
+                                                       ReplenishmentStatus status) {
         ReplenishmentRecommendation recommendation = new ReplenishmentRecommendation();
         recommendation.setVariantId(variantId);
         recommendation.setAvailableQuantity(10);
@@ -151,8 +195,8 @@ class AdminReplenishmentControllerIntegrationTest {
         recommendation.setSafetyStock(5);
         recommendation.setSuggestedQuantity(suggestedQuantity);
         recommendation.setEstimatedStockoutDays(5);
-        recommendation.setPriority(ReplenishmentPriority.HIGH);
-        recommendation.setStatus(ReplenishmentStatus.PENDING);
+        recommendation.setPriority(priority);
+        recommendation.setStatus(status);
         recommendation.setExplanation(Map.of("summary", "integration test"));
         return recommendationRepository.saveAndFlush(recommendation);
     }
@@ -188,6 +232,19 @@ class AdminReplenishmentControllerIntegrationTest {
                 .param("variantId", variantId)
                 .param("stock", stock)
                 .param("reserved", reserved)
+                .update();
+    }
+
+    private void insertVariantSnapshot(UUID variantId, String sku, String productName) {
+        jdbc.sql("""
+                insert into ai_product_variant_snapshot
+                    (variant_id, product_id, sku, product_name, size, color, captured_at)
+                values (:variantId, :productId, :sku, :productName, 'M', 'Black', now())
+                """)
+                .param("variantId", variantId)
+                .param("productId", UUID.randomUUID())
+                .param("sku", sku)
+                .param("productName", productName)
                 .update();
     }
 
