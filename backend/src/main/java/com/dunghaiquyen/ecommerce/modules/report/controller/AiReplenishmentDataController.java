@@ -81,7 +81,29 @@ public class AiReplenishmentDataController {
                         rs.getObject("demand_date", Date.class).toLocalDate(), rs.getLong("quantity"),
                         rs.getString("data_source")))
                 .list();
-        return ApiResponse.ok(new SnapshotResponse(Instant.now(), variants, demand, List.of()));
+
+        // Read distinct suppliers from inventory_policies for the selected variants.
+        // supplier_name is used as both code and display name; a stable UUID is derived from it.
+        List<SupplierData> suppliers = selectedIds.length == 0 ? List.of() : jdbc.sql("""
+                select supplier_name,
+                       cast(round(avg(lead_time_days)) as int) avg_lead_time_days
+                from inventory_policies
+                where variant_id = any(:ids)
+                  and supplier_name is not null
+                  and supplier_name <> ''
+                  and active = true
+                group by supplier_name
+                order by supplier_name
+                """).param("ids", selectedIds)
+                .query((rs, row) -> {
+                    String name = rs.getString("supplier_name");
+                    int leadTime = rs.getInt("avg_lead_time_days");
+                    UUID supplierId = UUID.nameUUIDFromBytes(name.getBytes(StandardCharsets.UTF_8));
+                    return new SupplierData(supplierId, name, name, true, leadTime, null);
+                })
+                .list();
+
+        return ApiResponse.ok(new SnapshotResponse(Instant.now(), variants, demand, suppliers));
     }
 
     private Instant atStart(LocalDate date) { return date.atStartOfDay(BUSINESS_ZONE).toInstant(); }

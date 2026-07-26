@@ -1,6 +1,7 @@
 package com.dunghaiquyen.ecommerce.modules.replenishment.service;
 
 import com.dunghaiquyen.ecommerce.common.response.ApiResponse;
+import java.sql.Date;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -46,8 +47,11 @@ public class CoreSnapshotSyncService {
         Timestamp capturedAt = Timestamp.from(payload.generatedAt());
         batchVariants(payload.variants(), capturedAt);
         batchDailyDemand(payload.dailyDemand(), capturedAt);
-        batchSuppliers(payload.suppliers(), capturedAt);        return new SyncResult(payload.generatedAt(), payload.variants().size(),
-                payload.dailyDemand().size(), payload.suppliers().size());
+        int zeroDays = materializeZeroDemandDays(fromInclusive, toInclusive,
+                payload.variants().stream().map(VariantData::id).distinct().toList(), capturedAt);
+        batchSuppliers(payload.suppliers(), capturedAt);
+        return new SyncResult(payload.generatedAt(), payload.variants().size(),
+                payload.dailyDemand().size(), payload.suppliers().size(), zeroDays);
     }
 
     private void batchVariants(List<VariantData> variants, Timestamp capturedAt) {
@@ -97,6 +101,40 @@ public class CoreSnapshotSyncService {
                 """, rows);
     }
 
+    /**
+     * Fills zero-quantity rows for every calendar day in [fromInclusive, toInclusive] that does
+     * not yet have a demand row in ai_sales_daily_snapshot for each variant. This ensures the
+     * data-quality service sees a continuous series and does not report missing days as INSUFFICIENT.
+     * Uses PostgreSQL generate_series to avoid a Java-side loop over 180 * 120 = 21,600 combinations.
+     */
+    private int materializeZeroDemandDays(LocalDate fromInclusive, LocalDate toInclusive,
+            List<UUID> variantIds, Timestamp capturedAt) {
+        if (variantIds.isEmpty()) return 0;
+        UUID[] idArray = variantIds.toArray(UUID[]::new);
+        // Insert zero-demand rows for each (variant, day) pair that is missing.
+        // The variant's data_source is read from the snapshot table so zeros get the same source tag.
+        return jdbc.update("""
+                insert into ai_sales_daily_snapshot (variant_id, sales_date, quantity, captured_at, data_source)
+                select v.variant_id, s.day::date, 0, ?, v.data_source
+                from (
+                    select distinct variant_id, data_source
+                    from ai_product_variant_snapshot
+                    where variant_id = any(?)
+                ) v,
+                generate_series(?::date, ?::date, '1 day'::interval) s(day)
+                where not exists (
+                    select 1 from ai_sales_daily_snapshot x
+                    where x.variant_id = v.variant_id
+                      and x.sales_date = s.day::date
+                      and x.data_source = v.data_source
+                )
+                """,
+                capturedAt,
+                idArray,
+                Date.valueOf(fromInclusive),
+                Date.valueOf(toInclusive));
+    }
+
     private void batchSuppliers(List<SupplierData> suppliers, Timestamp capturedAt) {
         if (suppliers.isEmpty()) return;
         List<Object[]> rows = suppliers.stream()
@@ -113,6 +151,7 @@ public class CoreSnapshotSyncService {
                     captured_at=excluded.captured_at, source_updated_at=excluded.source_updated_at
                 """, rows);
     }
+
     public record SnapshotRequest(LocalDate fromInclusive, LocalDate toInclusive, List<UUID> variantIds) {}
     public record SnapshotPayload(Instant generatedAt, List<VariantData> variants,
                                   List<DemandData> dailyDemand, List<SupplierData> suppliers) {}
@@ -121,7 +160,7 @@ public class CoreSnapshotSyncService {
     public record DemandData(UUID variantId, LocalDate demandDate, long quantity, String dataSource) {}
     public record SupplierData(UUID id, String code, String name, boolean active,
                                Integer defaultLeadTimeDays, Instant updatedAt) {}
-    public record SyncResult(Instant capturedAt, int variants, int dailySalesRows, int suppliers) {}
+    public record SyncResult(Instant capturedAt, int variants, int dailySalesRows, int suppliers, int materializedZeroRows) {}
 }
 
 
