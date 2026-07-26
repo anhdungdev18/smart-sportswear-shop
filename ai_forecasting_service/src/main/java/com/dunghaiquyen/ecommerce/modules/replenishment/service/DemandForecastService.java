@@ -11,6 +11,7 @@ import com.dunghaiquyen.ecommerce.modules.replenishment.entity.ForecastModelEval
 import com.dunghaiquyen.ecommerce.modules.replenishment.entity.ForecastRun;
 import com.dunghaiquyen.ecommerce.modules.replenishment.entity.InventoryPolicy;
 import com.dunghaiquyen.ecommerce.modules.replenishment.entity.ReplenishmentRecommendation;
+import com.dunghaiquyen.ecommerce.modules.replenishment.entity.ReplenishmentStatus;
 import com.dunghaiquyen.ecommerce.modules.replenishment.repository.ForecastModelEvaluationRepository;
 import com.dunghaiquyen.ecommerce.modules.replenishment.repository.ForecastRunRepository;
 import com.dunghaiquyen.ecommerce.modules.replenishment.repository.InventoryPolicyRepository;
@@ -77,6 +78,7 @@ public class DemandForecastService {
         this.algorithms = algorithms;
     }
 
+    @Transactional
     public void evaluateModelsBatch(List<UUID> variantIds, LocalDate fromInclusive, LocalDate toInclusive) {
         if (variantIds == null || variantIds.isEmpty()) return;
         
@@ -87,6 +89,7 @@ public class DemandForecastService {
 
         long backtestStart = System.currentTimeMillis();
         List<ForecastModelEvaluation> evaluations = new ArrayList<>();
+        List<UUID> insufficientVariantIds = new ArrayList<>();
         Map<UUID, DemandClassificationResponse> classificationMap = demandClassificationRepository
                 .findSaved(dataSourceProperties.dataSource())
                 .stream()
@@ -143,6 +146,9 @@ public class DemandForecastService {
             } else if (backtestResult.confidence() == ForecastConfidence.INSUFFICIENT) {
                 eval.setFallbackReason(backtestResult.reason());
             }
+            if (eval.getConfidence() == ForecastConfidence.INSUFFICIENT) {
+                insufficientVariantIds.add(variantId);
+            }
             
             evaluations.add(eval);
         }
@@ -150,6 +156,17 @@ public class DemandForecastService {
         
         long saveStart = System.currentTimeMillis();
         evaluationRepository.saveAll(evaluations);
+        if (!insufficientVariantIds.isEmpty()) {
+            forecastRunRepository.deleteAllByVariantIdIn(insufficientVariantIds);
+            int dismissed = recommendationRepository.updateStatusForVariants(
+                    insufficientVariantIds,
+                    ReplenishmentStatus.PENDING,
+                    ReplenishmentStatus.DISMISSED,
+                    "Automatically dismissed because Phase 2 evaluation is INSUFFICIENT.",
+                    Instant.now());
+            log.info("Cleared stale Phase 2 outputs for insufficient variants: variants={}, dismissedPending={}",
+                    insufficientVariantIds.size(), dismissed);
+        }
         long saveMillis = System.currentTimeMillis() - saveStart;
         
         log.info("Evaluate models chunk metrics: variants={}, loadDemand={}ms, backtest={}ms, save={}ms",
