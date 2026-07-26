@@ -81,7 +81,11 @@ public class AdminReplenishmentController {
             @RequestParam(defaultValue = "20") int limit) {
 
         Pageable pageable = PageRequest.of(page - 1, limit);
-        Page<ReplenishmentRecommendation> result = recommendationRepository.searchRecommendations(status, priority, keyword, pageable);
+        Page<ReplenishmentRecommendation> result = recommendationRepository.searchRecommendations(
+                status == null ? null : status.name(),
+                priority == null ? null : priority.name(),
+                keyword,
+                pageable);
 
         List<UUID> variantIds = result.getContent().stream().map(ReplenishmentRecommendation::getVariantId).toList();
         Map<UUID, VariantSnapshot> variantMap = new HashMap<>();

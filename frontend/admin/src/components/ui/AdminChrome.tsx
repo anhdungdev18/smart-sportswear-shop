@@ -3,6 +3,7 @@
 import {
   ArrowCounterClockwise,
   Bell,
+  Brain,
   Books,
   ChartLineUp,
   FileText,
@@ -48,6 +49,7 @@ const navGroups: NavGroup[] = [
       { label: "Tổng quan", href: "/", icon: House },
       { label: "Đơn hàng", href: "/orders", icon: Receipt },
       { label: "Tồn kho", href: "/inventory", icon: Package },
+      { label: "AI Insights", href: "/inventory/ai-insights", icon: Brain },
       { label: "Khách hàng", href: "/customers", icon: Users },
       { label: "Báo cáo", href: "/reports", icon: ChartLineUp },
       { label: "Đổi trả", href: "/returns", icon: ArrowCounterClockwise },

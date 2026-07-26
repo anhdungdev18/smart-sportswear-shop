@@ -32,12 +32,12 @@ public interface ReplenishmentRecommendationRepository extends JpaRepository<Rep
 
     @Query(value="""
         select r.* from replenishment_recommendations r join ai_product_variant_snapshot v on v.variant_id=r.variant_id
-        where (cast(:status as text) is null or r.status=cast(:status as text)) and (cast(:priority as text) is null or r.priority=cast(:priority as text))
+        where (:status is null or r.status=:status) and (:priority is null or r.priority=:priority)
           and (coalesce(:keyword,'')='' or lower(v.sku) like lower(concat('%',:keyword,'%')) or lower(v.product_name) like lower(concat('%',:keyword,'%')))
         """, countQuery="""
         select count(*) from replenishment_recommendations r join ai_product_variant_snapshot v on v.variant_id=r.variant_id
-        where (cast(:status as text) is null or r.status=cast(:status as text)) and (cast(:priority as text) is null or r.priority=cast(:priority as text))
+        where (:status is null or r.status=:status) and (:priority is null or r.priority=:priority)
           and (coalesce(:keyword,'')='' or lower(v.sku) like lower(concat('%',:keyword,'%')) or lower(v.product_name) like lower(concat('%',:keyword,'%')))
         """, nativeQuery=true)
-    Page<ReplenishmentRecommendation> searchRecommendations(@Param("status") ReplenishmentStatus status, @Param("priority") ReplenishmentPriority priority, @Param("keyword") String keyword, Pageable pageable);
+    Page<ReplenishmentRecommendation> searchRecommendations(@Param("status") String status, @Param("priority") String priority, @Param("keyword") String keyword, Pageable pageable);
 }
