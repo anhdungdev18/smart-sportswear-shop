@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 from app.config.settings import settings
 from app.main import app
 from app.services import approval_service
+from app.services.approval_store import ApprovalStore
 from tests.helpers import make_token
 
 
@@ -115,3 +116,47 @@ def test_execute_approval_records_after_snapshot_and_audit(monkeypatch):
     assert payload["beforeSnapshot"]["status"] == "PENDING"
     assert payload["afterSnapshot"]["status"] == "ACCEPTED"
     assert [entry["event"] for entry in payload["audit"]] == ["REQUESTED", "APPROVED", "EXECUTED"]
+
+
+def test_approval_store_persists_rows_and_audit_across_instances(tmp_path):
+    store_path = tmp_path / "approvals.sqlite3"
+    first_store = ApprovalStore(str(store_path))
+    row = {
+        "id": "approval-persistent-1",
+        "action": "ACCEPT_REPLENISHMENT",
+        "resourceType": "REPLENISHMENT_RECOMMENDATION",
+        "resourceId": "rec-persistent-1",
+        "payload": {"note": "persist"},
+        "payloadHash": "hash-persistent",
+        "idempotencyKey": "idem-persistent-1",
+        "reason": "verify persistence",
+        "riskLevel": "MEDIUM",
+        "status": "PENDING",
+        "requestedBy": "actor-1",
+        "approvedBy": None,
+        "executedBy": None,
+        "beforeSnapshot": {"id": "rec-persistent-1", "variantId": "variant-1", "status": "PENDING"},
+        "afterSnapshot": None,
+        "audit": [
+            {
+                "event": "REQUESTED",
+                "actorId": "actor-1",
+                "role": "ADMIN",
+                "at": "2026-07-27T00:00:00+00:00",
+                "extra": {"payloadHash": "hash-persistent"},
+            }
+        ],
+        "error": None,
+        "expiresAt": "2026-07-27T01:00:00+00:00",
+        "createdAt": "2026-07-27T00:00:00+00:00",
+        "updatedAt": "2026-07-27T00:00:00+00:00",
+    }
+
+    first_store.save(row)
+    second_store = ApprovalStore(str(store_path))
+
+    persisted = second_store.get_by_idempotency_key("idem-persistent-1")
+    assert persisted is not None
+    assert persisted["id"] == "approval-persistent-1"
+    assert persisted["audit"][0]["event"] == "REQUESTED"
+    assert second_store.list(10, "PENDING")[0]["resourceId"] == "rec-persistent-1"

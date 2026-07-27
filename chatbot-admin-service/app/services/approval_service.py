@@ -12,17 +12,11 @@ from app.auth.actor_context import ActorContext
 from app.clients.forecasting_client import ForecastingClient
 from app.config.settings import settings
 from app.schemas.approval import ApprovalResponse, CreateApprovalRequest
-
-_APPROVALS: dict[str, dict[str, Any]] = {}
-_IDEMPOTENCY_INDEX: dict[str, str] = {}
-_EXECUTION_RESULTS: dict[str, dict[str, Any]] = {}
+from app.services.approval_store import approval_store
 
 
 def list_approvals(limit: int = 50, status_filter: str | None = None) -> list[ApprovalResponse]:
-    rows = sorted(_APPROVALS.values(), key=lambda row: row["createdAt"], reverse=True)
-    if status_filter:
-        rows = [row for row in rows if row["status"] == status_filter]
-    return [ApprovalResponse(**row) for row in rows[:limit]]
+    return [ApprovalResponse(**row) for row in approval_store.list(limit, status_filter)]
 
 
 async def create_approval(request: CreateApprovalRequest, actor: ActorContext, token: str) -> ApprovalResponse:
@@ -37,9 +31,9 @@ async def create_approval(request: CreateApprovalRequest, actor: ActorContext, t
     if request.action == "DISMISS_REPLENISHMENT" and not str(request.payload.get("note", "")).strip():
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Dismiss note is required")
 
-    existing_id = _IDEMPOTENCY_INDEX.get(request.idempotencyKey)
-    if existing_id:
-        return ApprovalResponse(**_APPROVALS[existing_id])
+    existing = approval_store.get_by_idempotency_key(request.idempotencyKey)
+    if existing:
+        return ApprovalResponse(**existing)
 
     before = await _fetch_replenishment_snapshot(token, request.resourceId)
     if before.get("status") != "PENDING":
@@ -68,9 +62,7 @@ async def create_approval(request: CreateApprovalRequest, actor: ActorContext, t
         "createdAt": now,
         "updatedAt": now,
     }
-    _APPROVALS[row["id"]] = row
-    _IDEMPOTENCY_INDEX[request.idempotencyKey] = row["id"]
-    return ApprovalResponse(**row)
+    return ApprovalResponse(**approval_store.save(row))
 
 
 def approve_approval(approval_id: str, actor: ActorContext, note: str | None = None) -> ApprovalResponse:
@@ -80,7 +72,7 @@ def approve_approval(approval_id: str, actor: ActorContext, note: str | None = N
     row["approvedBy"] = actor.actor_id
     row["audit"].append(_audit("APPROVED", actor, {"note": note}))
     row["updatedAt"] = _now()
-    return ApprovalResponse(**row)
+    return ApprovalResponse(**approval_store.save(row))
 
 
 def reject_approval(approval_id: str, actor: ActorContext, note: str | None = None) -> ApprovalResponse:
@@ -90,15 +82,16 @@ def reject_approval(approval_id: str, actor: ActorContext, note: str | None = No
     row["approvedBy"] = actor.actor_id
     row["audit"].append(_audit("REJECTED", actor, {"note": note}))
     row["updatedAt"] = _now()
-    return ApprovalResponse(**row)
+    return ApprovalResponse(**approval_store.save(row))
 
 
 async def execute_approval(approval_id: str, actor: ActorContext, token: str) -> ApprovalResponse:
     if not settings.WRITE_TOOLS_ENABLED:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Write tools are disabled")
     row = _get_approval(approval_id)
-    if row["idempotencyKey"] in _EXECUTION_RESULTS:
-        return ApprovalResponse(**_EXECUTION_RESULTS[row["idempotencyKey"]])
+    executed = approval_store.execution_result(row["idempotencyKey"])
+    if executed:
+        return ApprovalResponse(**executed)
     if row["status"] != "APPROVED":
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Approval is not approved")
     _assert_not_expired(row)
@@ -124,20 +117,18 @@ async def execute_approval(approval_id: str, actor: ActorContext, token: str) ->
         row["executedBy"] = actor.actor_id
         row["audit"].append(_audit("EXECUTED", actor, {"afterStatus": row["afterSnapshot"].get("status")}))
         row["updatedAt"] = _now()
-        _EXECUTION_RESULTS[row["idempotencyKey"]] = row
-        return ApprovalResponse(**row)
+        return ApprovalResponse(**approval_store.save(row))
     except Exception as exc:
         row["status"] = "FAILED"
         row["error"] = str(exc)
         row["audit"].append(_audit("FAILED", actor, {"error": str(exc)}))
         row["updatedAt"] = _now()
+        approval_store.save(row)
         raise
 
 
 def clear_approvals_for_tests() -> None:
-    _APPROVALS.clear()
-    _IDEMPOTENCY_INDEX.clear()
-    _EXECUTION_RESULTS.clear()
+    approval_store.clear_for_tests()
 
 
 async def _fetch_replenishment_snapshot(token: str, recommendation_id: str) -> dict[str, Any]:
@@ -145,7 +136,7 @@ async def _fetch_replenishment_snapshot(token: str, recommendation_id: str) -> d
 
 
 def _get_approval(approval_id: str) -> dict[str, Any]:
-    row = _APPROVALS.get(approval_id)
+    row = approval_store.get(approval_id)
     if not row:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Approval not found")
     return row
@@ -161,6 +152,7 @@ def _assert_not_expired(row: dict[str, Any]) -> None:
     if datetime.fromisoformat(row["expiresAt"]) <= datetime.now(timezone.utc):
         row["status"] = "EXPIRED"
         row["updatedAt"] = _now()
+        approval_store.save(row)
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Approval expired")
 
 

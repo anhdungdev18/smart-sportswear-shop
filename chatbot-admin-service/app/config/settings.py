@@ -32,6 +32,14 @@ class Settings(BaseSettings):
     READ_ONLY_MODE: bool = True
     WRITE_TOOLS_ENABLED: bool = False
     APPROVALS_ENABLED: bool = False
+    APPROVAL_STORAGE_BACKEND: str = "sqlite"
+    APPROVAL_SQLITE_PATH: str = "data/admin_agent_approvals.sqlite3"
+    APPROVAL_DB_HOST: str = ""
+    APPROVAL_DB_PORT: int = 5432
+    APPROVAL_DB_NAME: str = "postgres"
+    APPROVAL_DB_USERNAME: str = ""
+    APPROVAL_DB_PASSWORD: str = ""
+    APPROVAL_DB_SSLMODE: str = "require"
 
     OBSERVABILITY_ENABLED: bool = True
     EVALUATION_LOGGING_ENABLED: bool = True

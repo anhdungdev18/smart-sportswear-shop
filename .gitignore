@@ -40,3 +40,4 @@ ai-website-cloner-template/
 **/__pycache__/
 **/.pytest_cache/
 *.py[cod]
+chatbot-admin-service/data/
