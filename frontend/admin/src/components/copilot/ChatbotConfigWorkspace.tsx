@@ -2,8 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { ArrowsClockwise, LockKey, Robot, ShieldCheck } from "@phosphor-icons/react";
-import { getCopilotConfig, listCopilotRuns } from "@/modules/admin-copilot/browser-api";
-import type { CopilotConfig, CopilotRun } from "@/modules/admin-copilot/types";
+import {
+  approveApproval,
+  createApproval,
+  executeApproval,
+  getCopilotConfig,
+  listApprovals,
+  listCopilotRuns,
+  rejectApproval,
+} from "@/modules/admin-copilot/browser-api";
+import type { ApprovalAction, ApprovalResponse, CopilotConfig, CopilotRun } from "@/modules/admin-copilot/types";
 
 function decodeRole() {
   if (typeof window === "undefined") return null;
@@ -20,22 +28,69 @@ function decodeRole() {
 export function ChatbotConfigWorkspace() {
   const [config, setConfig] = useState<CopilotConfig | null>(null);
   const [runs, setRuns] = useState<CopilotRun[]>([]);
+  const [approvals, setApprovals] = useState<ApprovalResponse[]>([]);
   const [role, setRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [approvalMessage, setApprovalMessage] = useState<string | null>(null);
+  const [approvalForm, setApprovalForm] = useState({
+    action: "ACCEPT_REPLENISHMENT" as ApprovalAction,
+    resourceId: "",
+    quantity: "",
+    note: "",
+    idempotencyKey: `approval-${Date.now()}`,
+    reason: "",
+  });
 
   async function load() {
     setLoading(true);
     setError(null);
     try {
-      const [nextConfig, nextRuns] = await Promise.all([getCopilotConfig(), listCopilotRuns(50)]);
+      const [nextConfig, nextRuns, nextApprovals] = await Promise.all([getCopilotConfig(), listCopilotRuns(50), listApprovals(50)]);
       setConfig(nextConfig);
       setRuns(nextRuns);
+      setApprovals(nextApprovals);
     } catch (cause) {
       console.error(cause);
       setError("Khong tai duoc cau hinh Admin Copilot. Kiem tra chatbot-admin-service va env NEXT_PUBLIC_ADMIN_COPILOT_API_BASE_URL.");
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function submitApprovalRequest() {
+    setApprovalMessage(null);
+    const payload: Record<string, unknown> = {};
+    if (approvalForm.note.trim()) payload.note = approvalForm.note.trim();
+    if (approvalForm.action === "ADJUST_REPLENISHMENT") payload.quantity = Number(approvalForm.quantity);
+    try {
+      await createApproval({
+        action: approvalForm.action,
+        resourceId: approvalForm.resourceId.trim(),
+        payload,
+        idempotencyKey: approvalForm.idempotencyKey.trim(),
+        reason: approvalForm.reason.trim(),
+        riskLevel: approvalForm.action === "DISMISS_REPLENISHMENT" ? "LOW" : "MEDIUM",
+      });
+      setApprovalMessage("Da tao approval request.");
+      setApprovalForm((current) => ({ ...current, idempotencyKey: `approval-${Date.now()}` }));
+      setApprovals(await listApprovals(50));
+    } catch (cause) {
+      console.error(cause);
+      setApprovalMessage("Khong tao duoc approval. Kiem tra APPROVALS_ENABLED, recommendation id va payload.");
+    }
+  }
+
+  async function decideApproval(id: string, action: "approve" | "reject" | "execute") {
+    setApprovalMessage(null);
+    try {
+      if (action === "approve") await approveApproval(id, "Approved from chatbot config UI");
+      if (action === "reject") await rejectApproval(id, "Rejected from chatbot config UI");
+      if (action === "execute") await executeApproval(id);
+      setApprovals(await listApprovals(50));
+    } catch (cause) {
+      console.error(cause);
+      setApprovalMessage("Action khong thuc hien duoc. Kiem tra status, WRITE_TOOLS_ENABLED va resource revalidation.");
     }
   }
 
@@ -85,7 +140,7 @@ export function ChatbotConfigWorkspace() {
           <div className="panel-header">
             <div>
               <h2>Guardrails</h2>
-              <p className="panel-copy">Phase 6 chi cau hinh va quan sat, khong publish write action.</p>
+              <p className="panel-copy">Phase 8 chi execute write action sau approval rieng, audit va idempotency.</p>
             </div>
             <ShieldCheck size={24} weight="duotone" />
           </div>
@@ -97,6 +152,51 @@ export function ChatbotConfigWorkspace() {
               <span className={`status ${config.observabilityEnabled ? "active" : "draft"}`}>TRACE={String(config.observabilityEnabled)}</span>
             </div>
           )}
+        </section>
+
+        <section className="card panel">
+          <div className="panel-header">
+            <div>
+              <h2>Approval queue</h2>
+              <p className="panel-copy">Tao va duyet action replenishment; cau chat dong y khong execute write.</p>
+            </div>
+          </div>
+          <div className="admin-form-grid">
+            <select
+              className="admin-input"
+              value={approvalForm.action}
+              onChange={(event) => setApprovalForm((current) => ({ ...current, action: event.target.value as ApprovalAction }))}
+            >
+              <option value="ACCEPT_REPLENISHMENT">Accept replenishment</option>
+              <option value="ADJUST_REPLENISHMENT">Adjust replenishment</option>
+              <option value="DISMISS_REPLENISHMENT">Dismiss replenishment</option>
+            </select>
+            <input className="admin-input" placeholder="Recommendation id" value={approvalForm.resourceId} onChange={(event) => setApprovalForm((current) => ({ ...current, resourceId: event.target.value }))} />
+            <input className="admin-input" placeholder="Quantity for adjust" value={approvalForm.quantity} onChange={(event) => setApprovalForm((current) => ({ ...current, quantity: event.target.value }))} />
+            <input className="admin-input" placeholder="Idempotency key" value={approvalForm.idempotencyKey} onChange={(event) => setApprovalForm((current) => ({ ...current, idempotencyKey: event.target.value }))} />
+          </div>
+          <textarea className="admin-input" rows={3} placeholder="Reason" value={approvalForm.reason} onChange={(event) => setApprovalForm((current) => ({ ...current, reason: event.target.value }))} style={{ marginTop: 12 }} />
+          <textarea className="admin-input" rows={2} placeholder="Note" value={approvalForm.note} onChange={(event) => setApprovalForm((current) => ({ ...current, note: event.target.value }))} style={{ marginTop: 12 }} />
+          <div className="filters" style={{ marginTop: 12 }}>
+            <button className="admin-btn" type="button" onClick={() => void submitApprovalRequest()}>Tao approval</button>
+            {approvalMessage && <span className="table-subtle">{approvalMessage}</span>}
+          </div>
+          <div className="admin-stack" style={{ marginTop: 16 }}>
+            {approvals.length === 0 && <div className="empty-state">Chua co approval request.</div>}
+            {approvals.map((approval) => (
+              <div className="admin-subcard admin-subcard-tight" key={approval.id}>
+                <strong>{approval.action}</strong>
+                <span className="table-subtle">{approval.resourceId} / {approval.status} / risk {approval.riskLevel}</span>
+                <span className="table-subtle">hash {approval.payloadHash.slice(0, 12)} / idem {approval.idempotencyKey}</span>
+                <span className="table-subtle">audit {approval.audit.map((item) => item.event).join(" -> ")}</span>
+                <div className="filters">
+                  <button className="admin-btn secondary" type="button" onClick={() => void decideApproval(approval.id, "approve")} disabled={approval.status !== "PENDING"}>Approve</button>
+                  <button className="admin-btn secondary" type="button" onClick={() => void decideApproval(approval.id, "reject")} disabled={approval.status !== "PENDING"}>Reject</button>
+                  <button className="admin-btn secondary" type="button" onClick={() => void decideApproval(approval.id, "execute")} disabled={approval.status !== "APPROVED"}>Execute</button>
+                </div>
+              </div>
+            ))}
+          </div>
         </section>
 
         <section className="card panel">

@@ -19,7 +19,7 @@ READINESS_THRESHOLDS = {
     "toolSelectionAccuracy": 0.90,
     "groundedNumericAccuracy": 0.95,
     "readOnlyTaskSuccess": 0.85,
-    "maxToolCallsPerRun": 1,
+    "maxToolCallsPerRun": settings.MAX_TOOL_CALLS_PER_RUN,
 }
 
 
@@ -102,13 +102,16 @@ async def evaluate_phase7_readiness(root: Path | None = None) -> dict[str, Any]:
             continue
 
         max_tool_calls_observed = max(max_tool_calls_observed, len(registry.calls))
+        call_keys = {(call.name, tuple(sorted((key, str(value)) for key, value in call.args.items()))) for call in registry.calls}
         is_route_ok = state["intent"] == case["expectedIntent"] and state["selected_tool"] == case["expectedTool"]
         is_numeric_ok = bool(state["grounded_numbers"]) and _reply_numbers_are_grounded(state["reply"], state["grounded_numbers"])
         is_task_ok = (
             is_route_ok
             and is_numeric_ok
             and state["token"] == "[REDACTED]"
-            and len(registry.calls) == 1
+            and len(registry.calls) >= 1
+            and len(registry.calls) <= settings.MAX_TOOL_CALLS_PER_RUN
+            and len(call_keys) == len(registry.calls)
             and registry.calls[0].name == case["expectedTool"]
         )
 
@@ -138,7 +141,7 @@ async def evaluate_phase7_readiness(root: Path | None = None) -> dict[str, Any]:
         "roleBypassBlocked": role_bypass_blocked,
         "maxToolCallsObserved": max_tool_calls_observed,
         "infiniteLoopDetected": max_tool_calls_observed > settings.MAX_TOOL_CALLS_PER_RUN,
-        "maxAllowedToolCallsPerRun": READINESS_THRESHOLDS["maxToolCallsPerRun"],
+        "maxAllowedToolCallsPerRun": settings.MAX_TOOL_CALLS_PER_RUN,
     }
     passed = (
         metrics["toolSelectionAccuracy"] >= READINESS_THRESHOLDS["toolSelectionAccuracy"]

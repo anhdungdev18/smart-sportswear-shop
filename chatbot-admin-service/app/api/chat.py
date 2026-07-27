@@ -5,7 +5,7 @@ from fastapi import APIRouter, Header
 from app.graph.admin_graph import run_admin_graph
 from app.memory.session_store import save_run
 from app.observability.trace_logger import get_logger, log_run
-from app.schemas.chat import ChatRequest, ChatResponse, ToolCallRecord
+from app.schemas.chat import ChatRequest, ChatResponse, ReactTraceStep, ToolCallRecord
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -26,6 +26,8 @@ async def chat(request: ChatRequest, authorization: str | None = Header(default=
         "intent": state["intent"],
         "tool": state["selected_tool"],
         "source": state["tool_source"],
+        "toolCalls": len(state.get("tool_calls", [])),
+        "partial": state.get("partial", False),
         "warnings": state["warnings"],
     }
     save_run(run)
@@ -36,12 +38,16 @@ async def chat(request: ChatRequest, authorization: str | None = Header(default=
         intent=state["intent"],
         toolCalls=[
             ToolCallRecord(
-                tool=state["selected_tool"],
-                args=state["tool_args"],
-                result=state["tool_result"],
-                source=state["tool_source"],
+                tool=call["tool"],
+                args=call["args"],
+                result=call["result"],
+                source=call["source"],
+                reason=call.get("reason"),
             )
+            for call in state.get("tool_calls", [])
         ],
+        trace=[ReactTraceStep(**step) for step in state.get("react_steps", [])],
+        partial=state.get("partial", False),
         warnings=state["warnings"],
         groundedNumbers=state["grounded_numbers"],
         runId=state["run_id"],

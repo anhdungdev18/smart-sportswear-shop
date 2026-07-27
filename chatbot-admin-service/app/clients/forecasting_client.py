@@ -46,3 +46,12 @@ class ForecastingClient(ApiClient):
 
     async def simulate_inventory_policy(self, token: str, payload: dict[str, Any]) -> dict[str, Any]:
         return await self.request("POST", "/api/v1/admin/ai/inventory/simulate", token, json=payload)
+
+    async def accept_replenishment(self, token: str, recommendation_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+        return await self.request("POST", f"/api/v1/admin/replenishment/suggestions/{recommendation_id}/accept", token, json=payload)
+
+    async def adjust_replenishment(self, token: str, recommendation_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+        return await self.request("POST", f"/api/v1/admin/replenishment/suggestions/{recommendation_id}/adjust", token, json=payload)
+
+    async def dismiss_replenishment(self, token: str, recommendation_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+        return await self.request("POST", f"/api/v1/admin/replenishment/suggestions/{recommendation_id}/dismiss", token, json=payload)

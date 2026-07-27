@@ -5,7 +5,7 @@
     "toolSelectionAccuracy": 0.9,
     "groundedNumericAccuracy": 0.95,
     "readOnlyTaskSuccess": 0.85,
-    "maxToolCallsPerRun": 1
+    "maxToolCallsPerRun": 6
   },
   "metrics": {
     "caseCount": 50,
@@ -13,9 +13,9 @@
     "groundedNumericAccuracy": 1.0,
     "readOnlyTaskSuccess": 1.0,
     "roleBypassBlocked": true,
-    "maxToolCallsObserved": 1,
+    "maxToolCallsObserved": 2,
     "infiniteLoopDetected": false,
-    "maxAllowedToolCallsPerRun": 1
+    "maxAllowedToolCallsPerRun": 6
   },
   "failures": []
 }

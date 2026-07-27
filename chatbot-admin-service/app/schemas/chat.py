@@ -28,12 +28,24 @@ class ToolCallRecord(BaseModel):
     args: dict[str, Any] = Field(default_factory=dict)
     result: dict[str, Any] | list[Any] | None = None
     source: str
+    reason: str | None = None
+
+
+class ReactTraceStep(BaseModel):
+    step: int
+    node: str
+    tool: str | None = None
+    reason: str | None = None
+    observation: str | None = None
+    decision: str | None = None
 
 
 class ChatResponse(BaseModel):
     reply: str
     intent: Intent
     toolCalls: list[ToolCallRecord] = Field(default_factory=list)
+    trace: list[ReactTraceStep] = Field(default_factory=list)
+    partial: bool = False
     warnings: list[str] = Field(default_factory=list)
     groundedNumbers: list[str] = Field(default_factory=list)
     runId: str

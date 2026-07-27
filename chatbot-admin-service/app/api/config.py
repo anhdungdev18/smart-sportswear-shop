@@ -24,7 +24,7 @@ async def config() -> dict:
         "environment": settings.ADMIN_COPILOT_ENV,
         "modelProvider": settings.MODEL_PROVIDER,
         "modelName": settings.MODEL_NAME,
-        "promptVersion": "admin-copilot-readonly-v1",
+        "promptVersion": "admin-copilot-react-readonly-v1",
         "maxAgentSteps": settings.MAX_AGENT_STEPS,
         "maxToolCallsPerRun": settings.MAX_TOOL_CALLS_PER_RUN,
         "agentTimeoutSeconds": settings.AGENT_TIMEOUT_SECONDS,
@@ -37,6 +37,11 @@ async def config() -> dict:
         "evaluationLoggingEnabled": settings.EVALUATION_LOGGING_ENABLED,
         "rateLimitPerMinute": settings.RATE_LIMIT_PER_MINUTE,
         "enabledTools": sorted(READ_ONLY_TOOLS),
+        "approvalWriteActions": [
+            "ACCEPT_REPLENISHMENT",
+            "ADJUST_REPLENISHMENT",
+            "DISMISS_REPLENISHMENT",
+        ],
         "rolePermissions": [
             {"role": "ADMIN", "access": "FULL_READ_ONLY"},
             {"role": "SALES", "access": "BLOCKED_IN_PHASE_6"},
@@ -46,12 +51,13 @@ async def config() -> dict:
             "dataset": "phase5_mvp_cases.json",
             "cases": 50,
             "lastResult": "passed",
+            "phase7ReadinessReport": "phase7_readiness_report.json",
         },
         "cost": {
             "tokenCount": 0,
             "estimatedCost": 0,
             "currency": "USD",
-            "note": "Phase 6 uses deterministic read-only answers; no LLM token spend is recorded.",
+            "note": "Current Copilot answers and approval workflow are deterministic; no LLM token spend is recorded.",
         },
         "updatedAt": datetime.now(timezone.utc).isoformat(),
     }

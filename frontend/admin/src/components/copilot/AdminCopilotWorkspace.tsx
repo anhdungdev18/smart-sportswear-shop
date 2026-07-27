@@ -27,6 +27,7 @@ function makeSessionId() {
 }
 
 function stateFor(response: ChatResponse): ChatMessage["state"] {
+  if (response.partial) return "partial";
   if (response.warnings.length > 0) return "warning";
   if (response.intent === "UNKNOWN") return "partial";
   return "answer";
@@ -163,8 +164,21 @@ export function AdminCopilotWorkspace({ initialRuns }: { initialRuns: CopilotRun
                     <div key={`${message.id}-${call.tool}`}>
                       <span className="status draft">{call.source}</span>
                       <span className="table-subtle"> {call.tool} args={JSON.stringify(call.args)}</span>
+                      {call.reason && <span className="table-subtle"> - {call.reason}</span>}
                     </div>
                   ))}
+                  {message.response.trace.length > 0 && (
+                    <div className="admin-stack" style={{ marginTop: 8 }}>
+                      {message.response.trace.map((step) => (
+                        <span className="table-subtle" key={`${message.id}-${step.step}-${step.node}`}>
+                          {step.step}. {step.node}
+                          {step.tool ? ` / ${step.tool}` : ""}
+                          {step.observation ? ` / ${step.observation}` : ""}
+                          {step.decision ? ` / ${step.decision}` : ""}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                   {message.response.groundedNumbers.length > 0 && (
                     <p className="table-subtle">So lieu grounded: {message.response.groundedNumbers.join(", ")}</p>
                   )}

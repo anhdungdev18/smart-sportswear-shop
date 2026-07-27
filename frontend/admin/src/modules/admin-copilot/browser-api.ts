@@ -1,6 +1,6 @@
 import { getBrowserAccessToken } from "@/modules/auth/session";
 import { ApiRequestError } from "@/modules/api/common";
-import type { ChatResponse, CopilotConfig, CopilotRun } from "@/modules/admin-copilot/types";
+import type { ApprovalAction, ApprovalResponse, ChatResponse, CopilotConfig, CopilotRun } from "@/modules/admin-copilot/types";
 
 type QueryValue = string | number | boolean | null | undefined;
 
@@ -73,4 +73,41 @@ export function sendCopilotFeedback(runId: string, rating: "CORRECT" | "INCORREC
     method: "POST",
     body: JSON.stringify({ runId, rating, note }),
   });
+}
+
+export async function listApprovals(limit = 50, status?: string) {
+  const payload = await copilotRequest<{ items: ApprovalResponse[] }>("/approvals", { query: { limit, status } });
+  return payload.items;
+}
+
+export function createApproval(payload: {
+  action: ApprovalAction;
+  resourceId: string;
+  payload: Record<string, unknown>;
+  idempotencyKey: string;
+  reason: string;
+  riskLevel?: string;
+}) {
+  return copilotRequest<ApprovalResponse>("/approvals", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function approveApproval(id: string, note?: string) {
+  return copilotRequest<ApprovalResponse>(`/approvals/${id}/approve`, {
+    method: "POST",
+    body: JSON.stringify({ note }),
+  });
+}
+
+export function rejectApproval(id: string, note?: string) {
+  return copilotRequest<ApprovalResponse>(`/approvals/${id}/reject`, {
+    method: "POST",
+    body: JSON.stringify({ note }),
+  });
+}
+
+export function executeApproval(id: string) {
+  return copilotRequest<ApprovalResponse>(`/approvals/${id}/execute`, { method: "POST" });
 }
