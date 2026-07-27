@@ -23,6 +23,14 @@ class FakeEvaluationRegistry:
     async def execute(self, name, token, args):
         result = {
             "get_inventory_risks": [{"risk": "STOCKOUT"}, {"risk": "OVERSTOCK"}],
+            "get_inventory_risk_explanation": {
+                "sku": "SKU-1",
+                "detail": {"sku": "SKU-1", "risk": "STOCKOUT", "availableQuantity": 4, "suggestedQuantity": 30},
+                "lookup": [{"sku": "SKU-1", "stockQuantity": 5, "reservedQuantity": 1, "availableQuantity": 4}],
+                "matchingRisks": [{"sku": "SKU-1", "risk": "STOCKOUT", "availableQuantity": 4, "suggestedQuantity": 30}],
+                "forecastQuality": {"totalVariants": 120, "insufficientVariants": 5},
+                "evidenceAvailable": True,
+            },
             "get_replenishment_suggestions": {"content": [{"id": "r1", "status": "PENDING"}], "totalElements": 1},
             "get_forecast_quality": {"totalVariants": 120, "highQualityVariants": 100},
             "get_sales_overview": {"totalOrders": 10, "revenue": 1000},

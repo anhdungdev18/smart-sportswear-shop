@@ -64,6 +64,14 @@ def build_readonly_plan(intent: Intent, message: str, question_type: QuestionTyp
         plan = [
             PlannedToolCall("get_revenue_breakdown", {}, "revenue breakdown for explanation or diagnosis"),
         ]
+    elif intent in {"INVENTORY_RISK", "PRODUCT_INVENTORY_LOOKUP"} and question_type == "EXPLANATION":
+        plan = [
+            PlannedToolCall(
+                "get_inventory_risk_explanation",
+                _inventory_explanation_args(message),
+                "inventory risk evidence for explanation or diagnosis",
+            )
+        ]
 
     needs_quality_context = any(
         term in text
@@ -143,3 +151,19 @@ def _extract_lookback_days(text: str) -> int:
 def _extract_lookup_query(message: str) -> str:
     cleaned = re.sub(r"\b(con bao nhieu|cÃ²n bao nhiÃªu|con ton|cÃ²n tá»“n|ton kho|tá»“n kho)\b", " ", message, flags=re.I)
     return " ".join(cleaned.split()).strip() or message.strip()
+
+
+def _inventory_explanation_args(message: str) -> dict[str, Any]:
+    args: dict[str, Any] = {"limit": 5}
+    query = _extract_lookup_query(message)
+    if query:
+        args["sku"] = query
+    match = re.search(r"\bvariant[:\s-]+([A-Za-z0-9_-]+)", message, flags=re.I)
+    if match:
+        args["variantId"] = match.group(1)
+    lowered = message.lower()
+    if "stockout" in lowered or "sap het" in lowered or "sắp hết" in lowered:
+        args["risk"] = "STOCKOUT"
+    elif "overstock" in lowered or "du hang" in lowered or "dư hàng" in lowered:
+        args["risk"] = "OVERSTOCK"
+    return args

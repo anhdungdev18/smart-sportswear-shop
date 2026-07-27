@@ -200,6 +200,58 @@ def _format_replenishment_suggestions(items: list[dict[str, Any]], question_type
     return f"Hiện có {_format_number(len(items))} đề xuất nhập hàng trong trang kết quả này."
 
 
+def _first_dict(*values: Any) -> dict[str, Any]:
+    for value in values:
+        if isinstance(value, dict):
+            return value
+        if isinstance(value, list) and value and isinstance(value[0], dict):
+            return value[0]
+    return {}
+
+
+def _format_inventory_risk_explanation(result: Any) -> str:
+    if not isinstance(result, dict):
+        return "Tôi chưa đọc được dữ liệu giải thích rủi ro tồn kho từ hệ thống."
+
+    detail = _first_dict(result.get("detail"))
+    lookup = _first_dict(result.get("lookup"))
+    risk = _first_dict(result.get("matchingRisks"), detail)
+    quality = result.get("forecastQuality") if isinstance(result.get("forecastQuality"), dict) else {}
+    evidence_available = result.get("evidenceAvailable") is not False
+    if not evidence_available and not any([detail, lookup, risk]):
+        return "Chưa đủ dữ liệu để kết luận chắc chắn vì hệ thống chưa trả về chi tiết tồn kho, cảnh báo rủi ro hoặc tốc độ bán của SKU này."
+
+    sku = risk.get("sku") or lookup.get("sku") or detail.get("sku") or result.get("sku") or "SKU này"
+    risk_label = _format_status(risk.get("risk") or detail.get("risk") or "UNKNOWN")
+    stock = lookup.get("stockQuantity", detail.get("stockQuantity", risk.get("stockQuantity")))
+    reserved = lookup.get("reservedQuantity", detail.get("reservedQuantity", risk.get("reservedQuantity")))
+    available = lookup.get("availableQuantity", detail.get("availableQuantity", risk.get("availableQuantity")))
+    suggested = detail.get("suggestedQuantity", risk.get("suggestedQuantity"))
+    velocity = detail.get("salesVelocity", risk.get("salesVelocity"))
+    quality_total = quality.get("totalVariants")
+    insufficient = quality.get("insufficientVariants")
+
+    parts = [f"{sku} được cảnh báo {risk_label} dựa trên tồn kho khả dụng và tín hiệu dự báo hiện tại."]
+    if available is not None:
+        parts.append(f"Tồn khả dụng là {_format_number(available)}.")
+    elif stock is not None and reserved is not None:
+        try:
+            parts.append(f"Tồn khả dụng ước tính là {_format_number(float(stock) - float(reserved))} vì tồn kho trừ số đã giữ.")
+        except (TypeError, ValueError):
+            pass
+    if stock is not None or reserved is not None:
+        parts.append(f"Tồn vật lý {_format_number(stock) if stock is not None else 'chưa rõ'}, đã giữ {_format_number(reserved) if reserved is not None else 'chưa rõ'}.")
+    if velocity is not None:
+        parts.append(f"Tốc độ bán gần đây là {_format_number(velocity)} sản phẩm/ngày.")
+    if suggested is not None:
+        parts.append(f"Hệ thống đang gợi ý xem xét nhập khoảng {_format_number(suggested)} sản phẩm.")
+    if quality_total is not None and insufficient is not None:
+        parts.append(f"Bối cảnh dự báo: {_format_number(insufficient)}/{_format_number(quality_total)} biến thể đang thiếu dữ liệu, nên cần đọc khuyến nghị với mức thận trọng phù hợp.")
+    if suggested is None and velocity is None:
+        parts.append("Chưa đủ dữ liệu về tốc độ bán hoặc lượng gợi ý nhập để kết luận nguyên nhân định lượng sâu hơn.")
+    return " ".join(parts)
+
+
 def _format_product_inventory(items: list[dict[str, Any]]) -> str:
     if not items:
         return "Tôi chưa tìm thấy biến thể kho nào phù hợp."
@@ -250,6 +302,8 @@ def generate_grounded_answer(intent: str, tool_name: str, result: Any, message: 
         numbers = risk_numbers + numbers
     elif tool_name == "get_replenishment_suggestions":
         reply = _format_replenishment_suggestions(items, question_type)
+    elif tool_name == "get_inventory_risk_explanation":
+        reply = _format_inventory_risk_explanation(result)
     elif tool_name == "search_product_inventory":
         reply = _format_product_inventory(items)
     elif tool_name == "get_best_selling_products":

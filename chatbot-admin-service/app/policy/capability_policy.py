@@ -2,6 +2,7 @@ READ_ONLY_TOOLS = {
     "get_data_quality_summary",
     "get_inventory_risks",
     "get_inventory_risk_detail",
+    "get_inventory_risk_explanation",
     "get_replenishment_suggestions",
     "get_replenishment_detail",
     "get_forecast_quality",

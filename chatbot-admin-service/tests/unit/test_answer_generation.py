@@ -93,3 +93,27 @@ def test_answer_uses_revenue_breakdown_when_available():
     assert "get_revenue_breakdown" not in reply
     assert "grossRevenue=1000000" in numbers
     assert warnings == []
+
+
+def test_answer_explains_inventory_risk_from_evidence():
+    reply, warnings, numbers = generate_grounded_answer(
+        "INVENTORY_RISK",
+        "get_inventory_risk_explanation",
+        {
+            "sku": "SKU-1",
+            "detail": {"sku": "SKU-1", "risk": "STOCKOUT", "availableQuantity": 4, "suggestedQuantity": 30},
+            "lookup": [{"sku": "SKU-1", "stockQuantity": 5, "reservedQuantity": 1, "availableQuantity": 4}],
+            "matchingRisks": [{"sku": "SKU-1", "risk": "STOCKOUT", "availableQuantity": 4, "suggestedQuantity": 30}],
+            "forecastQuality": {"totalVariants": 120, "insufficientVariants": 5},
+            "evidenceAvailable": True,
+        },
+        "Tai sao SKU-1 bi stockout?",
+        "EXPLANATION",
+    )
+
+    assert "SKU-1" in reply
+    assert "Tồn khả dụng" in reply
+    assert "30" in reply
+    assert "get_inventory_risk_explanation" not in reply
+    assert "suggestedQuantity=30" in numbers
+    assert warnings == []

@@ -12,7 +12,7 @@ class FakeForecastingClient:
         return [{"variantId": "v1", "risk": "STOCKOUT"}]
 
     async def inventory_risk_detail(self, token, variant_id):
-        return {"variantId": variant_id, "risk": "STOCKOUT"}
+        return {"variantId": variant_id, "sku": "SKU-1", "risk": "STOCKOUT", "availableQuantity": 4, "suggestedQuantity": 30}
 
     async def replenishment_suggestions(self, token, **kwargs):
         return {"content": [{"id": "r1", "status": "PENDING"}], "totalElements": 1}
@@ -50,7 +50,7 @@ class FakeBackendClient:
         return {"totalOrders": 10}
 
     async def inventory_lookup(self, token, **kwargs):
-        return [{"sku": "SKU-1", "availableQuantity": 7}]
+        return [{"variantId": "v1", "sku": "SKU-1", "availableQuantity": 7, "stockQuantity": 9, "reservedQuantity": 2}]
 
     async def best_sellers(self, token, **kwargs):
         return {"items": [{"productName": "Ao chay bo", "unitsSold": 12}], "source": "order_items_excluding_cancelled"}
@@ -91,6 +91,17 @@ def test_registry_executes_revenue_breakdown_tool():
 
     assert source == "backend"
     assert result["difference"] == 50
+
+
+def test_registry_executes_inventory_risk_explanation_tool():
+    registry = ToolRegistry(forecasting=FakeForecastingClient(), backend=FakeBackendClient())
+
+    result, source = asyncio.run(registry.execute("get_inventory_risk_explanation", "token", {"sku": "SKU-1", "risk": "STOCKOUT"}))
+
+    assert source == "forecasting"
+    assert result["evidenceAvailable"] is True
+    assert result["detail"]["variantId"] == "v1"
+    assert result["forecastQuality"]["totalVariants"] == 120
 
 
 def test_registry_blocks_controlled_ai_jobs_by_default():

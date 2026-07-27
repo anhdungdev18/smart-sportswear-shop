@@ -26,6 +26,7 @@ class ToolRegistry:
             "get_data_quality_summary": ToolDefinition("get_data_quality_summary", "forecasting", self._data_quality),
             "get_inventory_risks": ToolDefinition("get_inventory_risks", "forecasting", self._inventory_risks),
             "get_inventory_risk_detail": ToolDefinition("get_inventory_risk_detail", "forecasting", self._risk_detail),
+            "get_inventory_risk_explanation": ToolDefinition("get_inventory_risk_explanation", "forecasting", self._risk_explanation),
             "get_replenishment_suggestions": ToolDefinition("get_replenishment_suggestions", "forecasting", self._suggestions),
             "get_replenishment_detail": ToolDefinition("get_replenishment_detail", "forecasting", self._suggestion_detail),
             "get_forecast_quality": ToolDefinition("get_forecast_quality", "forecasting", self._data_quality),
@@ -68,6 +69,34 @@ class ToolRegistry:
 
     async def _risk_detail(self, token: str, args: dict[str, Any]) -> Any:
         return await self.forecasting.inventory_risk_detail(token, args["variantId"])
+
+    async def _risk_explanation(self, token: str, args: dict[str, Any]) -> Any:
+        variant_id = args.get("variantId")
+        sku = args.get("sku")
+        risk_filter = args.get("risk")
+        detail: dict[str, Any] | None = None
+        lookup: Any = None
+
+        if variant_id:
+            detail = await self.forecasting.inventory_risk_detail(token, str(variant_id))
+        if sku and settings.PRODUCT_LOOKUP_ENABLED:
+            lookup = await self.backend.inventory_lookup(token, query=str(sku), sku=str(sku), limit=1)
+            if not variant_id and isinstance(lookup, list) and lookup and lookup[0].get("variantId"):
+                variant_id = lookup[0]["variantId"]
+                detail = await self.forecasting.inventory_risk_detail(token, str(variant_id))
+
+        risks = await self.forecasting.inventory_risks(token, str(risk_filter) if risk_filter else None)
+        matching_risks = _matching_risks(risks, sku=sku, variant_id=variant_id)
+        quality = await self.forecasting.data_quality_summary(token)
+        return {
+            "variantId": variant_id,
+            "sku": sku,
+            "detail": detail,
+            "lookup": lookup,
+            "matchingRisks": matching_risks,
+            "forecastQuality": quality,
+            "evidenceAvailable": bool(detail or matching_risks or lookup),
+        }
 
     async def _suggestions(self, token: str, args: dict[str, Any]) -> Any:
         return await self.forecasting.replenishment_suggestions(token, **args)
@@ -163,3 +192,21 @@ def _assert_allowed_data_source(args: dict[str, Any]) -> None:
     allowed = {value.strip().upper() for value in settings.AI_JOB_ALLOWED_DATA_SOURCES.split(",") if value.strip()}
     if data_source not in allowed:
         raise PermissionError(f"AI job dataSource {data_source} is not allowed")
+
+
+def _matching_risks(risks: Any, *, sku: Any = None, variant_id: Any = None) -> list[dict[str, Any]]:
+    if not isinstance(risks, list):
+        return []
+    if not sku and not variant_id:
+        return risks[:5]
+    sku_text = str(sku).upper() if sku else None
+    variant_text = str(variant_id) if variant_id else None
+    matches = []
+    for item in risks:
+        if not isinstance(item, dict):
+            continue
+        if variant_text and str(item.get("variantId")) == variant_text:
+            matches.append(item)
+        elif sku_text and str(item.get("sku", "")).upper() == sku_text:
+            matches.append(item)
+    return matches[:5]

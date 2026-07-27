@@ -40,6 +40,14 @@ class EvaluationRegistry:
                 {"risk": "STOCKOUT", "availableQuantity": 10, "suggestedQuantity": 68},
                 {"risk": "OVERSTOCK", "availableQuantity": 220, "suggestedQuantity": 0},
             ],
+            "get_inventory_risk_explanation": {
+                "sku": "SKU-1",
+                "detail": {"sku": "SKU-1", "risk": "STOCKOUT", "availableQuantity": 10, "suggestedQuantity": 68},
+                "lookup": [{"sku": "SKU-1", "stockQuantity": 12, "reservedQuantity": 2, "availableQuantity": 10}],
+                "matchingRisks": [{"sku": "SKU-1", "risk": "STOCKOUT", "availableQuantity": 10, "suggestedQuantity": 68}],
+                "forecastQuality": {"totalVariants": 120, "insufficientVariants": 5},
+                "evidenceAvailable": True,
+            },
             "get_replenishment_suggestions": {
                 "content": [{"id": "r1", "status": "PENDING", "suggestedQuantity": 30}],
                 "totalElements": 1,

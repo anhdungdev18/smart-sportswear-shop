@@ -59,6 +59,8 @@ def classify_message(message: str, conversation_summary: str | None = None) -> C
     text = _normalize_text(message)
     if intent == "SALES_OVERVIEW" and question_type in {"EXPLANATION", "COMPARISON", "DIAGNOSIS"}:
         needed_tools = ["get_revenue_breakdown"]
+    elif intent in {"INVENTORY_RISK", "PRODUCT_INVENTORY_LOOKUP"} and question_type == "EXPLANATION":
+        needed_tools = ["get_inventory_risk_explanation"]
     elif intent == "ORDER_OVERVIEW" and question_type in {"COMPARISON", "DIAGNOSIS"}:
         needed_tools = ["get_order_overview", "get_order_status_trend"]
 
@@ -119,7 +121,7 @@ async def classify_message_intelligently(
 
 def _default_available_tools() -> list[str]:
     tools = {select_tool(intent) for intent in Intent.__args__ if intent != "UNKNOWN"}  # type: ignore[attr-defined]
-    tools.update({"get_revenue_breakdown", "get_order_status_trend", "get_data_quality_summary"})
+    tools.update({"get_revenue_breakdown", "get_order_status_trend", "get_inventory_risk_explanation", "get_data_quality_summary"})
     return sorted(tools)
 
 
@@ -146,12 +148,12 @@ def classify_question_type(message: str, conversation_summary: str | None = None
     text = _normalize_text(message)
     if any(term in text for term in ["chay lai", "refresh", "sync", "cap nhat", "generate", "evaluate"]):
         return "ACTION_REQUEST"
-    if any(term in text for term in ["tai sao", "vi sao", "giai thich", "nguyen nhan", "khac nhau", "chenh"]):
+    if any(term in text for term in ["tai sao", "vi sao", "why", "explain", "giai thich", "nguyen nhan", "khac nhau", "chenh"]):
         return "EXPLANATION"
-    if any(term in text for term in ["so sanh", "hon", "kem", "thang truoc", "tuan truoc", "hom qua"]):
-        return "COMPARISON"
     if any(term in text for term in ["bat thuong", "rui ro", "dang lo", "van de", "canh bao", "stockout", "overstock"]):
         return "DIAGNOSIS"
+    if any(term in text for term in ["so sanh", "kem", "thang truoc", "tuan truoc", "hom qua"]) or _has_word(text, "hon"):
+        return "COMPARISON"
     if any(term in text for term in ["nen", "can lam gi", "uu tien", "de xuat", "goi y"]):
         return "RECOMMENDATION"
     if any(term in text for term in ["bao nhieu", "tong", "hien co", "hien tai co", "doanh thu", "so luong"]):
@@ -171,6 +173,12 @@ def _extract_entities(message: str) -> dict[str, str]:
     if sku_match:
         entities["sku"] = sku_match.group(0)
     return entities
+
+
+def _has_word(text: str, word: str) -> bool:
+    import re
+
+    return re.search(rf"\b{re.escape(word)}\b", text) is not None
 
 
 def select_tool(intent: Intent) -> str:
