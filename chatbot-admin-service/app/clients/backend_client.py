@@ -14,6 +14,30 @@ class BackendClient(ApiClient):
     async def sales_overview(self, token: str) -> dict[str, Any]:
         return await self.request("GET", "/api/v1/admin/reports/overview", token)
 
+    async def revenue_breakdown(self, token: str) -> dict[str, Any]:
+        try:
+            return await self.request("GET", "/api/v1/admin/reports/revenue/breakdown", token)
+        except Exception:
+            overview = await self.sales_overview(token)
+            gross = overview.get("grossRevenue")
+            realized = overview.get("realizedRevenue")
+            difference = None
+            if isinstance(gross, (int, float)) and isinstance(realized, (int, float)):
+                difference = realized - gross
+            return {
+                "grossRevenue": gross,
+                "realizedRevenue": realized,
+                "difference": difference,
+                "breakdownAvailable": False,
+            }
+
+    async def order_status_trend(self, token: str) -> dict[str, Any]:
+        try:
+            return await self.request("GET", "/api/v1/admin/reports/orders/status-trend", token)
+        except Exception:
+            overview = await self.order_overview(token)
+            return {"overview": overview, "trendAvailable": False}
+
     async def product_performance(self, token: str) -> dict[str, Any]:
         return await self.request("GET", "/api/v1/admin/reports/products", token)
 

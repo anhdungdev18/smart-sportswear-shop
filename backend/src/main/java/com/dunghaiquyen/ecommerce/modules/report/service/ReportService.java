@@ -15,10 +15,15 @@ import com.dunghaiquyen.ecommerce.modules.report.dto.LowStockItemResponse;
 import com.dunghaiquyen.ecommerce.modules.report.dto.OrderReportQuery;
 import com.dunghaiquyen.ecommerce.modules.report.dto.OrderReportResponse;
 import com.dunghaiquyen.ecommerce.modules.report.dto.OrderStatusCount;
+import com.dunghaiquyen.ecommerce.modules.report.dto.OrderStatusTrendPoint;
+import com.dunghaiquyen.ecommerce.modules.report.dto.OrderStatusTrendResponse;
+import com.dunghaiquyen.ecommerce.modules.report.dto.OrderStatusTrendRow;
 import com.dunghaiquyen.ecommerce.modules.report.dto.OverviewReportResponse;
 import com.dunghaiquyen.ecommerce.modules.report.dto.ProductReportQuery;
 import com.dunghaiquyen.ecommerce.modules.report.dto.ProductReportResponse;
+import com.dunghaiquyen.ecommerce.modules.report.dto.RevenueBreakdownResponse;
 import com.dunghaiquyen.ecommerce.modules.report.dto.RevenueBucketRow;
+import com.dunghaiquyen.ecommerce.modules.report.dto.RevenueExceptionSlice;
 import com.dunghaiquyen.ecommerce.modules.report.dto.RevenueGranularity;
 import com.dunghaiquyen.ecommerce.modules.report.dto.RevenuePointResponse;
 import com.dunghaiquyen.ecommerce.modules.report.dto.RevenueReportQuery;
@@ -111,6 +116,25 @@ public class ReportService {
         return new OverviewReportResponse(grossRevenue, realizedRevenue, totalOrders, pendingOrders, lowStockCount);
     }
 
+    @Transactional(readOnly = true)
+    public RevenueBreakdownResponse getRevenueBreakdown() {
+        BigDecimal grossRevenue = orderReportRepository.sumTotalAmountByPaymentStatus(PaymentStatus.PAID);
+        BigDecimal realizedRevenue = orderReportRepository.sumTotalAmountByOrderStatus(OrderStatus.DELIVERED);
+        RevenueExceptionSlice deliveredUnpaid =
+                orderReportRepository.sumDeliveredUnpaid(OrderStatus.DELIVERED, PaymentStatus.PAID);
+        RevenueExceptionSlice paidNotDelivered =
+                orderReportRepository.sumPaidNotDelivered(PaymentStatus.PAID, OrderStatus.DELIVERED);
+        return new RevenueBreakdownResponse(
+                grossRevenue,
+                realizedRevenue,
+                realizedRevenue.subtract(grossRevenue),
+                orderReportRepository.revenueByPaymentStatus(),
+                orderReportRepository.revenueByOrderStatus(),
+                deliveredUnpaid,
+                paidNotDelivered,
+                true);
+    }
+
     /**
      * Gross-revenue time series (PAID orders) bucketed by day/month/year. When
      * dateFrom/dateTo are omitted a window is derived from the granularity (last
@@ -193,6 +217,35 @@ public class ReportService {
         List<OrderStatusCount> byStatus = orderReportRepository.countByStatusInRange(from, to);
         long totalOrders = byStatus.stream().mapToLong(OrderStatusCount::count).sum();
         return new OrderReportResponse(dateFrom, dateTo, totalOrders, byStatus);
+    }
+
+    @Transactional(readOnly = true)
+    public OrderStatusTrendResponse getOrderStatusTrend(LocalDate dateFrom, LocalDate dateTo) {
+        LocalDate today = LocalDate.now(AppTimeZone.ZONE);
+        LocalDate to = dateTo != null ? dateTo : today;
+        LocalDate from = dateFrom != null ? dateFrom : to.minusDays(6);
+        if (from.isAfter(to)) {
+            LocalDate swap = from;
+            from = to;
+            to = swap;
+        }
+        Instant fromInstant = from.atStartOfDay(AppTimeZone.ZONE).toInstant();
+        Instant toInstant = to.atTime(LocalTime.MAX).atZone(AppTimeZone.ZONE).toInstant();
+        Map<LocalDate, List<OrderStatusTrendRow>> rowsByDate = orderReportRepository
+                .countStatusByDay(fromInstant, toInstant)
+                .stream()
+                .collect(Collectors.groupingBy(OrderStatusTrendRow::getBucket));
+        List<OrderStatusTrendPoint> points = new ArrayList<>();
+        LocalDate cursor = from;
+        while (!cursor.isAfter(to)) {
+            List<OrderStatusCount> byStatus = rowsByDate.getOrDefault(cursor, List.of()).stream()
+                    .map(row -> new OrderStatusCount(row.getStatus(), row.getOrderCount()))
+                    .toList();
+            long totalOrders = byStatus.stream().mapToLong(OrderStatusCount::count).sum();
+            points.add(new OrderStatusTrendPoint(cursor, totalOrders, byStatus));
+            cursor = cursor.plusDays(1);
+        }
+        return new OrderStatusTrendResponse(from, to, points, true);
     }
 
     @Cacheable(value = CacheConfig.REPORT_PRODUCTS, key = "#query.limit() != null ? #query.limit() : 'default'")

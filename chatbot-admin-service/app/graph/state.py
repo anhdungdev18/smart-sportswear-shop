@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any, TypedDict
 
 from app.auth.actor_context import ActorContext
-from app.schemas.chat import Intent
+from app.schemas.chat import Intent, QuestionType
 
 
 class ToolCallState(TypedDict, total=False):
@@ -29,6 +29,7 @@ class AdminGraphState(TypedDict, total=False):
     token: str
     actor: ActorContext
     intent: Intent
+    question_type: QuestionType
     selected_tool: str
     tool_args: dict[str, Any]
     tool_result: Any

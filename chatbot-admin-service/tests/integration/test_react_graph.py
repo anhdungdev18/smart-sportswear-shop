@@ -26,6 +26,13 @@ class RecordingRegistry:
             },
             "search_product_inventory": [{"sku": "SKU-1", "availableQuantity": 7, "stockQuantity": 9, "reservedQuantity": 2}],
             "get_best_selling_products": {"fromDate": "2026-06-28", "toDate": "2026-07-27", "items": []},
+            "get_sales_overview": {"grossRevenue": 1000000, "realizedRevenue": 1500000},
+            "get_revenue_breakdown": {
+                "grossRevenue": 1000000,
+                "realizedRevenue": 1500000,
+                "difference": 500000,
+                "breakdownAvailable": True,
+            },
         }[name]
         return result, "fake"
 
@@ -86,3 +93,23 @@ def test_phase9_urgent_replenishment_uses_freshness_then_rank_then_quality():
         "get_forecast_quality",
     ]
     assert state["partial"] is False
+
+
+def test_follow_up_uses_previous_session_topic_for_revenue_explanation():
+    first_registry = RecordingRegistry()
+    token = make_token("ADMIN")
+    asyncio.run(run_admin_graph("follow-up-s1", "Doanh thu hien tai bao nhieu?", token, registry=first_registry))  # type: ignore[arg-type]
+
+    second_registry = RecordingRegistry()
+    state = asyncio.run(
+        run_admin_graph(
+            "follow-up-s1",
+            "Tai sao lai chenh vay?",
+            token,
+            registry=second_registry,  # type: ignore[arg-type]
+        )
+    )
+
+    assert [name for name, _ in second_registry.calls] == ["get_revenue_breakdown"]
+    assert state["intent"] == "SALES_OVERVIEW"
+    assert state["question_type"] == "EXPLANATION"

@@ -6,9 +6,11 @@ import com.dunghaiquyen.ecommerce.modules.report.dto.InventoryLookupItemResponse
 import com.dunghaiquyen.ecommerce.modules.report.dto.BestSellingProductPeriodResponse;
 import com.dunghaiquyen.ecommerce.modules.report.dto.OrderReportQuery;
 import com.dunghaiquyen.ecommerce.modules.report.dto.OrderReportResponse;
+import com.dunghaiquyen.ecommerce.modules.report.dto.OrderStatusTrendResponse;
 import com.dunghaiquyen.ecommerce.modules.report.dto.OverviewReportResponse;
 import com.dunghaiquyen.ecommerce.modules.report.dto.ProductReportQuery;
 import com.dunghaiquyen.ecommerce.modules.report.dto.ProductReportResponse;
+import com.dunghaiquyen.ecommerce.modules.report.dto.RevenueBreakdownResponse;
 import com.dunghaiquyen.ecommerce.modules.report.dto.RevenueReportQuery;
 import com.dunghaiquyen.ecommerce.modules.report.dto.RevenueReportResponse;
 import com.dunghaiquyen.ecommerce.modules.report.service.ReportService;
@@ -44,9 +46,21 @@ public class AdminReportController {
         return ApiResponse.ok(reportService.getRevenueReport(query));
     }
 
+    @GetMapping("/revenue/breakdown")
+    public ApiResponse<RevenueBreakdownResponse> revenueBreakdown() {
+        return ApiResponse.ok(reportService.getRevenueBreakdown());
+    }
+
     @GetMapping("/orders")
     public ApiResponse<OrderReportResponse> orders(@ModelAttribute OrderReportQuery query) {
         return ApiResponse.ok(reportService.getOrderReport(query));
+    }
+
+    @GetMapping("/orders/status-trend")
+    public ApiResponse<OrderStatusTrendResponse> orderStatusTrend(
+            @RequestParam(required = false) LocalDate dateFrom,
+            @RequestParam(required = false) LocalDate dateTo) {
+        return ApiResponse.ok(reportService.getOrderStatusTrend(dateFrom, dateTo));
     }
 
     @GetMapping("/products")

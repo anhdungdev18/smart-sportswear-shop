@@ -4,7 +4,10 @@ import com.dunghaiquyen.ecommerce.modules.order.entity.Order;
 import com.dunghaiquyen.ecommerce.modules.order.entity.OrderStatus;
 import com.dunghaiquyen.ecommerce.modules.payment.entity.PaymentStatus;
 import com.dunghaiquyen.ecommerce.modules.report.dto.OrderStatusCount;
+import com.dunghaiquyen.ecommerce.modules.report.dto.OrderStatusTrendRow;
 import com.dunghaiquyen.ecommerce.modules.report.dto.RevenueBucketRow;
+import com.dunghaiquyen.ecommerce.modules.report.dto.RevenueExceptionSlice;
+import com.dunghaiquyen.ecommerce.modules.report.dto.RevenueStatusBreakdown;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
@@ -29,6 +32,30 @@ public interface OrderReportRepository extends JpaRepository<Order, UUID> {
     /** PHASE1_SPEC.md 6.9: "Realized revenue: tính theo đơn có order_status = DELIVERED". */
     @Query("select coalesce(sum(o.totalAmount), 0) from Order o where o.orderStatus = :status")
     BigDecimal sumTotalAmountByOrderStatus(@Param("status") OrderStatus status);
+
+    @Query("select new com.dunghaiquyen.ecommerce.modules.report.dto.RevenueStatusBreakdown("
+            + "cast(o.paymentStatus as string), count(o), coalesce(sum(o.totalAmount), 0)) "
+            + "from Order o group by o.paymentStatus")
+    List<RevenueStatusBreakdown> revenueByPaymentStatus();
+
+    @Query("select new com.dunghaiquyen.ecommerce.modules.report.dto.RevenueStatusBreakdown("
+            + "cast(o.orderStatus as string), count(o), coalesce(sum(o.totalAmount), 0)) "
+            + "from Order o group by o.orderStatus")
+    List<RevenueStatusBreakdown> revenueByOrderStatus();
+
+    @Query("select new com.dunghaiquyen.ecommerce.modules.report.dto.RevenueExceptionSlice("
+            + "count(o), coalesce(sum(o.totalAmount), 0)) "
+            + "from Order o where o.orderStatus = :orderStatus and o.paymentStatus <> :paymentStatus")
+    RevenueExceptionSlice sumDeliveredUnpaid(
+            @Param("orderStatus") OrderStatus orderStatus,
+            @Param("paymentStatus") PaymentStatus paymentStatus);
+
+    @Query("select new com.dunghaiquyen.ecommerce.modules.report.dto.RevenueExceptionSlice("
+            + "count(o), coalesce(sum(o.totalAmount), 0)) "
+            + "from Order o where o.paymentStatus = :paymentStatus and o.orderStatus <> :orderStatus")
+    RevenueExceptionSlice sumPaidNotDelivered(
+            @Param("paymentStatus") PaymentStatus paymentStatus,
+            @Param("orderStatus") OrderStatus orderStatus);
 
     long countByOrderStatus(OrderStatus orderStatus);
 
@@ -69,4 +96,15 @@ public interface OrderReportRepository extends JpaRepository<Order, UUID> {
             @Param("granularity") String granularity,
             @Param("from") Instant from,
             @Param("to") Instant to);
+
+    @Query(value = """
+            select cast(o.created_at at time zone 'Asia/Ho_Chi_Minh' as date) as bucket,
+                   o.order_status as status,
+                   count(*) as "orderCount"
+            from orders o
+            where o.created_at >= :from and o.created_at <= :to
+            group by bucket, o.order_status
+            order by bucket, o.order_status
+            """, nativeQuery = true)
+    List<OrderStatusTrendRow> countStatusByDay(@Param("from") Instant from, @Param("to") Instant to);
 }

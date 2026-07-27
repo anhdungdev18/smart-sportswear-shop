@@ -21,6 +21,28 @@ Intent = Literal[
     "UNKNOWN",
 ]
 
+QuestionType = Literal[
+    "METRIC",
+    "EXPLANATION",
+    "COMPARISON",
+    "DIAGNOSIS",
+    "RECOMMENDATION",
+    "DETAIL_LOOKUP",
+    "ACTION_REQUEST",
+    "FOLLOW_UP",
+    "UNKNOWN",
+]
+
+
+class ClassificationResult(BaseModel):
+    intent: Intent
+    questionType: QuestionType = "UNKNOWN"
+    neededTools: list[str] = Field(default_factory=list)
+    entities: dict[str, Any] = Field(default_factory=dict)
+    timeRange: dict[str, Any] | None = None
+    confidence: float = Field(default=1.0, ge=0.0, le=1.0)
+    clarifyingQuestion: str | None = None
+
 
 class ChatRequest(BaseModel):
     sessionId: str = Field(min_length=1, max_length=120)
@@ -48,6 +70,7 @@ class ReactTraceStep(BaseModel):
 class ChatResponse(BaseModel):
     reply: str
     intent: Intent
+    questionType: QuestionType = "UNKNOWN"
     toolCalls: list[ToolCallRecord] = Field(default_factory=list)
     trace: list[ReactTraceStep] = Field(default_factory=list)
     partial: bool = False

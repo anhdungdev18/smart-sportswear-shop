@@ -5,13 +5,15 @@ from uuid import uuid4
 from fastapi import HTTPException, status
 
 from app.auth.jwt_verifier import verify_admin_jwt
-from app.graph.nodes.generate_answer import generate_grounded_answer
+from app.graph.nodes.generate_answer import compose_grounded_answer, generate_grounded_answer
 from app.graph.nodes.input_guard import guard_input
 from app.graph.nodes.policy_guard import guard_policy
 from app.graph.nodes.validate_answer import validate_answer
 from app.graph.planner import build_readonly_plan, decide_next
-from app.graph.routing import classify_intent, select_tool
+from app.graph.routing import classify_message_intelligently, select_tool
+from app.graph.evidence import build_evidence_pack
 from app.graph.state import AdminGraphState
+from app.memory.session_store import get_session_memory, save_session_memory
 from app.tools.registry import ToolRegistry
 
 
@@ -20,10 +22,17 @@ async def run_admin_graph(session_id: str, message: str, token: str | None, regi
     actor = verify_admin_jwt(token)
     guard_input(message)
 
-    intent = classify_intent(message)
-    primary_tool = select_tool(intent)
+    memory = get_session_memory(session_id)
     tool_registry = registry or ToolRegistry()
-    plan = build_readonly_plan(intent, message)
+    classification = await classify_message_intelligently(
+        message,
+        _memory_summary(memory),
+        available_tools=tool_registry.available_tool_names() if hasattr(tool_registry, "available_tool_names") else None,
+    )
+    intent = _resolve_follow_up_intent(classification.intent, classification.questionType, memory)
+    question_type = classification.questionType
+    primary_tool = select_tool(intent)
+    plan = build_readonly_plan(intent, message, question_type)
     tool_calls = []
     trace_steps = [
         {
@@ -86,14 +95,32 @@ async def run_admin_graph(session_id: str, message: str, token: str | None, regi
     if not tool_calls:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No read-only tool could be executed")
 
+    evidence_pack = build_evidence_pack(
+        message=message,
+        intent=intent,
+        question_type=question_type,
+        tool_calls=tool_calls,
+        memory=memory,
+    )
     primary_call = _primary_answer_call(tool_calls)
-    reply, warnings, numbers = generate_grounded_answer(intent, primary_call["tool"], primary_call["result"])
+    reply, warnings, numbers = await compose_grounded_answer(evidence_pack, primary_call)
     if len(tool_calls) > 1:
         numbers.append(f"contextSources={len(tool_calls) - 1}")
-        reply += f" Tôi cũng đã đối chiếu thêm {len(tool_calls) - 1} nguồn read-only để bổ sung ngữ cảnh."
+        reply += f" Tôi cũng đã đối chiếu thêm {len(tool_calls) - 1} nguồn dữ liệu để bổ sung ngữ cảnh."
     if partial:
         warnings.append("Kết quả là partial answer vì agent đã chạm giới hạn bước hoặc phát hiện tool lặp.")
-    validate_answer(reply, numbers)
+    try:
+        validate_answer(reply, numbers, question_type=question_type, evidence_missing=_evidence_missing(primary_call["result"]))
+    except HTTPException:
+        reply, warnings, numbers = generate_grounded_answer(
+            evidence_pack.intent,
+            primary_call["tool"],
+            primary_call["result"],
+            message,
+            evidence_pack.question_type,
+        )
+        validate_answer(reply, numbers, question_type=question_type, evidence_missing=_evidence_missing(primary_call["result"]))
+    save_session_memory(session_id, _next_memory(message, intent, question_type, primary_call, numbers))
 
     return AdminGraphState(
         session_id=session_id,
@@ -101,6 +128,7 @@ async def run_admin_graph(session_id: str, message: str, token: str | None, regi
         token="[REDACTED]",
         actor=actor,
         intent=intent,
+        question_type=question_type,
         selected_tool=primary_call["tool"],
         tool_args=primary_call["args"],
         tool_result=primary_call["result"],
@@ -130,6 +158,41 @@ def _summarize_observation(result: object) -> str:
 
 def _primary_answer_call(tool_calls: list[dict]) -> dict:
     for call in tool_calls:
+        if call["tool"] == "get_revenue_breakdown":
+            return call
+    for call in tool_calls:
         if call["tool"] != "get_ai_data_freshness":
             return call
     return tool_calls[0]
+
+
+def _evidence_missing(result: object) -> bool:
+    return isinstance(result, dict) and (
+        result.get("breakdownAvailable") is False or result.get("trendAvailable") is False
+    )
+
+
+def _memory_summary(memory: dict) -> str | None:
+    if not memory:
+        return None
+    topic = memory.get("lastTopic")
+    question = memory.get("lastQuestion")
+    return f"lastTopic={topic}; lastQuestion={question}"
+
+
+def _resolve_follow_up_intent(intent: str, question_type: str, memory: dict) -> str:
+    if intent == "UNKNOWN" and question_type in {"FOLLOW_UP", "EXPLANATION", "COMPARISON", "DIAGNOSIS"}:
+        previous = memory.get("lastTopic")
+        if previous:
+            return previous
+    return intent
+
+
+def _next_memory(message: str, intent: str, question_type: str, primary_call: dict, numbers: list[str]) -> dict:
+    return {
+        "lastTopic": intent,
+        "lastQuestionType": question_type,
+        "lastQuestion": message,
+        "lastTool": primary_call["tool"],
+        "lastMetrics": numbers[:8],
+    }

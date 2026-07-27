@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     MODEL_NAME: str = "deterministic-readonly-v1"
     ANTHROPIC_API_KEY: str = ""
     OPENAI_API_KEY: str = ""
+    LLM_TIMEOUT_SECONDS: float = 8.0
 
     MAX_AGENT_STEPS: int = 4
     MAX_TOOL_CALLS_PER_RUN: int = 6

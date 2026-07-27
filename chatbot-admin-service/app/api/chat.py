@@ -36,6 +36,7 @@ async def chat(request: ChatRequest, authorization: str | None = Header(default=
     return ChatResponse(
         reply=state["reply"],
         intent=state["intent"],
+        questionType=state.get("question_type", "UNKNOWN"),
         toolCalls=[
             ToolCallRecord(
                 tool=call["tool"],

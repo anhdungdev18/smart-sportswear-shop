@@ -6,6 +6,8 @@ READ_ONLY_TOOLS = {
     "get_replenishment_detail",
     "get_forecast_quality",
     "get_sales_overview",
+    "get_revenue_breakdown",
+    "get_order_status_trend",
     "get_product_performance",
     "get_order_overview",
     "simulate_inventory_policy",

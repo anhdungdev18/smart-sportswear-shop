@@ -7,7 +7,7 @@ from typing import Any, Literal
 
 from app.config.settings import settings
 from app.graph.routing import select_tool
-from app.schemas.chat import Intent
+from app.schemas.chat import Intent, QuestionType
 
 PlanStatus = Literal["CONTINUE", "FINAL_ANSWER", "LIMIT_REACHED"]
 
@@ -19,7 +19,7 @@ class PlannedToolCall:
     reason: str
 
 
-def build_readonly_plan(intent: Intent, message: str) -> list[PlannedToolCall]:
+def build_readonly_plan(intent: Intent, message: str, question_type: QuestionType = "UNKNOWN") -> list[PlannedToolCall]:
     text = message.lower()
     primary_tool = select_tool(intent)
     plan = [PlannedToolCall(primary_tool, _default_args(primary_tool), f"primary tool for {intent}")]
@@ -59,6 +59,10 @@ def build_readonly_plan(intent: Intent, message: str) -> list[PlannedToolCall]:
                 {"query": _extract_lookup_query(message), "limit": _extract_limit(text, 20)},
                 "deterministic product inventory lookup",
             )
+        ]
+    elif intent == "SALES_OVERVIEW" and question_type in {"EXPLANATION", "COMPARISON", "DIAGNOSIS"}:
+        plan = [
+            PlannedToolCall("get_revenue_breakdown", {}, "revenue breakdown for explanation or diagnosis"),
         ]
 
     needs_quality_context = any(

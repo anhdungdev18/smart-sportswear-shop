@@ -30,6 +30,8 @@ class ToolRegistry:
             "get_replenishment_detail": ToolDefinition("get_replenishment_detail", "forecasting", self._suggestion_detail),
             "get_forecast_quality": ToolDefinition("get_forecast_quality", "forecasting", self._data_quality),
             "get_sales_overview": ToolDefinition("get_sales_overview", "backend", self._sales_overview),
+            "get_revenue_breakdown": ToolDefinition("get_revenue_breakdown", "backend", self._revenue_breakdown),
+            "get_order_status_trend": ToolDefinition("get_order_status_trend", "backend", self._order_status_trend),
             "get_product_performance": ToolDefinition("get_product_performance", "backend", self._product_performance),
             "get_order_overview": ToolDefinition("get_order_overview", "backend", self._order_overview),
             "simulate_inventory_policy": ToolDefinition("simulate_inventory_policy", "forecasting", self._simulate),
@@ -50,6 +52,9 @@ class ToolRegistry:
         else:
             assert_read_only_tool(name)
         return self._tools[name]
+
+    def available_tool_names(self) -> list[str]:
+        return sorted(self._tools)
 
     async def execute(self, name: str, token: str, args: dict[str, Any]) -> tuple[Any, str]:
         tool = self.get(name)
@@ -78,6 +83,12 @@ class ToolRegistry:
 
     async def _sales_overview(self, token: str, args: dict[str, Any]) -> Any:
         return await self.backend.sales_overview(token)
+
+    async def _revenue_breakdown(self, token: str, args: dict[str, Any]) -> Any:
+        return await self.backend.revenue_breakdown(token)
+
+    async def _order_status_trend(self, token: str, args: dict[str, Any]) -> Any:
+        return await self.backend.order_status_trend(token)
 
     async def _product_performance(self, token: str, args: dict[str, Any]) -> Any:
         return await self.backend.product_performance(token)

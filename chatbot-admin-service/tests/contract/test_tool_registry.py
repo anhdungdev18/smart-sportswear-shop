@@ -37,6 +37,12 @@ class FakeBackendClient:
     async def sales_overview(self, token):
         return {"orders": 10}
 
+    async def revenue_breakdown(self, token):
+        return {"grossRevenue": 100, "realizedRevenue": 150, "difference": 50}
+
+    async def order_status_trend(self, token):
+        return {"trendAvailable": False}
+
     async def product_performance(self, token):
         return {"items": []}
 
@@ -76,6 +82,15 @@ def test_registry_executes_phase9_read_only_tools():
     assert lookup[0]["availableQuantity"] == 7
     assert freshness_source == "forecasting"
     assert freshness["stale"] is False
+
+
+def test_registry_executes_revenue_breakdown_tool():
+    registry = ToolRegistry(forecasting=FakeForecastingClient(), backend=FakeBackendClient())
+
+    result, source = asyncio.run(registry.execute("get_revenue_breakdown", "token", {}))
+
+    assert source == "backend"
+    assert result["difference"] == 50
 
 
 def test_registry_blocks_controlled_ai_jobs_by_default():

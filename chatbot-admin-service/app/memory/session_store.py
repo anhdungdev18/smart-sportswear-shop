@@ -5,6 +5,7 @@ from typing import Any
 
 _RUNS: deque[dict[str, Any]] = deque(maxlen=500)
 _FEEDBACK: deque[dict[str, Any]] = deque(maxlen=500)
+_SESSION_MEMORY: dict[str, dict[str, Any]] = {}
 
 
 def save_run(run: dict[str, Any]) -> None:
@@ -21,3 +22,11 @@ def save_feedback(feedback: dict[str, Any]) -> None:
 
 def list_feedback(limit: int = 50) -> list[dict[str, Any]]:
     return list(_FEEDBACK)[:limit]
+
+
+def get_session_memory(session_id: str) -> dict[str, Any]:
+    return dict(_SESSION_MEMORY.get(session_id, {}))
+
+
+def save_session_memory(session_id: str, memory: dict[str, Any]) -> None:
+    _SESSION_MEMORY[session_id] = dict(memory)
