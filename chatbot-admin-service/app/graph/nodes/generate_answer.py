@@ -39,6 +39,7 @@ def generate_grounded_answer(intent: str, tool_name: str, result: Any) -> tuple[
         split: dict[str, int] = {}
         for item in items:
             split[item.get("risk", "UNKNOWN")] = split.get(item.get("risk", "UNKNOWN"), 0) + 1
+        numbers = [f"{risk}={count}" for risk, count in sorted(split.items())] + numbers
         reply = f"Inventory risk hiện có {len(items)} SKU trong kết quả. Phân bổ: {split}."
     elif tool_name == "get_replenishment_suggestions":
         reply = f"Đang có {len(items)} đề xuất nhập hàng trong trang kết quả read-only."

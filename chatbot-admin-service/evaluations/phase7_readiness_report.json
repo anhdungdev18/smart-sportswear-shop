@@ -1,0 +1,21 @@
+{
+  "phase": "Phase 7 readiness",
+  "status": "PASS",
+  "thresholds": {
+    "toolSelectionAccuracy": 0.9,
+    "groundedNumericAccuracy": 0.95,
+    "readOnlyTaskSuccess": 0.85,
+    "maxToolCallsPerRun": 1
+  },
+  "metrics": {
+    "caseCount": 50,
+    "toolSelectionAccuracy": 1.0,
+    "groundedNumericAccuracy": 1.0,
+    "readOnlyTaskSuccess": 1.0,
+    "roleBypassBlocked": true,
+    "maxToolCallsObserved": 1,
+    "infiniteLoopDetected": false,
+    "maxAllowedToolCallsPerRun": 1
+  },
+  "failures": []
+}
