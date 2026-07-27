@@ -132,7 +132,7 @@ app:
     # point at a WireMock stub (application-test.yml sets this).
     token-info-url: ${GOOGLE_TOKENINFO_URL:https://oauth2.googleapis.com/tokeninfo}
   vnpay:
-    tmn-code: ${VNPAY_TMN_CODE:DEVTMNCODE}
+    tmn-code: ${VNPAY_TMN_CODE:DEVTMN01}
     # Must never be empty: HMAC-SHA512 (VnpaySignatureService) rejects a
     # zero-length key outright (IllegalArgumentException), which previously
     # crashed any VNPAY flow - including this project's own seed data, caught

@@ -450,6 +450,17 @@ public class ProductService {
         if (q.sportType() != null && !q.sportType().isBlank()) {
             spec = spec.and(ProductSpecifications.hasSportType(q.sportType().trim()));
         }
+        if (q.surface() != null && !q.surface().isBlank()) {
+            java.util.List<String> surfaceSlugs = switch (q.surface().trim().toUpperCase()) {
+                case "FG" -> java.util.List.of("giay-da-bong-fg");
+                case "TF", "AG" -> java.util.List.of("giay-da-bong-tf");
+                case "IC", "FUTSAL" -> java.util.List.of("giay-futsal");
+                default -> java.util.List.<String>of();
+            };
+            if (!surfaceSlugs.isEmpty()) {
+                spec = spec.and(ProductSpecifications.hasCategorySlugIn(surfaceSlugs));
+            }
+        }
         if (q.size() != null && !q.size().isBlank()) {
             spec = spec.and(ProductSpecifications.hasVariantSize(q.size().trim()));
         }

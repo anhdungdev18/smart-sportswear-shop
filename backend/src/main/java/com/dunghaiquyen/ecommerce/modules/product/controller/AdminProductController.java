@@ -102,9 +102,10 @@ public class AdminProductController {
             @PathVariable UUID id,
             @RequestParam("file") MultipartFile file,
             @RequestParam(required = false) String altText,
+            @RequestParam(required = false) String color,
             @RequestParam(required = false) Boolean isPrimary,
             @RequestParam(required = false) Integer sortOrder) {
-        ProductImageUploadResponse response = productImageService.uploadImage(id, file, altText, isPrimary, sortOrder);
+        ProductImageUploadResponse response = productImageService.uploadImage(id, file, altText, color, isPrimary, sortOrder);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok("Image uploaded", response));
     }
 

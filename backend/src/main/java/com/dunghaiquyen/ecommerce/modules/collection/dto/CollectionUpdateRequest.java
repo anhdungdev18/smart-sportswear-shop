@@ -9,11 +9,7 @@ import jakarta.validation.constraints.Size;
 import java.time.Instant;
 import java.util.UUID;
 
-/**
- * PATCH semantics: null means "leave unchanged" for every field EXCEPT
- * {@code brandId}, which the admin form always submits explicitly, so there null
- * means "clear the brand tag" (see CollectionService.update).
- */
+/** PATCH semantics: null means "leave unchanged". Use clearBrand=true to remove the brand tag. */
 public record CollectionUpdateRequest(
 
         @NullOrNotBlank(message = "Name must not be blank")
@@ -32,6 +28,8 @@ public record CollectionUpdateRequest(
         CollectionType collectionType,
 
         UUID brandId,
+
+        Boolean clearBrand,
 
         @Size(max = 50, message = "Season must be at most 50 characters")
         String season,

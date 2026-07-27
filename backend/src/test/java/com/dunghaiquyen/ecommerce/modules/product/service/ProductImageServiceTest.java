@@ -79,7 +79,7 @@ class ProductImageServiceTest {
     void uploadImage_emptyFile_rejectedBeforeAnyUploadOrDbCall() {
         MultipartFile empty = new MockMultipartFile("file", "empty.jpg", "image/jpeg", new byte[0]);
 
-        assertThatThrownBy(() -> service.uploadImage(productId, empty, null, null, null))
+        assertThatThrownBy(() -> service.uploadImage(productId, empty, null, null, null, null))
                 .isInstanceOf(BusinessRuleException.class);
         verify(imageStorageService, never()).upload(any());
     }
@@ -88,7 +88,7 @@ class ProductImageServiceTest {
     void uploadImage_nonImageContentType_rejected() {
         MultipartFile textFile = new MockMultipartFile("file", "notes.txt", "text/plain", new byte[] {1, 2, 3});
 
-        assertThatThrownBy(() -> service.uploadImage(productId, textFile, null, null, null))
+        assertThatThrownBy(() -> service.uploadImage(productId, textFile, null, null, null, null))
                 .isInstanceOf(BusinessRuleException.class);
         verify(imageStorageService, never()).upload(any());
     }
@@ -98,7 +98,7 @@ class ProductImageServiceTest {
         byte[] tooBig = new byte[6 * 1024 * 1024];
         MultipartFile big = new MockMultipartFile("file", "big.jpg", "image/jpeg", tooBig);
 
-        assertThatThrownBy(() -> service.uploadImage(productId, big, null, null, null))
+        assertThatThrownBy(() -> service.uploadImage(productId, big, null, null, null, null))
                 .isInstanceOf(BusinessRuleException.class);
         verify(imageStorageService, never()).upload(any());
     }
@@ -107,7 +107,7 @@ class ProductImageServiceTest {
     void uploadImage_productNotFound_returns404_beforeUploading() {
         when(productRepository.findById(productId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.uploadImage(productId, validImageFile(), null, null, null))
+        assertThatThrownBy(() -> service.uploadImage(productId, validImageFile(), null, null, null, null))
                 .isInstanceOf(ResourceNotFoundException.class);
         verify(imageStorageService, never()).upload(any());
     }
@@ -121,7 +121,7 @@ class ProductImageServiceTest {
         when(imageStorageService.upload(any())).thenReturn(uploaded);
         when(imageRepository.saveAndFlush(any(ProductImage.class))).thenThrow(new RuntimeException("DB is down"));
 
-        assertThatThrownBy(() -> service.uploadImage(productId, validImageFile(), "alt", null, null))
+        assertThatThrownBy(() -> service.uploadImage(productId, validImageFile(), "alt", null, null, null))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("DB is down");
 
@@ -139,7 +139,7 @@ class ProductImageServiceTest {
                 .delete("products/abc123");
 
         // The cleanup failure must never mask/replace the original DB failure.
-        assertThatThrownBy(() -> service.uploadImage(productId, validImageFile(), null, null, null))
+        assertThatThrownBy(() -> service.uploadImage(productId, validImageFile(), null, null, null, null))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessage("DB is down");
     }
@@ -147,6 +147,7 @@ class ProductImageServiceTest {
     @Test
     void uploadImage_success_returnsWidthAndHeightFromUpload() {
         when(productRepository.findById(productId)).thenReturn(Optional.of(product));
+        when(productRepository.findByIdForUpdate(productId)).thenReturn(Optional.of(product));
         UploadedImage uploaded = new UploadedImage("products/xyz", "https://cdn.test/xyz.jpg", 1024, 768);
         when(imageStorageService.upload(any())).thenReturn(uploaded);
 
@@ -158,7 +159,7 @@ class ProductImageServiceTest {
         saved.setSortOrder(0);
         when(imageRepository.saveAndFlush(any(ProductImage.class))).thenReturn(saved);
 
-        ProductImageUploadResponse response = service.uploadImage(productId, validImageFile(), "alt text", true, 2);
+        ProductImageUploadResponse response = service.uploadImage(productId, validImageFile(), "alt text", null, true, 2);
 
         assertThat(response.publicId()).isEqualTo("products/xyz");
         assertThat(response.imageUrl()).isEqualTo("https://cdn.test/xyz.jpg");

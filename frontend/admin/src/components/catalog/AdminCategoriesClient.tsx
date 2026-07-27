@@ -208,7 +208,12 @@ export function AdminCategoriesClient({ initialItems }: { initialItems: Category
         </div>
         {message ? <p className="action-message">{message}</p> : null}
         {(() => {
-          const parentOptions = items.filter((item) => item.id !== selectedId && (item.nodeType ?? "LEAF") === "GROUP");
+          const parentOptions = items.filter(
+            (item) =>
+              item.id !== selectedId &&
+              !item.parentId &&
+              (item.nodeType ?? "LEAF") === "GROUP"
+          );
           return (
         <div className="admin-form-grid">
           <input

@@ -21,6 +21,7 @@ type CategoryListingQuery = {
   color?: string;
   minPrice?: string;
   maxPrice?: string;
+  surface?: string;
 };
 
 export async function fetchCategoryListing(query: CategoryListingQuery) {

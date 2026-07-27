@@ -20,7 +20,7 @@ export function mapProductDetail(p: ProductDetail): {
   name: string;
   slug: string;
   href: string;
-  images: string[];
+  images: Array<{ url: string; color: string | null }>;
   price: number;
   compareAtPrice?: number;
   sku?: string;
@@ -31,19 +31,22 @@ export function mapProductDetail(p: ProductDetail): {
   relatedProducts: ReturnType<typeof mapProductListItem>[];
 } {
   const sortedImages = [...p.images].sort((a, b) => a.sortOrder - b.sortOrder);
+  const images = sortedImages.map((img) => ({ url: img.imageUrl, color: img.color ?? null }));
 
-  const uniqueColors = Array.from(
-    new Map(
-      p.variants
-        .filter((v) => v.color)
-        .map((v) => [v.color, v]),
-    ).values(),
-  ).map((v, idx) => ({
-    id: v.id,
-    image: sortedImages[idx]?.imageUrl ?? NO_IMAGE,
-    label: v.color ?? "",
-    active: idx === 0,
-  }));
+  // Distinct colors in first-seen order; each swatch uses that color's own first image.
+  const colorLabels: string[] = [];
+  for (const v of p.variants) {
+    if (v.color && !colorLabels.includes(v.color)) colorLabels.push(v.color);
+  }
+  const uniqueColors = colorLabels.map((label, idx) => {
+    const swatch = sortedImages.find((img) => img.color === label) ?? sortedImages[idx];
+    return {
+      id: label,
+      image: swatch?.imageUrl ?? NO_IMAGE,
+      label,
+      active: idx === 0,
+    };
+  });
 
   const uniqueSizes = Array.from(
     new Map(
@@ -63,7 +66,7 @@ export function mapProductDetail(p: ProductDetail): {
     name: p.name,
     slug: p.slug,
     href: `/sanpham/${p.slug}`,
-    images: sortedImages.map((img) => img.imageUrl),
+    images,
     price: p.variants[0]?.price ?? p.variants.reduce((min, v) => Math.min(min, v.price), Infinity),
     compareAtPrice: p.variants[0]?.compareAtPrice,
     sku: p.variants[0]?.sku?.split("-")[0],

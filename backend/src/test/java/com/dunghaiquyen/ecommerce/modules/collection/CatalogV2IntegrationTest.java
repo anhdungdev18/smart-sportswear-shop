@@ -175,6 +175,38 @@ class CatalogV2IntegrationTest extends AbstractIntegrationTest {
         assertThat(data.at("/collectionType").asText()).isEqualTo("SEASONAL");
     }
 
+    @Test
+    void adminUpdateCollection_omittedBrandPreservesIt_andClearBrandRemovesIt() throws Exception {
+        AdminCtx ctx = setUpAdmin();
+        String slug = "brand-contract-" + UUID.randomUUID();
+        MvcResult created = mockMvc.perform(post("/api/v1/admin/collections")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + ctx.token())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(("{\"name\":\"Brand collection\",\"slug\":\"%s\","
+                                        + "\"collectionType\":\"BRAND\",\"brandId\":\"%s\"}")
+                                .formatted(slug, ctx.brandId())))
+                .andExpect(status().isCreated())
+                .andReturn();
+        String collectionId = json(created.getResponse().getContentAsString()).at("/data/id").asText();
+
+        MvcResult preserved = mockMvc.perform(patch("/api/v1/admin/collections/" + collectionId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + ctx.token())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Renamed collection\"}"))
+                .andExpect(status().isOk())
+                .andReturn();
+        assertThat(json(preserved.getResponse().getContentAsString()).at("/data/brand/id").asText())
+                .isEqualTo(ctx.brandId());
+
+        MvcResult cleared = mockMvc.perform(patch("/api/v1/admin/collections/" + collectionId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + ctx.token())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"clearBrand\":true}"))
+                .andExpect(status().isOk())
+                .andReturn();
+        assertThat(json(cleared.getResponse().getContentAsString()).at("/data/brand").isNull()).isTrue();
+    }
+
     // ===== TEST 4: admin link product to collection ===========================
 
     @Test

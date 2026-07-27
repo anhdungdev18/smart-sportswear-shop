@@ -19,6 +19,7 @@ type CategorySearchParams = {
   color?: string;
   minPrice?: string;
   maxPrice?: string;
+  surface?: string;
 };
 
 export async function CategoryListingPage({
@@ -30,8 +31,10 @@ export async function CategoryListingPage({
 }) {
   const { slug } = await params;
   const resolvedSearchParams = await searchParams;
-  const { page: pageParam, sort, sortBy, sortOrder, size, color, minPrice, maxPrice } = resolvedSearchParams;
+  const { page: pageParam, sort, sortBy, sortOrder, size, color, minPrice, maxPrice, surface } = resolvedSearchParams;
   const currentPage = Math.max(1, Number(pageParam ?? 1));
+  // Surface facet only makes sense for football footwear (group "giay" + boot leaves).
+  const showSurface = slug === "giay" || slug.includes("da-bong") || slug.includes("futsal");
 
   const [{ products, meta }, category]: [
     { products: ProductListItem[]; meta: PageMeta },
@@ -48,6 +51,7 @@ export async function CategoryListingPage({
       color: color || undefined,
       minPrice: minPrice || undefined,
       maxPrice: maxPrice || undefined,
+      surface: surface || undefined,
     }),
     fetchCategoryDetail(slug),
   ]);
@@ -71,6 +75,8 @@ export async function CategoryListingPage({
           initialColor={color}
           initialMinPrice={minPrice ? Number(minPrice) : undefined}
           initialMaxPrice={maxPrice ? Number(maxPrice) : undefined}
+          initialSurface={surface}
+          showSurface={showSurface}
           sizeType={slug.includes("giay") ? "shoe" : "cloth"}
         />
         <div className="flex-1">

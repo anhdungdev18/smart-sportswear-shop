@@ -4,6 +4,7 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from app.observability.trace_logger import get_logger
+from app.config.settings import settings
 
 logger = get_logger(__name__)
 
@@ -80,6 +81,13 @@ def _ensure_loaded() -> None:
         return
 
     for md_file in sorted(_KNOWLEDGE_DIR.glob("*.md")):
+        raw_text = md_file.read_text(encoding="utf-8")
+        if settings.CHATBOT_ENV.lower() == "production" and "placeholder knowledge content" in raw_text.lower():
+            logger.error(
+                "knowledge_repository | skipped placeholder file in production: %s",
+                md_file.name,
+            )
+            continue
         chunks = _parse_md_file(md_file)
         _corpus.extend(chunks)
         logger.info(f"knowledge_repository | loaded {md_file.name} → {len(chunks)} chunks")

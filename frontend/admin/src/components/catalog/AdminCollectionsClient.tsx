@@ -358,7 +358,10 @@ export function AdminCollectionsClient({ initialItems }: { initialItems: Collect
       };
 
       if (selectedId) {
-        const updated = await updateCollection(selectedId, payload);
+        const updated = await updateCollection(selectedId, {
+          ...payload,
+          clearBrand: !form.brandId
+        });
         setItems((current) => current.map((item) => (item.id === updated.id ? updated : item)));
         setMessage(`Đã cập nhật bộ sưu tập ${updated.name}.`);
         return;

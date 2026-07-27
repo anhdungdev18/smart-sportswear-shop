@@ -33,6 +33,8 @@ public record ProductListQuery(
         String color,
         Gender gender,
         String sportType,
+        /** Football-boot surface facet: FG (natural grass), TF/AG (artificial), IC (futsal). */
+        String surface,
         String sortBy,
         String sortOrder,
         String sort,

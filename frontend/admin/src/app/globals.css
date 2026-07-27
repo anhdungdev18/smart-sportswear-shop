@@ -1001,6 +1001,78 @@ a {
   color: var(--admin-muted);
 }
 
+/* Variant editor grouped by color: one block per color, sizes as compact rows. */
+.variant-color-group {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--admin-line);
+  border-radius: 16px;
+  background: var(--admin-accent-soft);
+}
+
+.variant-color-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.variant-color-head .editor-subcard-title {
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  color: var(--admin-text);
+}
+
+.variant-size-table-wrap {
+  overflow-x: auto;
+}
+
+.variant-size-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.variant-size-table th {
+  text-align: left;
+  padding: 0 6px 6px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--admin-muted);
+  white-space: nowrap;
+}
+
+.variant-size-table td {
+  padding: 3px 6px;
+  vertical-align: middle;
+}
+
+.variant-size-table .admin-input,
+.variant-size-table .select,
+.variant-size-table .admin-btn {
+  height: 34px;
+  min-height: 34px;
+  padding: 0 8px;
+  font-size: 13px;
+}
+
+.variant-size-table td:nth-child(1) .admin-input { width: 58px; }
+.variant-size-table td:nth-child(2) .admin-input,
+.variant-size-table td:nth-child(3) .admin-input { width: 96px; }
+.variant-size-table td:nth-child(4) .select { width: 116px; }
+
+.variant-size-table .admin-btn {
+  padding: 0 12px;
+}
+
+.variant-size-table .variant-stock {
+  text-align: center;
+  color: var(--admin-muted);
+  font-variant-numeric: tabular-nums;
+}
+
 /* Product list pagination */
 .admin-pager {
   display: flex;

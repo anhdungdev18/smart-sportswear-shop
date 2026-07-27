@@ -216,9 +216,11 @@ public class CollectionService {
         if (request.description() != null) c.setDescription(request.description());
         if (request.shortDescription() != null) c.setShortDescription(request.shortDescription());
         if (request.collectionType() != null) c.setCollectionType(request.collectionType());
-        // brandId is applied as given (null clears the tag) - the admin form always
-        // submits it explicitly, so it is not part of the null=unchanged contract.
-        c.setBrand(resolveBrand(request.brandId()));
+        if (Boolean.TRUE.equals(request.clearBrand())) {
+            c.setBrand(null);
+        } else if (request.brandId() != null) {
+            c.setBrand(resolveBrand(request.brandId()));
+        }
         if (request.season() != null) c.setSeason(request.season());
         if (request.year() != null) c.setYear(request.year());
         if (request.bannerImageUrl() != null) c.setBannerImageUrl(request.bannerImageUrl());

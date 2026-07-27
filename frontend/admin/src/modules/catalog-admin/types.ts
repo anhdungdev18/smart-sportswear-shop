@@ -8,6 +8,7 @@ export type ProductImageResponse = {
   imageUrl: string;
   publicId: string | null;
   altText: string | null;
+  color: string | null;
   isPrimary: boolean;
   sortOrder: number;
 };

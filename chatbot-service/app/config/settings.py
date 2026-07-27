@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     DB_READ_URL: str = ""
     DB_WRITE_URL: str = ""       # Optional write connection for durable chat history
     BACKEND_API_BASE_URL: str = "http://localhost:8080"
+    JWT_ACCESS_SECRET: str = ""
     REDIS_URL: str = "redis://localhost:6379"
     SESSION_TTL_SECONDS: int = 3600          # Phase 9: Redis session TTL
     OBSERVABILITY_ENABLED: bool = True       # Phase 9: structured trace/tool logging

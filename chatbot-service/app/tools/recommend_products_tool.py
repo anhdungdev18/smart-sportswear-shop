@@ -17,13 +17,10 @@ DEFINITION = ToolDefinition(
 )
 
 
-async def run(
-    mode: str = "need_based",
-    product_id: str = "",
-    query: str = "",
-) -> dict:
+async def run(args: dict) -> dict:
+    mode = args.get("mode") or "need_based"
     if mode == "related":
-        result = await recommend_related(product_id)
+        result = await recommend_related(args.get("product_id") or "")
     else:
-        result = await recommend_by_need(query)
+        result = await recommend_by_need(args.get("query") or "")
     return result.model_dump()

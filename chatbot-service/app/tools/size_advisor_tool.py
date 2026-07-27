@@ -16,9 +16,6 @@ DEFINITION = ToolDefinition(
 )
 
 
-async def run(
-    message: str = "",
-    product_id: str | None = None,
-) -> dict:
-    result = await advise(message, product_id or None)
+async def run(args: dict) -> dict:
+    result = await advise(args.get("message") or "", args.get("product_id") or None)
     return result.model_dump()

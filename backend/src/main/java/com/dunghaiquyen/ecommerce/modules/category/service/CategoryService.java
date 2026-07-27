@@ -74,6 +74,7 @@ public class CategoryService {
         category.setNodeType(nodeType);
         category.setSortOrder(request.sortOrder() != null ? request.sortOrder() : 0);
         category.setParent(resolveParent(request.parentId(), null));
+        validateHierarchy(category.getNodeType(), category.getParent());
 
         try {
             category = categoryRepository.save(category);
@@ -116,6 +117,7 @@ public class CategoryService {
         } else if (request.parentId() != null) {
             category.setParent(resolveParent(request.parentId(), id));
         }
+        validateHierarchy(category.getNodeType(), category.getParent());
         if (category.getNodeType() == CategoryNodeType.LEAF && categoryRepository.existsByParentId(id)) {
             throw new BusinessRuleException("Category with children cannot become LEAF.");
         }
@@ -183,6 +185,20 @@ public class CategoryService {
             cursor = cursor.getParent();
         }
         return false;
+    }
+
+    /**
+     * The storefront and product query intentionally use a two-level taxonomy:
+     * root GROUP -> LEAF. Keeping this invariant here prevents categories that
+     * exist in the API tree but cannot be rendered or included by parent filters.
+     */
+    private void validateHierarchy(CategoryNodeType nodeType, Category parent) {
+        if (nodeType == CategoryNodeType.GROUP && parent != null) {
+            throw new BusinessRuleException("GROUP category must be a root category.");
+        }
+        if (parent != null && parent.getParent() != null) {
+            throw new BusinessRuleException("Category taxonomy supports at most two levels.");
+        }
     }
 
     private List<CategoryTreeResponse> buildTree(List<Category> categories) {

@@ -58,6 +58,11 @@ public final class ProductSpecifications {
         return (root, query, cb) -> cb.equal(root.get("category").get("id"), categoryId);
     }
 
+    /** Match products whose leaf category slug is one of the given slugs (used by the surface facet). */
+    public static Specification<Product> hasCategorySlugIn(java.util.Collection<String> slugs) {
+        return (root, query, cb) -> root.get("category").get("slug").in(slugs);
+    }
+
     /**
      * Taxonomy V2: allows filtering by a GROUP category while products still
      * point at leaf categories. A match occurs when product.category.id is the
