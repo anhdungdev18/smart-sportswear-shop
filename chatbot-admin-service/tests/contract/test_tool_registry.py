@@ -26,6 +26,12 @@ class FakeForecastingClient:
     async def simulate_inventory_policy(self, token, payload):
         return {"currentDecision": {}, "simulatedDecision": {}}
 
+    async def freshness(self, token, data_source=None):
+        return {"dataSource": data_source or "DEMO", "stale": False}
+
+    async def job_status(self, token, job_id):
+        return {"jobId": job_id, "status": "IDLE"}
+
 
 class FakeBackendClient:
     async def sales_overview(self, token):
@@ -36,6 +42,12 @@ class FakeBackendClient:
 
     async def order_overview(self, token):
         return {"totalOrders": 10}
+
+    async def inventory_lookup(self, token, **kwargs):
+        return [{"sku": "SKU-1", "availableQuantity": 7}]
+
+    async def best_sellers(self, token, **kwargs):
+        return {"items": [{"productName": "Ao chay bo", "unitsSold": 12}], "source": "order_items_excluding_cancelled"}
 
 
 def test_registry_executes_read_only_forecasting_tool():
@@ -52,3 +64,22 @@ def test_registry_rejects_non_allowlisted_tool():
 
     with pytest.raises(PermissionError):
         asyncio.run(registry.execute("accept_replenishment", "token", {}))
+
+
+def test_registry_executes_phase9_read_only_tools():
+    registry = ToolRegistry(forecasting=FakeForecastingClient(), backend=FakeBackendClient())
+
+    lookup, lookup_source = asyncio.run(registry.execute("search_product_inventory", "token", {"query": "SKU-1"}))
+    freshness, freshness_source = asyncio.run(registry.execute("get_ai_data_freshness", "token", {"dataSource": "DEMO"}))
+
+    assert lookup_source == "backend"
+    assert lookup[0]["availableQuantity"] == 7
+    assert freshness_source == "forecasting"
+    assert freshness["stale"] is False
+
+
+def test_registry_blocks_controlled_ai_jobs_by_default():
+    registry = ToolRegistry(forecasting=FakeForecastingClient(), backend=FakeBackendClient())
+
+    with pytest.raises(PermissionError):
+        asyncio.run(registry.execute("run_forecast_generation", "token", {"dataSource": "DEMO"}))

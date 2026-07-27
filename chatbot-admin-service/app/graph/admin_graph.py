@@ -86,9 +86,10 @@ async def run_admin_graph(session_id: str, message: str, token: str | None, regi
     if not tool_calls:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No read-only tool could be executed")
 
-    primary_call = tool_calls[0]
+    primary_call = _primary_answer_call(tool_calls)
     reply, warnings, numbers = generate_grounded_answer(intent, primary_call["tool"], primary_call["result"])
     if len(tool_calls) > 1:
+        numbers.append(f"contextSources={len(tool_calls) - 1}")
         reply += f" Tôi cũng đã đối chiếu thêm {len(tool_calls) - 1} nguồn read-only để bổ sung ngữ cảnh."
     if partial:
         warnings.append("Kết quả là partial answer vì agent đã chạm giới hạn bước hoặc phát hiện tool lặp.")
@@ -125,3 +126,10 @@ def _summarize_observation(result: object) -> str:
             return ", ".join(f"{key}={result[key]}" for key in numeric_keys[:4])
         return f"keys={len(result)}"
     return "result=available"
+
+
+def _primary_answer_call(tool_calls: list[dict]) -> dict:
+    for call in tool_calls:
+        if call["tool"] != "get_ai_data_freshness":
+            return call
+    return tool_calls[0]

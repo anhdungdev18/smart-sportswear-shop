@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Any
+from uuid import uuid4
 
 from app.clients.base import ApiClient
 from app.config.settings import settings
@@ -55,3 +56,26 @@ class ForecastingClient(ApiClient):
 
     async def dismiss_replenishment(self, token: str, recommendation_id: str, payload: dict[str, Any]) -> dict[str, Any]:
         return await self.request("POST", f"/api/v1/admin/replenishment/suggestions/{recommendation_id}/dismiss", token, json=payload)
+
+    async def freshness(self, token: str, data_source: str | None = None) -> dict[str, Any]:
+        params = {"dataSource": data_source} if data_source else None
+        return await self.request("GET", "/api/v1/admin/ai/freshness", token, params=params)
+
+    async def sync_snapshot(self, token: str, payload: dict[str, Any]) -> dict[str, Any]:
+        body = {"correlationId": payload.get("correlationId") or str(uuid4()), "variantIds": payload.get("variantIds", [])}
+        return await self.request("POST", "/api/v1/admin/replenishment/snapshots/sync", token, json=body)
+
+    async def run_demand_classification(self, token: str, payload: dict[str, Any]) -> dict[str, Any]:
+        params: dict[str, Any] = {}
+        if payload.get("dataSource"):
+            params["dataSource"] = payload["dataSource"]
+        return await self.request("POST", "/api/v1/admin/ai/demand-classifications/run", token, params=params)
+
+    async def run_forecast_evaluation(self, token: str, payload: dict[str, Any]) -> dict[str, Any]:
+        return await self.request("POST", "/api/v1/admin/replenishment/evaluate", token, json=payload)
+
+    async def run_forecast_generation(self, token: str, payload: dict[str, Any]) -> dict[str, Any]:
+        return await self.request("POST", "/api/v1/admin/replenishment/generate", token, json=payload)
+
+    async def job_status(self, token: str, job_id: str) -> dict[str, Any]:
+        return await self.request("GET", f"/api/v1/admin/ai/jobs/{job_id}", token)

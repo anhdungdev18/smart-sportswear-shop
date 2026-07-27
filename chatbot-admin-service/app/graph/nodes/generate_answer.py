@@ -14,6 +14,8 @@ def _page_items(result: Any) -> list[dict[str, Any]]:
 def collect_numbers(result: Any) -> list[str]:
     numbers: list[str] = []
     if isinstance(result, dict):
+        if isinstance(result.get("content"), list):
+            numbers.append(f"rows={len(result['content'])}")
         for key, value in result.items():
             if isinstance(value, (int, float)) and not isinstance(value, bool):
                 numbers.append(f"{key}={value}")
@@ -43,6 +45,33 @@ def generate_grounded_answer(intent: str, tool_name: str, result: Any) -> tuple[
         reply = f"Inventory risk hiện có {len(items)} SKU trong kết quả. Phân bổ: {split}."
     elif tool_name == "get_replenishment_suggestions":
         reply = f"Đang có {len(items)} đề xuất nhập hàng trong trang kết quả read-only."
+    elif tool_name == "search_product_inventory":
+        reply = f"Tim thay {len(items)} bien the phu hop trong kho."
+        if len(items) == 1:
+            item = items[0]
+            reply = (
+                f"{item.get('productName')} SKU {item.get('sku')} con "
+                f"{item.get('availableQuantity')} kha dung "
+                f"(stock={item.get('stockQuantity')}, reserved={item.get('reservedQuantity')})."
+            )
+        elif len(items) > 1:
+            candidates = ", ".join(f"{item.get('sku')} {item.get('size')}/{item.get('color')}" for item in items[:5])
+            reply += f" Ung vien dau: {candidates}. Hay chi ro SKU/size/color neu can mot bien the."
+    elif tool_name == "get_best_selling_products":
+        rows = result.get("items", []) if isinstance(result, dict) else []
+        reply = (
+            f"Top san pham ban chay tu {result.get('fromDate')} den {result.get('toDate')} "
+            f"co {len(rows)} dong, nguon {result.get('source')}."
+        )
+    elif tool_name == "get_ai_data_freshness":
+        stale = result.get("stale") if isinstance(result, dict) else None
+        reply = f"Freshness AI dataSource={result.get('dataSource')} stale={stale}."
+    elif tool_name == "get_urgent_replenishment_candidates":
+        reply = f"Top {len(items)} SKU can nhap cap bach duoc xep hang tu pending replenishment suggestions."
+    elif tool_name in {"sync_ai_snapshot", "run_demand_classification", "run_forecast_evaluation", "run_forecast_generation"}:
+        reply = f"Controlled AI job {tool_name} da duoc goi qua allowlist."
+    elif tool_name == "get_ai_job_status":
+        reply = f"AI job status hien la {result.get('status')}."
     elif tool_name == "get_forecast_quality":
         reply = "Data-quality/forecast quality đã được lấy từ AI service."
     elif tool_name == "simulate_inventory_policy":

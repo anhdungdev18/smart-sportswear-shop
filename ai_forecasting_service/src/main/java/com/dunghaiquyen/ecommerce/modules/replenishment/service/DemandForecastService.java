@@ -157,7 +157,8 @@ public class DemandForecastService {
         long saveStart = System.currentTimeMillis();
         evaluationRepository.saveAll(evaluations);
         if (!insufficientVariantIds.isEmpty()) {
-            forecastRunRepository.deleteAllByVariantIdIn(insufficientVariantIds);
+            forecastRunRepository.deleteAllByVariantIdInAndDataSource(
+                    insufficientVariantIds, dataSourceProperties.dataSource());
             int dismissed = recommendationRepository.updateStatusForVariants(
                     insufficientVariantIds,
                     ReplenishmentStatus.PENDING,
@@ -200,7 +201,9 @@ public class DemandForecastService {
         long loadDemandMillis = System.currentTimeMillis() - t2;
 
         long tEval = System.currentTimeMillis();
-        Map<UUID, ForecastModelEvaluation> evaluationMap = evaluationRepository.findAllByVariantIdIn(activeVariantIds).stream()
+        String dataSource = dataSourceProperties.dataSource();
+        Map<UUID, ForecastModelEvaluation> evaluationMap =
+                evaluationRepository.findAllByVariantIdInAndDataSource(activeVariantIds, dataSource).stream()
                 .collect(Collectors.toMap(ForecastModelEvaluation::getVariantId, e -> e));
         long loadEvaluationMillis = System.currentTimeMillis() - tEval;
 
@@ -231,6 +234,7 @@ public class DemandForecastService {
             run.setAlgorithm(bestAlgoType);
             run.setTrainingFrom(fromInclusive);
             run.setTrainingTo(toInclusive);
+            run.setDataSource(dataSource);
             
             int horizonDays = policy.getLeadTimeDays() + policy.getTargetCoverDays();
             run.setForecastHorizonDays(horizonDays);

@@ -2,6 +2,8 @@ package com.dunghaiquyen.ecommerce.modules.report.controller;
 
 import com.dunghaiquyen.ecommerce.common.response.ApiResponse;
 import com.dunghaiquyen.ecommerce.modules.report.dto.InventoryReportResponse;
+import com.dunghaiquyen.ecommerce.modules.report.dto.InventoryLookupItemResponse;
+import com.dunghaiquyen.ecommerce.modules.report.dto.BestSellingProductPeriodResponse;
 import com.dunghaiquyen.ecommerce.modules.report.dto.OrderReportQuery;
 import com.dunghaiquyen.ecommerce.modules.report.dto.OrderReportResponse;
 import com.dunghaiquyen.ecommerce.modules.report.dto.OverviewReportResponse;
@@ -13,8 +15,12 @@ import com.dunghaiquyen.ecommerce.modules.report.service.ReportService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import java.time.LocalDate;
+import java.util.List;
+import java.util.UUID;
 
 /** API_SPEC_PHASE1.md section 12 - admin dashboard/report APIs. */
 @RestController
@@ -51,5 +57,22 @@ public class AdminReportController {
     @GetMapping("/inventory")
     public ApiResponse<InventoryReportResponse> inventory() {
         return ApiResponse.ok(reportService.getInventoryReport());
+    }
+
+    @GetMapping("/inventory/lookup")
+    public ApiResponse<List<InventoryLookupItemResponse>> inventoryLookup(
+            @RequestParam(required = false) String query,
+            @RequestParam(required = false) String sku,
+            @RequestParam(required = false) UUID variantId,
+            @RequestParam(defaultValue = "20") Integer limit) {
+        return ApiResponse.ok(reportService.lookupInventory(query, sku, variantId, limit));
+    }
+
+    @GetMapping("/products/best-sellers")
+    public ApiResponse<BestSellingProductPeriodResponse> bestSellers(
+            @RequestParam(required = false) LocalDate fromDate,
+            @RequestParam(required = false) LocalDate toDate,
+            @RequestParam(defaultValue = "10") Integer limit) {
+        return ApiResponse.ok(reportService.getBestSellers(fromDate, toDate, limit));
     }
 }

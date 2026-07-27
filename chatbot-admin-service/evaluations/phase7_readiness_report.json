@@ -8,12 +8,12 @@
     "maxToolCallsPerRun": 6
   },
   "metrics": {
-    "caseCount": 50,
+    "caseCount": 80,
     "toolSelectionAccuracy": 1.0,
     "groundedNumericAccuracy": 1.0,
     "readOnlyTaskSuccess": 1.0,
     "roleBypassBlocked": true,
-    "maxToolCallsObserved": 2,
+    "maxToolCallsObserved": 3,
     "infiniteLoopDetected": false,
     "maxAllowedToolCallsPerRun": 6
   },

@@ -53,6 +53,17 @@ class EvaluationRegistry:
                 "simulatedDecision": {"suggestedQuantity": 20},
             },
             "get_data_quality_summary": {"totalVariants": 120, "highQualityVariants": 100},
+            "search_product_inventory": [{"sku": "SKU-1", "availableQuantity": 7, "stockQuantity": 9, "reservedQuantity": 2}],
+            "get_best_selling_products": {
+                "fromDate": "2026-06-28",
+                "toDate": "2026-07-27",
+                "items": [{"productId": "p1", "productName": "Ao chay bo", "unitsSold": 12, "revenue": 300}],
+            },
+            "get_ai_data_freshness": {"dataSource": "DEMO", "stale": False, "salesRows": 21600},
+            "get_urgent_replenishment_candidates": {
+                "content": [{"sku": "SKU-1", "priority": "CRITICAL", "suggestedQuantity": 30}],
+                "limit": 5,
+            },
         }[name]
         return result, "fake"
 
@@ -89,6 +100,7 @@ async def evaluate_phase7_readiness(root: Path | None = None) -> dict[str, Any]:
     failures: list[dict[str, str]] = []
 
     for case in cases:
+        limits._BUCKETS.clear()
         intent = classify_intent(case["query"])
         tool = select_tool(intent)
         if intent == case["expectedIntent"] and tool == case["expectedTool"]:
@@ -112,7 +124,7 @@ async def evaluate_phase7_readiness(root: Path | None = None) -> dict[str, Any]:
             and len(registry.calls) >= 1
             and len(registry.calls) <= settings.MAX_TOOL_CALLS_PER_RUN
             and len(call_keys) == len(registry.calls)
-            and registry.calls[0].name == case["expectedTool"]
+            and any(call.name == case["expectedTool"] for call in registry.calls)
         )
 
         if is_numeric_ok:

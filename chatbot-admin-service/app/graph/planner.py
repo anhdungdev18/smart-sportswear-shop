@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import date, timedelta
+import re
 from typing import Any, Literal
 
 from app.config.settings import settings
@@ -21,6 +23,43 @@ def build_readonly_plan(intent: Intent, message: str) -> list[PlannedToolCall]:
     text = message.lower()
     primary_tool = select_tool(intent)
     plan = [PlannedToolCall(primary_tool, _default_args(primary_tool), f"primary tool for {intent}")]
+
+    if intent == "URGENT_REPLENISHMENT_ANALYSIS":
+        plan = [
+            PlannedToolCall("get_ai_data_freshness", {"dataSource": "DEMO"}, "freshness gate for urgent replenishment"),
+            PlannedToolCall("get_urgent_replenishment_candidates", {"limit": _extract_limit(text, 5)}, "rank pending replenishment"),
+            PlannedToolCall("get_forecast_quality", {}, "quality context for replenishment ranking"),
+        ]
+    elif intent == "AI_PIPELINE_REFRESH":
+        plan = [PlannedToolCall("get_ai_data_freshness", {"dataSource": "DEMO"}, "freshness check before controlled jobs")]
+        if settings.CONTROLLED_AI_JOBS_ENABLED:
+            correlation_id = f"phase9-{date.today().isoformat()}"
+            plan.extend([
+                PlannedToolCall("sync_ai_snapshot", {"dataSource": "DEMO", "correlationId": correlation_id}, "controlled snapshot sync"),
+                PlannedToolCall("run_demand_classification", {"dataSource": "DEMO", "correlationId": correlation_id}, "controlled demand classification"),
+                PlannedToolCall("run_forecast_evaluation", {"dataSource": "DEMO", "correlationId": correlation_id}, "controlled evaluation"),
+                PlannedToolCall("run_forecast_generation", {"dataSource": "DEMO", "correlationId": correlation_id}, "controlled forecast generation"),
+                PlannedToolCall("get_ai_job_status", {"jobId": correlation_id}, "poll current AI batch status"),
+            ])
+    elif intent == "BEST_SELLING_PRODUCTS":
+        to_date = date.today()
+        lookback_days = _extract_lookback_days(text)
+        from_date = to_date - timedelta(days=lookback_days - 1)
+        plan = [
+            PlannedToolCall(
+                "get_best_selling_products",
+                {"fromDate": from_date.isoformat(), "toDate": to_date.isoformat(), "limit": _extract_limit(text, 10)},
+                "best sellers for explicit date range",
+            )
+        ]
+    elif intent == "PRODUCT_INVENTORY_LOOKUP":
+        plan = [
+            PlannedToolCall(
+                "search_product_inventory",
+                {"query": _extract_lookup_query(message), "limit": _extract_limit(text, 20)},
+                "deterministic product inventory lookup",
+            )
+        ]
 
     needs_quality_context = any(
         term in text
@@ -76,3 +115,27 @@ def _default_args(tool: str) -> dict[str, Any]:
     if tool == "simulate_inventory_policy":
         return {}
     return {}
+
+
+def _extract_limit(text: str, default: int) -> int:
+    match = re.search(r"\btop\s+(\d+)|\b(\d+)\s+(?:sku|san|mon)", text)
+    if not match:
+        return min(default, settings.MAX_AGENT_RESULT_ROWS)
+    value = int(next(group for group in match.groups() if group))
+    return max(1, min(value, settings.MAX_AGENT_RESULT_ROWS))
+
+
+def _extract_lookback_days(text: str) -> int:
+    if "7 ng" in text or "1 tuan" in text:
+        return 7
+    if "thang nay" in text or "1 thang" in text or "1 thÃ¡ng" in text:
+        return min(30, settings.MAX_REPORT_LOOKBACK_DAYS)
+    match = re.search(r"(\d+)\s+ng", text)
+    if match:
+        return max(1, min(int(match.group(1)), settings.MAX_REPORT_LOOKBACK_DAYS))
+    return min(settings.DEFAULT_REPORT_LOOKBACK_DAYS, settings.MAX_REPORT_LOOKBACK_DAYS)
+
+
+def _extract_lookup_query(message: str) -> str:
+    cleaned = re.sub(r"\b(con bao nhieu|cÃ²n bao nhiÃªu|con ton|cÃ²n tá»“n|ton kho|tá»“n kho)\b", " ", message, flags=re.I)
+    return " ".join(cleaned.split()).strip() or message.strip()
