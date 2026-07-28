@@ -9,4 +9,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface ForecastModelEvaluationRepository extends JpaRepository<ForecastModelEvaluation, UUID> {
     List<ForecastModelEvaluation> findAllByVariantIdIn(Iterable<UUID> variantIds);
+
+    List<ForecastModelEvaluation> findAllByVariantIdInAndDataSource(Iterable<UUID> variantIds, String dataSource);
 }

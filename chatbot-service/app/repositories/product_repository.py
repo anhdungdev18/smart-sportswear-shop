@@ -235,6 +235,8 @@ async def get_product_by_id(product_id: str) -> dict | None:
         JOIN categories c ON c.id = p.category_id
         JOIN brands     b ON b.id = p.brand_id
         WHERE p.id = $1
+          AND p.status = 'ACTIVE'
+          AND c.status = 'ACTIVE'
     """
     async with pool.acquire() as conn:
         row = await conn.fetchrow(sql, product_id)

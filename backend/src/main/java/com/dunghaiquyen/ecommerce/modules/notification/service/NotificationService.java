@@ -39,24 +39,16 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 
 /**
  * Single entry point for every outbound notification (Phase O): builds the
- * subject/body via {@link NotificationTemplates}, sends through the existing
- * {@link MailService} abstraction (logging-only this phase, real
- * SMTP/SendGrid/Resend later - nothing here changes when that swap happens),
- * and always writes one {@link Notification} row recording the outcome.
+ * subject/body via {@link NotificationTemplates} and always writes one
+ * {@link Notification} row recording the outcome. Order lifecycle email is
+ * queued only after the surrounding transaction commits and delivered by
+ * {@link NotificationDeliveryService}; manual resend and password-reset delivery
+ * remain synchronous because their API contracts need an immediate outcome.
  *
- * <p><b>Failure tradeoff (deliberate):</b> every notify* method swallows any
- * exception from the mail send and records it as a FAILED row instead of
- * propagating - a transactional email going down must never roll back the
- * order/cancel/deliver/password-reset action that triggered it. These
- * methods are called from INSIDE the caller's existing transaction (order
- * creation, status transition, forgot-password), not in a separate one: if
- * that outer transaction itself rolls back for an unrelated reason (e.g. a
- * later step throws), the notification row rolls back with it - which is
- * correct, since logging "we emailed about X" when X never actually
- * happened would be misleading. No queue/scheduled-retry exists this phase
- * (Notification Operations phase, see {@link #resend} for why) - a FAILED
- * row is a visibility/audit signal for admins, recoverable via manual
- * resend, not auto-retried.
+ * <p><b>Failure tradeoff:</b> SMTP failure is recorded as FAILED and never rolls
+ * back the business action. The bounded executor is an in-process queue, not a
+ * durable broker; rows left PENDING after an abrupt shutdown remain visible for
+ * operational recovery/manual resend.
  */
 @Service
 public class NotificationService {
@@ -74,16 +66,19 @@ public class NotificationService {
     private final MailService mailService;
     private final NotificationTemplates notificationTemplates;
     private final NotificationBroadcaster broadcaster;
+    private final NotificationDeliveryService deliveryService;
 
     public NotificationService(
             NotificationRepository notificationRepository,
             MailService mailService,
             NotificationTemplates notificationTemplates,
-            NotificationBroadcaster broadcaster) {
+            NotificationBroadcaster broadcaster,
+            NotificationDeliveryService deliveryService) {
         this.notificationRepository = notificationRepository;
         this.mailService = mailService;
         this.notificationTemplates = notificationTemplates;
         this.broadcaster = broadcaster;
+        this.deliveryService = deliveryService;
     }
 
     public record ListResult(List<NotificationResponse> items, PageMeta meta) {
@@ -91,17 +86,17 @@ public class NotificationService {
 
     @Transactional
     public void notifyOrderCreated(Order order) {
-        send(order.getUser(), order, NotificationType.ORDER_CREATED, notificationTemplates.orderCreated(order));
+        queueAfterCommit(order.getUser(), order, NotificationType.ORDER_CREATED, notificationTemplates.orderCreated(order));
     }
 
     @Transactional
     public void notifyOrderCancelled(Order order) {
-        send(order.getUser(), order, NotificationType.ORDER_CANCELLED, notificationTemplates.orderCancelled(order));
+        queueAfterCommit(order.getUser(), order, NotificationType.ORDER_CANCELLED, notificationTemplates.orderCancelled(order));
     }
 
     @Transactional
     public void notifyOrderDelivered(Order order) {
-        send(order.getUser(), order, NotificationType.ORDER_DELIVERED, notificationTemplates.orderDelivered(order));
+        queueAfterCommit(order.getUser(), order, NotificationType.ORDER_DELIVERED, notificationTemplates.orderDelivered(order));
     }
 
     /**
@@ -113,7 +108,7 @@ public class NotificationService {
      */
     @Transactional
     public void notifyOrderShipping(Order order) {
-        send(order.getUser(), order, NotificationType.ORDER_SHIPPING, notificationTemplates.orderShipping(order));
+        queueAfterCommit(order.getUser(), order, NotificationType.ORDER_SHIPPING, notificationTemplates.orderShipping(order));
     }
 
     @Transactional
@@ -307,6 +302,46 @@ public class NotificationService {
         notification.setBody(content.body());
         notification.setStatus(NotificationStatus.PENDING);
         deliverAndSave(notification);
+    }
+
+    private void queueAfterCommit(User user, Order order, NotificationType type, EmailContent content) {
+        Notification notification = new Notification();
+        notification.setUser(user);
+        notification.setOrder(order);
+        notification.setType(type);
+        notification.setChannel(NotificationChannel.EMAIL);
+        notification.setRecipient(user.getEmail());
+        notification.setSubject(content.subject());
+        notification.setBody(content.body());
+        notification.setStatus(NotificationStatus.PENDING);
+        notification = notificationRepository.save(notification);
+
+        UUID notificationId = notification.getId();
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    scheduleDelivery(notificationId);
+                }
+            });
+        } else {
+            scheduleDelivery(notificationId);
+        }
+    }
+
+    private void scheduleDelivery(UUID notificationId) {
+        try {
+            deliveryService.deliverAsync(notificationId);
+        } catch (RuntimeException ex) {
+            // The business transaction is already committed. Mark the row
+            // FAILED in a new transaction so admin resend can recover it.
+            log.error("Notification task rejected id={}: {}", notificationId, ex.getMessage());
+            try {
+                deliveryService.markSchedulingFailed(notificationId, "Notification queue unavailable");
+            } catch (RuntimeException markFailure) {
+                log.error("Could not mark rejected notification {} as FAILED: {}", notificationId, markFailure.getMessage());
+            }
+        }
     }
 
     /** The one place that actually calls MailService.send and records the outcome - used by both the organic send() path and resend(). */

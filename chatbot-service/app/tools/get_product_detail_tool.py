@@ -17,10 +17,10 @@ DEFINITION = ToolDefinition(
 )
 
 
-async def run(
-    product_id: str = "",
-    size_hint: str | None = None,
-    color_hint: str | None = None,
-) -> dict:
-    result = await get_detail(product_id, size_hint, color_hint)
+async def run(args: dict) -> dict:
+    result = await get_detail(
+        args.get("product_id") or "",
+        args.get("size_hint"),
+        args.get("color_hint"),
+    )
     return result.model_dump()

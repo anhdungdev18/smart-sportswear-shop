@@ -29,6 +29,10 @@ public class ProductImage extends AbstractCreatedAtEntity {
     @Column(name = "alt_text", length = 255)
     private String altText;
 
+    /** Colorway this image belongs to (null = shared/generic across colors). */
+    @Column(name = "color", length = 120)
+    private String color;
+
     @Column(name = "sort_order", nullable = false)
     private int sortOrder = 0;
 

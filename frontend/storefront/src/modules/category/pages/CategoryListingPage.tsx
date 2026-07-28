@@ -2,7 +2,7 @@ import { Breadcrumb } from "@/components/shared/Breadcrumb";
 import { Pagination } from "@/components/shared/Pagination";
 import { CategorySidebarFilter } from "@/modules/category/components/CategorySidebarFilter";
 import { CategoryToolbar } from "@/modules/category/components/CategoryToolbar";
-import { fetchCategoryListing, fetchCategoryName } from "@/modules/category/queries";
+import { fetchCategoryDetail, fetchCategoryListing } from "@/modules/category/queries";
 import type { PageMeta } from "@/modules/category/types";
 import { ProductCard } from "@/modules/product/components/ProductCard";
 import { mapProductListItem } from "@/modules/product/mappers";
@@ -19,6 +19,7 @@ type CategorySearchParams = {
   color?: string;
   minPrice?: string;
   maxPrice?: string;
+  surface?: string;
 };
 
 export async function CategoryListingPage({
@@ -30,12 +31,14 @@ export async function CategoryListingPage({
 }) {
   const { slug } = await params;
   const resolvedSearchParams = await searchParams;
-  const { page: pageParam, sort, sortBy, sortOrder, size, color, minPrice, maxPrice } = resolvedSearchParams;
+  const { page: pageParam, sort, sortBy, sortOrder, size, color, minPrice, maxPrice, surface } = resolvedSearchParams;
   const currentPage = Math.max(1, Number(pageParam ?? 1));
+  // Surface facet only makes sense for football footwear (group "giay" + boot leaves).
+  const showSurface = slug === "giay" || slug.includes("da-bong") || slug.includes("futsal");
 
-  const [{ products, meta }, categoryName]: [
+  const [{ products, meta }, category]: [
     { products: ProductListItem[]; meta: PageMeta },
-    string,
+    Awaited<ReturnType<typeof fetchCategoryDetail>>,
   ] = await Promise.all([
     fetchCategoryListing({
       categorySlug: slug,
@@ -48,21 +51,32 @@ export async function CategoryListingPage({
       color: color || undefined,
       minPrice: minPrice || undefined,
       maxPrice: maxPrice || undefined,
+      surface: surface || undefined,
     }),
-    fetchCategoryName(slug),
+    fetchCategoryDetail(slug),
   ]);
 
   const mappedProducts = products.map(mapProductListItem);
+  const categoryName = category?.name ?? slug.replace(/-/g, " ");
+  const breadcrumbItems = [
+    { label: "Trang chủ", href: "/" },
+    ...(category?.parentSlug
+      ? [{ label: category.parentName ?? category.parentSlug.replace(/-/g, " "), href: `/danh-muc/${category.parentSlug}` }]
+      : []),
+    { label: categoryName },
+  ];
 
   return (
     <main className="site-main page-below-header flex-1 border-b border-ivy-hairline">
-      <Breadcrumb items={[{ label: "Trang chủ", href: "/" }, { label: categoryName }]} />
+      <Breadcrumb items={breadcrumbItems} />
       <div className="mx-auto flex max-w-[1368px] flex-col gap-8 px-4 pb-16 md:px-0 lg:flex-row">
         <CategorySidebarFilter
           initialSize={size}
           initialColor={color}
           initialMinPrice={minPrice ? Number(minPrice) : undefined}
           initialMaxPrice={maxPrice ? Number(maxPrice) : undefined}
+          initialSurface={surface}
+          showSurface={showSurface}
           sizeType={slug.includes("giay") ? "shoe" : "cloth"}
         />
         <div className="flex-1">

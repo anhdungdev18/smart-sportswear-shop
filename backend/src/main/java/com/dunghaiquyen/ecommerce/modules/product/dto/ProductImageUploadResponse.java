@@ -13,6 +13,7 @@ public record ProductImageUploadResponse(
         String imageUrl,
         String publicId,
         String altText,
+        String color,
         boolean isPrimary,
         int sortOrder,
         Integer width,

@@ -22,12 +22,17 @@ import com.dunghaiquyen.ecommerce.modules.category.entity.Category;
 import com.dunghaiquyen.ecommerce.modules.order.entity.Order;
 import com.dunghaiquyen.ecommerce.modules.product.dto.CatalogRefResponse;
 import com.dunghaiquyen.ecommerce.modules.product.entity.Product;
+import com.dunghaiquyen.ecommerce.modules.product.entity.ProductImage;
 import com.dunghaiquyen.ecommerce.modules.product.entity.ProductVariant;
+import com.dunghaiquyen.ecommerce.modules.product.repository.ProductImageRepository;
 import com.dunghaiquyen.ecommerce.modules.product.repository.ProductVariantRepository;
+import com.dunghaiquyen.ecommerce.modules.product.util.ThumbnailResolver;
 import com.dunghaiquyen.ecommerce.modules.user.entity.User;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Caching;
@@ -68,11 +73,15 @@ public class InventoryService {
 
     private final ProductVariantRepository variantRepository;
     private final InventoryTransactionRepository transactionRepository;
+    private final ProductImageRepository imageRepository;
 
     public InventoryService(
-            ProductVariantRepository variantRepository, InventoryTransactionRepository transactionRepository) {
+            ProductVariantRepository variantRepository,
+            InventoryTransactionRepository transactionRepository,
+            ProductImageRepository imageRepository) {
         this.variantRepository = variantRepository;
         this.transactionRepository = transactionRepository;
+        this.imageRepository = imageRepository;
     }
 
     public record ListResult<T>(List<T> items, PageMeta meta) {
@@ -283,7 +292,10 @@ public class InventoryService {
         Pageable pageable = PageRequest.of(
                 resolvePageIndex(query.page()), resolveLimit(query.limit()), Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<ProductVariant> page = variantRepository.findAll(spec, pageable);
-        List<InventoryItemResponse> items = page.getContent().stream().map(this::toItemResponse).toList();
+        Map<UUID, String> thumbnailByProductId = resolveThumbnails(page.getContent());
+        List<InventoryItemResponse> items = page.getContent().stream()
+                .map(variant -> toItemResponse(variant, thumbnailByProductId.get(variant.getProduct().getId())))
+                .toList();
         return new ListResult<>(items, PageMeta.from(page));
     }
 
@@ -328,12 +340,38 @@ public class InventoryService {
         return Math.min(limit, MAX_LIMIT);
     }
 
+    /**
+     * Thumbnails for a whole page of variants in one query (same "primary else
+     * lowest sortOrder" rule as cart/catalog via {@link ThumbnailResolver}) -
+     * resolving per variant would be an N+1 over product_images. Products with no
+     * image are simply absent from the map, so callers read back a null thumbnail.
+     */
+    private Map<UUID, String> resolveThumbnails(List<ProductVariant> variants) {
+        List<UUID> productIds = variants.stream()
+                .map(variant -> variant.getProduct().getId())
+                .distinct()
+                .toList();
+        if (productIds.isEmpty()) {
+            return Map.of();
+        }
+        return imageRepository.findAllByProductIdIn(productIds).stream()
+                .collect(Collectors.groupingBy(image -> image.getProduct().getId()))
+                .entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, entry -> ThumbnailResolver.resolve(entry.getValue())));
+    }
+
     private InventoryItemResponse toItemResponse(ProductVariant variant) {
+        List<ProductImage> images = imageRepository.findAllByProductIdIn(List.of(variant.getProduct().getId()));
+        return toItemResponse(variant, ThumbnailResolver.resolve(images));
+    }
+
+    private InventoryItemResponse toItemResponse(ProductVariant variant, String thumbnail) {
         Product product = variant.getProduct();
         return new InventoryItemResponse(
                 variant.getId(),
                 product.getId(),
                 product.getName(),
+                thumbnail,
                 variant.getSku(),
                 variant.getSize(),
                 variant.getColor(),

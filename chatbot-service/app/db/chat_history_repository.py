@@ -23,12 +23,13 @@ _SELECT_SQL = """
     SELECT role, content
     FROM chat_messages
     WHERE session_id = $1
+      AND (($2::text IS NULL AND user_id IS NULL) OR user_id = $2)
     ORDER BY created_at DESC
-    LIMIT $2
+    LIMIT $3
 """
 
 
-async def load_last_messages(session_id: str, limit: int = 10) -> list[dict]:
+async def load_last_messages(session_id: str, user_id: str | None, limit: int = 10) -> list[dict]:
     """
     Load the last `limit` messages for a session, ordered oldest-first.
     Returns [] when pool is unavailable, table missing, or any error.
@@ -38,7 +39,7 @@ async def load_last_messages(session_id: str, limit: int = 10) -> list[dict]:
         return []
     try:
         async with pool.acquire() as conn:
-            rows = await conn.fetch(_SELECT_SQL, session_id, limit)
+            rows = await conn.fetch(_SELECT_SQL, session_id, user_id, limit)
         # rows come back newest-first; reverse to oldest-first for LLM context
         return [{"role": row["role"], "content": row["content"]} for row in reversed(rows)]
     except Exception as exc:

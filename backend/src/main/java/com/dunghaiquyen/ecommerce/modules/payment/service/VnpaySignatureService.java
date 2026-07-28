@@ -14,13 +14,7 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import org.springframework.stereotype.Service;
 
-/**
- * VNPay-style HMAC-SHA512 signing/verification, sandbox-shaped but not byte-for-byte
- * identical to VNPay's real encoding quirks (see {@link #buildQueryString} javadoc) -
- * this project has no real merchant account to test against this phase, so the only
- * requirement that matters is internal round-trip consistency: a URL this service
- * signs must verify successfully when the same params come back on the callback.
- */
+/** VNPay 2.1.0 HMAC-SHA512 signing and verification. */
 @Service
 public class VnpaySignatureService {
 
@@ -30,7 +24,7 @@ public class VnpaySignatureService {
         this.properties = properties;
     }
 
-    /** Hashes over RAW (unencoded) sorted key=value pairs - see class javadoc for why. */
+    /** Hashes the sorted URL-encoded key/value representation required by VNPay 2.1.0. */
     public String hash(Map<String, String> params) {
         return hmacSha512(properties.hashSecret(), buildHashData(params));
     }
@@ -52,24 +46,9 @@ public class VnpaySignatureService {
                 expected.getBytes(StandardCharsets.UTF_8), received.getBytes(StandardCharsets.UTF_8));
     }
 
-    /**
-     * URL-encoded query string for the human/browser-facing payment URL only - this
-     * is never fed back into {@link #hash}, so its encoding does not need to match
-     * what {@link #buildHashData} does (real VNPay actually uses different encoding
-     * rules for the two; deliberately not replicated here, see class javadoc).
-     */
+    /** Builds the same canonical encoded representation used for signing. */
     public String buildQueryString(Map<String, String> params) {
-        List<String> keys = sortedNonEmptyKeys(params);
-        StringBuilder sb = new StringBuilder();
-        for (String key : keys) {
-            if (sb.length() > 0) {
-                sb.append('&');
-            }
-            sb.append(URLEncoder.encode(key, StandardCharsets.UTF_8))
-                    .append('=')
-                    .append(URLEncoder.encode(params.get(key), StandardCharsets.UTF_8));
-        }
-        return sb.toString();
+        return buildHashData(params);
     }
 
     private String buildHashData(Map<String, String> params) {
@@ -79,9 +58,13 @@ public class VnpaySignatureService {
             if (sb.length() > 0) {
                 sb.append('&');
             }
-            sb.append(key).append('=').append(params.get(key));
+            sb.append(encode(key)).append('=').append(encode(params.get(key)));
         }
         return sb.toString();
+    }
+
+    private String encode(String value) {
+        return URLEncoder.encode(value, StandardCharsets.UTF_8);
     }
 
     private List<String> sortedNonEmptyKeys(Map<String, String> params) {

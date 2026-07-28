@@ -3,7 +3,12 @@ import { AdminProductsCatalogClient } from "@/components/products/AdminProductsC
 import { listAdminBrands, listAdminCategories } from "@/modules/catalog-admin/api";
 import { buildAdminProductStats, listAdminProducts } from "@/modules/product-management/api";
 
-export default function ProductsPage() {
+type ProductsSearchParams = Promise<{ q?: string | string[] }>;
+
+export default async function ProductsPage({ searchParams }: { searchParams: ProductsSearchParams }) {
+  const params = await searchParams;
+  const initialSearchTerm = typeof params.q === "string" ? params.q : "";
+
   return (
     <main className="workspace">
       <section className="page-title">
@@ -18,7 +23,7 @@ export default function ProductsPage() {
       </Suspense>
 
       <Suspense fallback={<ProductTableSkeleton />}>
-        <ProductCatalog />
+        <ProductCatalog initialSearchTerm={initialSearchTerm} />
       </Suspense>
     </main>
   );
@@ -42,14 +47,14 @@ async function ProductCatalogStats() {
   );
 }
 
-async function ProductCatalog() {
+async function ProductCatalog({ initialSearchTerm }: { initialSearchTerm: string }) {
   const [adminProducts, categories, brands] = await Promise.all([
     listAdminProducts().catch(() => []),
     listAdminCategories().catch(() => []),
     listAdminBrands().catch(() => []),
   ]);
 
-  return <AdminProductsCatalogClient initialProducts={adminProducts} categories={categories} brands={brands} />;
+  return <AdminProductsCatalogClient initialProducts={adminProducts} initialSearchTerm={initialSearchTerm} categories={categories} brands={brands} />;
 }
 
 function ProductStatsSkeleton() {

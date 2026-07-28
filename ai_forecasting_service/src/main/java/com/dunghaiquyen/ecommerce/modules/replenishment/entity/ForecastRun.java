@@ -45,6 +45,9 @@ public class ForecastRun extends AbstractEntity {
     @Column(name = "forecast_quantity", nullable = false, precision = 12, scale = 4)
     private BigDecimal forecastQuantity;
 
+    @Column(name = "data_source", nullable = false, length = 20)
+    private String dataSource = "REAL";
+
     @Column(precision = 12, scale = 4)
     private BigDecimal mae;
 

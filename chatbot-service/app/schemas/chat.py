@@ -1,16 +1,17 @@
 from __future__ import annotations
 
 from typing import Any
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class ChatRequest(BaseModel):
-    sessionId: str
+    sessionId: str = Field(min_length=1, max_length=128)
+    # Deprecated compatibility hints. Identity and role only come from the verified JWT.
     userId: str | None = None
-    userRole: str | None = None         # Phase 2: "guest" | "customer" | "admin"
-    accessToken: str | None = None      # Phase 5: Bearer token forwarded to backend
-    message: str
-    channel: str = "web"
+    userRole: str | None = None
+    accessToken: str | None = Field(default=None, max_length=4096)
+    message: str = Field(min_length=1, max_length=4000)
+    channel: str = Field(default="web", min_length=1, max_length=32)
 
 
 class ToolCallRecord(BaseModel):

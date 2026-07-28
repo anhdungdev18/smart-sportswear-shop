@@ -14,6 +14,7 @@ public record InventoryItemResponse(
         UUID variantId,
         UUID productId,
         String productName,
+        String thumbnail,
         String sku,
         String size,
         String color,

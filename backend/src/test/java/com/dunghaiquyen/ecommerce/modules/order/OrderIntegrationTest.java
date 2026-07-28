@@ -874,6 +874,40 @@ class OrderIntegrationTest extends AbstractIntegrationTest {
         assertThat(cancelResult.getResponse().getStatus()).isEqualTo(409);
     }
 
+    @Test
+    void deliveredCodOrder_isMarkedPaid() throws Exception {
+        AdminContext ctx = setUpAdmin();
+        String productId = createActiveProduct(ctx, "COD Payment Completion");
+        String variantId = createVariant(ctx, productId, 110000, 10);
+        String buyerEmail = uniqueEmail("cod-paid-on-delivery");
+        TokenPair buyer = registerUser(buyerEmail);
+        addToCart(buyer.accessToken(), variantId, 1);
+        String addressId = createAddressForUser(buyerEmail);
+
+        MvcResult created = mockMvc.perform(post("/api/v1/orders")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + buyer.accessToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(createOrderBody(addressId)))
+                .andExpect(status().isCreated())
+                .andReturn();
+        String orderId = json(created.getResponse().getContentAsString()).at("/data/id").asText();
+
+        for (String nextStatus : new String[] {"CONFIRMED", "PACKING", "SHIPPING", "DELIVERED"}) {
+            mockMvc.perform(patch("/api/v1/admin/orders/" + orderId + "/status")
+                            .header(HttpHeaders.AUTHORIZATION, "Bearer " + ctx.token())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"status\":\"" + nextStatus + "\"}"))
+                    .andExpect(status().isOk());
+        }
+
+        MvcResult detail = mockMvc.perform(get("/api/v1/orders/" + orderId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + buyer.accessToken()))
+                .andExpect(status().isOk())
+                .andReturn();
+        assertThat(json(detail.getResponse().getContentAsString()).at("/data/paymentStatus").asText())
+                .isEqualTo("PAID");
+    }
+
     // ===== double-submit: same cart, two concurrent checkout requests =====
 
     @Test

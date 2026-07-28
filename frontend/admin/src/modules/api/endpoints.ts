@@ -44,6 +44,7 @@ export const adminEndpoints = {
   productImages: (id: string) => `/api/v1/admin/products/${id}/images`,
   productImageUpload: (id: string) => `/api/v1/admin/products/${id}/images/upload`,
   productImageDelete: (productId: string, imageId: string) => `/api/v1/admin/products/${productId}/images/${imageId}`,
+  productImagePrimary: (productId: string, imageId: string) => `/api/v1/admin/products/${productId}/images/${imageId}/primary`,
   variant: (id: string) => `/api/v1/admin/variants/${id}`,
   shippingMethods: "/api/v1/shipping/methods",
   adminReturns: "/api/v1/admin/returns",

@@ -10,6 +10,7 @@ import com.dunghaiquyen.ecommerce.AbstractIntegrationTest;
 import com.dunghaiquyen.ecommerce.modules.address.entity.Address;
 import com.dunghaiquyen.ecommerce.modules.address.repository.AddressRepository;
 import com.dunghaiquyen.ecommerce.modules.payment.service.VnpaySignatureService;
+import com.dunghaiquyen.ecommerce.modules.payment.repository.PaymentRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -30,6 +31,9 @@ class ReportIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
     private VnpaySignatureService signatureService;
+
+    @Autowired
+    private PaymentRepository paymentRepository;
 
     private record AdminContext(String token, String categoryId, String brandId) {
     }
@@ -135,10 +139,13 @@ class ReportIntegrationTest extends AbstractIntegrationTest {
     }
 
     private void sendSuccessCallback(String transactionRef) throws Exception {
+        var payment = paymentRepository.findByTransactionRef(transactionRef).orElseThrow();
         Map<String, String> params = new LinkedHashMap<>();
         params.put("vnp_TxnRef", transactionRef);
         params.put("vnp_ResponseCode", "00");
-        params.put("vnp_Amount", "10000000");
+        params.put("vnp_TransactionStatus", "00");
+        params.put("vnp_TmnCode", "TESTTMN1");
+        params.put("vnp_Amount", payment.getAmount().movePointRight(2).toBigIntegerExact().toString());
         String hash = signatureService.hash(params);
         params.put("vnp_SecureHash", hash);
 
@@ -182,9 +189,8 @@ class ReportIntegrationTest extends AbstractIntegrationTest {
         String txnRefA = createPaymentSession(tokenA.accessToken(), orderA.id());
         sendSuccessCallback(txnRefA);
 
-        // Order B: COD, progressed all the way to DELIVERED - counts toward
-        // realizedRevenue (orderStatus=DELIVERED) even though COD never flips
-        // paymentStatus to PAID in this phase - must NOT count toward grossRevenue.
+        // Order B: COD, progressed all the way to DELIVERED. Delivery records
+        // cash collection, so it counts toward both gross and realized revenue.
         String buyerB = uniqueEmail("rpt-buyer-b");
         TokenPair tokenB = registerUser(buyerB);
         addToCart(tokenB.accessToken(), variantId, 3);
@@ -219,8 +225,8 @@ class ReportIntegrationTest extends AbstractIntegrationTest {
         long pendingAfter = after.at("/pendingOrders").asLong();
 
         assertThat(grossAfter.subtract(grossBefore))
-                .as("grossRevenue must equal exactly order A's total (paymentStatus=PAID), not B or C")
-                .isEqualByComparingTo(orderA.totalAmount());
+                .as("grossRevenue includes paid VNPAY and delivered/collected COD, never cancelled order C")
+                .isEqualByComparingTo(orderA.totalAmount().add(orderB.totalAmount()));
         assertThat(realizedAfter.subtract(realizedBefore))
                 .as("realizedRevenue must equal exactly order B's total (orderStatus=DELIVERED), not A or C")
                 .isEqualByComparingTo(orderB.totalAmount());
@@ -228,6 +234,45 @@ class ReportIntegrationTest extends AbstractIntegrationTest {
         assertThat(pendingAfter - pendingBefore)
                 .as("only order A remains PENDING_CONFIRMATION - B is DELIVERED, C is CANCELLED")
                 .isEqualTo(1);
+    }
+
+    @Test
+    void revenueBreakdown_explainsGrossRealizedDifferenceWithStatusSlices() throws Exception {
+        AdminContext ctx = setUpAdmin();
+        String productId = createActiveProduct(ctx, "Report Revenue Breakdown");
+        String variantId = createVariant(ctx, productId, 100000, 100);
+
+        String paidBuyer = uniqueEmail("rpt-breakdown-paid");
+        TokenPair paidToken = registerUser(paidBuyer);
+        addToCart(paidToken.accessToken(), variantId, 1);
+        String paidAddress = createAddressForUser(paidBuyer);
+        OrderResult paidOrder = createOrder(paidToken.accessToken(), paidAddress, "VNPAY");
+        String txnRef = createPaymentSession(paidToken.accessToken(), paidOrder.id());
+        sendSuccessCallback(txnRef);
+
+        String codBuyer = uniqueEmail("rpt-breakdown-cod");
+        TokenPair codToken = registerUser(codBuyer);
+        addToCart(codToken.accessToken(), variantId, 2);
+        String codAddress = createAddressForUser(codBuyer);
+        OrderResult codOrder = createOrder(codToken.accessToken(), codAddress, "COD");
+        adminSetStatus(ctx, codOrder.id(), "CONFIRMED");
+        adminSetStatus(ctx, codOrder.id(), "PACKING");
+        adminSetStatus(ctx, codOrder.id(), "SHIPPING");
+        adminSetStatus(ctx, codOrder.id(), "DELIVERED");
+
+        MvcResult result = mockMvc.perform(get("/api/v1/admin/reports/revenue/breakdown")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + ctx.token()))
+                .andReturn();
+
+        assertThat(result.getResponse().getStatus()).isEqualTo(200);
+        JsonNode body = json(result.getResponse().getContentAsString()).at("/data");
+        assertThat(body.at("/breakdownAvailable").asBoolean()).isTrue();
+        assertThat(new BigDecimal(body.at("/grossRevenue").asText())).isGreaterThanOrEqualTo(paidOrder.totalAmount());
+        assertThat(new BigDecimal(body.at("/realizedRevenue").asText())).isGreaterThanOrEqualTo(codOrder.totalAmount());
+        assertThat(new BigDecimal(body.at("/codDeliveredUnpaid/amount").asText())).isGreaterThanOrEqualTo(codOrder.totalAmount());
+        assertThat(new BigDecimal(body.at("/paidNotDelivered/amount").asText())).isGreaterThanOrEqualTo(paidOrder.totalAmount());
+        assertThat(body.at("/byPaymentStatus").isArray()).isTrue();
+        assertThat(body.at("/byOrderStatus").isArray()).isTrue();
     }
 
     // ===== lowStockCount =====
@@ -295,6 +340,30 @@ class ReportIntegrationTest extends AbstractIntegrationTest {
             }
         }
         assertThat(hasPendingConfirmation).isTrue();
+    }
+
+    @Test
+    void orderStatusTrend_returnsDailyStatusBuckets() throws Exception {
+        AdminContext ctx = setUpAdmin();
+        String productId = createActiveProduct(ctx, "Report Order Trend");
+        String variantId = createVariant(ctx, productId, 60000, 50);
+
+        String buyer = uniqueEmail("rpt-ordertrend-buyer");
+        TokenPair token = registerUser(buyer);
+        addToCart(token.accessToken(), variantId, 1);
+        String address = createAddressForUser(buyer);
+        createOrder(token.accessToken(), address, "COD");
+
+        MvcResult result = mockMvc.perform(get("/api/v1/admin/reports/orders/status-trend?dateFrom="
+                        + LocalDate.now() + "&dateTo=" + LocalDate.now())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + ctx.token()))
+                .andReturn();
+
+        assertThat(result.getResponse().getStatus()).isEqualTo(200);
+        JsonNode body = json(result.getResponse().getContentAsString()).at("/data");
+        assertThat(body.at("/trendAvailable").asBoolean()).isTrue();
+        assertThat(body.at("/points").size()).isEqualTo(1);
+        assertThat(body.at("/points/0/totalOrders").asLong()).isGreaterThanOrEqualTo(1);
     }
 
     // ===== product report: best selling, based on real order items, excluding cancelled =====

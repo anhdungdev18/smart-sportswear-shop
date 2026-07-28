@@ -98,7 +98,10 @@ export async function apiFetch<T>(
   }
 
   const isGet = !rest.method || rest.method.toUpperCase() === "GET";
-  const nextOptions = next ?? (isGet && !token ? { revalidate: 60 } : undefined);
+  // `cache: "no-store"` and `next.revalidate` are mutually exclusive in Next.js.
+  // Only provide the default revalidation policy when the caller has not
+  // explicitly selected a cache mode.
+  const nextOptions = next ?? (isGet && !token && rest.cache == null ? { revalidate: 60 } : undefined);
 
   const res = await fetch(buildUrl(path, query), {
     ...rest,

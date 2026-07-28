@@ -435,7 +435,7 @@ public class ProductService {
     private Specification<Product> applyCommonFilters(
             Specification<Product> spec, ProductListQuery q, UUID resolvedCategoryId, UUID resolvedBrandId) {
         if (resolvedCategoryId != null) {
-            spec = spec.and(ProductSpecifications.hasCategoryId(resolvedCategoryId));
+            spec = spec.and(ProductSpecifications.hasCategoryIdOrParentId(resolvedCategoryId));
         }
         if (resolvedBrandId != null) {
             spec = spec.and(ProductSpecifications.hasBrandId(resolvedBrandId));
@@ -449,6 +449,17 @@ public class ProductService {
         }
         if (q.sportType() != null && !q.sportType().isBlank()) {
             spec = spec.and(ProductSpecifications.hasSportType(q.sportType().trim()));
+        }
+        if (q.surface() != null && !q.surface().isBlank()) {
+            java.util.List<String> surfaceSlugs = switch (q.surface().trim().toUpperCase()) {
+                case "FG" -> java.util.List.of("giay-da-bong-fg");
+                case "TF", "AG" -> java.util.List.of("giay-da-bong-tf");
+                case "IC", "FUTSAL" -> java.util.List.of("giay-futsal");
+                default -> java.util.List.<String>of();
+            };
+            if (!surfaceSlugs.isEmpty()) {
+                spec = spec.and(ProductSpecifications.hasCategorySlugIn(surfaceSlugs));
+            }
         }
         if (q.size() != null && !q.size().isBlank()) {
             spec = spec.and(ProductSpecifications.hasVariantSize(q.size().trim()));

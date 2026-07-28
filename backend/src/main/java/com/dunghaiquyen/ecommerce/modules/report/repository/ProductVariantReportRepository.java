@@ -34,4 +34,18 @@ public interface ProductVariantReportRepository extends JpaRepository<ProductVar
             + "order by (v.stockQuantity - v.reservedQuantity) asc")
     List<ProductVariant> findLowStockVariants(
             @Param("excludedStatus") VariantStatus excludedStatus, @Param("threshold") int threshold, Pageable pageable);
+
+    @Query("select v from ProductVariant v join fetch v.product where lower(v.sku) = lower(:sku)")
+    List<ProductVariant> findLookupBySku(@Param("sku") String sku);
+
+    @Query(value = """
+            select v.*
+            from product_variants v
+            join products p on p.id = v.product_id
+            where lower(v.sku) like lower(concat('%', cast(:query as text), '%'))
+               or lower(p.name) like lower(concat('%', cast(:query as text), '%'))
+               or lower(p.slug) like lower(concat('%', cast(:query as text), '%'))
+            order by p.name asc, v.sku asc
+            """, nativeQuery = true)
+    List<ProductVariant> searchInventoryLookupByQuery(@Param("query") String query, Pageable pageable);
 }

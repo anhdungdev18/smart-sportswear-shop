@@ -12,5 +12,9 @@ public interface ForecastRunRepository extends JpaRepository<ForecastRun, UUID> 
 
     Optional<ForecastRun> findFirstByVariantIdOrderByGeneratedAtDesc(UUID variantId);
 
+    Optional<ForecastRun> findFirstByVariantIdAndDataSourceOrderByGeneratedAtDesc(UUID variantId, String dataSource);
+
     void deleteAllByVariantIdIn(List<UUID> variantIds);
+
+    void deleteAllByVariantIdInAndDataSource(List<UUID> variantIds, String dataSource);
 }

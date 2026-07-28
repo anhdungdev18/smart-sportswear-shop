@@ -1,6 +1,6 @@
 import { apiFetch } from "@/lib/api";
 import { endpoints } from "@/lib/endpoints";
-import type { CollectionDetail, CollectionSummary, PageMeta } from "@/modules/category/types";
+import type { Category, CollectionDetail, CollectionSummary, PageMeta } from "@/modules/category/types";
 import type { ProductListItem } from "@/modules/product/types";
 
 const DEFAULT_PAGE_META: PageMeta = {
@@ -21,6 +21,7 @@ type CategoryListingQuery = {
   color?: string;
   minPrice?: string;
   maxPrice?: string;
+  surface?: string;
 };
 
 export async function fetchCategoryListing(query: CategoryListingQuery) {
@@ -38,12 +39,23 @@ export async function fetchCategoryListing(query: CategoryListingQuery) {
   }
 }
 
-export async function fetchCategoryName(slug: string) {
+export async function fetchCategoryDetail(slug: string): Promise<Category | null> {
   try {
-    const result = await apiFetch<{ name: string }>(endpoints.category(slug));
-    return result.data.name;
+    const result = await apiFetch<Category>(endpoints.category(slug));
+    return result.data;
   } catch {
-    return slug.replace(/-/g, " ");
+    return null;
+  }
+}
+
+export async function fetchCategoryTree(): Promise<Category[]> {
+  try {
+    const result = await apiFetch<Category[]>(endpoints.categoryTree, {
+      next: { revalidate: 300, tags: ["category-tree"] },
+    });
+    return result.data ?? [];
+  } catch {
+    return [];
   }
 }
 

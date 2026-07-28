@@ -26,7 +26,7 @@ async def load_context_node(state: AgentState) -> dict:
     try:
         from app.db import chat_history_repository
         db_history = await chat_history_repository.load_last_messages(
-            session_id, limit=_MAX_HISTORY
+            session_id, state.get("user_id"), limit=_MAX_HISTORY
         )
         if db_history:
             logger.info(

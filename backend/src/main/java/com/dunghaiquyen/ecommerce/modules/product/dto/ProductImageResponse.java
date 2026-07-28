@@ -7,6 +7,7 @@ public record ProductImageResponse(
         String imageUrl,
         String publicId,
         String altText,
+        String color,
         boolean isPrimary,
         int sortOrder) {
 }

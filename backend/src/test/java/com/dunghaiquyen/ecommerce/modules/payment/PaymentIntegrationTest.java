@@ -2,6 +2,7 @@ package com.dunghaiquyen.ecommerce.modules.payment;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -131,10 +132,13 @@ class PaymentIntegrationTest extends AbstractIntegrationTest {
     }
 
     private Map<String, String> buildSignedCallbackParams(String transactionRef, String responseCode) {
+        var payment = paymentRepository.findByTransactionRef(transactionRef).orElseThrow();
         Map<String, String> params = new LinkedHashMap<>();
         params.put("vnp_TxnRef", transactionRef);
         params.put("vnp_ResponseCode", responseCode);
-        params.put("vnp_Amount", "10000000");
+        params.put("vnp_TransactionStatus", responseCode.equals("00") ? "00" : responseCode);
+        params.put("vnp_TmnCode", "TESTTMN1");
+        params.put("vnp_Amount", payment.getAmount().movePointRight(2).toBigIntegerExact().toString());
         params.put("vnp_TransactionNo", "VNP" + UUID.randomUUID());
         params.put("vnp_BankCode", "NCB");
         params.put("vnp_PayDate", "20260101120000");
@@ -378,7 +382,8 @@ class PaymentIntegrationTest extends AbstractIntegrationTest {
         params.put("vnp_SecureHash", "deadbeef" + params.get("vnp_SecureHash"));
 
         MvcResult result = sendCallback(params);
-        assertThat(result.getResponse().getStatus()).isEqualTo(400);
+        assertThat(result.getResponse().getStatus()).isEqualTo(200);
+        assertThat(json(result.getResponse().getContentAsString()).at("/RspCode").asText()).isEqualTo("97");
 
         var payment = paymentRepository.findByTransactionRef(txnRef).orElseThrow();
         assertThat(payment.getStatus().name())
@@ -397,8 +402,9 @@ class PaymentIntegrationTest extends AbstractIntegrationTest {
 
         MvcResult result = sendCallback(params);
         assertThat(result.getResponse().getStatus())
-                .as("callback must be public - a bad payload should fail business validation (400), never 401")
-                .isEqualTo(400);
+                .as("callback must be public and return VNPay's IPN response contract, never 401")
+                .isEqualTo(200);
+        assertThat(json(result.getResponse().getContentAsString()).at("/RspCode").asText()).isEqualTo("97");
     }
 
     // ===== duplicate callback delivery is idempotent =====
@@ -427,8 +433,8 @@ class PaymentIntegrationTest extends AbstractIntegrationTest {
         // Same gateway re-delivers the exact same callback a second time.
         MvcResult secondDelivery = sendCallback(params);
         assertThat(secondDelivery.getResponse().getStatus()).isEqualTo(200);
-        assertThat(json(secondDelivery.getResponse().getContentAsString()).at("/success").asBoolean())
-                .isTrue();
+        assertThat(json(secondDelivery.getResponse().getContentAsString()).at("/RspCode").asText())
+                .isEqualTo("02");
 
         var afterSecond = paymentRepository.findByTransactionRef(txnRef).orElseThrow();
         assertThat(afterSecond.getStatus().name()).isEqualTo("PAID");
@@ -589,8 +595,8 @@ class PaymentIntegrationTest extends AbstractIntegrationTest {
 
         MvcResult callbackResult = sendCallback(buildSignedCallbackParams(txnRef, "00"));
         assertThat(callbackResult.getResponse().getStatus()).isEqualTo(200);
-        assertThat(json(callbackResult.getResponse().getContentAsString()).at("/success").asBoolean())
-                .isTrue();
+        assertThat(json(callbackResult.getResponse().getContentAsString()).at("/RspCode").asText())
+                .isEqualTo("00");
 
         var payment = paymentRepository.findByTransactionRef(txnRef).orElseThrow();
         assertThat(payment.getStatus().name())
@@ -613,5 +619,101 @@ class PaymentIntegrationTest extends AbstractIntegrationTest {
         assertThat(secondDelivery.getResponse().getStatus()).isEqualTo(200);
         var orderAfterDuplicate = orderRepository.findById(UUID.fromString(orderId)).orElseThrow();
         assertThat(orderAfterDuplicate.getPaymentStatus()).isEqualTo(paymentStatusBeforeCallback);
+    }
+
+    @Test
+    void paidOrder_cannotBeCancelledWithoutRefund() throws Exception {
+        AdminContext ctx = setUpAdmin();
+        String productId = createActiveProduct(ctx, "Paid Cancel Guard");
+        String variantId = createVariant(ctx, productId, 125000, 10);
+        String email = uniqueEmail("paid-cancel-guard");
+        TokenPair buyer = registerUser(email);
+        addToCart(buyer.accessToken(), variantId, 1);
+        String orderId = createOrder(buyer.accessToken(), createAddressForUser(email), "VNPAY");
+        String txnRef = json(createPaymentSession(buyer.accessToken(), orderId).getResponse().getContentAsString())
+                .at("/data/transactionRef").asText();
+        mockMvc.perform(callbackRequest(buildSignedCallbackParams(txnRef, "00"))).andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/v1/orders/" + orderId + "/cancel")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + buyer.accessToken()))
+                .andExpect(status().isConflict());
+
+        var order = orderRepository.findById(UUID.fromString(orderId)).orElseThrow();
+        assertThat(order.getOrderStatus().name()).isEqualTo("PENDING_CONFIRMATION");
+        assertThat(order.getPaymentStatus().name()).isEqualTo("PAID");
+    }
+
+    @Test
+    void unpaidVnpayOrder_cannotBeConfirmed() throws Exception {
+        AdminContext ctx = setUpAdmin();
+        String productId = createActiveProduct(ctx, "Unpaid Confirm Guard");
+        String variantId = createVariant(ctx, productId, 130000, 10);
+        String email = uniqueEmail("unpaid-confirm-guard");
+        TokenPair buyer = registerUser(email);
+        addToCart(buyer.accessToken(), variantId, 1);
+        String orderId = createOrder(buyer.accessToken(), createAddressForUser(email), "VNPAY");
+
+        mockMvc.perform(patch("/api/v1/admin/orders/" + orderId + "/status")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + ctx.token())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"CONFIRMED\"}"))
+                .andExpect(status().isConflict());
+
+        var order = orderRepository.findById(UUID.fromString(orderId)).orElseThrow();
+        assertThat(order.getOrderStatus().name()).isEqualTo("PENDING_CONFIRMATION");
+    }
+
+    @Test
+    void callback_withSignedWrongAmount_isRejected() throws Exception {
+        AdminContext ctx = setUpAdmin();
+        String productId = createActiveProduct(ctx, "Amount Guard");
+        String variantId = createVariant(ctx, productId, 140000, 10);
+        String email = uniqueEmail("amount-guard");
+        TokenPair buyer = registerUser(email);
+        addToCart(buyer.accessToken(), variantId, 1);
+        String orderId = createOrder(buyer.accessToken(), createAddressForUser(email), "VNPAY");
+        String txnRef = json(createPaymentSession(buyer.accessToken(), orderId).getResponse().getContentAsString())
+                .at("/data/transactionRef").asText();
+
+        Map<String, String> params = buildSignedCallbackParams(txnRef, "00");
+        params.put("vnp_Amount", "1");
+        params.remove("vnp_SecureHash");
+        params.put("vnp_SecureHash", signatureService.hash(params));
+
+        MvcResult mismatch = mockMvc.perform(callbackRequest(params)).andExpect(status().isOk()).andReturn();
+        assertThat(json(mismatch.getResponse().getContentAsString()).at("/RspCode").asText()).isEqualTo("04");
+        assertThat(paymentRepository.findByTransactionRef(txnRef).orElseThrow().getStatus().name())
+                .isEqualTo("PENDING");
+    }
+
+    @Test
+    void callback_requiresMatchingMerchantAndTransactionStatus() throws Exception {
+        AdminContext ctx = setUpAdmin();
+        String productId = createActiveProduct(ctx, "Merchant Guard");
+        String variantId = createVariant(ctx, productId, 145000, 10);
+        String email = uniqueEmail("merchant-guard");
+        TokenPair buyer = registerUser(email);
+        addToCart(buyer.accessToken(), variantId, 1);
+        String orderId = createOrder(buyer.accessToken(), createAddressForUser(email), "VNPAY");
+        String txnRef = json(createPaymentSession(buyer.accessToken(), orderId).getResponse().getContentAsString())
+                .at("/data/transactionRef").asText();
+
+        Map<String, String> wrongMerchant = buildSignedCallbackParams(txnRef, "00");
+        wrongMerchant.put("vnp_TmnCode", "OTHER001");
+        wrongMerchant.remove("vnp_SecureHash");
+        wrongMerchant.put("vnp_SecureHash", signatureService.hash(wrongMerchant));
+        MvcResult merchantResult =
+                mockMvc.perform(callbackRequest(wrongMerchant)).andExpect(status().isOk()).andReturn();
+        assertThat(json(merchantResult.getResponse().getContentAsString()).at("/RspCode").asText())
+                .isEqualTo("99");
+
+        Map<String, String> unsuccessfulTransaction = buildSignedCallbackParams(txnRef, "00");
+        unsuccessfulTransaction.put("vnp_TransactionStatus", "01");
+        unsuccessfulTransaction.remove("vnp_SecureHash");
+        unsuccessfulTransaction.put("vnp_SecureHash", signatureService.hash(unsuccessfulTransaction));
+        mockMvc.perform(callbackRequest(unsuccessfulTransaction)).andExpect(status().isOk());
+
+        assertThat(paymentRepository.findByTransactionRef(txnRef).orElseThrow().getStatus().name())
+                .isEqualTo("FAILED");
     }
 }

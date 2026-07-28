@@ -8,7 +8,9 @@ Isolation:
 """
 from __future__ import annotations
 
+import jwt
 import pytest
+from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock, patch
 
 from app.schemas.action import CancelOrderResult, AddToCartResult
@@ -18,10 +20,22 @@ from app.schemas.action import CancelOrderResult, AddToCartResult
 
 def _req(message: str, session_id: str = "test_sess",
          user_id: str | None = None, access_token: str | None = None) -> dict:
+    token = None
+    if access_token:
+        token = jwt.encode(
+            {
+                "sub": user_id or "test-user",
+                "role": "CUSTOMER",
+                "type": "access",
+                "exp": datetime.now(timezone.utc) + timedelta(minutes=15),
+            },
+            "test-access-secret-that-is-at-least-32-bytes",
+            algorithm="HS256",
+        )
     return {
         "sessionId": session_id,
         "userId": user_id,
-        "accessToken": access_token,
+        "accessToken": token,
         "message": message,
         "channel": "web",
     }
@@ -76,8 +90,8 @@ async def test_size_advisor_rule_based(http_client):
     assert resp.status_code == 200
     body = resp.json()
     assert body["sessionState"]["intent"] == "SIZE_ADVISOR"
-    # Rule-based path: reply should mention the suggested size
-    assert body["reply"]
+    assert body["toolCalls"][0]["result"]["source"] == "rule_based"
+    assert body["toolCalls"][0]["result"]["suggestedSize"] == "L"
 
 
 # ── 6. ORDER_STATUS — no auth token → auth-blocked reply ─────────────────────
@@ -90,7 +104,7 @@ async def test_order_status_no_auth(http_client):
     body = resp.json()
     assert body["sessionState"]["intent"] == "ORDER_STATUS"
     # No token → tool returns error or service returns auth_required
-    assert body["reply"]
+    assert body["sessionState"]["blockedReason"] == "auth_required"
 
 
 # ── 7. CANCEL_ORDER → awaitingConfirmation ────────────────────────────────────
@@ -159,13 +173,12 @@ async def test_reject_cancel_order(http_client):
 # ── 10. EXPIRED_CONFIRMATION ──────────────────────────────────────────────────
 
 async def test_expired_confirmation(http_client):
-    from datetime import datetime, timezone, timedelta
     from app.memory.base_store import PENDING_ACTION_TTL_SECONDS
     from app.memory import session_store
 
     # Manually plant an expired pending action in the session store
     old_ts = (datetime.now(timezone.utc) - timedelta(seconds=PENDING_ACTION_TTL_SECONDS + 60)).isoformat()
-    await session_store.update_context("sess_expired",
+    await session_store.update_context("user:u1:sess_expired",
         pending_action="cancel_order",
         pending_action_payload={"tool": "cancel_order", "args": {}, "display": "hủy đơn"},
         pending_action_created_at=old_ts,

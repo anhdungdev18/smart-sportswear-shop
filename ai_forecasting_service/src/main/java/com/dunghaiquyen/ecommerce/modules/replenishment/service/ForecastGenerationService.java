@@ -60,7 +60,7 @@ public class ForecastGenerationService {
             // If it is COMPLETED or FAILED, we can allow a new run
             if (!currentStatus.compareAndSet(Status.COMPLETED, Status.SYNCING) &&
                 !currentStatus.compareAndSet(Status.FAILED, Status.SYNCING)) {
-                throw new IllegalStateException("A batch is already running");
+                throw new IllegalArgumentException("A batch is already running");
             }
         }
         startedAt.set(Instant.now());

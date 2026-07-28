@@ -12,14 +12,14 @@ import { addWishlistItem } from "@/modules/account/api";
 import { addCartItem } from "@/modules/cart/api";
 import type { ProductVariant } from "@/modules/product/types";
 
-interface ProductColor {
+export interface ProductColor {
   id: string;
   image: string;
   label: string;
   active?: boolean;
 }
 
-interface ProductSize {
+export interface ProductSize {
   id: string;
   label: string;
   quantity: number;
@@ -35,6 +35,19 @@ interface ProductPurchasePanelProps {
   colors: ProductColor[];
   sizes: ProductSize[];
   variants: ProductVariant[];
+  // Color is controlled by the parent so the gallery can react to it too.
+  selectedColorLabel: string;
+  onSelectColor: (label: string) => void;
+}
+
+const SIZE_ORDER = ["XXS", "XS", "S", "M", "L", "XL", "XXL", "XXXL", "2XL", "3XL", "4XL"];
+
+// Natural size ordering: letter sizes by the scale above, numeric (shoe) sizes ascending after them.
+function sizeRank(label: string) {
+  const idx = SIZE_ORDER.indexOf(label.trim().toUpperCase());
+  if (idx !== -1) return idx;
+  const num = Number(label);
+  return Number.isFinite(num) ? 100 + num : 999;
 }
 
 export function ProductPurchasePanel({
@@ -47,11 +60,10 @@ export function ProductPurchasePanel({
   colors,
   sizes,
   variants,
+  selectedColorLabel,
+  onSelectColor,
 }: ProductPurchasePanelProps) {
   const router = useRouter();
-  const [selectedColorLabel, setSelectedColorLabel] = useState(
-    colors.find((color) => color.active)?.label ?? colors[0]?.label ?? "",
-  );
   const [selectedSizeLabel, setSelectedSizeLabel] = useState(
     sizes.find((size) => size.quantity > 0)?.label ?? sizes[0]?.label ?? "",
   );
@@ -63,60 +75,78 @@ export function ProductPurchasePanel({
   const selectedColor = colors.find((color) => color.label === selectedColorLabel);
   const filledStars = Math.floor(ratingPercentage / 20);
 
-  const availableSizes = useMemo(() => {
-    if (variants.length === 0) {
-      return sizes;
-    }
+  // Every size the product offers (across all colors), in natural order — so the
+  // customer always sees the full size run, not just what's in stock right now.
+  const allSizes = useMemo(() => {
+    const labels = new Set<string>();
+    variants.forEach((variant) => {
+      if (variant.size) labels.add(variant.size);
+    });
+    if (labels.size === 0) return sizes.map((size) => size.label);
+    return Array.from(labels).sort((a, b) => sizeRank(a) - sizeRank(b));
+  }, [variants, sizes]);
 
-    const sizeMap = new Map<string, ProductSize>();
-
+  // Available quantity per size for the currently selected color.
+  const availabilityBySize = useMemo(() => {
+    const map = new Map<string, number>();
     variants
       .filter((variant) => !selectedColorLabel || variant.color === selectedColorLabel)
       .forEach((variant) => {
         const label = variant.size ?? "";
-        const existing = sizeMap.get(label);
-        const nextQuantity = variant.availableQuantity;
-
-        if (!existing || nextQuantity > existing.quantity) {
-          sizeMap.set(label, {
-            id: variant.id,
-            label,
-            quantity: nextQuantity,
-          });
-        }
+        map.set(label, Math.max(map.get(label) ?? 0, variant.availableQuantity));
       });
+    return map;
+  }, [variants, selectedColorLabel]);
 
-    return Array.from(sizeMap.values());
-  }, [variants, sizes, selectedColorLabel]);
+  // Colors whose every variant is sold out — flagged in the swatch row.
+  const soldOutColors = useMemo(() => {
+    const byColor = new Map<string, number>();
+    variants.forEach((variant) => {
+      const label = variant.color ?? "";
+      byColor.set(label, Math.max(byColor.get(label) ?? 0, variant.availableQuantity));
+    });
+    const set = new Set<string>();
+    byColor.forEach((qty, label) => {
+      if (qty <= 0) set.add(label);
+    });
+    return set;
+  }, [variants]);
 
   const selectedVariant = useMemo(() => {
     if (variants.length === 0) return null;
-
-    const exactMatch = variants.find(
-      (variant) => variant.color === selectedColorLabel && variant.size === selectedSizeLabel,
+    return (
+      variants.find(
+        (variant) =>
+          (!selectedColorLabel || variant.color === selectedColorLabel) &&
+          (!selectedSizeLabel || variant.size === selectedSizeLabel),
+      ) ?? null
     );
-    if (exactMatch) return exactMatch;
-
-    const sameColor = variants.find((variant) => variant.color === selectedColorLabel);
-    if (sameColor) return sameColor;
-
-    return variants[0] ?? null;
   }, [variants, selectedColorLabel, selectedSizeLabel]);
 
+  const selectionUnavailable =
+    variants.length > 0 && (!selectedVariant || selectedVariant.availableQuantity <= 0);
+
+  // Price shown reflects the selected color (colors may be priced differently).
+  const displayPrice = useMemo(() => {
+    const prices = variants
+      .filter((variant) => !selectedColorLabel || variant.color === selectedColorLabel)
+      .map((variant) => variant.price);
+    return prices.length ? Math.min(...prices) : price;
+  }, [variants, selectedColorLabel, price]);
+
   useEffect(() => {
-    if (availableSizes.length === 0) {
+    if (allSizes.length === 0) {
       setSelectedSizeLabel("");
       return;
     }
 
-    const stillValid = availableSizes.some((size) => size.label === selectedSizeLabel);
-    if (stillValid) return;
+    const currentOk =
+      allSizes.includes(selectedSizeLabel) && (availabilityBySize.get(selectedSizeLabel) ?? 0) > 0;
+    if (currentOk) return;
 
-    const nextSize =
-      availableSizes.find((size) => size.quantity > 0)?.label ?? availableSizes[0]?.label ?? "";
-
-    setSelectedSizeLabel(nextSize);
-  }, [availableSizes, selectedSizeLabel]);
+    const firstInStock = allSizes.find((label) => (availabilityBySize.get(label) ?? 0) > 0);
+    setSelectedSizeLabel(firstInStock ?? allSizes[0] ?? "");
+  }, [allSizes, availabilityBySize, selectedSizeLabel]);
 
   const decrementQuantity = () => setQuantity((current) => Math.max(1, current - 1));
   const incrementQuantity = () => setQuantity((current) => current + 1);
@@ -191,55 +221,87 @@ export function ProductPurchasePanel({
         <span>({reviewCount} đánh giá)</span>
       </div>
 
-      <div className="mb-6 text-[30px] font-semibold text-ivy-dark">{price.toLocaleString("vi-VN")}đ</div>
+      <div className="mb-6 text-[30px] font-semibold text-ivy-dark">{displayPrice.toLocaleString("vi-VN")}đ</div>
 
-      <div className="mb-6 border-t border-ivy-hairline pt-6">
-        <div className="mb-3 text-[14px] font-semibold uppercase tracking-[0.03em] text-ivy-dark">
-          Màu sắc: <span className="font-normal normal-case tracking-normal text-ivy-text">{selectedColor?.label}</span>
+      {/* Each product is a single colorway, so color is shown as a per-product label.
+          The swatch picker only appears if a product ever carries more than one color. */}
+      {selectedColor?.label ? (
+        <div className="mb-6 border-t border-ivy-hairline pt-6">
+          <div className="text-[14px] font-semibold uppercase tracking-[0.03em] text-ivy-dark">
+            Màu sắc: <span className="font-normal normal-case tracking-normal text-ivy-text">{selectedColor.label}</span>
+          </div>
+          {colors.length > 1 ? (
+            <div className="mt-3 flex flex-wrap gap-3">
+              {colors.map((color) => {
+                const isSoldOut = soldOutColors.has(color.label);
+                return (
+                  <button
+                    key={color.id}
+                    type="button"
+                    aria-label={isSoldOut ? `${color.label} (hết hàng)` : color.label}
+                    aria-pressed={selectedColorLabel === color.label}
+                    title={isSoldOut ? `${color.label} - Hết hàng` : color.label}
+                    onClick={() => onSelectColor(color.label)}
+                    className={cn(
+                      "relative h-12 w-12 overflow-hidden rounded-full border border-[#d8d8db] transition",
+                      selectedColorLabel === color.label && "ring-2 ring-ivy-dark ring-offset-2",
+                      isSoldOut && "opacity-45",
+                    )}
+                  >
+                    <Image src={color.image} alt={color.label} fill sizes="48px" className="object-cover" />
+                    {isSoldOut ? (
+                      <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                        <span className="h-[1.5px] w-[150%] rotate-45 bg-ivy-dark/70" />
+                      </span>
+                    ) : null}
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
         </div>
-        <div className="flex flex-wrap gap-3">
-          {colors.map((color) => (
-            <button
-              key={color.id}
-              type="button"
-              aria-label={color.label}
-              aria-pressed={selectedColorLabel === color.label}
-              onClick={() => setSelectedColorLabel(color.label)}
-              className={cn(
-                "relative h-12 w-12 overflow-hidden rounded-full border border-[#d8d8db] transition",
-                selectedColorLabel === color.label && "ring-2 ring-ivy-dark ring-offset-2",
-              )}
-            >
-              <Image src={color.image} alt={color.label} fill sizes="48px" className="object-cover" />
-            </button>
-          ))}
-        </div>
-      </div>
+      ) : null}
 
       <div className="mb-6 border-t border-ivy-hairline pt-6">
         <div className="mb-3 text-[14px] font-semibold uppercase tracking-[0.03em] text-ivy-dark">Kích thước</div>
         <div className="flex flex-wrap gap-3">
-          {availableSizes.map((size) => {
-            const isOutOfStock = size.quantity === 0;
-            const isSelected = selectedSizeLabel === size.label;
+          {allSizes.map((label) => {
+            const isOutOfStock = (availabilityBySize.get(label) ?? 0) <= 0;
+            const isSelected = selectedSizeLabel === label;
             return (
               <button
-                key={size.id}
+                key={label}
                 type="button"
                 disabled={isOutOfStock}
                 data-selected={isSelected}
-                onClick={() => setSelectedSizeLabel(size.label)}
+                onClick={() => setSelectedSizeLabel(label)}
+                title={isOutOfStock ? `Size ${label} - Hết hàng` : `Size ${label}`}
                 className={cn(
-                  "h-10 min-w-[50px] rounded-tl-[14px] rounded-br-[14px] border border-ivy-hairline px-3 text-[13px] uppercase text-ivy-text transition",
-                  isSelected && "border-ivy-dark font-semibold text-ivy-dark",
-                  isOutOfStock && "cursor-not-allowed border-ivy-hairline text-ivy-disabled line-through",
+                  "relative h-10 min-w-[50px] overflow-hidden rounded-tl-[14px] rounded-br-[14px] border border-ivy-hairline px-3 text-[13px] uppercase text-ivy-text transition",
+                  isSelected && !isOutOfStock && "border-ivy-dark font-semibold text-ivy-dark",
+                  isOutOfStock && "cursor-not-allowed border-ivy-hairline/60 text-ivy-disabled",
                 )}
               >
-                {size.label}
+                {label}
+                {isOutOfStock ? (
+                  // "X" crossing the box (two corner-to-corner diagonals) so a sold-out size is
+                  // clearly marked, not hidden.
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute inset-0"
+                    style={{
+                      backgroundImage:
+                        "linear-gradient(to top right, transparent calc(50% - 0.75px), #c0242a calc(50% - 0.75px), #c0242a calc(50% + 0.75px), transparent calc(50% + 0.75px)), linear-gradient(to bottom right, transparent calc(50% - 0.75px), #c0242a calc(50% - 0.75px), #c0242a calc(50% + 0.75px), transparent calc(50% + 0.75px))",
+                    }}
+                  />
+                ) : null}
               </button>
             );
           })}
         </div>
+        {selectionUnavailable ? (
+          <p className="mt-3 text-[13px] font-medium text-[#C62127]">Size/màu bạn chọn hiện đã hết hàng.</p>
+        ) : null}
         <a href="#" className="mt-3 inline-flex items-center gap-2 text-[14px] text-ivy-text underline">
           <Ruler size={16} />
           Kiểm tra size của bạn
@@ -286,15 +348,15 @@ export function ProductPurchasePanel({
         <button
           type="button"
           onClick={() => void handleCart("cart")}
-          disabled={pending !== null}
+          disabled={pending !== null || selectionUnavailable}
           className="h-12 rounded-tl-[18px] rounded-br-[18px] bg-ivy-dark px-8 text-[14px] font-semibold uppercase tracking-[0.03em] text-white disabled:opacity-60"
         >
-          {pending === "cart" ? "Đang thêm..." : "Thêm vào giỏ"}
+          {selectionUnavailable ? "Hết hàng" : pending === "cart" ? "Đang thêm..." : "Thêm vào giỏ"}
         </button>
         <button
           type="button"
           onClick={() => void handleCart("buy")}
-          disabled={pending !== null}
+          disabled={pending !== null || selectionUnavailable}
           className="h-12 rounded-tl-[18px] rounded-br-[18px] border border-ivy-dark px-8 text-[14px] font-semibold uppercase tracking-[0.03em] text-ivy-dark disabled:opacity-60"
         >
           {pending === "buy" ? "Đang xử lý..." : "Mua hàng"}

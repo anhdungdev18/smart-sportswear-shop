@@ -274,6 +274,7 @@ ChatRequest nhận `accessToken` từ client:
 | DB_READ_URL                 | (trống)                | Phase 3       |
 | DB_WRITE_URL                | (trống)                | Durable chat history; disabled when empty |
 | BACKEND_API_BASE_URL        | localhost:8082         | Phase 5       |
+| JWT_ACCESS_SECRET           | (trống)                | Phải giống backend; xác minh JWT và khóa API admin |
 | LOG_LEVEL                   | INFO                   | Phase 0       |
 | MODEL_PROVIDER              | anthropic              | `anthropic` hoặc `openai` |
 | MODEL_NAME                  | claude-sonnet-4-6      | Model used by the configured provider |

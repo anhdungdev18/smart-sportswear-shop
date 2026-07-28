@@ -14,6 +14,11 @@ export interface Category {
   description?: string;
   imageUrl?: string;
   parentId?: string;
+  parentName?: string;
+  parentSlug?: string;
+  nodeType?: "GROUP" | "LEAF";
+  sortOrder?: number;
+  children?: Category[];
 }
 
 export interface CollectionSummary {

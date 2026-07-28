@@ -2,6 +2,7 @@ export type InventoryItemResponse = {
   variantId: string;
   productId: string;
   productName: string;
+  thumbnail: string | null;
   sku: string;
   size: string | null;
   color: string | null;

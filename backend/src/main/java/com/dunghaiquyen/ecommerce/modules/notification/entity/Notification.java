@@ -19,10 +19,8 @@ import lombok.Setter;
  * One row per attempted notification (Phase O). user/order are both nullable
  * - PASSWORD_RESET has no order; a notification tied to a since-deleted
  * user/order still keeps its row (on delete set null) since this is a send
- * history, not a live reference. Written PENDING first, then updated to
- * SENT/FAILED in the same transaction by NotificationService - see its class
- * javadoc for why a failed send never rolls back the business action that
- * triggered it.
+ * history, not a live reference. Organic order notifications are committed as
+ * PENDING, then delivered asynchronously after the business transaction commits.
  */
 @Getter
 @Setter

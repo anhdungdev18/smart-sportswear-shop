@@ -1,5 +1,6 @@
 package com.dunghaiquyen.ecommerce.modules.category.dto;
 
+import com.dunghaiquyen.ecommerce.modules.category.entity.CategoryNodeType;
 import com.dunghaiquyen.ecommerce.modules.category.entity.CategoryStatus;
 import java.util.UUID;
 
@@ -8,5 +9,10 @@ public record CategoryResponse(
         String name,
         String slug,
         String description,
-        CategoryStatus status) {
+        CategoryStatus status,
+        UUID parentId,
+        String parentName,
+        String parentSlug,
+        CategoryNodeType nodeType,
+        int sortOrder) {
 }

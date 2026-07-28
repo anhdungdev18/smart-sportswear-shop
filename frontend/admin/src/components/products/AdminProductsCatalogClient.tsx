@@ -14,6 +14,7 @@ import {
   createVariant,
   deleteProduct,
   deleteProductImage,
+  setPrimaryProductImage,
   fetchAdminProductDetail,
   listCollectionsForPicker,
   listProductCollections,
@@ -50,6 +51,51 @@ type ApiEnvelopePayload = {
 };
 
 type VariantDraft = ReturnType<typeof createEmptyVariantForm>;
+
+// One auto-generated row in the "create many variants" matrix (color × size).
+type GenVariantRow = {
+  key: string;
+  color: string;
+  size: string;
+  sku: string;
+  price: string;
+  compareAtPrice: string;
+  stockQuantity: string;
+};
+
+// "All Black, Red , Red" -> ["All Black", "Red"] (trimmed, de-duped, blanks dropped).
+function parseCsvList(input: string) {
+  return Array.from(new Set(input.split(",").map((item) => item.trim()).filter(Boolean)));
+}
+
+// Turn a human label into an uppercase SKU token: "All Black" -> "ALLBLACK".
+function skuToken(value: string) {
+  return toSlug(value).replace(/-/g, "").toUpperCase();
+}
+
+const ADMIN_SIZE_ORDER = ["XXS", "XS", "S", "M", "L", "XL", "XXL", "XXXL", "2XL", "3XL", "4XL"];
+function adminSizeRank(label: string | null | undefined) {
+  const idx = ADMIN_SIZE_ORDER.indexOf((label ?? "").trim().toUpperCase());
+  if (idx !== -1) return idx;
+  const num = Number(label);
+  return Number.isFinite(num) ? 100 + num : 999;
+}
+
+// Group a product's variants by color so the editor shows one block per color
+// (color once at the top) with its sizes listed inside, naturally ordered.
+function groupVariantsByColor(variants: ProductVariantResponse[]): Array<[string, ProductVariantResponse[]]> {
+  const groups = new Map<string, ProductVariantResponse[]>();
+  for (const variant of variants) {
+    const key = variant.color ?? "";
+    const arr = groups.get(key) ?? [];
+    arr.push(variant);
+    groups.set(key, arr);
+  }
+  return Array.from(groups.entries()).map(
+    ([color, list]) =>
+      [color, [...list].sort((a, b) => adminSizeRank(a.size) - adminSizeRank(b.size))] as [string, ProductVariantResponse[]],
+  );
+}
 
 const fieldLabelMap: Record<string, string> = {
   name: "Tên sản phẩm",
@@ -174,6 +220,7 @@ function createEmptyImageForm() {
     imageUrl: "",
     publicId: "",
     altText: "",
+    color: "",
     isPrimary: false,
     sortOrder: "0"
   };
@@ -183,6 +230,7 @@ function createEmptyUploadForm() {
   return {
     file: null as File | null,
     altText: "",
+    color: "",
     isPrimary: false,
     sortOrder: "0"
   };
@@ -255,14 +303,17 @@ const VariantEditorCard = memo(function VariantEditorCard({
   onSave: () => void;
 }) {
   return (
-    <div className="admin-subcard">
-      <strong>{variant.sku}</strong>
-      <div className="table-subtle">Khả dụng hiện tại: {variant.availableQuantity}</div>
-      <div className="admin-form-grid">
+    <tr title={variant.sku}>
+      <td>
         <input className="admin-input" value={draft.size} onChange={(event) => onDraftChange({ size: event.target.value })} />
-        <input className="admin-input" value={draft.color} onChange={(event) => onDraftChange({ color: event.target.value })} />
+      </td>
+      <td>
         <input className="admin-input" type="number" min={0} value={draft.price} onChange={(event) => onDraftChange({ price: event.target.value })} />
+      </td>
+      <td>
         <input className="admin-input" type="number" min={0} value={draft.compareAtPrice} onChange={(event) => onDraftChange({ compareAtPrice: event.target.value })} />
+      </td>
+      <td>
         <select className="select" value={draft.status} onChange={(event) => onDraftChange({ status: event.target.value })}>
           {variantStatusOptions.map((item) => (
             <option value={item} key={item}>
@@ -270,11 +321,14 @@ const VariantEditorCard = memo(function VariantEditorCard({
             </option>
           ))}
         </select>
-      </div>
-      <button className="admin-btn secondary" type="button" onClick={onSave} disabled={saving}>
-        {saving ? "Đang lưu..." : "Lưu biến thể"}
-      </button>
-    </div>
+      </td>
+      <td className="variant-stock">{variant.availableQuantity}</td>
+      <td>
+        <button className="admin-btn secondary" type="button" onClick={onSave} disabled={saving}>
+          {saving ? "..." : "Lưu"}
+        </button>
+      </td>
+    </tr>
   );
 });
 
@@ -282,15 +336,19 @@ const ProductImageCard = memo(function ProductImageCard({
   image,
   productName,
   saving,
-  onDelete
+  settingPrimary,
+  onDelete,
+  onSetPrimary
 }: {
   image: ProductImageResponse;
   productName: string;
   saving: boolean;
+  settingPrimary: boolean;
   onDelete: () => void;
+  onSetPrimary: () => void;
 }) {
   return (
-    <article className="admin-image-card">
+    <article className={`admin-image-card${image.isPrimary ? " is-primary" : ""}`}>
       <Image
         src={image.imageUrl}
         alt={image.altText ?? productName}
@@ -302,22 +360,39 @@ const ProductImageCard = memo(function ProductImageCard({
       <div>
         <strong>{image.altText ?? "Không có alt text"}</strong>
         <div className="table-subtle">
-          {image.isPrimary ? "Ảnh chính" : "Ảnh phụ"} · Thứ tự {image.sortOrder}
+          {image.color ? `Màu: ${image.color} · ` : ""}
+          {image.isPrimary ? "Ảnh chính (nổi bật)" : "Ảnh phụ"} · Thứ tự {image.sortOrder}
         </div>
       </div>
-      <button className="admin-btn secondary" type="button" onClick={onDelete} disabled={saving}>
-        {saving ? "Đang xóa..." : "Xóa ảnh"}
-      </button>
+      <div className="admin-image-actions">
+        {image.isPrimary ? (
+          <span className="status active">Ảnh nổi bật</span>
+        ) : (
+          <button
+            className="admin-btn secondary"
+            type="button"
+            onClick={onSetPrimary}
+            disabled={settingPrimary || saving}
+          >
+            {settingPrimary ? "Đang đặt..." : "Đặt làm ảnh nổi bật"}
+          </button>
+        )}
+        <button className="admin-btn secondary" type="button" onClick={onDelete} disabled={saving || settingPrimary}>
+          {saving ? "Đang xóa..." : "Xóa ảnh"}
+        </button>
+      </div>
     </article>
   );
 });
 
 export function AdminProductsCatalogClient({
   initialProducts,
+  initialSearchTerm = "",
   categories,
   brands
 }: {
   initialProducts: AdminProduct[];
+  initialSearchTerm?: string;
   categories: CategoryResponse[];
   brands: BrandResponse[];
 }) {
@@ -331,15 +406,27 @@ export function AdminProductsCatalogClient({
   const [slugDirty, setSlugDirty] = useState(false);
   const [variantForm, setVariantForm] = useState(createEmptyVariantForm());
   const [variantDrafts, setVariantDrafts] = useState<Record<string, VariantDraft>>({});
+  // "Create many variants" matrix state.
+  const [genColors, setGenColors] = useState("");
+  const [genSizes, setGenSizes] = useState("");
+  const [genBaseSku, setGenBaseSku] = useState("");
+  const [bulkPrice, setBulkPrice] = useState("");
+  const [bulkCompare, setBulkCompare] = useState("");
+  const [bulkStock, setBulkStock] = useState("0");
+  const [genRows, setGenRows] = useState<GenVariantRow[]>([]);
   const [imageForm, setImageForm] = useState(createEmptyImageForm());
   const [uploadForm, setUploadForm] = useState(createEmptyUploadForm());
   const [message, setMessage] = useState<string | null>(null);
   const [saving, setSaving] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
   const [statusFilter, setStatusFilter] = useState<"all" | AdminProduct["status"] | "featured">("all");
   const [activeTab, setActiveTab] = useState<"info" | "variants" | "images" | "collections">("info");
   const [page, setPage] = useState(1);
   const deferredSearchTerm = useDeferredValue(searchTerm);
+
+  useEffect(() => {
+    setSearchTerm(initialSearchTerm);
+  }, [initialSearchTerm]);
 
   const [productCollections, setProductCollections] = useState<CollectionResponse[]>([]);
   const [allCollections, setAllCollections] = useState<CollectionResponse[]>([]);
@@ -640,6 +727,112 @@ export function AdminProductsCatalogClient({
     }
   }
 
+  function handleGenerateMatrix() {
+    const colors = parseCsvList(genColors);
+    const sizes = parseCsvList(genSizes);
+    const colorList = colors.length ? colors : [""];
+    const sizeList = sizes.length ? sizes : [""];
+
+    if (colorList.length === 1 && colorList[0] === "" && sizeList.length === 1 && sizeList[0] === "") {
+      setMessage("Hãy nhập ít nhất một size hoặc một màu để tạo bảng biến thể.");
+      return;
+    }
+
+    const base = (genBaseSku.trim() ? skuToken(genBaseSku) : skuToken(detail?.slug ?? productForm.slug ?? productForm.name ?? "SP")) || "SP";
+    // Skip color/size pairs that already exist on this product.
+    const existing = new Set((detail?.variants ?? []).map((v) => `${(v.color ?? "").toLowerCase()}|${(v.size ?? "").toLowerCase()}`));
+
+    const rows: GenVariantRow[] = [];
+    for (const color of colorList) {
+      for (const size of sizeList) {
+        if (existing.has(`${color.toLowerCase()}|${size.toLowerCase()}`)) continue;
+        const skuParts = [base, color ? skuToken(color) : "", size ? skuToken(size) : ""].filter(Boolean);
+        rows.push({
+          key: `${color}__${size}`,
+          color,
+          size,
+          sku: skuParts.join("-"),
+          price: bulkPrice,
+          compareAtPrice: bulkCompare,
+          stockQuantity: bulkStock || "0"
+        });
+      }
+    }
+
+    if (rows.length === 0) {
+      setGenRows([]);
+      setMessage("Tất cả tổ hợp màu/size này đã tồn tại — không có biến thể mới để tạo.");
+      return;
+    }
+
+    setGenRows(rows);
+    setMessage(`Đã tạo bảng ${rows.length} biến thể. Điền giá/tồn rồi bấm "Lưu tất cả".`);
+  }
+
+  function applyBulkToRows() {
+    setGenRows((rows) =>
+      rows.map((row) => ({
+        ...row,
+        price: bulkPrice !== "" ? bulkPrice : row.price,
+        compareAtPrice: bulkCompare !== "" ? bulkCompare : row.compareAtPrice,
+        stockQuantity: bulkStock !== "" ? bulkStock : row.stockQuantity
+      }))
+    );
+  }
+
+  function updateGenRow(key: string, patch: Partial<GenVariantRow>) {
+    setGenRows((rows) => rows.map((row) => (row.key === key ? { ...row, ...patch } : row)));
+  }
+
+  function removeGenRow(key: string) {
+    setGenRows((rows) => rows.filter((row) => row.key !== key));
+  }
+
+  async function handleSaveAllVariants() {
+    if (!selectedProductId || genRows.length === 0) return;
+
+    if (genRows.some((row) => !(Number(row.price) > 0))) {
+      setMessage('Mỗi biến thể cần giá bán > 0. Dùng "Áp dụng cho tất cả" để điền nhanh.');
+      return;
+    }
+
+    try {
+      setSaving("variant-bulk");
+      setMessage(null);
+      let created = 0;
+      const failed: string[] = [];
+
+      for (const row of genRows) {
+        try {
+          await createVariant(selectedProductId, {
+            sku: row.sku,
+            size: row.size,
+            color: row.color,
+            price: Number(row.price),
+            compareAtPrice: row.compareAtPrice ? Number(row.compareAtPrice) : null,
+            stockQuantity: Number(row.stockQuantity || 0),
+            status: "ACTIVE"
+          });
+          created += 1;
+        } catch (error) {
+          failed.push(`${row.sku}: ${extractError(error, "lỗi")}`);
+        }
+      }
+
+      await refreshDetail(selectedProductId);
+      setGenRows([]);
+      setGenColors("");
+      setGenSizes("");
+      setMessage(
+        failed.length
+          ? `Đã tạo ${created} biến thể. ${failed.length} lỗi: ${failed.slice(0, 3).join(" | ")}`
+          : `Đã tạo ${created} biến thể mới.`
+      );
+    } finally {
+      setSaving(null);
+    }
+  }
+
   async function handleCreateVariant() {
     if (!selectedProductId) {
       setMessage("Hãy tạo sản phẩm trước khi thêm biến thể.");
@@ -723,6 +916,7 @@ export function AdminProductsCatalogClient({
         imageUrl: imageForm.imageUrl,
         publicId: imageForm.publicId || null,
         altText: imageForm.altText || null,
+        color: imageForm.color.trim() || null,
         sortOrder: Number(imageForm.sortOrder || 0),
         isPrimary: imageForm.isPrimary
       });
@@ -755,6 +949,9 @@ export function AdminProductsCatalogClient({
       if (uploadForm.altText.trim()) {
         formData.append("altText", uploadForm.altText.trim());
       }
+      if (uploadForm.color.trim()) {
+        formData.append("color", uploadForm.color.trim());
+      }
       formData.append("isPrimary", String(uploadForm.isPrimary));
       formData.append("sortOrder", String(Number(uploadForm.sortOrder || 0)));
       await uploadProductImage(selectedProductId, formData);
@@ -781,6 +978,24 @@ export function AdminProductsCatalogClient({
       setMessage("Đã xóa ảnh khỏi sản phẩm.");
     } catch (error) {
       setMessage(extractError(error, "Không xóa được ảnh"));
+    } finally {
+      setSaving(null);
+    }
+  }
+
+  async function handleSetPrimaryImage(image: ProductImageResponse) {
+    if (!selectedProductId || image.isPrimary) {
+      return;
+    }
+
+    try {
+      setSaving(`image-primary-${image.id}`);
+      setMessage(null);
+      await setPrimaryProductImage(selectedProductId, image.id);
+      await refreshDetail(selectedProductId);
+      setMessage("Đã đặt ảnh nổi bật cho sản phẩm.");
+    } catch (error) {
+      setMessage(extractError(error, "Không đặt được ảnh nổi bật"));
     } finally {
       setSaving(null);
     }
@@ -1036,12 +1251,89 @@ export function AdminProductsCatalogClient({
           <div className="editor-panel">
             <div className="editor-section-head">
               <h3>Biến thể</h3>
-              <p className="table-subtle">Thêm biến thể mới tại đây. Chỉnh tồn kho sau tạo dùng module tồn kho.</p>
+              <p className="table-subtle">Tạo hàng loạt theo tổ hợp màu × size, hoặc thêm từng biến thể. Chỉnh tồn kho sau tạo dùng module tồn kho.</p>
             </div>
             {!selectedProductId ? (
               <div className="empty-state">Hãy lưu sản phẩm ở tab Thông tin trước khi thêm biến thể.</div>
             ) : (
               <>
+                <div className="admin-subcard">
+                  <div className="editor-subcard-title">Tạo nhanh nhiều biến thể</div>
+                  <p className="table-subtle" style={{ marginBottom: 10 }}>
+                    Nhập nhiều màu và size (cách nhau bằng dấu phẩy) → hệ thống tạo mọi tổ hợp. Bỏ trống màu nếu sản phẩm chỉ khác size.
+                  </p>
+                  <div className="admin-form-grid">
+                    <input className="admin-input" placeholder="Màu (vd: All Black, Red, White)" value={genColors} onChange={(event) => setGenColors(event.target.value)} />
+                    <input className="admin-input" placeholder="Size (vd: S, M, L, XL)" value={genSizes} onChange={(event) => setGenSizes(event.target.value)} />
+                    <input className="admin-input" placeholder="Mã SKU cơ sở (tự sinh nếu trống)" value={genBaseSku} onChange={(event) => setGenBaseSku(event.target.value)} />
+                  </div>
+                  <div className="page-actions">
+                    <button className="admin-btn secondary" type="button" onClick={handleGenerateMatrix}>
+                      Tạo bảng
+                    </button>
+                  </div>
+
+                  {genRows.length > 0 ? (
+                    <>
+                      <div className="admin-form-grid" style={{ marginTop: 12 }}>
+                        <input className="admin-input" type="number" min={0} placeholder="Giá bán (áp dụng tất cả)" value={bulkPrice} onChange={(event) => setBulkPrice(event.target.value)} />
+                        <input className="admin-input" type="number" min={0} placeholder="Giá so sánh" value={bulkCompare} onChange={(event) => setBulkCompare(event.target.value)} />
+                        <input className="admin-input" type="number" min={0} placeholder="Tồn ban đầu" value={bulkStock} onChange={(event) => setBulkStock(event.target.value)} />
+                        <button className="admin-btn secondary" type="button" onClick={applyBulkToRows}>
+                          Áp dụng cho tất cả
+                        </button>
+                      </div>
+                      <div style={{ overflowX: "auto", marginTop: 10 }}>
+                        <table className="data-table">
+                          <thead>
+                            <tr>
+                              <th>Màu</th>
+                              <th>Size</th>
+                              <th>SKU</th>
+                              <th>Giá bán</th>
+                              <th>Giá so sánh</th>
+                              <th>Tồn</th>
+                              <th />
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {genRows.map((row) => (
+                              <tr key={row.key}>
+                                <td>{row.color || "—"}</td>
+                                <td>{row.size || "—"}</td>
+                                <td>
+                                  <input className="admin-input" value={row.sku} onChange={(event) => updateGenRow(row.key, { sku: event.target.value })} />
+                                </td>
+                                <td>
+                                  <input className="admin-input" type="number" min={0} value={row.price} onChange={(event) => updateGenRow(row.key, { price: event.target.value })} />
+                                </td>
+                                <td>
+                                  <input className="admin-input" type="number" min={0} value={row.compareAtPrice} onChange={(event) => updateGenRow(row.key, { compareAtPrice: event.target.value })} />
+                                </td>
+                                <td>
+                                  <input className="admin-input" type="number" min={0} value={row.stockQuantity} onChange={(event) => updateGenRow(row.key, { stockQuantity: event.target.value })} />
+                                </td>
+                                <td>
+                                  <button className="admin-btn secondary" type="button" onClick={() => removeGenRow(row.key)}>
+                                    Xoá
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      <div className="page-actions">
+                        <button className="admin-btn" type="button" onClick={() => void handleSaveAllVariants()} disabled={saving === "variant-bulk"}>
+                          {saving === "variant-bulk" ? "Đang tạo..." : `Lưu tất cả (${genRows.length})`}
+                        </button>
+                      </div>
+                    </>
+                  ) : null}
+                </div>
+
+                <hr className="editor-divider" />
+                <div className="editor-subcard-title">Thêm một biến thể</div>
                 <div className="admin-form-grid">
                   <input className="admin-input" placeholder="SKU" value={variantForm.sku} onChange={(event) => setVariantForm((current) => ({ ...current, sku: event.target.value }))} />
                   <input className="admin-input" placeholder="Size" value={variantForm.size} onChange={(event) => setVariantForm((current) => ({ ...current, size: event.target.value }))} />
@@ -1061,11 +1353,44 @@ export function AdminProductsCatalogClient({
                 <hr className="editor-divider" />
                 {detail?.variants.length ? (
                   <div className="admin-stack">
-                    {detail.variants.map((variant) => {
-                      const draft = variantDrafts[variant.id];
-                      if (!draft) return null;
-                      return <VariantEditorCard key={variant.id} variant={variant} draft={draft} saving={saving === `variant-${variant.id}`} onDraftChange={(patch) => setVariantDrafts((current) => ({ ...current, [variant.id]: { ...current[variant.id], ...patch } }))} onSave={() => void handleUpdateVariant(variant.id)} />;
-                    })}
+                    {groupVariantsByColor(detail.variants).map(([color, variantsInColor]) => (
+                      <div className="variant-color-group" key={color || "__no_color__"}>
+                        <div className="variant-color-head">
+                          <span className="editor-subcard-title">Màu: {color || "— (chưa đặt màu)"}</span>
+                          <span className="tab-count">{variantsInColor.length} size</span>
+                        </div>
+                        <div className="variant-size-table-wrap">
+                          <table className="variant-size-table">
+                            <thead>
+                              <tr>
+                                <th>Size</th>
+                                <th>Giá bán</th>
+                                <th>Giá so sánh</th>
+                                <th>Trạng thái</th>
+                                <th>Tồn</th>
+                                <th aria-hidden />
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {variantsInColor.map((variant) => {
+                                const draft = variantDrafts[variant.id];
+                                if (!draft) return null;
+                                return (
+                                  <VariantEditorCard
+                                    key={variant.id}
+                                    variant={variant}
+                                    draft={draft}
+                                    saving={saving === `variant-${variant.id}`}
+                                    onDraftChange={(patch) => setVariantDrafts((current) => ({ ...current, [variant.id]: { ...current[variant.id], ...patch } }))}
+                                    onSave={() => void handleUpdateVariant(variant.id)}
+                                  />
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 ) : <div className="empty-state">Sản phẩm này chưa có biến thể.</div>}
               </>
@@ -1083,6 +1408,11 @@ export function AdminProductsCatalogClient({
               <div className="empty-state">Hãy lưu sản phẩm ở tab Thông tin trước khi thêm hình ảnh.</div>
             ) : (
               <>
+                <datalist id="admin-product-colors">
+                  {Array.from(new Set((detail?.variants ?? []).map((v) => v.color).filter((c): c is string => Boolean(c)))).map((c) => (
+                    <option value={c} key={c} />
+                  ))}
+                </datalist>
                 <div className="admin-subcard">
                   <div className="editor-subcard-title">Thêm bằng URL</div>
                   <div className="admin-form-grid">
@@ -1091,6 +1421,7 @@ export function AdminProductsCatalogClient({
                     </div>
                     <input className="admin-input" placeholder="Cloudinary publicId (nếu có)" value={imageForm.publicId} onChange={(event) => setImageForm((current) => ({ ...current, publicId: event.target.value }))} />
                     <input className="admin-input" placeholder="Alt text" value={imageForm.altText} onChange={(event) => setImageForm((current) => ({ ...current, altText: event.target.value }))} />
+                    <input className="admin-input" list="admin-product-colors" placeholder="Màu (để trống = dùng chung)" value={imageForm.color} onChange={(event) => setImageForm((current) => ({ ...current, color: event.target.value }))} />
                     <input className="admin-input" type="number" min={0} placeholder="Sort order" value={imageForm.sortOrder} onChange={(event) => setImageForm((current) => ({ ...current, sortOrder: event.target.value }))} />
                     <label className="admin-check">
                       <input type="checkbox" checked={imageForm.isPrimary} onChange={(event) => setImageForm((current) => ({ ...current, isPrimary: event.target.checked }))} />
@@ -1108,6 +1439,7 @@ export function AdminProductsCatalogClient({
                   <div className="admin-form-grid">
                     <input className="admin-input admin-form-full" type="file" accept="image/*" onChange={(event) => setUploadForm((current) => ({ ...current, file: event.target.files?.[0] ?? null }))} />
                     <input className="admin-input" placeholder="Alt text upload" value={uploadForm.altText} onChange={(event) => setUploadForm((current) => ({ ...current, altText: event.target.value }))} />
+                    <input className="admin-input" list="admin-product-colors" placeholder="Màu (để trống = dùng chung)" value={uploadForm.color} onChange={(event) => setUploadForm((current) => ({ ...current, color: event.target.value }))} />
                     <input className="admin-input" type="number" min={0} placeholder="Sort order" value={uploadForm.sortOrder} onChange={(event) => setUploadForm((current) => ({ ...current, sortOrder: event.target.value }))} />
                     <label className="admin-check">
                       <input type="checkbox" checked={uploadForm.isPrimary} onChange={(event) => setUploadForm((current) => ({ ...current, isPrimary: event.target.checked }))} />
@@ -1123,7 +1455,17 @@ export function AdminProductsCatalogClient({
                 <hr className="editor-divider" />
                 {detail?.images.length ? (
                   <div className="admin-gallery">
-                    {detail.images.map((image) => <ProductImageCard key={image.id} image={image} productName={detail.name} saving={saving === `image-delete-${image.id}`} onDelete={() => void handleDeleteImage(image)} />)}
+                    {detail.images.map((image) => (
+                      <ProductImageCard
+                        key={image.id}
+                        image={image}
+                        productName={detail.name}
+                        saving={saving === `image-delete-${image.id}`}
+                        settingPrimary={saving === `image-primary-${image.id}`}
+                        onDelete={() => void handleDeleteImage(image)}
+                        onSetPrimary={() => void handleSetPrimaryImage(image)}
+                      />
+                    ))}
                   </div>
                 ) : <div className="empty-state">Sản phẩm này chưa có ảnh.</div>}
               </>
