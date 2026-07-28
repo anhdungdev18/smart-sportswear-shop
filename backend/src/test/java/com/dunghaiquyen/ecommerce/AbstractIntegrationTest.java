@@ -10,6 +10,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.support.NoOpCacheManager;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -34,6 +40,7 @@ import org.springframework.test.web.servlet.MvcResult;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@Import(AbstractIntegrationTest.NoCacheTestConfiguration.class)
 public abstract class AbstractIntegrationTest {
 
     static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("pgvector/pgvector:pg16")
@@ -49,6 +56,14 @@ public abstract class AbstractIntegrationTest {
         registry.add("spring.datasource.username", POSTGRES::getUsername);
         registry.add("spring.datasource.password", POSTGRES::getPassword);
         registry.add("spring.flyway.enabled", () -> "true");
+    @TestConfiguration
+    static class NoCacheTestConfiguration {
+
+        @Bean
+        @Primary
+        CacheManager testCacheManager() {
+            return new NoOpCacheManager();
+        }
     }
 
     @Autowired

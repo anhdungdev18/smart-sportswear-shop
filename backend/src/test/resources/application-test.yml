@@ -11,6 +11,8 @@
 # REQUIRES_NEW) does not flake on pool exhaustion under MockMvc's
 # thread-per-call execution.
 spring:
+  cache:
+    type: none
   datasource:
     url: ${TEST_DB_URL}
     username: ${TEST_DB_USERNAME}
