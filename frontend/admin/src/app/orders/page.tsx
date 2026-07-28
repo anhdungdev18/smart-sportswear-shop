@@ -3,7 +3,15 @@ import { AdminOrdersClient } from "@/components/orders/AdminOrdersClient";
 import { listAdminOrders } from "@/modules/orders/api";
 import { listShippingMethods } from "@/modules/shipping/api";
 
-export default function OrdersPage() {
+type OrdersSearchParams = Promise<Record<string, string | string[] | undefined>>;
+
+export default async function OrdersPage({ searchParams }: { searchParams: OrdersSearchParams }) {
+  const params = await searchParams;
+  const requestedPage = Number(Array.isArray(params.page) ? params.page[0] : params.page);
+  const page = Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+  const keyword = (Array.isArray(params.keyword) ? params.keyword[0] : params.keyword)?.trim() ?? "";
+  const status = (Array.isArray(params.status) ? params.status[0] : params.status) ?? "all";
+
   return (
     <main className="workspace">
       <section className="page-title">
@@ -14,19 +22,29 @@ export default function OrdersPage() {
       </section>
 
       <Suspense fallback={<OrderTableSkeleton />}>
-        <OrdersContent />
+        <OrdersContent page={page} keyword={keyword} status={status} />
       </Suspense>
     </main>
   );
 }
 
-async function OrdersContent() {
-  const [orders, shippingMethods] = await Promise.all([
-    listAdminOrders().catch(() => []),
+async function OrdersContent({ page, keyword, status }: { page: number; keyword: string; status: string }) {
+  const [orderPage, shippingMethods] = await Promise.all([
+    listAdminOrders({ page, limit: 20, keyword: keyword || undefined, status: status === "all" ? undefined : status })
+      .catch(() => ({ orders: [], meta: { page, limit: 20, total: 0, totalPages: 0 } })),
     listShippingMethods().catch(() => []),
   ]);
 
-  return <AdminOrdersClient initialOrders={orders} shippingMethods={shippingMethods} />;
+  return (
+    <AdminOrdersClient
+      key={`${page}:${keyword}:${status}`}
+      initialOrders={orderPage.orders}
+      pageMeta={orderPage.meta}
+      initialKeyword={keyword}
+      initialStatus={status}
+      shippingMethods={shippingMethods}
+    />
+  );
 }
 
 function OrderTableSkeleton() {

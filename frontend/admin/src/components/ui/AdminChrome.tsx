@@ -28,6 +28,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { adminLogout } from "@/modules/auth/api";
 import { clearAuthSession, getBrowserRefreshToken } from "@/modules/auth/session";
 
@@ -156,6 +157,35 @@ export function AdminTopbar() {
   const router = useRouter();
   const pathname = usePathname();
   const pageMeta = getPageMeta(pathname);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  useEffect(() => {
+    function syncSearchTerm() {
+      const keyword = pathname.startsWith("/products")
+        ? new URLSearchParams(window.location.search).get("q") ?? ""
+        : "";
+      setSearchTerm(keyword);
+    }
+
+    syncSearchTerm();
+    window.addEventListener("popstate", syncSearchTerm);
+    return () => window.removeEventListener("popstate", syncSearchTerm);
+  }, [pathname]);
+
+  function handleSearch(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const params = new URLSearchParams();
+    const keyword = searchTerm.trim();
+
+    if (keyword) {
+      params.set("q", keyword);
+    } else {
+      params.delete("q");
+    }
+
+    const query = params.toString();
+    router.push(`/products${query ? `?${query}` : ""}`);
+  }
 
   async function handleLogout() {
     const refreshToken = getBrowserRefreshToken();
@@ -178,10 +208,15 @@ export function AdminTopbar() {
           <strong>{pageMeta.title}</strong>
           <p>{pageMeta.subtitle}</p>
         </div>
-        <div className="admin-search">
+        <form className="admin-search" role="search" onSubmit={handleSearch}>
           <MagnifyingGlass size={20} />
-          <span>Tìm đơn hàng, SKU, khách hàng hoặc mã chiến dịch...</span>
-        </div>
+          <input
+            aria-label="Tìm kiếm sản phẩm"
+            placeholder="Tìm theo tên, SKU, danh mục hoặc thương hiệu..."
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+          />
+        </form>
       </div>
 
       <div className="admin-actions">

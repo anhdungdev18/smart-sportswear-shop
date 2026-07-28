@@ -387,10 +387,12 @@ const ProductImageCard = memo(function ProductImageCard({
 
 export function AdminProductsCatalogClient({
   initialProducts,
+  initialSearchTerm = "",
   categories,
   brands
 }: {
   initialProducts: AdminProduct[];
+  initialSearchTerm?: string;
   categories: CategoryResponse[];
   brands: BrandResponse[];
 }) {
@@ -416,11 +418,15 @@ export function AdminProductsCatalogClient({
   const [uploadForm, setUploadForm] = useState(createEmptyUploadForm());
   const [message, setMessage] = useState<string | null>(null);
   const [saving, setSaving] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
   const [statusFilter, setStatusFilter] = useState<"all" | AdminProduct["status"] | "featured">("all");
   const [activeTab, setActiveTab] = useState<"info" | "variants" | "images" | "collections">("info");
   const [page, setPage] = useState(1);
   const deferredSearchTerm = useDeferredValue(searchTerm);
+
+  useEffect(() => {
+    setSearchTerm(initialSearchTerm);
+  }, [initialSearchTerm]);
 
   const [productCollections, setProductCollections] = useState<CollectionResponse[]>([]);
   const [allCollections, setAllCollections] = useState<CollectionResponse[]>([]);
