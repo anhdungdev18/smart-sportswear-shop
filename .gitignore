@@ -40,3 +40,7 @@ ai-website-cloner-template/
 **/__pycache__/
 **/.pytest_cache/
 *.py[cod]
+# Database backups
+backups/
+*.dump
+*.backup
