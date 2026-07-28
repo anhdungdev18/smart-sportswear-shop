@@ -34,6 +34,12 @@ const DISCOUNT_OPTIONS = [
   { label: "Trên 50%", value: "gt50" },
 ] as const;
 
+const SURFACE_OPTIONS = [
+  { label: "Cỏ tự nhiên (FG)", value: "FG" },
+  { label: "Cỏ nhân tạo (TF/AG)", value: "TF" },
+  { label: "Futsal (IC)", value: "IC" },
+] as const;
+
 const MATERIAL_OPTIONS = ["Polyester", "Nylon", "Spandex", "Cotton"] as const;
 
 type SizeType = "cloth" | "shoe" | "both";
@@ -102,19 +108,25 @@ export function CategorySidebarFilter({
   initialColor,
   initialMinPrice,
   initialMaxPrice,
+  initialSurface,
+  showSurface = false,
   sizeType = "both",
 }: {
   initialSize?: string;
   initialColor?: string;
   initialMinPrice?: number;
   initialMaxPrice?: number;
+  initialSurface?: string;
+  showSurface?: boolean;
   sizeType?: SizeType;
 }) {
-  const [openSize, setOpenSize] = useState(true);
-  const [openColor, setOpenColor] = useState(true);
-  const [openPrice, setOpenPrice] = useState(true);
+  const [openSurface, setOpenSurface] = useState(Boolean(initialSurface));
+  const [openSize, setOpenSize] = useState(false);
+  const [openColor, setOpenColor] = useState(false);
+  const [openPrice, setOpenPrice] = useState(false);
   const [openDiscount, setOpenDiscount] = useState(false);
   const [openAdvanced, setOpenAdvanced] = useState(false);
+  const [selectedSurface, setSelectedSurface] = useState<string | null>(initialSurface ?? null);
 
   const pathname = usePathname();
   const router = useRouter();
@@ -152,6 +164,9 @@ export function CategorySidebarFilter({
     if (selectedColor) params.set("color", selectedColor);
     else params.delete("color");
 
+    if (selectedSurface) params.set("surface", selectedSurface);
+    else params.delete("surface");
+
     if (priceRange[0] > MIN_PRICE) params.set("minPrice", String(priceRange[0]));
     else params.delete("minPrice");
 
@@ -166,9 +181,10 @@ export function CategorySidebarFilter({
 
   function clearFilters() {
     const params = new URLSearchParams(searchParams.toString());
-    ["page", "size", "color", "minPrice", "maxPrice"].forEach((k) => params.delete(k));
+    ["page", "size", "color", "minPrice", "maxPrice", "surface"].forEach((k) => params.delete(k));
     setSelectedSize(null);
     setSelectedColor(null);
+    setSelectedSurface(null);
     setPriceRange([MIN_PRICE, MAX_PRICE]);
     setSelectedDiscount(null);
     setSelectedMaterials([]);
@@ -183,6 +199,27 @@ export function CategorySidebarFilter({
 
   return (
     <aside className="w-full lg:w-64 lg:shrink-0">
+      {showSurface ? (
+        <FilterSection label="Mặt sân" open={openSurface} onToggle={() => setOpenSurface((p) => !p)}>
+          <ul className="space-y-3">
+            {SURFACE_OPTIONS.map((opt) => (
+              <li key={opt.value}>
+                <label className="flex cursor-pointer items-center gap-2 text-[13px] text-gray-700">
+                  <input
+                    type="radio"
+                    name="surface"
+                    checked={selectedSurface === opt.value}
+                    onChange={() => setSelectedSurface(opt.value)}
+                    className="size-4 accent-ivy-dark"
+                  />
+                  {opt.label}
+                </label>
+              </li>
+            ))}
+          </ul>
+        </FilterSection>
+      ) : null}
+
       <FilterSection label="Size" open={openSize} onToggle={() => setOpenSize((p) => !p)}>
         <div className="space-y-3">
           {showCloth && (

@@ -58,9 +58,8 @@ import org.springframework.transaction.annotation.Transactional;
  *   so a cancelled order can never read back as paymentStatus = PAID and can
  *   never be picked up by this query. Covered by a regression test below.
  * - realizedRevenue = SUM(totalAmount) over every order with orderStatus =
- *   DELIVERED, regardless of paymentStatus (so a delivered COD order counts
- *   even though COD never flips paymentStatus to PAID in this phase - that is
- *   the literal spec rule, not a gap).
+ *   DELIVERED. COD is marked PAID on delivery, so collected COD contributes to
+ *   both gross and realized revenue.
  * - Both numbers are shown together on the overview on purpose (spec: "tránh
  *   hiểu sai doanh thu") - they answer different questions (cash received vs.
  *   orders fully completed) and are not meant to reconcile to each other.

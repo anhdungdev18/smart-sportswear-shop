@@ -14,6 +14,11 @@ async def lifespan(app: FastAPI):
     setup_logging(settings.LOG_LEVEL)
     logger = get_logger(__name__)
 
+    if not settings.JWT_ACCESS_SECRET:
+        if settings.CHATBOT_ENV.lower() == "production":
+            raise RuntimeError("JWT_ACCESS_SECRET is required in production")
+        logger.warning("chatbot-service | JWT_ACCESS_SECRET not set — authenticated tools are disabled")
+
     # DB pool (Phase 3+) — skipped gracefully if DB_READ_URL is empty
     if settings.DB_READ_URL:
         await db_pool.init_pool(settings.DB_READ_URL)

@@ -4,6 +4,7 @@ import com.dunghaiquyen.ecommerce.common.exception.BusinessRuleException;
 import com.dunghaiquyen.ecommerce.common.exception.ResourceNotFoundException;
 import com.dunghaiquyen.ecommerce.config.AppVnpayProperties;
 import com.dunghaiquyen.ecommerce.config.CacheConfig;
+import com.dunghaiquyen.ecommerce.common.time.AppTimeZone;
 import com.dunghaiquyen.ecommerce.modules.order.entity.Order;
 import com.dunghaiquyen.ecommerce.modules.order.entity.OrderStatus;
 import com.dunghaiquyen.ecommerce.modules.order.entity.PaymentMethod;
@@ -19,25 +20,22 @@ import com.dunghaiquyen.ecommerce.modules.user.entity.UserRole;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.ThreadLocalRandom;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * VNPay sandbox-shaped flow only - see VnpaySignatureService's javadoc for what
- * is and is not faithfully replicated from the real VNPay protocol. Nothing here
- * touches stock/InventoryService or creates Order rows: by construction the
- * callback path can only ever move an existing Payment/Order between payment
- * states, never re-run order creation or stock reservation (Phase G's job).
+ * VNPay 2.1.0 payment session and IPN handling. The configured payment URL may
+ * point to sandbox or production; protocol validation is identical in both
+ * environments. This service never creates orders or reserves stock.
  */
 @Service
 public class PaymentService {
@@ -88,6 +86,12 @@ public class PaymentService {
      */
     @Transactional
     public CreatePaymentResponse createPaymentSession(UUID userId, CreatePaymentRequest request) {
+        return createPaymentSession(userId, request, "127.0.0.1");
+    }
+
+    @Transactional
+    public CreatePaymentResponse createPaymentSession(
+            UUID userId, CreatePaymentRequest request, String clientIpAddress) {
         Order order = orderRepository.findByIdForUpdate(request.orderId())
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
         if (!order.getUser().getId().equals(userId)) {
@@ -106,7 +110,8 @@ public class PaymentService {
         Optional<Payment> latest = paymentRepository.findFirstByOrderIdOrderByCreatedAtDesc(order.getId());
         if (latest.isPresent() && latest.get().getStatus() == PaymentStatus.PENDING) {
             Payment existing = latest.get();
-            return new CreatePaymentResponse(buildPaymentUrl(existing), existing.getTransactionRef());
+            return new CreatePaymentResponse(
+                    buildPaymentUrl(existing, clientIpAddress), existing.getTransactionRef());
         }
 
         Payment payment = new Payment();
@@ -115,21 +120,14 @@ public class PaymentService {
         payment.setTransactionRef(generateTransactionRef());
         payment.setAmount(order.getTotalAmount());
         payment.setStatus(PaymentStatus.PENDING);
-        try {
-            payment = paymentRepository.save(payment);
-        } catch (DataIntegrityViolationException ex) {
-            // transactionRef collision (vanishingly unlikely) - retry once with a
-            // fresh ref rather than fail the whole checkout-payment flow.
-            payment.setTransactionRef(generateTransactionRef());
-            payment = paymentRepository.save(payment);
-        }
+        payment = paymentRepository.save(payment);
 
         if (order.getPaymentStatus() != PaymentStatus.PENDING) {
             order.setPaymentStatus(PaymentStatus.PENDING);
             orderRepository.save(order);
         }
 
-        return new CreatePaymentResponse(buildPaymentUrl(payment), payment.getTransactionRef());
+        return new CreatePaymentResponse(buildPaymentUrl(payment, clientIpAddress), payment.getTransactionRef());
     }
 
     /**
@@ -163,25 +161,39 @@ public class PaymentService {
      */
     @Transactional
     @CacheEvict(value = CacheConfig.REPORT_OVERVIEW, allEntries = true)
-    public Map<String, Object> handleCallback(Map<String, String> params) {
+    public Map<String, String> handleCallback(Map<String, String> params) {
         if (!signatureService.verify(params)) {
-            throw new BusinessRuleException(HttpStatus.BAD_REQUEST, "Invalid checksum");
+            return ipnResponse("97", "Invalid signature");
         }
         String transactionRef = params.get("vnp_TxnRef");
         if (transactionRef == null || transactionRef.isBlank()) {
-            throw new BusinessRuleException(HttpStatus.BAD_REQUEST, "Missing transaction reference");
+            return ipnResponse("99", "Missing transaction reference");
         }
 
-        Payment payment = paymentRepository.findByTransactionRefForUpdate(transactionRef)
-                .orElseThrow(() -> new ResourceNotFoundException("Payment not found"));
+        Optional<Payment> paymentResult = paymentRepository.findByTransactionRefForUpdate(transactionRef);
+        if (paymentResult.isEmpty()) {
+            return ipnResponse("01", "Payment not found");
+        }
+        Payment payment = paymentResult.get();
+
+        String validationCode = validateCallbackPayload(params, payment);
+        if (validationCode != null) {
+            return switch (validationCode) {
+                case "04" -> ipnResponse("04", "Invalid amount");
+                default -> ipnResponse("99", "Invalid payment data");
+            };
+        }
 
         if (payment.getStatus() != PaymentStatus.PENDING) {
-            return Map.of();
+            return ipnResponse("02", "Payment already confirmed");
         }
 
         String responseCode = params.get("vnp_ResponseCode");
-        Order order = payment.getOrder();
-        PaymentStatus resolvedStatus = resolveStatus(responseCode);
+        String transactionStatus = params.get("vnp_TransactionStatus");
+        // Serialize payment completion against customer/admin status changes.
+        Order order = orderRepository.findByIdForUpdate(payment.getOrder().getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+        PaymentStatus resolvedStatus = resolveStatus(responseCode, transactionStatus);
         payment.setStatus(resolvedStatus);
         if (resolvedStatus == PaymentStatus.PAID) {
             payment.setPaidAt(Instant.now());
@@ -193,11 +205,34 @@ public class PaymentService {
             order.setPaymentStatus(resolvedStatus);
             orderRepository.save(order);
         }
-        return Map.of();
+        return ipnResponse("00", "Confirm Success");
     }
 
-    private PaymentStatus resolveStatus(String responseCode) {
-        if (VNP_SUCCESS_CODE.equals(responseCode)) {
+    private String validateCallbackPayload(Map<String, String> params, Payment payment) {
+        if (!vnpayProperties.tmnCode().equals(params.get("vnp_TmnCode"))) {
+            return "99";
+        }
+        String amountValue = params.get("vnp_Amount");
+        try {
+            BigDecimal callbackAmount = new BigDecimal(amountValue).movePointLeft(2);
+            if (callbackAmount.compareTo(payment.getAmount()) != 0) {
+                return "04";
+            }
+        } catch (NumberFormatException | NullPointerException ex) {
+            return "04";
+        }
+        if (params.get("vnp_ResponseCode") == null || params.get("vnp_TransactionStatus") == null) {
+            return "99";
+        }
+        return null;
+    }
+
+    private Map<String, String> ipnResponse(String code, String message) {
+        return Map.of("RspCode", code, "Message", message);
+    }
+
+    private PaymentStatus resolveStatus(String responseCode, String transactionStatus) {
+        if (VNP_SUCCESS_CODE.equals(responseCode) && VNP_SUCCESS_CODE.equals(transactionStatus)) {
             return PaymentStatus.PAID;
         }
         if (VNP_USER_CANCELLED_CODE.equals(responseCode)) {
@@ -231,11 +266,11 @@ public class PaymentService {
 
     private String generateTransactionRef() {
         String datePart = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
-        String randomPart = String.format("%04d", ThreadLocalRandom.current().nextInt(10000));
-        return "TXN" + datePart + randomPart;
+        String uniquePart = UUID.randomUUID().toString().replace("-", "").substring(0, 16).toUpperCase();
+        return "TXN" + datePart + uniquePart;
     }
 
-    private String buildPaymentUrl(Payment payment) {
+    private String buildPaymentUrl(Payment payment, String clientIpAddress) {
         Map<String, String> params = new LinkedHashMap<>();
         params.put("vnp_Version", "2.1.0");
         params.put("vnp_Command", "pay");
@@ -249,8 +284,13 @@ public class PaymentService {
         params.put("vnp_OrderType", "other");
         params.put("vnp_Locale", "vn");
         params.put("vnp_ReturnUrl", vnpayProperties.returnUrl());
-        params.put("vnp_IpAddr", "127.0.0.1");
-        params.put("vnp_CreateDate", LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
+        params.put(
+                "vnp_IpAddr",
+                clientIpAddress == null || clientIpAddress.isBlank() ? "127.0.0.1" : clientIpAddress);
+        ZonedDateTime now = ZonedDateTime.now(AppTimeZone.ZONE);
+        DateTimeFormatter timestamp = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+        params.put("vnp_CreateDate", now.format(timestamp));
+        params.put("vnp_ExpireDate", now.plusMinutes(15).format(timestamp));
 
         String hash = signatureService.hash(params);
         String query = signatureService.buildQueryString(params);

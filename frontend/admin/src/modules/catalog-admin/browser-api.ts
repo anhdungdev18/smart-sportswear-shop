@@ -88,6 +88,12 @@ export async function deleteProductImage(productId: string, imageId: string) {
   });
 }
 
+export async function setPrimaryProductImage(productId: string, imageId: string) {
+  return browserApiRequest<ProductImageResponse[]>(adminEndpoints.productImagePrimary(productId, imageId), {
+    method: "PATCH"
+  });
+}
+
 export async function deleteProduct(id: string) {
   return browserApiRequest<void>(adminEndpoints.productDetail(id), { method: "DELETE" });
 }

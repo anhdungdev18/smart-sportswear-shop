@@ -70,11 +70,34 @@ function mapAdminStatus(status: AdminProductListItemResponse["status"], stock: n
   return "active";
 }
 
+// Backend caps page size at 100 (ProductService.MAX_LIMIT). To show the whole
+// catalog in the admin, we page through every batch instead of stopping at the
+// first 100 — otherwise products beyond the newest page are invisible.
+const ADMIN_PAGE_SIZE = 100;
+
+async function fetchAllAdminProducts() {
+  const all: AdminProductListItemResponse[] = [];
+  for (let page = 1; page <= 100; page += 1) {
+    const batch = await apiRequest<AdminProductListItemResponse[]>(adminEndpoints.products, {
+      query: { page, limit: ADMIN_PAGE_SIZE },
+      next: { revalidate: 30 }
+    });
+    all.push(...batch);
+    if (batch.length < ADMIN_PAGE_SIZE) break;
+  }
+  return all;
+}
+
 async function loadAdminProductDataset(query: AdminProductListQuery = {}) {
-  const productsResponse = await apiRequest<AdminProductListItemResponse[]>(adminEndpoints.products, {
-    query: { page: query.page, limit: query.limit ?? 50 },
-    next: { revalidate: 30 }
-  });
+  // No explicit page/limit means "give me the full catalog" (stats + client-side
+  // pagination both rely on the complete set); a specific page/limit fetches one batch.
+  const productsResponse =
+    query.page == null && query.limit == null
+      ? await fetchAllAdminProducts()
+      : await apiRequest<AdminProductListItemResponse[]>(adminEndpoints.products, {
+          query: { page: query.page, limit: query.limit ?? ADMIN_PAGE_SIZE },
+          next: { revalidate: 30 }
+        });
 
   const [inventoryResponse, productReport] = await Promise.all([
     apiRequest<InventoryItemResponse[]>(adminEndpoints.inventory, {

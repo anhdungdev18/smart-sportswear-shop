@@ -18,6 +18,7 @@ os.environ["OPENAI_API_KEY"] = ""
 os.environ["ANTHROPIC_API_KEY"] = ""
 os.environ["DB_WRITE_URL"] = ""
 os.environ["BACKEND_API_BASE_URL"] = "http://test-backend.local"
+os.environ["JWT_ACCESS_SECRET"] = "test-access-secret-that-is-at-least-32-bytes"
 os.environ["EVALUATION_LOGGING_ENABLED"] = "false"
 os.environ["CHATBOT_ENV"] = "test"
 # ─────────────────────────────────────────────────────────────────────────────

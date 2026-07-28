@@ -167,12 +167,29 @@ class NotificationResendIntegrationTest extends AbstractIntegrationTest {
                         .content("{\"addressId\":\"" + addressId + "\",\"paymentMethod\":\"COD\"}"))
                 .andExpect(status().isCreated());
 
-        Notification notification = notificationRepository.findAll().stream()
-                .filter(n -> n.getType() == NotificationType.ORDER_CREATED && n.getRecipient().equals(buyerEmail))
-                .findFirst()
-                .orElseThrow();
+        Notification notification = awaitOrderCreatedNotification(buyerEmail);
         assertThat(notification.getStatus().name()).isEqualTo("FAILED");
         return notification.getId();
+    }
+
+    private Notification awaitOrderCreatedNotification(String buyerEmail) {
+        for (int attempt = 0; attempt < 100; attempt++) {
+            var notification = notificationRepository.findAll().stream()
+                    .filter(n -> n.getType() == NotificationType.ORDER_CREATED
+                            && n.getRecipient().equals(buyerEmail)
+                            && !n.getStatus().name().equals("PENDING"))
+                    .findFirst();
+            if (notification.isPresent()) {
+                return notification.get();
+            }
+            try {
+                Thread.sleep(20);
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
+        throw new AssertionError("Timed out waiting for order notification delivery");
     }
 
     // ===== resend success: FAILED -> recovered, new row created, original bookkeeping updated =====
@@ -242,10 +259,7 @@ class NotificationResendIntegrationTest extends AbstractIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"addressId\":\"" + addressId + "\",\"paymentMethod\":\"COD\"}"))
                 .andExpect(status().isCreated());
-        Notification sent = notificationRepository.findAll().stream()
-                .filter(n -> n.getType() == NotificationType.ORDER_CREATED && n.getRecipient().equals(buyerEmail))
-                .findFirst()
-                .orElseThrow();
+        Notification sent = awaitOrderCreatedNotification(buyerEmail);
         assertThat(sent.getStatus().name()).isEqualTo("SENT");
 
         String adminToken = registerAdminAndGetAccessToken(uniqueEmail("ntfrs-resendsent-admin"));

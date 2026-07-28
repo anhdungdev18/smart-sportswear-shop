@@ -54,7 +54,7 @@ public class ProductImageService {
 
         boolean makePrimary = request.isPrimary() != null && request.isPrimary();
         ProductImage image = insertImageRow(
-                product, request.imageUrl(), request.publicId(), request.altText(), request.sortOrder(), makePrimary);
+                product, request.imageUrl(), request.publicId(), request.altText(), request.color(), request.sortOrder(), makePrimary);
         return productMapper.toImageResponse(image);
     }
 
@@ -74,7 +74,7 @@ public class ProductImageService {
      */
     @Transactional
     public ProductImageUploadResponse uploadImage(
-            UUID productId, MultipartFile file, String altText, Boolean isPrimary, Integer sortOrder) {
+            UUID productId, MultipartFile file, String altText, String color, Boolean isPrimary, Integer sortOrder) {
         validateImageFile(file);
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
@@ -83,12 +83,13 @@ public class ProductImageService {
         boolean makePrimary = isPrimary != null && isPrimary;
         try {
             ProductImage image =
-                    insertImageRow(product, uploaded.secureUrl(), uploaded.publicId(), altText, sortOrder, makePrimary);
+                    insertImageRow(product, uploaded.secureUrl(), uploaded.publicId(), altText, color, sortOrder, makePrimary);
             return new ProductImageUploadResponse(
                     image.getId(),
                     image.getImageUrl(),
                     image.getPublicId(),
                     image.getAltText(),
+                    image.getColor(),
                     image.isPrimary(),
                     image.getSortOrder(),
                     uploaded.width(),
@@ -129,6 +130,38 @@ public class ProductImageService {
     }
 
     /**
+     * Promote an already-uploaded image to the product's primary/featured image.
+     * Unsets the current primary first and flushes before setting the new one, so
+     * the partial unique index (V2, "max 1 primary per product") is never even
+     * momentarily violated - the same ordering {@link #insertImageRow} relies on.
+     */
+    @Transactional
+    public List<ProductImageResponse> setPrimary(UUID productId, UUID imageId) {
+        productRepository.findByIdForUpdate(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+        ProductImage target = imageRepository.findById(imageId)
+                .orElseThrow(() -> new ResourceNotFoundException("Image not found"));
+        if (!target.getProduct().getId().equals(productId)) {
+            throw new ResourceNotFoundException("Image not found");
+        }
+        if (!target.isPrimary()) {
+            List<ProductImage> currentPrimaries = imageRepository.findAllByProductIdAndPrimaryTrue(productId);
+            currentPrimaries.forEach(img -> img.setPrimary(false));
+            imageRepository.saveAll(currentPrimaries);
+            imageRepository.flush();
+            target.setPrimary(true);
+            try {
+                imageRepository.saveAndFlush(target);
+            } catch (DataIntegrityViolationException ex) {
+                throw new BusinessRuleException("Another image was just set as primary for this product, please retry");
+            }
+        }
+        return imageRepository.findAllByProductIdOrderBySortOrderAsc(productId).stream()
+                .map(productMapper::toImageResponse)
+                .toList();
+    }
+
+    /**
      * ERD_PHASE1.md 6.9: "mỗi product nên có tối đa 1 ảnh primary". The unset-old-
      * primary step below is a read-modify-write, which by itself cannot close a
      * concurrency race: two requests adding a primary image for the same product
@@ -143,8 +176,10 @@ public class ProductImageService {
      * method already returned, uncaught).
      */
     private ProductImage insertImageRow(
-            Product product, String imageUrl, String publicId, String altText, Integer sortOrder, boolean makePrimary) {
+            Product product, String imageUrl, String publicId, String altText, String color, Integer sortOrder, boolean makePrimary) {
         if (makePrimary) {
+            product = productRepository.findByIdForUpdate(product.getId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
             List<ProductImage> currentPrimaries = imageRepository.findAllByProductIdAndPrimaryTrue(product.getId());
             currentPrimaries.forEach(img -> img.setPrimary(false));
             imageRepository.saveAll(currentPrimaries);
@@ -160,6 +195,7 @@ public class ProductImageService {
         image.setImageUrl(imageUrl);
         image.setPublicId(publicId);
         image.setAltText(altText);
+        image.setColor(color != null && !color.isBlank() ? color.trim() : null);
         image.setSortOrder(sortOrder != null ? sortOrder : 0);
         image.setPrimary(makePrimary);
 

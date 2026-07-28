@@ -58,7 +58,7 @@ async def policy_guard_node(state: AgentState) -> dict:
         }
 
     # 2. Auth check
-    auth_ok, auth_reason = auth_policy.check(definition.requires_auth, state.get("user_id"))
+    auth_ok, auth_reason = auth_policy.check(definition.requires_auth, state.get("access_token"))
     if not auth_ok:
         logger.info(f"[{sid}] policy_guard | tool={tool_name} blocked={auth_reason}")
         return {

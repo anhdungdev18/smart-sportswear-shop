@@ -1,6 +1,7 @@
 package com.dunghaiquyen.ecommerce.infra.seed;
 
 import com.dunghaiquyen.ecommerce.config.AppSeedProperties;
+import com.dunghaiquyen.ecommerce.config.AppVnpayProperties;
 import com.dunghaiquyen.ecommerce.modules.address.entity.Address;
 import com.dunghaiquyen.ecommerce.modules.address.repository.AddressRepository;
 import com.dunghaiquyen.ecommerce.modules.brand.entity.Brand;
@@ -14,6 +15,7 @@ import com.dunghaiquyen.ecommerce.modules.category.entity.Category;
 import com.dunghaiquyen.ecommerce.modules.category.entity.CategoryStatus;
 import com.dunghaiquyen.ecommerce.modules.category.repository.CategoryRepository;
 import com.dunghaiquyen.ecommerce.modules.order.dto.CreateOrderRequest;
+import com.dunghaiquyen.ecommerce.modules.order.dto.OrderResponse;
 import com.dunghaiquyen.ecommerce.modules.order.dto.UpdateOrderStatusRequest;
 import com.dunghaiquyen.ecommerce.modules.order.entity.OrderStatus;
 import com.dunghaiquyen.ecommerce.modules.order.entity.PaymentMethod;
@@ -110,6 +112,7 @@ public class SeedDataService {
     private final VnpaySignatureService vnpaySignatureService;
     private final PasswordEncoder passwordEncoder;
     private final AppSeedProperties seedProperties;
+    private final AppVnpayProperties vnpayProperties;
     private final ProductReviewRepository productReviewRepository;
     private final ReviewService reviewService;
 
@@ -129,6 +132,7 @@ public class SeedDataService {
             VnpaySignatureService vnpaySignatureService,
             PasswordEncoder passwordEncoder,
             AppSeedProperties seedProperties,
+            AppVnpayProperties vnpayProperties,
             ProductReviewRepository productReviewRepository,
             ReviewService reviewService) {
         this.userRepository = userRepository;
@@ -148,6 +152,7 @@ public class SeedDataService {
         this.vnpaySignatureService = vnpaySignatureService;
         this.passwordEncoder = passwordEncoder;
         this.seedProperties = seedProperties;
+        this.vnpayProperties = vnpayProperties;
     }
 
     public record SeedSummary(long users, long products, long variants, long orders) {
@@ -481,14 +486,14 @@ public class SeedDataService {
         cartItem.setQuantity(quantity);
         cartItemRepository.save(cartItem);
 
-        UUID orderId = orderService.createOrderFromCart(
-                        customer.getId(), new CreateOrderRequest(address.getId(), paymentMethod, note))
-                .id();
+        OrderResponse createdOrder = orderService.createOrderFromCart(
+                customer.getId(), new CreateOrderRequest(address.getId(), paymentMethod, note));
+        UUID orderId = createdOrder.id();
 
         if (markPaid) {
             CreatePaymentResponse payment =
                     paymentService.createPaymentSession(customer.getId(), new CreatePaymentRequest(orderId));
-            paymentService.handleCallback(buildSuccessCallback(payment.transactionRef()));
+            paymentService.handleCallback(buildSuccessCallback(payment.transactionRef(), createdOrder.totalAmount()));
         }
 
         for (OrderStatus status : transitions) {
@@ -524,11 +529,13 @@ public class SeedDataService {
         });
     }
 
-    private Map<String, String> buildSuccessCallback(String transactionRef) {
+    private Map<String, String> buildSuccessCallback(String transactionRef, BigDecimal amount) {
         Map<String, String> params = new LinkedHashMap<>();
         params.put("vnp_TxnRef", transactionRef);
         params.put("vnp_ResponseCode", "00");
-        params.put("vnp_Amount", "10000000");
+        params.put("vnp_TransactionStatus", "00");
+        params.put("vnp_TmnCode", vnpayProperties.tmnCode());
+        params.put("vnp_Amount", amount.movePointRight(2).toBigIntegerExact().toString());
         params.put("vnp_TransactionNo", "SEED-" + UUID.randomUUID());
         params.put("vnp_BankCode", "NCB");
         params.put("vnp_PayDate", "20260101120000");

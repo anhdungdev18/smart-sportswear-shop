@@ -16,18 +16,25 @@ public class SeedDataRunner implements CommandLineRunner {
 
     private final SeedDataService seedDataService;
     private final FashionProductSeeder fashionProductSeeder;
+    private final RealRunningCatalogSeeder realRunningCatalogSeeder;
     private final ForecastDemoDataSeeder forecastDemoDataSeeder;
 
-    public SeedDataRunner(SeedDataService seedDataService, FashionProductSeeder fashionProductSeeder, @org.springframework.beans.factory.annotation.Autowired(required = false) ForecastDemoDataSeeder forecastDemoDataSeeder) {
+    public SeedDataRunner(
+            SeedDataService seedDataService,
+            FashionProductSeeder fashionProductSeeder,
+            RealRunningCatalogSeeder realRunningCatalogSeeder,
+            @org.springframework.beans.factory.annotation.Autowired(required = false) ForecastDemoDataSeeder forecastDemoDataSeeder) {
         this.seedDataService = seedDataService;
         this.fashionProductSeeder = fashionProductSeeder;
+        this.realRunningCatalogSeeder = realRunningCatalogSeeder;
         this.forecastDemoDataSeeder = forecastDemoDataSeeder;
     }
 
     @Override
     public void run(String... args) {
-        // Sports seeder must run first — it clears old data before SeedDataService re-creates its own fixtures.
+        // Base sports catalog runs first because it resets the demo catalog.
         fashionProductSeeder.seed();
+        realRunningCatalogSeeder.seed();
 
         SeedDataService.SeedSummary summary = seedDataService.seed();
         log.info(

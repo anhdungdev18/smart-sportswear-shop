@@ -102,15 +102,21 @@ public class AdminProductController {
             @PathVariable UUID id,
             @RequestParam("file") MultipartFile file,
             @RequestParam(required = false) String altText,
+            @RequestParam(required = false) String color,
             @RequestParam(required = false) Boolean isPrimary,
             @RequestParam(required = false) Integer sortOrder) {
-        ProductImageUploadResponse response = productImageService.uploadImage(id, file, altText, isPrimary, sortOrder);
+        ProductImageUploadResponse response = productImageService.uploadImage(id, file, altText, color, isPrimary, sortOrder);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok("Image uploaded", response));
     }
 
     @DeleteMapping("/{id}/images/{imageId}")
     public ApiResponse<List<ProductImageResponse>> deleteImage(@PathVariable UUID id, @PathVariable UUID imageId) {
         return ApiResponse.ok("Image deleted", productImageService.deleteImage(id, imageId));
+    }
+
+    @PatchMapping("/{id}/images/{imageId}/primary")
+    public ApiResponse<List<ProductImageResponse>> setPrimaryImage(@PathVariable UUID id, @PathVariable UUID imageId) {
+        return ApiResponse.ok("Primary image updated", productImageService.setPrimary(id, imageId));
     }
 
     @GetMapping("/{id}/collections")

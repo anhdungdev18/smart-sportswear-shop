@@ -8,6 +8,7 @@ from app.graph.chat_graph import run_chat_graph
 from app.memory import session_store
 from app.observability.trace_logger import get_logger, log_chat_request, log_pending_event
 from app.observability import tool_call_logger, evaluation_logger
+from app.services.auth_identity import session_storage_id, verify_access_token
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -69,32 +70,37 @@ async def _update_normal_session(session_id: str, intent: str, result: dict) -> 
 @router.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest) -> ChatResponse:
     t_start = time.monotonic()
+    identity = verify_access_token(request.accessToken)
+    verified_token = request.accessToken if identity is not None else None
+    user_id = identity.user_id if identity is not None else None
+    user_role = identity.role if identity is not None else None
+    storage_session_id = session_storage_id(request.sessionId, identity)
 
     log_chat_request(
         logger,
-        session_id=request.sessionId,
-        user_id=request.userId,
+        session_id=storage_session_id,
+        user_id=user_id,
         channel=request.channel,
         message=request.message,
     )
 
     # Load session context (includes pending_action fields from Phase 9)
     try:
-        session_context = await session_store.get_context(request.sessionId)
+        session_context = await session_store.get_context(storage_session_id)
     except Exception as _ctx_err:
-        logger.warning(f"[{request.sessionId}] session_get failed — {_ctx_err!r}")
+        logger.warning(f"[{storage_session_id}] session_get failed — {_ctx_err!r}")
         from app.memory.base_store import default_context
         session_context = default_context()
 
     # chat_history cold-start load is now handled inside the graph by load_context_node
 
     state = await run_chat_graph(
-        session_id=request.sessionId,
-        user_id=request.userId,
+        session_id=storage_session_id,
+        user_id=user_id,
         channel=request.channel,
         message=request.message,
-        user_role=request.userRole,
-        access_token=request.accessToken,
+        user_role=user_role,
+        access_token=verified_token,
         session_context=session_context,
     )
 
@@ -114,10 +120,10 @@ async def chat(request: ChatRequest) -> ChatResponse:
             pending_event = "confirmed" if intent == "CONFIRM_ACTION" else (
                 "rejected" if intent == "REJECT_ACTION" else "expired"
             )
-            log_pending_event(logger, request.sessionId, event=pending_event,
+            log_pending_event(logger, storage_session_id, event=pending_event,
                               tool=session_context.get("pending_action") or "")
-            await session_store.clear_pending(request.sessionId)
-            await session_store.update_context(request.sessionId, last_intent=intent)
+            await session_store.clear_pending(storage_session_id)
+            await session_store.update_context(storage_session_id, last_intent=intent)
 
         elif blocked and state.get("requires_confirmation"):
             # Save pending action so the next turn can confirm or reject
@@ -130,10 +136,10 @@ async def chat(request: ChatRequest) -> ChatResponse:
                 "display": state.get("pending_action_display") or "thao tác này",
             }
             pending_event = "created"
-            log_pending_event(logger, request.sessionId, event="created",
+            log_pending_event(logger, storage_session_id, event="created",
                               tool=tool_name, display=pending_payload["display"])
             await session_store.update_context(
-                request.sessionId,
+                storage_session_id,
                 last_intent=intent,
                 pending_action=tool_name,
                 pending_action_payload=pending_payload,
@@ -141,17 +147,17 @@ async def chat(request: ChatRequest) -> ChatResponse:
             )
 
         elif not blocked:
-            await _update_normal_session(request.sessionId, intent, result)
+            await _update_normal_session(storage_session_id, intent, result)
 
     except Exception as _sess_err:
-        logger.warning(f"[{request.sessionId}] session_update failed — {_sess_err!r}")
+        logger.warning(f"[{storage_session_id}] session_update failed — {_sess_err!r}")
 
     # chat_history is now saved inside the graph by save_result_node
 
     # ── Tool-call log ──────────────────────────────────────────────────────
     if tool_name != "none":
         tool_call_logger.log_tool_call(
-            session_id=request.sessionId,
+            session_id=storage_session_id,
             tool_name=tool_name,
             args=state.get("tool_args", {}),
             result=result if result else None,
@@ -161,8 +167,8 @@ async def chat(request: ChatRequest) -> ChatResponse:
 
     # ── Evaluation log ────────────────────────────────────────────────────
     evaluation_logger.log_turn(
-        session_id=request.sessionId,
-        user_id=request.userId,
+        session_id=storage_session_id,
+        user_id=user_id,
         query=request.message,
         intent=intent,
         tool=tool_name,

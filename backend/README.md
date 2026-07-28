@@ -23,7 +23,7 @@ Backend Spring Boot cho sản phẩm web kinh doanh trang phục thể thao. Đ�
 - `category`, `brand`, `product`: catalog, tìm kiếm/lọc/sắp xếp, search suggestion, PDP (review summary + related products), upload ảnh sản phẩm thật qua Cloudinary
 - `cart`: guest cart theo `session_id`, merge sau login/register
 - `order`: checkout (có thể áp coupon), order history, customer cancel, admin status update
-- `payment`: tạo session VNPay sandbox, callback, lịch sử payment attempts
+- `payment`: tạo session VNPay 2.1.0 (sandbox mặc định), callback/IPN có checksum, đối soát merchant và số tiền
 - `inventory`: tồn kho hiện tại, import/export/adjust, transaction log
 - `report`: overview, order report, product report, inventory report
 - `wishlist`: danh sách yêu thích của user đã đăng nhập

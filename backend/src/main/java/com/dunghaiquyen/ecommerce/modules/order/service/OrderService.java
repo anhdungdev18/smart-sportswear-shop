@@ -25,6 +25,7 @@ import com.dunghaiquyen.ecommerce.modules.order.dto.UpdateOrderStatusRequest;
 import com.dunghaiquyen.ecommerce.modules.order.entity.Order;
 import com.dunghaiquyen.ecommerce.modules.order.entity.OrderItem;
 import com.dunghaiquyen.ecommerce.modules.order.entity.OrderStatus;
+import com.dunghaiquyen.ecommerce.modules.order.entity.PaymentMethod;
 import com.dunghaiquyen.ecommerce.modules.order.mapper.OrderMapper;
 import com.dunghaiquyen.ecommerce.modules.order.repository.OrderItemRepository;
 import com.dunghaiquyen.ecommerce.modules.order.repository.OrderRepository;
@@ -33,6 +34,7 @@ import com.dunghaiquyen.ecommerce.modules.product.entity.ProductStatus;
 import com.dunghaiquyen.ecommerce.modules.product.entity.ProductVariant;
 import com.dunghaiquyen.ecommerce.modules.product.entity.VariantStatus;
 import com.dunghaiquyen.ecommerce.modules.product.repository.ProductVariantRepository;
+import com.dunghaiquyen.ecommerce.modules.payment.entity.PaymentStatus;
 import com.dunghaiquyen.ecommerce.modules.user.entity.User;
 import com.dunghaiquyen.ecommerce.modules.user.entity.UserRole;
 import com.dunghaiquyen.ecommerce.modules.user.repository.UserRepository;
@@ -47,9 +49,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -227,24 +227,7 @@ public class OrderService {
         order.setDiscountAmount(discount);
         order.setTotalAmount(subtotal.add(order.getShippingFee()).subtract(discount));
 
-        try {
-            // saveAndFlush, not save: a plain save() only enqueues the INSERT in
-            // Hibernate's session - without a flush, the order_code unique
-            // constraint is not actually checked by Postgres until SOME LATER
-            // flush point (e.g. the SELECT inside assembleResponse below), by
-            // which time this catch block has already been skipped over and the
-            // violation surfaces as an unhandled 500 instead of triggering the
-            // retry it was meant to. Incidental fix - this collision-retry was
-            // already silently ineffective; only caught now because the test
-            // suite has grown enough to occasionally hit a true 5-digit
-            // order_code collision within the same day's order volume.
-            order = orderRepository.saveAndFlush(order);
-        } catch (DataIntegrityViolationException ex) {
-            // order_code collision (vanishingly unlikely with date+random suffix) -
-            // retry once with a freshly generated code rather than fail checkout.
-            order.setOrderCode(generateOrderCode());
-            order = orderRepository.saveAndFlush(order);
-        }
+        order = orderRepository.save(order);
 
         // Phase 3: reserve stock for every line, reusing the SAME locked variant
         // entities from Phase 1 (still locked for the rest of this transaction).
@@ -401,6 +384,7 @@ public class OrderService {
             throw new BusinessRuleException(
                     HttpStatus.CONFLICT, "Cannot transition order from " + current + " to " + target);
         }
+        OrderFinancialPolicy.validateTransition(order, target);
 
         List<OrderItem> items = orderItemRepository.findAllByOrderIdOrderByIdAsc(order.getId());
         // Lock variants in a fixed order before mutating, same deadlock-avoidance
@@ -423,6 +407,9 @@ public class OrderService {
         if (target == OrderStatus.DELIVERED) {
             // Returns module's return-window eligibility check reads this - see Order.deliveredAt's javadoc.
             order.setDeliveredAt(java.time.Instant.now());
+            if (order.getPaymentMethod() == PaymentMethod.COD) {
+                order.setPaymentStatus(PaymentStatus.PAID);
+            }
         }
         order = orderRepository.save(order);
 
@@ -555,8 +542,8 @@ public class OrderService {
 
     private String generateOrderCode() {
         String datePart = LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE);
-        String randomPart = String.format("%05d", ThreadLocalRandom.current().nextInt(100000));
-        return "ORD" + datePart + randomPart;
+        String uniquePart = UUID.randomUUID().toString().replace("-", "").substring(0, 16).toUpperCase();
+        return "ORD" + datePart + uniquePart;
     }
 
     private Map<String, Object> buildAddressSnapshot(Address address) {

@@ -5,6 +5,9 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
@@ -24,7 +27,18 @@ public class Category extends AbstractAuditEntity {
     @Column(columnDefinition = "text")
     private String description;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_id")
+    private Category parent;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private CategoryStatus status = CategoryStatus.ACTIVE;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "node_type", nullable = false, length = 20)
+    private CategoryNodeType nodeType = CategoryNodeType.LEAF;
+
+    @Column(name = "sort_order", nullable = false)
+    private int sortOrder = 0;
 }

@@ -114,6 +114,21 @@ class NotificationIntegrationTest extends AbstractIntegrationTest {
     }
 
     private List<Notification> notificationsFor(UUID orderId, NotificationType type) {
+        for (int attempt = 0; attempt < 100; attempt++) {
+            List<Notification> notifications = notificationRepository.findAll().stream()
+                    .filter(n -> n.getOrder() != null && n.getOrder().getId().equals(orderId) && n.getType() == type)
+                    .toList();
+            if (!notifications.isEmpty()
+                    && notifications.stream().noneMatch(n -> n.getStatus().name().equals("PENDING"))) {
+                return notifications;
+            }
+            try {
+                Thread.sleep(20);
+            } catch (InterruptedException ex) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
         return notificationRepository.findAll().stream()
                 .filter(n -> n.getOrder() != null && n.getOrder().getId().equals(orderId) && n.getType() == type)
                 .toList();

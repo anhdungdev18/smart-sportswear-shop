@@ -7,8 +7,9 @@ import com.dunghaiquyen.ecommerce.modules.collection.entity.CollectionType;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.time.Instant;
+import java.util.UUID;
 
-/** PATCH semantics: null means "leave unchanged" for every field. */
+/** PATCH semantics: null means "leave unchanged". Use clearBrand=true to remove the brand tag. */
 public record CollectionUpdateRequest(
 
         @NullOrNotBlank(message = "Name must not be blank")
@@ -25,6 +26,10 @@ public record CollectionUpdateRequest(
         String shortDescription,
 
         CollectionType collectionType,
+
+        UUID brandId,
+
+        Boolean clearBrand,
 
         @Size(max = 50, message = "Season must be at most 50 characters")
         String season,

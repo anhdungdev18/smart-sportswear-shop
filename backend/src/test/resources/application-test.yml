@@ -24,5 +24,5 @@ spring:
 # here, not a real merchant credential.
 app:
   vnpay:
-    tmn-code: TESTTMN01
+    tmn-code: TESTTMN1
     hash-secret: test-only-vnpay-hash-secret-do-not-use-in-prod

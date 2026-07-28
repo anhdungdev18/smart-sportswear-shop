@@ -2,6 +2,7 @@ package com.dunghaiquyen.ecommerce.modules.collection.dto;
 
 import com.dunghaiquyen.ecommerce.modules.collection.entity.CollectionStatus;
 import com.dunghaiquyen.ecommerce.modules.collection.entity.CollectionType;
+import com.dunghaiquyen.ecommerce.modules.product.dto.CatalogRefResponse;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -13,6 +14,7 @@ public record CollectionResponse(
         String description,
         String shortDescription,
         CollectionType collectionType,
+        CatalogRefResponse brand,
         String season,
         Integer year,
         String bannerImageUrl,

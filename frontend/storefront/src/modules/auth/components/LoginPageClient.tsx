@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { getApiErrorMessage } from "@/lib/api-errors";
 import { emitSessionChange, setSession } from "@/lib/session";
 import { forgotPassword, login, register } from "@/modules/auth/api";
+import { GoogleSignInButton } from "@/modules/auth/components/GoogleSignInButton";
 
 export function LoginPageClient() {
   const router = useRouter();
@@ -143,6 +144,24 @@ export function LoginPageClient() {
                 {loginLoading ? "Đang đăng nhập..." : "Đăng nhập"}
               </button>
             </form>
+
+            <div className="mt-6">
+              <div className="mb-4 flex items-center gap-4">
+                <span className="h-px flex-1 bg-ivy-hairline" />
+                <span className="text-[13px] uppercase tracking-[0.04em] text-ivy-text">Hoặc</span>
+                <span className="h-px flex-1 bg-ivy-hairline" />
+              </div>
+              <GoogleSignInButton
+                onError={(message) => {
+                  setLoginError(message);
+                  setLoginMessage(null);
+                }}
+                onSuccess={(fullName) => {
+                  setLoginError(null);
+                  setLoginMessage(`Chào mừng ${fullName}, bạn đã đăng nhập bằng Google.`);
+                }}
+              />
+            </div>
           </section>
 
           <section className="border border-ivy-hairline px-6 py-8 md:px-10">

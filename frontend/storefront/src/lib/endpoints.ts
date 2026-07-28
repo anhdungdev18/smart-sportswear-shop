@@ -3,6 +3,7 @@ export const endpoints = {
   product: (slugOrId: string) => `/api/v1/products/${slugOrId}`,
   productSuggestions: "/api/v1/products/search-suggestions",
   categories: "/api/v1/categories",
+  categoryTree: "/api/v1/categories/tree",
   category: (slugOrId: string) => `/api/v1/categories/${slugOrId}`,
   brands: "/api/v1/brands",
   collections: "/api/v1/collections",
@@ -38,6 +39,7 @@ export const endpoints = {
   },
   auth: {
     login: "/api/v1/auth/login",
+    google: "/api/v1/auth/google",
     register: "/api/v1/auth/register",
     refresh: "/api/v1/auth/refresh",
     logout: "/api/v1/auth/logout",

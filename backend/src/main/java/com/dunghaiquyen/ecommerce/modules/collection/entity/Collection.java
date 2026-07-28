@@ -1,10 +1,14 @@
 package com.dunghaiquyen.ecommerce.modules.collection.entity;
 
 import com.dunghaiquyen.ecommerce.common.entity.AbstractAuditEntity;
+import com.dunghaiquyen.ecommerce.modules.brand.entity.Brand;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import lombok.Getter;
@@ -41,6 +45,11 @@ public class Collection extends AbstractAuditEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "collection_type", nullable = false, length = 30)
     private CollectionType collectionType;
+
+    /** Optional brand tag - see V20 migration. Null = not tied to any brand. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "brand_id")
+    private Brand brand;
 
     @Column(length = 50)
     private String season;

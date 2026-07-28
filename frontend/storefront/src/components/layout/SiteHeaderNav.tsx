@@ -4,14 +4,18 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { NavCategoryMenu, NavSubItemGroup } from "@/components/layout/types";
-import { HEADER_NAV_ITEMS } from "@/modules/content/data/layout";
 import { cn } from "@/lib/utils";
 
 function CategorySubMenu({ item }: { item: NavCategoryMenu }) {
   const pathname = usePathname();
   return (
     <div className="fixed left-0 top-[var(--site-header-height)] z-30 w-full border-y border-ivy-hairline bg-white px-14 py-8 shadow-[0_10px_30px_rgba(34,31,32,0.06)]">
-      <div className="grid grid-cols-[220px_repeat(7,minmax(0,1fr))] gap-8">
+      <div
+        className="grid gap-8"
+        style={{
+          gridTemplateColumns: `220px repeat(${Math.max(1, item.groups?.length ?? 1)}, minmax(180px, 1fr))`,
+        }}
+      >
         {item.quickLinks?.length ? (
           <div className="pr-3">
             {item.quickLinks.map((quickLink) => {
@@ -132,7 +136,7 @@ function NavMenuItem({
   );
 }
 
-export function SiteHeaderNav() {
+export function SiteHeaderNav({ items }: { items: NavCategoryMenu[] }) {
   const pathname = usePathname();
   const [openLabel, setOpenLabel] = useState<string | null>(null);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -171,7 +175,7 @@ export function SiteHeaderNav() {
   return (
     <nav className="hidden h-full items-center justify-start md:flex" onMouseLeave={scheduleClose} onMouseEnter={clearCloseTimer}>
       <ul className="flex h-full items-center gap-7 xl:gap-8">
-        {HEADER_NAV_ITEMS.map((item) => (
+        {items.map((item) => (
           <NavMenuItem
             key={item.label}
             item={item}

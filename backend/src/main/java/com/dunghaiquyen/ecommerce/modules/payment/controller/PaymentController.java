@@ -6,6 +6,7 @@ import com.dunghaiquyen.ecommerce.modules.payment.dto.CreatePaymentRequest;
 import com.dunghaiquyen.ecommerce.modules.payment.dto.CreatePaymentResponse;
 import com.dunghaiquyen.ecommerce.modules.payment.dto.PaymentResponse;
 import com.dunghaiquyen.ecommerce.modules.payment.service.PaymentService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
@@ -19,10 +20,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-/** API_SPEC_PHASE1.md section 8 - VNPay sandbox payment session + callback. */
+/** API_SPEC_PHASE1.md section 8 - VNPay 2.1.0 payment session and callback. */
 @RestController
 @RequestMapping("/api/v1/payments")
 public class PaymentController {
@@ -36,8 +38,11 @@ public class PaymentController {
     @PostMapping("/create")
     @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<ApiResponse<CreatePaymentResponse>> create(
-            @AuthenticationPrincipal CustomUserDetails principal, @Valid @RequestBody CreatePaymentRequest request) {
-        CreatePaymentResponse response = paymentService.createPaymentSession(principal.getUserId(), request);
+            @AuthenticationPrincipal CustomUserDetails principal,
+            @Valid @RequestBody CreatePaymentRequest request,
+            HttpServletRequest httpRequest) {
+        CreatePaymentResponse response =
+                paymentService.createPaymentSession(principal.getUserId(), request, httpRequest.getRemoteAddr());
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok("Payment session created", response));
     }
 
@@ -49,10 +54,9 @@ public class PaymentController {
      * vnp_* key/value set (not JSON), and the handler needs to hash over
      * whatever set of params actually arrived, not a fixed shape.
      */
-    @PostMapping("/callback")
-    public ApiResponse<Map<String, Object>> callback(@RequestParam Map<String, String> params) {
-        Map<String, Object> data = paymentService.handleCallback(params);
-        return ApiResponse.ok("Callback processed", data);
+    @RequestMapping(value = "/callback", method = {RequestMethod.GET, RequestMethod.POST})
+    public Map<String, String> callback(@RequestParam Map<String, String> params) {
+        return paymentService.handleCallback(params);
     }
 
     @GetMapping("/{orderId}")
