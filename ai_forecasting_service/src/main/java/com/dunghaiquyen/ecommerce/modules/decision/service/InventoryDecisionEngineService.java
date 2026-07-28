@@ -20,6 +20,7 @@ import com.dunghaiquyen.ecommerce.modules.replenishment.repository.InventoryPoli
 import com.dunghaiquyen.ecommerce.modules.replenishment.repository.ReplenishmentRecommendationRepository;
 import com.dunghaiquyen.ecommerce.modules.replenishment.repository.VariantReadRepository;
 import com.dunghaiquyen.ecommerce.modules.replenishment.repository.VariantSnapshot;
+import com.dunghaiquyen.ecommerce.config.ForecastDataSourceProperties;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -40,36 +41,42 @@ public class InventoryDecisionEngineService {
     private final ForecastRunRepository forecastRunRepository;
     private final ForecastModelEvaluationRepository evaluationRepository;
     private final ReplenishmentRecommendationRepository recommendationRepository;
+    private final ForecastDataSourceProperties dataSourceProperties;
 
     public InventoryDecisionEngineService(
             VariantReadRepository variantRepository,
             InventoryPolicyRepository policyRepository,
             ForecastRunRepository forecastRunRepository,
             ForecastModelEvaluationRepository evaluationRepository,
-            ReplenishmentRecommendationRepository recommendationRepository) {
+            ReplenishmentRecommendationRepository recommendationRepository,
+            ForecastDataSourceProperties dataSourceProperties) {
         this.variantRepository = variantRepository;
         this.policyRepository = policyRepository;
         this.forecastRunRepository = forecastRunRepository;
         this.evaluationRepository = evaluationRepository;
         this.recommendationRepository = recommendationRepository;
+        this.dataSourceProperties = dataSourceProperties;
     }
 
     @Transactional(readOnly = true)
     public List<InventoryRiskResponse> listRisks(InventoryRiskType risk) {
-        List<ReplenishmentRecommendation> pending = recommendationRepository.findAllByStatus(ReplenishmentStatus.PENDING);
-        List<UUID> variantIds = pending.stream().map(ReplenishmentRecommendation::getVariantId).distinct().toList();
+        String dataSource = dataSourceProperties.dataSource();
+        List<UUID> variantIds = variantRepository.findAllActiveIds(dataSource);
         var variants = variantRepository.findAllByIds(variantIds).stream()
                 .collect(Collectors.toMap(VariantSnapshot::id, v -> v));
         var policies = policyRepository.findAllByVariantIdIn(variantIds).stream()
                 .collect(Collectors.toMap(InventoryPolicy::getVariantId, p -> p, (first, second) -> first));
-        var evaluations = evaluationRepository.findAllByVariantIdIn(variantIds).stream()
+        var evaluations = evaluationRepository.findAllByVariantIdInAndDataSource(variantIds, dataSource).stream()
                 .collect(Collectors.toMap(ForecastModelEvaluation::getVariantId, e -> e, (first, second) -> first));
+        var forecasts = forecastRunRepository.findLatestByVariantIdsAndDataSource(variantIds, dataSource).stream()
+                .collect(Collectors.toMap(ForecastRun::getVariantId, f -> f, (first, second) -> first));
+        var pending = recommendationRepository.findAllByVariantIdInAndStatus(variantIds, ReplenishmentStatus.PENDING).stream()
+                .collect(Collectors.toMap(ReplenishmentRecommendation::getVariantId, r -> r, (first, second) -> first));
 
-        return pending.stream()
-                .map(rec -> toRisk(variants.get(rec.getVariantId()), rec.getForecastRun(),
-                        policies.get(rec.getVariantId()),
-                        evaluations.get(rec.getVariantId()),
-                        rec.getIncomingQuantity()))
+        return variantIds.stream()
+                .map(variantId -> toRisk(variants.get(variantId), forecasts.get(variantId),
+                        policies.get(variantId), evaluations.get(variantId),
+                        pending.containsKey(variantId) ? pending.get(variantId).getIncomingQuantity() : 0))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .filter(response -> risk == null || response.risk() == risk)

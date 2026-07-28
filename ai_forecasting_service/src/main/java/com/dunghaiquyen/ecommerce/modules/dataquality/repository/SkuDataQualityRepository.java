@@ -18,11 +18,16 @@ public class SkuDataQualityRepository {
     }
 
     public List<SkuDataQualityRow> findQualityRows(LocalDate fromInclusive, LocalDate toInclusive) {
-        return jdbcClient.sql(qualitySql() + " order by p.data_source, p.sku")
+        return findQualityRows(fromInclusive, toInclusive, null);
+    }
+
+    public List<SkuDataQualityRow> findQualityRows(LocalDate fromInclusive, LocalDate toInclusive, String dataSource) {
+        String sourceFilter = dataSource == null || dataSource.isBlank() ? "" : " where p.data_source = :dataSource";
+        var query = jdbcClient.sql(qualitySql() + sourceFilter + " order by p.data_source, p.sku")
                 .param("fromDate", Date.valueOf(fromInclusive))
-                .param("toDate", Date.valueOf(toInclusive))
-                .query(this::mapRow)
-                .list();
+                .param("toDate", Date.valueOf(toInclusive));
+        if (!sourceFilter.isEmpty()) query = query.param("dataSource", dataSource.toUpperCase());
+        return query.query(this::mapRow).list();
     }
 
     public Optional<SkuDataQualityRow> findQualityRow(UUID variantId, LocalDate fromInclusive, LocalDate toInclusive) {

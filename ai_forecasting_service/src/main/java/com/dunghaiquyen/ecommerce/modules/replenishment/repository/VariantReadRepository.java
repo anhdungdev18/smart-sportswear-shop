@@ -33,4 +33,8 @@ public class VariantReadRepository {
         return jdbcClient.sql("select variant_id from ai_product_variant_snapshot order by variant_id")
                 .query(UUID.class).list();
     }
+    public List<UUID> findAllActiveIds(String dataSource) {
+        return jdbcClient.sql("select variant_id from ai_product_variant_snapshot where data_source=:dataSource order by variant_id")
+                .param("dataSource", dataSource).query(UUID.class).list();
+    }
 }

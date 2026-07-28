@@ -5,6 +5,7 @@ import com.dunghaiquyen.ecommerce.common.security.CustomUserDetails;
 import com.dunghaiquyen.ecommerce.modules.replenishment.dto.*;
 import com.dunghaiquyen.ecommerce.modules.replenishment.entity.ForecastModelEvaluation;
 import com.dunghaiquyen.ecommerce.modules.replenishment.entity.ForecastRun;
+import com.dunghaiquyen.ecommerce.modules.replenishment.entity.ForecastConfidence;
 import com.dunghaiquyen.ecommerce.modules.replenishment.entity.InventoryPolicy;
 import com.dunghaiquyen.ecommerce.modules.replenishment.entity.ReplenishmentPriority;
 import com.dunghaiquyen.ecommerce.modules.replenishment.entity.ReplenishmentRecommendation;
@@ -14,7 +15,11 @@ import com.dunghaiquyen.ecommerce.modules.replenishment.repository.InventoryPoli
 import com.dunghaiquyen.ecommerce.modules.replenishment.repository.ReplenishmentRecommendationRepository;
 import com.dunghaiquyen.ecommerce.modules.replenishment.service.DailyDemandService;
 import com.dunghaiquyen.ecommerce.modules.replenishment.service.ForecastBacktestService;
+import com.dunghaiquyen.ecommerce.modules.demand.service.DemandClassificationService;
+import com.dunghaiquyen.ecommerce.modules.demand.dto.DemandPattern;
+import com.dunghaiquyen.ecommerce.config.ForecastDataSourceProperties;
 import com.dunghaiquyen.ecommerce.modules.replenishment.service.ForecastGenerationService;
+import com.dunghaiquyen.ecommerce.modules.replenishment.service.DemandForecastService;
 import jakarta.validation.Valid;
 import com.dunghaiquyen.ecommerce.modules.replenishment.service.CoreSnapshotSyncService;
 import com.dunghaiquyen.ecommerce.modules.replenishment.repository.VariantReadRepository;
@@ -50,6 +55,9 @@ public class AdminReplenishmentController {
     private final VariantReadRepository variantRepository;
     private final DailyDemandService dailyDemandService;
     private final ForecastBacktestService forecastBacktestService;
+    private final DemandClassificationService demandClassificationService;
+    private final DemandForecastService demandForecastService;
+    private final ForecastDataSourceProperties dataSourceProperties;
     private final ForecastModelEvaluationRepository evaluationRepository;
     private final ForecastGenerationService forecastGenerationService;
 
@@ -59,6 +67,9 @@ public class AdminReplenishmentController {
                                         VariantReadRepository variantRepository,
                                         DailyDemandService dailyDemandService,
                                         ForecastBacktestService forecastBacktestService,
+                                        DemandClassificationService demandClassificationService,
+                                        DemandForecastService demandForecastService,
+                                        ForecastDataSourceProperties dataSourceProperties,
                                         ForecastModelEvaluationRepository evaluationRepository,
                                         ForecastGenerationService forecastGenerationService) {
         this.snapshotSyncService = snapshotSyncService;
@@ -67,6 +78,9 @@ public class AdminReplenishmentController {
         this.variantRepository = variantRepository;
         this.dailyDemandService = dailyDemandService;
         this.forecastBacktestService = forecastBacktestService;
+        this.demandClassificationService = demandClassificationService;
+        this.demandForecastService = demandForecastService;
+        this.dataSourceProperties = dataSourceProperties;
         this.evaluationRepository = evaluationRepository;
         this.forecastGenerationService = forecastGenerationService;
     }
@@ -133,17 +147,38 @@ public class AdminReplenishmentController {
             @RequestBody(required = false) GenerateForecastRequest request) {
         List<UUID> requestedIds = request == null ? List.of() : request.getVariantIds();
         LocalDate today = LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh"));
-        LocalDate from = today.minusDays(180);
+        LocalDate from = today.minusDays(179);
 
         forecastGenerationService.startSync();
 
         java.util.concurrent.CompletableFuture.runAsync(() -> {
             try {
                 snapshotSyncService.sync(from, today, requestedIds);
-                List<UUID> variantIds = requestedIds == null || requestedIds.isEmpty()
-                        ? variantRepository.findAllActiveIds()
-                        : requestedIds;
-                forecastGenerationService.startGenerationAsync(variantIds, from, today);
+                String source = dataSourceProperties.dataSource();
+                demandClassificationService.classifyBatch(from, today, source);
+                List<UUID> requestedVariantIds = requestedIds == null || requestedIds.isEmpty()
+                        ? variantRepository.findAllActiveIds(source) : requestedIds;
+                java.util.Set<UUID> requestedSet = new java.util.HashSet<>(requestedVariantIds);
+                List<UUID> eligibleVariantIds = demandClassificationService.listSaved(source).stream()
+                        .filter(row -> requestedSet.contains(row.variantId()))
+                        .filter(row -> row.classification() != DemandPattern.NO_DEMAND
+                                && row.classification() != DemandPattern.INSUFFICIENT_DATA)
+                        .map(com.dunghaiquyen.ecommerce.modules.demand.dto.DemandClassificationResponse::variantId)
+                        .toList();
+                Map<UUID, ForecastModelEvaluation> existingEvaluations = evaluationRepository
+                        .findAllByVariantIdInAndDataSource(eligibleVariantIds, source).stream()
+                        .collect(java.util.stream.Collectors.toMap(ForecastModelEvaluation::getVariantId, row -> row));
+                List<UUID> variantsNeedingEvaluation = eligibleVariantIds.stream()
+                        .filter(id -> {
+                            ForecastModelEvaluation evaluation = existingEvaluations.get(id);
+                            return evaluation == null || evaluation.getTrainingTo() == null
+                                    || evaluation.getTrainingTo().isBefore(today);
+                        })
+                        .toList();
+                if (!variantsNeedingEvaluation.isEmpty()) {
+                    demandForecastService.evaluateModelsBatch(variantsNeedingEvaluation, from, today);
+                }
+                forecastGenerationService.startGenerationAsync(eligibleVariantIds, from, today);
             } catch (Exception e) {
                 log.error("Failed during sync phase", e);
                 forecastGenerationService.failBatch();
@@ -213,6 +248,7 @@ public class AdminReplenishmentController {
         if (rec.getStatus() != ReplenishmentStatus.PENDING) {
             throw new IllegalStateException("Invalid state transition");
         }
+        ensureActionableConfidence(rec);
         rec.setStatus(ReplenishmentStatus.ACCEPTED);
         rec.setAdminQuantity(rec.getSuggestedQuantity());
         if (request != null && request.getNote() != null) {
@@ -235,6 +271,7 @@ public class AdminReplenishmentController {
             @AuthenticationPrincipal CustomUserDetails principal) {
 
         ReplenishmentRecommendation rec = recommendationRepository.findById(id).orElseThrow();
+        ensureActionableConfidence(rec);
         if (rec.getStatus() != ReplenishmentStatus.PENDING) {
             throw new IllegalStateException("Invalid state transition");
         }
@@ -253,6 +290,14 @@ public class AdminReplenishmentController {
 
         recommendationRepository.save(rec);
         return ApiResponse.ok(null);
+    }
+
+    private void ensureActionableConfidence(ReplenishmentRecommendation recommendation) {
+        ForecastRun run = recommendation.getForecastRun();
+        if (run == null || run.getConfidence() == ForecastConfidence.LOW
+                || run.getConfidence() == ForecastConfidence.INSUFFICIENT) {
+            throw new IllegalStateException("Forecast confidence is too low for an import decision");
+        }
     }
 
     @PostMapping("/suggestions/{id}/dismiss")

@@ -30,6 +30,21 @@ public interface ReplenishmentRecommendationRepository extends JpaRepository<Rep
                                 @Param("note") String note,
                                 @Param("updatedAt") java.time.Instant updatedAt);
 
+    @Modifying
+    @Query(value = """
+            update replenishment_recommendations r
+               set status = 'DISMISSED',
+                   admin_note = 'Automatically dismissed: forecast confidence is INSUFFICIENT.',
+                   updated_at = :updatedAt
+              from forecast_runs f
+             where r.forecast_run_id = f.id
+               and r.status = 'PENDING'
+               and f.confidence = 'INSUFFICIENT'
+               and f.data_source = :dataSource
+            """, nativeQuery = true)
+    int dismissNonActionableForecasts(@Param("dataSource") String dataSource,
+                                      @Param("updatedAt") java.time.Instant updatedAt);
+
     @Query(value="""
         select r.* from replenishment_recommendations r join ai_product_variant_snapshot v on v.variant_id=r.variant_id
         where (:status is null or r.status=:status) and (:priority is null or r.priority=:priority)

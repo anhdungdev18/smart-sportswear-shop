@@ -16,6 +16,9 @@ spring:
       hibernate:
         jdbc.time_zone: UTC
         default_batch_fetch_size: 100
+        jdbc.batch_size: 100
+        order_inserts: true
+        order_updates: true
   flyway:
     enabled: ${SPRING_FLYWAY_ENABLED:true}
     locations: classpath:db/ai-migration

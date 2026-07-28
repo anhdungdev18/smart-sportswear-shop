@@ -104,7 +104,7 @@ class DemandClassificationServiceTest {
         for (int i = 0; i < quantities.size(); i++) {
             points.add(new DemandPoint(start.plusDays(i), quantities.get(i)));
         }
-        return new DemandHistory(new VariantKey(UUID.randomUUID(), "SKU-1", "Product", "DEMO"), points);
+        return new DemandHistory(new VariantKey(UUID.randomUUID(), "SKU-1", "Product", "DEMO", quantities.size()), points, quantities.size());
     }
 
     private List<Long> repeated(int days, long quantity) {

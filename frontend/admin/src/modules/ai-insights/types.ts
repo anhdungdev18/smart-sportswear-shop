@@ -29,6 +29,28 @@ export interface DataQualitySummaryResponse extends Omit<DataQualitySourceSummar
   bySource: DataQualitySourceSummaryResponse[];
 }
 
+export type InventoryAgeingStatus = "NEW_NO_SALES" | "WATCH" | "SLOW_MOVING" | "DORMANT" | "DEAD_STOCK";
+
+export interface InventoryAgeingItemResponse {
+  variantId: string; productId: string; sku: string; productName: string; size: string; color: string;
+  availableQuantity: number; unitPrice: number; estimatedInventoryValue: number;
+  lastImportDate: string; lastSaleDate: string | null; inventoryAgeDays: number; daysWithoutSale: number;
+  unitsSold30Days: number; unitsSold90Days: number; unitsSold180Days: number;
+  status: InventoryAgeingStatus; urgencyScore: number; supplierConfigured: boolean; recommendedActions: string[];
+}
+
+export interface InventoryAgeingSummaryResponse {
+  dataSource: DataSource; generatedAt: string; totalVariants: number; variantsWithStock: number;
+  newNoSalesVariants: number; watchVariants: number; slowMovingVariants: number;
+  dormantVariants: number; deadStockVariants: number; variantsMissingSupplier: number;
+  estimatedAtRiskValue: number; items: InventoryAgeingItemResponse[];
+}
+
+export interface DemandClassificationResponse {
+  variantId: string;
+  classification: "NO_DEMAND" | "INSUFFICIENT_DATA" | "NEW_ITEM" | "INTERMITTENT" | "ERRATIC" | "SMOOTH" | "GROWING" | "DECLINING";
+}
+
 export interface OverstockMetrics {
   daysOfSupply: number | null;
   deadStockDays: number | null;

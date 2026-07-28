@@ -4,6 +4,7 @@ import com.dunghaiquyen.ecommerce.common.response.ApiResponse;
 import com.dunghaiquyen.ecommerce.modules.dataquality.dto.DataQualitySummaryResponse;
 import com.dunghaiquyen.ecommerce.modules.dataquality.dto.SkuDataQualityResponse;
 import com.dunghaiquyen.ecommerce.modules.dataquality.service.SkuDataQualityService;
+import com.dunghaiquyen.ecommerce.config.ForecastDataSourceProperties;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.List;
@@ -21,25 +22,29 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminDataQualityController {
 
     private final SkuDataQualityService service;
+    private final ForecastDataSourceProperties dataSourceProperties;
 
-    public AdminDataQualityController(SkuDataQualityService service) {
+    public AdminDataQualityController(SkuDataQualityService service, ForecastDataSourceProperties dataSourceProperties) {
         this.service = service;
+        this.dataSourceProperties = dataSourceProperties;
     }
 
     @GetMapping("/summary")
     public ApiResponse<DataQualitySummaryResponse> summary(
             @RequestParam(required = false) LocalDate from,
-            @RequestParam(required = false) LocalDate to) {
+            @RequestParam(required = false) LocalDate to,
+            @RequestParam(required = false) String dataSource) {
         DateRange range = range(from, to);
-        return ApiResponse.ok(service.summarize(range.from(), range.to()));
+        return ApiResponse.ok(service.summarize(range.from(), range.to(), resolveSource(dataSource)));
     }
 
     @GetMapping("/variants")
     public ApiResponse<List<SkuDataQualityResponse>> variants(
             @RequestParam(required = false) LocalDate from,
-            @RequestParam(required = false) LocalDate to) {
+            @RequestParam(required = false) LocalDate to,
+            @RequestParam(required = false) String dataSource) {
         DateRange range = range(from, to);
-        return ApiResponse.ok(service.listVariants(range.from(), range.to()));
+        return ApiResponse.ok(service.listVariants(range.from(), range.to(), resolveSource(dataSource)));
     }
 
     @GetMapping("/variants/{variantId}")
@@ -55,6 +60,10 @@ public class AdminDataQualityController {
         LocalDate resolvedTo = to == null ? LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh")) : to;
         LocalDate resolvedFrom = from == null ? resolvedTo.minusDays(179) : from;
         return new DateRange(resolvedFrom, resolvedTo);
+    }
+
+    private String resolveSource(String source) {
+        return source == null || source.isBlank() ? dataSourceProperties.dataSource() : source.toUpperCase();
     }
 
     private record DateRange(LocalDate from, LocalDate to) {

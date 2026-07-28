@@ -174,6 +174,7 @@ public class DemandForecastService {
                 variantIds.size(), loadDemandMillis, backtestMillis, saveMillis);
     }
 
+    @Transactional
     public void generateForecastAndRecommendationBatch(List<UUID> variantIds, LocalDate fromInclusive, LocalDate toInclusive) {
         if (variantIds == null || variantIds.isEmpty()) return;
 
@@ -202,6 +203,11 @@ public class DemandForecastService {
 
         long tEval = System.currentTimeMillis();
         String dataSource = dataSourceProperties.dataSource();
+        int dismissedNonActionable = recommendationRepository.dismissNonActionableForecasts(dataSource, Instant.now());
+        if (dismissedNonActionable > 0) {
+            log.info("Dismissed {} stale LOW/INSUFFICIENT pending recommendations for source {}",
+                    dismissedNonActionable, dataSource);
+        }
         Map<UUID, ForecastModelEvaluation> evaluationMap =
                 evaluationRepository.findAllByVariantIdInAndDataSource(activeVariantIds, dataSource).stream()
                 .collect(Collectors.toMap(ForecastModelEvaluation::getVariantId, e -> e));
@@ -288,13 +294,21 @@ public class DemandForecastService {
             ForecastRun savedRun = savedRunMap.get(variantId);
             if (savedRun == null) continue;
 
+            ReplenishmentRecommendation existing = existingPendingMap.get(variantId);
+            if (savedRun.getConfidence() == ForecastConfidence.INSUFFICIENT) {
+                if (existing != null) {
+                    existing.setStatus(ReplenishmentStatus.DISMISSED);
+                    existing.setAdminNote("Automatically dismissed: forecast confidence is not sufficient for replenishment.");
+                    recommendationsToSave.add(existing);
+                }
+                continue;
+            }
+
             VariantSnapshot variant = variantMap.get(variantId);
             InventoryPolicy policy = activePolicyMap.get(variantId);
 
             ReplenishmentRecommendation generated = 
                     replenishmentService.generateRecommendation(variant, savedRun, policy);
-
-            ReplenishmentRecommendation existing = existingPendingMap.get(variantId);
 
             if (generated.getSuggestedQuantity() > 0 || "CRITICAL".equals(generated.getPriority().name())) {
                 if (existing != null) {

@@ -53,7 +53,7 @@ public class DemandClassificationService {
     DemandClassificationResponse classify(DemandHistory history, LocalDate fromInclusive, LocalDate toInclusive) {
         int expectedDays = (int) ChronoUnit.DAYS.between(fromInclusive, toInclusive) + 1;
         List<Long> quantities = history.points().stream().map(DemandPoint::quantity).toList();
-        int observedDays = quantities.size();
+        int observedDays = history.observedDays();
         int nonZeroDays = (int) quantities.stream().filter(quantity -> quantity > 0).count();
         long totalUnits = quantities.stream().mapToLong(Long::longValue).sum();
         double adi = nonZeroDays == 0 ? 0.0d : (double) observedDays / nonZeroDays;
