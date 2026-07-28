@@ -2,6 +2,8 @@ import { aiApiRequest } from "@/modules/ai-api/client";
 import type {
   DataQualitySummaryResponse,
   InventoryRiskResponse,
+  InventoryAgeingSummaryResponse,
+  DemandClassificationResponse,
   PageResponse,
   ReplenishmentSuggestionResponse,
 } from "./types";
@@ -9,6 +11,18 @@ import type {
 export async function getDataQualitySummary() {
   return aiApiRequest<DataQualitySummaryResponse>("/api/v1/admin/ai/data-quality/summary", {
     next: { revalidate: 0 },
+  });
+}
+
+export async function getInventoryAgeingSummary() {
+  return aiApiRequest<InventoryAgeingSummaryResponse>("/api/v1/admin/ai/inventory-ageing/summary", {
+    query: { dataSource: "REAL" }, next: { revalidate: 0 },
+  });
+}
+
+export async function listDemandClassifications() {
+  return aiApiRequest<DemandClassificationResponse[]>("/api/v1/admin/ai/demand-classifications/variants", {
+    query: { dataSource: "REAL" }, next: { revalidate: 0 },
   });
 }
 

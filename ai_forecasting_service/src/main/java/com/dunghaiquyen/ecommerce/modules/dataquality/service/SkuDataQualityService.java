@@ -29,9 +29,14 @@ public class SkuDataQualityService {
 
     @Transactional(readOnly = true)
     public List<SkuDataQualityResponse> listVariants(LocalDate fromInclusive, LocalDate toInclusive) {
+        return listVariants(fromInclusive, toInclusive, null);
+    }
+
+    @Transactional(readOnly = true)
+    public List<SkuDataQualityResponse> listVariants(LocalDate fromInclusive, LocalDate toInclusive, String dataSource) {
         validateRange(fromInclusive, toInclusive);
         int expectedDays = expectedDays(fromInclusive, toInclusive);
-        return repository.findQualityRows(fromInclusive, toInclusive).stream()
+        return repository.findQualityRows(fromInclusive, toInclusive, dataSource).stream()
                 .map(row -> map(row, fromInclusive, toInclusive, expectedDays))
                 .toList();
     }
@@ -47,7 +52,12 @@ public class SkuDataQualityService {
 
     @Transactional(readOnly = true)
     public DataQualitySummaryResponse summarize(LocalDate fromInclusive, LocalDate toInclusive) {
-        List<SkuDataQualityResponse> rows = listVariants(fromInclusive, toInclusive);
+        return summarize(fromInclusive, toInclusive, null);
+    }
+
+    @Transactional(readOnly = true)
+    public DataQualitySummaryResponse summarize(LocalDate fromInclusive, LocalDate toInclusive, String dataSource) {
+        List<SkuDataQualityResponse> rows = listVariants(fromInclusive, toInclusive, dataSource);
         return new DataQualitySummaryResponse(
                 rows.size(),
                 countLevel(rows, SkuDataQualityLevel.HIGH),
@@ -68,9 +78,8 @@ public class SkuDataQualityService {
         if (missingDays > 0) {
             warnings.add("Sales series has missing days; missing demand must be materialized as quantity 0.");
         }
-        if (row.nonZeroDays() < properties.minNonZeroDays()) {
-            warnings.add("Non-zero demand days are below the minimum forecast threshold.");
-        }
+        if (row.nonZeroDays() == 0) warnings.add("No demand was recorded; route this SKU to inventory ageing instead of forecasting.");
+        else if (row.nonZeroDays() < properties.minNonZeroDays()) warnings.add("Demand is sparse; use a sparse-demand or cold-start model.");
         if (row.inventorySnapshotDays() < properties.minHistoryDays()) {
             warnings.add("Inventory history is shorter than the minimum threshold.");
         }
@@ -78,8 +87,8 @@ public class SkuDataQualityService {
             warnings.add("Supplier is not configured on the active inventory policy.");
         }
 
-        int score = score(row, missingDays, supplierConfigured, expectedDays);
-        SkuDataQualityLevel level = level(row, score, missingDays);
+        int score = score(row, missingDays, expectedDays);
+        SkuDataQualityLevel level = level(row, score, missingDays, expectedDays);
         Integer daysSinceLastSale = row.lastSaleDate() == null
                 ? null
                 : (int) ChronoUnit.DAYS.between(row.lastSaleDate(), toInclusive);
@@ -103,33 +112,26 @@ public class SkuDataQualityService {
                 List.copyOf(warnings));
     }
 
-    private int score(SkuDataQualityRow row, int missingDays, boolean supplierConfigured, int expectedDays) {
-        int score = 100;
-        score -= Math.min(40, missingDays * 40 / Math.max(1, expectedDays));
-        if (row.nonZeroDays() < properties.highNonZeroDays()) {
-            score -= row.nonZeroDays() >= properties.minNonZeroDays() ? 10 : 25;
-        }
-        if (row.inventorySnapshotDays() < properties.highHistoryDays()) {
-            score -= row.inventorySnapshotDays() >= properties.minHistoryDays() ? 10 : 20;
-        }
-        if (!supplierConfigured) {
-            score -= 15;
-        }
-        return Math.max(0, score);
+    private int score(SkuDataQualityRow row, int missingDays, int expectedDays) {
+        int continuity = Math.max(0, 100 - Math.min(100, missingDays * 100 / Math.max(1, expectedDays)));
+        int demandSignal = row.nonZeroDays() == 0 ? 0
+                : Math.min(100, row.nonZeroDays() * 100 / Math.max(1, properties.highNonZeroDays()));
+        int inventoryHistory = Math.min(100,
+                row.inventorySnapshotDays() * 100 / Math.max(1, properties.highHistoryDays()));
+        return (int) Math.round(continuity * 0.4 + demandSignal * 0.4 + inventoryHistory * 0.2);
     }
 
-    private SkuDataQualityLevel level(SkuDataQualityRow row, int score, int missingDays) {
-        if (missingDays > 0 || row.nonZeroDays() < properties.minNonZeroDays()) {
-            return SkuDataQualityLevel.INSUFFICIENT;
+    private SkuDataQualityLevel level(SkuDataQualityRow row, int score, int missingDays, int expectedDays) {
+        if (missingDays >= expectedDays) return SkuDataQualityLevel.INSUFFICIENT;
+        if (row.nonZeroDays() == 0 || row.inventorySnapshotDays() < properties.minHistoryDays()) {
+            return SkuDataQualityLevel.LOW;
         }
-        if (score >= 80
+        if (missingDays == 0
                 && row.nonZeroDays() >= properties.highNonZeroDays()
                 && row.inventorySnapshotDays() >= properties.highHistoryDays()) {
             return SkuDataQualityLevel.HIGH;
         }
-        if (score >= 60) {
-            return SkuDataQualityLevel.MEDIUM;
-        }
+        if (score >= 60 && row.nonZeroDays() >= properties.minNonZeroDays()) return SkuDataQualityLevel.MEDIUM;
         return SkuDataQualityLevel.LOW;
     }
 

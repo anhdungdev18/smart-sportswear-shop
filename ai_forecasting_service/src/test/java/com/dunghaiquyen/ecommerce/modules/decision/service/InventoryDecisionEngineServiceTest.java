@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Test;
 class InventoryDecisionEngineServiceTest {
 
     private final InventoryDecisionEngineService service =
-            new InventoryDecisionEngineService(null, null, null, null, null);
+            new InventoryDecisionEngineService(null, null, null, null, null, new com.dunghaiquyen.ecommerce.config.ForecastDataSourceProperties("REAL"));
 
     @Test
     void stockoutDecisionAppliesSafetyStockMoqAndPackSize() {

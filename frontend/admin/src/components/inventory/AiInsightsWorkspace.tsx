@@ -37,10 +37,39 @@ type RiskFilter = InventoryRiskType | "ALL";
 type ConfidenceFilter = ForecastConfidence | "ALL";
 
 const riskLabels: Record<InventoryRiskType, string> = {
-  STOCKOUT: "Thieu hang",
-  OVERSTOCK: "Du hang",
-  BALANCED: "Can bang",
-  INSUFFICIENT_DATA: "Thieu du lieu",
+  STOCKOUT: "Thiếu hàng",
+  OVERSTOCK: "Dư hàng",
+  BALANCED: "Cân bằng",
+  INSUFFICIENT_DATA: "Chưa có dự báo",
+};
+
+const confidenceLabels: Record<string, string> = {
+  HIGH: "Cao",
+  MEDIUM: "Trung bình",
+  LOW: "Thấp",
+  INSUFFICIENT: "Chưa đủ dữ liệu",
+};
+
+const severityLabels: Record<string, string> = {
+  CRITICAL: "Khẩn cấp",
+  HIGH: "Cao",
+  MEDIUM: "Trung bình",
+  LOW: "Thấp",
+  NONE: "Bình thường",
+};
+
+const dataSourceLabels: Record<string, string> = {
+  DEMO: "Dữ liệu thử nghiệm",
+  REAL: "Dữ liệu thực tế",
+  IMPORTED: "Dữ liệu nhập từ tệp",
+};
+
+const demandPatternLabels: Record<string, string> = {
+  SMOOTH: "Ổn định",
+  ERRATIC: "Biến động",
+  INTERMITTENT: "Gián đoạn",
+  LUMPY: "Không đều",
+  INSUFFICIENT: "Chưa đủ dữ liệu",
 };
 
 const severityRank = { CRITICAL: 5, HIGH: 4, MEDIUM: 3, LOW: 2, NONE: 1 };
@@ -68,14 +97,14 @@ function recommendationForRisk(risk: InventoryRiskResponse, suggestions: Repleni
 
 function FormulaGrid({ risk }: { risk: InventoryRiskResponse }) {
   const fields = [
-    ["Avg demand/day", risk.formula.averageDailyDemand.toFixed(2)],
-    ["Lead time", `${risk.formula.leadTimeDays} ngay`],
-    ["Service level", formatPercent(risk.formula.serviceLevel)],
-    ["Safety stock", risk.formula.safetyStock],
-    ["Reorder point", risk.formula.reorderPoint],
-    ["Target stock", risk.formula.targetStock],
-    ["MOQ", risk.formula.minimumOrderQuantity],
-    ["Pack size", risk.formula.packSize],
+    ["Nhu cầu trung bình/ngày", formatNumber(risk.formula.averageDailyDemand, 2)],
+    ["Thời gian nhập hàng", `${risk.formula.leadTimeDays} ngày`],
+    ["Mức độ đáp ứng", formatPercent(risk.formula.serviceLevel)],
+    ["Tồn kho an toàn", formatNumber(risk.formula.safetyStock)],
+    ["Điểm đặt hàng lại", formatNumber(risk.formula.reorderPoint)],
+    ["Mức tồn kho mục tiêu", formatNumber(risk.formula.targetStock)],
+    ["Số lượng đặt tối thiểu (MOQ)", formatNumber(risk.formula.minimumOrderQuantity)],
+    ["Quy cách đóng gói", formatNumber(risk.formula.packSize)],
   ];
 
   return (
@@ -160,10 +189,10 @@ export function AiInsightsWorkspace({ initialQuality, initialRisks, initialSugge
       setQuality(nextQuality);
       setRisks(nextRisks);
       setSelected((current) => current ? nextRisks.find((item) => item.variantId === current.variantId) ?? nextRisks[0] ?? null : nextRisks[0] ?? null);
-      setMessage("Da lam moi insight tu AI service.");
+      setMessage("Đã cập nhật dữ liệu phân tích mới nhất.");
     } catch (cause) {
       console.error(cause);
-      setError("Khong the lam moi du lieu AI. Hay kiem tra AI service va token admin.");
+      setError("Không thể cập nhật dữ liệu. Vui lòng kiểm tra kết nối và đăng nhập lại.");
     } finally {
       setRefreshing(false);
     }
@@ -173,7 +202,7 @@ export function AiInsightsWorkspace({ initialQuality, initialRisks, initialSugge
     if (!selected) return;
     const pending = recommendationForRisk(selected, suggestions);
     if (!pending) {
-      setError("SKU nay chua co recommendation dang cho duyet de truy xuat persisted explanation.");
+      setError("SKU này chưa có đề xuất nhập hàng đang chờ duyệt.");
       return;
     }
     setExplanationLoading(true);
@@ -182,7 +211,7 @@ export function AiInsightsWorkspace({ initialQuality, initialRisks, initialSugge
       setExplanation(await getReplenishmentExplanation(pending.id));
     } catch (cause) {
       console.error(cause);
-      setError("Khong tai duoc explanation cua recommendation.");
+      setError("Không tải được nội dung giải thích cho đề xuất này.");
     } finally {
       setExplanationLoading(false);
     }
@@ -199,7 +228,7 @@ export function AiInsightsWorkspace({ initialQuality, initialRisks, initialSugge
       }));
     } catch (cause) {
       console.error(cause);
-      setError("Khong chay duoc what-if simulation. Gia tri nhap co the khong hop le.");
+      setError("Không thể chạy mô phỏng. Vui lòng kiểm tra lại các giá trị đã nhập.");
     } finally {
       setSimulationLoading(false);
     }
@@ -209,36 +238,36 @@ export function AiInsightsWorkspace({ initialQuality, initialRisks, initialSugge
     <>
       <section className="kpi-grid">
         <div className="card kpi-card">
-          <div className="kpi-label"><span>Data quality</span><ShieldWarning size={20} /></div>
+          <div className="kpi-label"><span>Chất lượng dữ liệu</span><ShieldWarning size={20} /></div>
           <div className="kpi-value">{quality ? `${quality.highQualityVariants}/${quality.totalVariants}` : "-"}</div>
-          <span className="trend warn">{quality?.insufficientVariants ?? 0} SKU thieu du lieu</span>
+          <span className="trend warn">{formatNumber(quality?.insufficientVariants ?? 0)} SKU có chuỗi dữ liệu chưa đầy đủ</span>
         </div>
         <div className="card kpi-card">
-          <div className="kpi-label"><span>Stockout risk</span><WarningCircle size={20} /></div>
+          <div className="kpi-label"><span>Nguy cơ thiếu hàng</span><WarningCircle size={20} /></div>
           <div className="kpi-value">{stockoutCount}</div>
-          <span className="trend warn">Can xem uu tien nhap</span>
+          <span className="trend warn">Cần ưu tiên xem xét nhập hàng</span>
         </div>
         <div className="card kpi-card">
-          <div className="kpi-label"><span>Overstock risk</span><Package size={20} /></div>
+          <div className="kpi-label"><span>Nguy cơ dư hàng</span><Package size={20} /></div>
           <div className="kpi-value">{overstockCount}</div>
-          <span className="trend">Can giam mua/xa hang</span>
+          <span className="trend">Cân nhắc giảm mua hoặc đẩy bán</span>
         </div>
         <div className="card kpi-card">
-          <div className="kpi-label"><span>Forecast flags</span><ChartLineUp size={20} /></div>
+          <div className="kpi-label"><span>Cảnh báo dự báo</span><ChartLineUp size={20} /></div>
           <div className="kpi-value">{lowConfidenceCount + highErrorCount}</div>
-          <span className="trend warn">{suggestions.length} recommendation cho duyet</span>
+          <span className="trend warn">{formatNumber(suggestions.length)} đề xuất đang chờ duyệt</span>
         </div>
       </section>
 
       <section className="card panel">
         <div className="panel-header">
           <div>
-            <h2>Nguon du lieu va do tin cay</h2>
-            <p className="panel-copy">Tach DEMO/REAL de tranh doc nham ket qua validation nhu production.</p>
+            <h2>Nguồn dữ liệu và độ tin cậy</h2>
+            <p className="panel-copy">Phân tách dữ liệu thử nghiệm và dữ liệu thực tế để tránh hiểu sai kết quả.</p>
           </div>
           <button className="admin-btn secondary" type="button" onClick={() => void refresh()} disabled={refreshing}>
             <ArrowsClockwise size={18} weight="duotone" />
-            {refreshing ? "Dang lam moi" : "Lam moi"}
+            {refreshing ? "Đang cập nhật" : "Cập nhật dữ liệu"}
           </button>
         </div>
         {message && <p className="action-message">{message}</p>}
@@ -246,12 +275,12 @@ export function AiInsightsWorkspace({ initialQuality, initialRisks, initialSugge
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(210px,1fr))", gap: 12 }}>
           {(quality?.bySource ?? []).map((source) => (
             <div className="admin-subcard" key={source.dataSource}>
-              <strong>{source.dataSource}</strong>
-              <span className="table-subtle">{source.totalVariants} SKU, {source.highQualityVariants} HIGH, {source.insufficientVariants} insufficient</span>
-              <span className="table-subtle">{source.variantsMissingSupplier} thieu supplier, {source.variantsWithMissingSalesDays} thieu ngay sales</span>
+              <strong>{dataSourceLabels[source.dataSource] ?? source.dataSource}</strong>
+              <span className="table-subtle">{formatNumber(source.totalVariants)} SKU · {formatNumber(source.highQualityVariants)} chất lượng cao · {formatNumber(source.insufficientVariants)} chưa đủ dữ liệu</span>
+              <span className="table-subtle">{formatNumber(source.variantsMissingSupplier)} thiếu nhà cung cấp · {formatNumber(source.variantsWithMissingSalesDays)} thiếu lịch sử bán hàng</span>
             </div>
           ))}
-          {!quality?.bySource?.length && <div className="empty-state">Chua co summary theo data source.</div>}
+          {!quality?.bySource?.length && <div className="empty-state">Chưa có thống kê theo nguồn dữ liệu.</div>}
         </div>
       </section>
 
@@ -259,8 +288,8 @@ export function AiInsightsWorkspace({ initialQuality, initialRisks, initialSugge
         <div className="card panel">
           <div className="panel-header">
             <div>
-              <h2>Risk queue</h2>
-              <p className="panel-copy">Sap xep theo severity va so luong de xuat.</p>
+              <h2>Danh sách cần xử lý</h2>
+              <p className="panel-copy">Ưu tiên theo mức độ rủi ro và số lượng đề xuất.</p>
             </div>
           </div>
           <div className="table-toolbar">
@@ -272,7 +301,7 @@ export function AiInsightsWorkspace({ initialQuality, initialRisks, initialSugge
                   type="button"
                   onClick={() => setRiskFilter(value)}
                 >
-                  {value === "ALL" ? "Tat ca" : riskLabels[value]}
+                  {value === "ALL" ? "Tất cả" : riskLabels[value]}
                 </button>
               ))}
             </div>
@@ -281,35 +310,35 @@ export function AiInsightsWorkspace({ initialQuality, initialRisks, initialSugge
             <div className="admin-search" style={{ minHeight: 42, width: "min(360px, 100%)" }}>
               <MagnifyingGlass size={18} />
               <input
-                aria-label="Tim SKU, san pham hoac demand pattern"
+                aria-label="Tìm theo SKU, sản phẩm hoặc nhu cầu"
                 value={keyword}
                 onChange={(event) => setKeyword(event.target.value)}
-                placeholder="Tim SKU, san pham..."
+                placeholder="Tìm SKU hoặc tên sản phẩm..."
                 style={{ border: 0, outline: 0, width: "100%", background: "transparent" }}
               />
             </div>
             <select className="admin-input" style={{ maxWidth: 190 }} value={confidenceFilter} onChange={(event) => setConfidenceFilter(event.target.value as ConfidenceFilter)}>
-              <option value="ALL">Tat ca confidence</option>
-              <option value="HIGH">HIGH</option>
-              <option value="MEDIUM">MEDIUM</option>
-              <option value="LOW">LOW</option>
-              <option value="INSUFFICIENT">INSUFFICIENT</option>
+              <option value="ALL">Tất cả độ tin cậy</option>
+              <option value="HIGH">Cao</option>
+              <option value="MEDIUM">Trung bình</option>
+              <option value="LOW">Thấp</option>
+              <option value="INSUFFICIENT">Chưa đủ dữ liệu</option>
             </select>
           </div>
           <div style={{ overflowX: "auto" }}>
             <table className="data-table">
               <thead>
                 <tr>
-                  <th>Risk</th>
+                  <th>Rủi ro</th>
                   <th>SKU</th>
-                  <th>Ton</th>
-                  <th>ROP</th>
-                  <th>De xuat</th>
-                  <th>Confidence</th>
+                  <th>Tồn khả dụng</th>
+                  <th>Điểm đặt lại</th>
+                  <th>Đề xuất nhập</th>
+                  <th>Độ tin cậy</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredRisks.length === 0 && <tr><td colSpan={6} className="empty-state">Khong co SKU phu hop bo loc.</td></tr>}
+                {filteredRisks.length === 0 && <tr><td colSpan={6} className="empty-state">Không có SKU phù hợp với bộ lọc.</td></tr>}
                 {filteredRisks.map((risk) => (
                   <tr key={risk.variantId} className={selected?.variantId === risk.variantId ? "row-selected" : undefined} onClick={() => selectRisk(risk)} style={{ cursor: "pointer" }}>
                     <td><span className={`status ${statusClass(risk.risk)}`}>{riskLabels[risk.risk]}</span></td>
@@ -317,7 +346,7 @@ export function AiInsightsWorkspace({ initialQuality, initialRisks, initialSugge
                     <td>{risk.availableQuantity}</td>
                     <td>{risk.reorderPoint}</td>
                     <td><strong>{risk.suggestedQuantity}</strong></td>
-                    <td><span className={`status ${statusClass(risk.confidence)}`}>{risk.confidence}</span></td>
+                    <td><span className={`status ${statusClass(risk.confidence)}`}>{confidenceLabels[risk.confidence] ?? risk.confidence}</span></td>
                   </tr>
                 ))}
               </tbody>
@@ -334,32 +363,32 @@ export function AiInsightsWorkspace({ initialQuality, initialRisks, initialSugge
                     <h2>{selected.sku}</h2>
                     <p className="panel-copy">{selected.productName} - {selected.color}/{selected.size}</p>
                   </div>
-                  {pendingByVariant.has(selected.variantId) && <span className="status low">Cho duyet</span>}
+                  {pendingByVariant.has(selected.variantId) && <span className="status low">Chờ duyệt</span>}
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(130px,1fr))", gap: 12, marginBottom: 16 }}>
-                  <div><span className="table-subtle">Risk</span><div><strong>{riskLabels[selected.risk]}</strong></div></div>
-                  <div><span className="table-subtle">Severity</span><div><strong>{selected.severity}</strong></div></div>
-                  <div><span className="table-subtle">Model</span><div><strong>{selected.selectedModel}</strong></div></div>
-                  <div><span className="table-subtle">Demand</span><div><strong>{selected.demandPattern}</strong></div></div>
+                  <div><span className="table-subtle">Rủi ro</span><div><strong>{riskLabels[selected.risk]}</strong></div></div>
+                  <div><span className="table-subtle">Mức độ</span><div><strong>{severityLabels[selected.severity] ?? selected.severity}</strong></div></div>
+                  <div><span className="table-subtle">Mô hình dự báo</span><div><strong>{selected.selectedModel}</strong></div></div>
+                  <div><span className="table-subtle">Kiểu nhu cầu</span><div><strong>{demandPatternLabels[selected.demandPattern] ?? selected.demandPattern}</strong></div></div>
                 </div>
                 <FormulaGrid risk={selected} />
                 <div style={{ marginTop: 16 }}>
-                  <h3>Ly do</h3>
+                  <h3>Lý do đề xuất</h3>
                   <ul>{selected.reasons.map((reason) => <li key={reason}>{reason}</li>)}</ul>
                   {selected.warnings.length > 0 && (
                     <>
-                      <h3>Canh bao</h3>
+                      <h3>Cảnh báo</h3>
                       <ul>{selected.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul>
                     </>
                   )}
                 </div>
                 <button className="admin-btn secondary" type="button" onClick={() => void loadExplanation()} disabled={explanationLoading || !pendingByVariant.has(selected.variantId)}>
                   <Info size={18} weight="duotone" />
-                  {explanationLoading ? "Dang tai explanation" : "Xem persisted explanation"}
+                  {explanationLoading ? "Đang tải giải thích" : "Xem giải thích chi tiết"}
                 </button>
                 {explanation && (
                   <div className="admin-subcard admin-subcard-tight">
-                    <strong>Recommendation {explanation.recommendationId}</strong>
+                    <strong>Giải thích đề xuất #{explanation.recommendationId}</strong>
                     <pre style={{ whiteSpace: "pre-wrap", margin: 0, color: "var(--admin-muted)", fontSize: 12 }}>
                       {JSON.stringify(explanation.persistedExplanation, null, 2)}
                     </pre>
@@ -370,20 +399,20 @@ export function AiInsightsWorkspace({ initialQuality, initialRisks, initialSugge
               <section className="card panel">
                 <div className="panel-header">
                   <div>
-                    <h2>What-if simulator</h2>
-                    <p className="panel-copy">Read-only: chi tinh lai decision, khong ghi thay doi vao database.</p>
+                    <h2>Mô phỏng chính sách tồn kho</h2>
+                    <p className="panel-copy">Thử các phương án trước khi quyết định. Kết quả mô phỏng không làm thay đổi dữ liệu.</p>
                   </div>
                   <Flask size={22} weight="duotone" />
                 </div>
                 <div className="admin-form-grid">
                   {([
-                    ["availableQuantity", "Ton kha dung"],
-                    ["incomingQuantity", "Hang sap ve"],
-                    ["leadTimeDays", "Lead time"],
-                    ["serviceLevel", "Service level"],
-                    ["targetCoverDays", "Target cover"],
-                    ["minimumOrderQuantity", "MOQ"],
-                    ["packSize", "Pack size"],
+                    ["availableQuantity", "Tồn khả dụng"],
+                    ["incomingQuantity", "Hàng đang về"],
+                    ["leadTimeDays", "Thời gian nhập hàng (ngày)"],
+                    ["serviceLevel", "Mức độ đáp ứng"],
+                    ["targetCoverDays", "Số ngày tồn kho mục tiêu"],
+                    ["minimumOrderQuantity", "Số lượng đặt tối thiểu (MOQ)"],
+                    ["packSize", "Quy cách đóng gói"],
                   ] as const).map(([key, label]) => (
                     <label key={key}>
                       <span className="table-subtle">{label}</span>
@@ -399,16 +428,16 @@ export function AiInsightsWorkspace({ initialQuality, initialRisks, initialSugge
                   ))}
                 </div>
                 <button className="admin-btn" type="button" onClick={() => void runSimulation()} disabled={simulationLoading} style={{ marginTop: 16 }}>
-                  {simulationLoading ? "Dang mo phong" : "Chay mo phong"}
+                  {simulationLoading ? "Đang mô phỏng" : "Chạy mô phỏng"}
                 </button>
                 {simulation && (
                   <div className="admin-subcard admin-subcard-tight">
-                    <strong>Ket qua mo phong</strong>
+                    <strong>Kết quả mô phỏng</strong>
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 10 }}>
-                      <div><span className="table-subtle">Suggested delta</span><div><strong>{simulation.suggestedQuantityDelta}</strong></div></div>
-                      <div><span className="table-subtle">ROP delta</span><div><strong>{simulation.reorderPointDelta}</strong></div></div>
-                      <div><span className="table-subtle">Stockout delta</span><div><strong>{formatNumber(simulation.stockoutDaysDelta)}</strong></div></div>
-                      <div><span className="table-subtle">New suggested</span><div><strong>{simulation.simulated.suggestedQuantity}</strong></div></div>
+                      <div><span className="table-subtle">Thay đổi lượng đề xuất</span><div><strong>{formatNumber(simulation.suggestedQuantityDelta)}</strong></div></div>
+                      <div><span className="table-subtle">Thay đổi điểm đặt lại</span><div><strong>{formatNumber(simulation.reorderPointDelta)}</strong></div></div>
+                      <div><span className="table-subtle">Thay đổi số ngày thiếu hàng</span><div><strong>{formatNumber(simulation.stockoutDaysDelta)}</strong></div></div>
+                      <div><span className="table-subtle">Lượng nhập đề xuất mới</span><div><strong>{formatNumber(simulation.simulated.suggestedQuantity)}</strong></div></div>
                     </div>
                     {simulation.warnings.length > 0 && <ul>{simulation.warnings.map((warning) => <li key={warning}>{warning}</li>)}</ul>}
                   </div>
@@ -416,7 +445,7 @@ export function AiInsightsWorkspace({ initialQuality, initialRisks, initialSugge
               </section>
             </>
           ) : (
-            <section className="card panel"><div className="empty-state">Chon mot SKU trong risk queue de xem chi tiet.</div></section>
+            <section className="card panel"><div className="empty-state">Chọn một SKU trong danh sách để xem chi tiết.</div></section>
           )}
         </div>
       </section>

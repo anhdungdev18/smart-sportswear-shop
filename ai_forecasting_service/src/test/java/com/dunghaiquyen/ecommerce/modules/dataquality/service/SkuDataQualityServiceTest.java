@@ -21,7 +21,7 @@ class SkuDataQualityServiceTest {
             repository, new AiDataQualityProperties(60, 120, 12, 30));
 
     @Test
-    void marksMissingSalesDaysAsInsufficient() {
+    void marksSmallSalesCoverageGapAsMediumQuality() {
         UUID variantId = UUID.randomUUID();
         LocalDate from = LocalDate.of(2026, 1, 1);
         LocalDate to = LocalDate.of(2026, 6, 29);
@@ -32,7 +32,7 @@ class SkuDataQualityServiceTest {
 
         assertThat(result.historyDays()).isEqualTo(180);
         assertThat(result.missingDays()).isEqualTo(1);
-        assertThat(result.qualityLevel()).isEqualTo(SkuDataQualityLevel.INSUFFICIENT);
+        assertThat(result.qualityLevel()).isEqualTo(SkuDataQualityLevel.MEDIUM);
         assertThat(result.warnings()).anyMatch(warning -> warning.contains("missing days"));
     }
 
@@ -57,7 +57,7 @@ class SkuDataQualityServiceTest {
     void summarizesSupplierAndInventoryWarnings() {
         LocalDate from = LocalDate.of(2026, 1, 1);
         LocalDate to = LocalDate.of(2026, 6, 29);
-        when(repository.findQualityRows(from, to)).thenReturn(List.of(
+        when(repository.findQualityRows(from, to, null)).thenReturn(List.of(
                 new SkuDataQualityRow(UUID.randomUUID(), "SKU-1", "Product", "REAL", 180, 40, 300, to, 180, "Supplier"),
                 new SkuDataQualityRow(UUID.randomUUID(), "SKU-2", "Product", "DEMO", 180, 20, 60, to.minusDays(10), 20, null)));
 
@@ -65,6 +65,7 @@ class SkuDataQualityServiceTest {
 
         assertThat(summary.totalVariants()).isEqualTo(2);
         assertThat(summary.highQualityVariants()).isEqualTo(1);
+        assertThat(summary.lowQualityVariants()).isEqualTo(1);
         assertThat(summary.variantsMissingSupplier()).isEqualTo(1);
         assertThat(summary.variantsWithInventoryGaps()).isEqualTo(1);
         assertThat(summary.bySource()).extracting("dataSource").containsExactly("DEMO", "REAL");
