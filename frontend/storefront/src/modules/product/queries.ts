@@ -57,6 +57,7 @@ export async function fetchFrequentlyBoughtTogether(productId: string): Promise<
 export async function fetchHomeBannerSlides(): Promise<BannerSlide[]> {
   try {
     const result = await apiFetch<Banner[]>(endpoints.banners, {
+      query: { placement: "HOME_HERO" },
       cache: "no-store"
     });
     const hero = result.data.find((banner) => banner.placement === "HOME_HERO");
