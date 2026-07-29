@@ -2,6 +2,8 @@ package com.dunghaiquyen.ecommerce.modules.report.controller;
 
 import com.dunghaiquyen.ecommerce.common.response.ApiResponse;
 import com.dunghaiquyen.ecommerce.modules.report.dto.InventoryReportResponse;
+import com.dunghaiquyen.ecommerce.modules.report.dto.CustomerReportQuery;
+import com.dunghaiquyen.ecommerce.modules.report.dto.CustomerReportResponse;
 import com.dunghaiquyen.ecommerce.modules.report.dto.InventoryLookupItemResponse;
 import com.dunghaiquyen.ecommerce.modules.report.dto.BestSellingProductPeriodResponse;
 import com.dunghaiquyen.ecommerce.modules.report.dto.OrderReportQuery;
@@ -66,6 +68,11 @@ public class AdminReportController {
     @GetMapping("/products")
     public ApiResponse<ProductReportResponse> products(@ModelAttribute ProductReportQuery query) {
         return ApiResponse.ok(reportService.getProductReport(query));
+    }
+
+    @GetMapping("/customers")
+    public ApiResponse<CustomerReportResponse> customers(@ModelAttribute CustomerReportQuery query) {
+        return ApiResponse.ok(reportService.getCustomerReport(query));
     }
 
     @GetMapping("/inventory")

@@ -53,6 +53,5 @@ export async function apiRequestEnvelope<T>(path: string, init?: ApiRequestInit)
   if (payload && typeof payload === "object" && "data" in payload) {
     return payload as ApiEnvelope<T>;
   }
-
   return { data: payload as T };
 }

@@ -1,10 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
+import { useDeferredValue, useEffect, useRef, useState } from "react";
 import { ApiRequestError } from "@/modules/api/common";
-import { adjustStock, exportStock, importStock } from "@/modules/inventory/browser-api";
-import type { InventoryItemResponse, InventoryTransactionResponse } from "@/modules/inventory/types";
+import { adjustStock, exportStock, importStock, listInventoryPage, listInventoryTransactionPage } from "@/modules/inventory/browser-api";
+import type { InventoryItemResponse, InventoryPage, InventoryTransactionResponse } from "@/modules/inventory/types";
 import { NO_IMAGE } from "@/modules/ui/placeholder";
 import type { InventoryImportDraft } from "./InventoryWorkspace";
 
@@ -38,16 +38,35 @@ function VariantCombobox({
 }) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
+  const [results, setResults] = useState(options);
+  const [selectedItem, setSelectedItem] = useState<InventoryItemResponse | null>(options.find((item) => item.variantId === value) ?? null);
+  const [loading, setLoading] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const deferredQuery = useDeferredValue(query);
 
-  const selected = options.find((item) => item.variantId === value) ?? null;
+  const selected = selectedItem?.variantId === value
+    ? selectedItem
+    : options.find((item) => item.variantId === value) ?? null;
 
-  const filtered = useMemo(() => {
-    const q = deferredQuery.trim().toLowerCase();
-    if (!q) return options;
-    return options.filter((item) => [item.sku, item.productName, item.size ?? "", item.color ?? ""].join(" ").toLowerCase().includes(q));
-  }, [deferredQuery, options]);
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    const timer = window.setTimeout(async () => {
+      setLoading(true);
+      try {
+        const page = await listInventoryPage(1, 20, deferredQuery.trim() || undefined);
+        if (!cancelled) setResults(page.items);
+      } catch {
+        if (!cancelled) setResults([]);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }, 300);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [deferredQuery, open]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -61,6 +80,7 @@ function VariantCombobox({
   }, []);
 
   function selectItem(item: InventoryItemResponse) {
+    setSelectedItem(item);
     onChange(item.variantId);
     setQuery("");
     setOpen(false);
@@ -83,10 +103,12 @@ function VariantCombobox({
       />
       {open ? (
         <div className="combobox-list">
-          {filtered.length === 0 ? (
+          {loading ? (
+            <div className="combobox-empty">Đang tìm...</div>
+          ) : results.length === 0 ? (
             <div className="combobox-empty">Không tìm thấy biến thể phù hợp</div>
           ) : (
-            filtered.map((item) => (
+            results.map((item) => (
               <button
                 type="button"
                 key={item.variantId}
@@ -124,17 +146,19 @@ function VariantCombobox({
 }
 
 export function AdminInventoryClient({
-  initialItems,
-  initialTransactions,
+  initialItemsPage,
+  initialTransactionsPage,
   importDraft
 }: {
-  initialItems: InventoryItemResponse[];
-  initialTransactions: InventoryTransactionResponse[];
+  initialItemsPage: InventoryPage<InventoryItemResponse>;
+  initialTransactionsPage: InventoryPage<InventoryTransactionResponse>;
   importDraft: InventoryImportDraft | null;
 }) {
-  const [items, setItems] = useState(initialItems);
-  const [transactions, setTransactions] = useState(initialTransactions);
-  const [variantId, setVariantId] = useState(initialItems[0]?.variantId ?? "");
+  const [items, setItems] = useState(initialItemsPage.items);
+  const [itemsMeta, setItemsMeta] = useState(initialItemsPage.meta);
+  const [transactions, setTransactions] = useState(initialTransactionsPage.items);
+  const [transactionsMeta, setTransactionsMeta] = useState(initialTransactionsPage.meta);
+  const [variantId, setVariantId] = useState(initialItemsPage.items[0]?.variantId ?? "");
   const [quantity, setQuantity] = useState(1);
   const [actionType, setActionType] = useState<ActionType>("IMPORT");
   const [note, setNote] = useState("");
@@ -142,6 +166,9 @@ export function AdminInventoryClient({
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
   const deferredSearch = useDeferredValue(search);
+  const [itemsLoading, setItemsLoading] = useState(false);
+  const [transactionsLoading, setTransactionsLoading] = useState(false);
+  const initialSearchRender = useRef(true);
 
   useEffect(() => {
     if (!importDraft) return;
@@ -153,11 +180,42 @@ export function AdminInventoryClient({
     document.getElementById("inventory-action-form")?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [importDraft]);
 
-  const filteredItems = useMemo(() => {
-    const query = deferredSearch.trim().toLowerCase();
-    if (!query) return items;
-    return items.filter((item) => [item.sku, item.productName, item.size ?? "", item.color ?? ""].join(" ").toLowerCase().includes(query));
-  }, [deferredSearch, items]);
+  async function loadItems(page: number, keyword = deferredSearch.trim()) {
+    setItemsLoading(true);
+    try {
+      const result = await listInventoryPage(page, 25, keyword || undefined);
+      setItems(result.items);
+      setItemsMeta(result.meta);
+    } catch (error) {
+      setMessage(extractError(error, "Không tải được danh sách tồn kho"));
+    } finally {
+      setItemsLoading(false);
+    }
+  }
+
+  async function loadTransactions(page: number) {
+    setTransactionsLoading(true);
+    try {
+      const result = await listInventoryTransactionPage(page, 20);
+      setTransactions(result.items);
+      setTransactionsMeta(result.meta);
+    } catch (error) {
+      setMessage(extractError(error, "Không tải được lịch sử giao dịch kho"));
+    } finally {
+      setTransactionsLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (initialSearchRender.current) {
+      initialSearchRender.current = false;
+      return;
+    }
+    const timer = window.setTimeout(() => void loadItems(1, deferredSearch.trim()), 300);
+    return () => window.clearTimeout(timer);
+    // loadItems deliberately reads only the supplied keyword for this effect.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deferredSearch]);
 
   async function handleSubmit() {
     try {
@@ -174,25 +232,12 @@ export function AdminInventoryClient({
       }
 
       setItems((current) => current.map((item) => (item.variantId === updated.variantId ? updated : item)));
-      setTransactions((current) => [
-        {
-          id: `${Date.now()}`,
-          variantId: updated.variantId,
-          sku: updated.sku,
-          orderId: null,
-          type: actionType,
-          quantity,
-          beforeStockQuantity: 0,
-          afterStockQuantity: updated.stockQuantity,
-          beforeReservedQuantity: 0,
-          afterReservedQuantity: updated.reservedQuantity,
-          note,
-          createdById: null,
-          createdByName: "Bạn",
-          createdAt: new Date().toISOString()
-        },
-        ...current
-      ]);
+      try {
+        await loadTransactions(1);
+      } catch {
+        // The stock mutation already succeeded. Keep the existing history instead
+        // of fabricating an audit row with incorrect before/after quantities.
+      }
       setMessage("Đã cập nhật tồn kho thành công.");
       setNote("");
     } catch (error) {
@@ -225,7 +270,7 @@ export function AdminInventoryClient({
             className="admin-btn"
             type="button"
             onClick={() => void handleSubmit()}
-            disabled={saving || !variantId || items.length === 0}
+            disabled={saving || !variantId}
           >
             {saving ? "Đang lưu..." : "Xác nhận"}
           </button>
@@ -246,7 +291,7 @@ export function AdminInventoryClient({
             onChange={(event) => setSearch(event.target.value)}
           />
         </div>
-        <table className="data-table">
+        <table className="data-table" aria-busy={itemsLoading}>
           <thead>
             <tr>
               <th>SKU</th>
@@ -258,14 +303,14 @@ export function AdminInventoryClient({
             </tr>
           </thead>
           <tbody>
-            {filteredItems.length === 0 ? (
+            {items.length === 0 ? (
               <tr>
                 <td colSpan={6} style={{ textAlign: "center", color: "var(--admin-muted)" }}>
                   Không có biến thể nào khớp bộ lọc hiện tại.
                 </td>
               </tr>
             ) : null}
-            {filteredItems.map((item) => (
+            {items.map((item) => (
               <tr key={item.variantId}>
                 <td>{item.sku}</td>
                 <td>{item.productName}</td>
@@ -279,34 +324,63 @@ export function AdminInventoryClient({
             ))}
           </tbody>
         </table>
+        <div className="admin-pager">
+          <span className="admin-pager-info">
+            {itemsLoading ? "Đang tải..." : itemsMeta.total === 0 ? "Không có SKU" : `Hiển thị ${(itemsMeta.page - 1) * itemsMeta.limit + 1}–${Math.min(itemsMeta.page * itemsMeta.limit, itemsMeta.total)} trên ${itemsMeta.total} SKU`}
+          </span>
+          <div className="admin-pager-controls">
+            <button className="admin-pager-btn" type="button" disabled={itemsLoading || itemsMeta.page <= 1} onClick={() => void loadItems(itemsMeta.page - 1)}>Trước</button>
+            <span className="admin-pager-page">Trang {itemsMeta.page}/{Math.max(1, itemsMeta.totalPages)}</span>
+            <button className="admin-pager-btn" type="button" disabled={itemsLoading || itemsMeta.page >= itemsMeta.totalPages} onClick={() => void loadItems(itemsMeta.page + 1)}>Sau</button>
+          </div>
+        </div>
       </section>
 
       <section className="card panel">
         <div className="panel-header">
           <h2>Giao dịch kho gần đây</h2>
         </div>
-        <table className="data-table">
+        <table className="data-table" aria-busy={transactionsLoading}>
           <thead>
             <tr>
               <th>Thời gian</th>
               <th>SKU</th>
               <th>Loại</th>
               <th>Số lượng</th>
+              <th>Tồn trước → sau</th>
+              <th>Khả dụng sau</th>
+              <th>Ghi chú</th>
               <th>Người thao tác</th>
             </tr>
           </thead>
           <tbody>
+            {transactions.length === 0 ? (
+              <tr><td colSpan={8} style={{ textAlign: "center", color: "var(--admin-muted)" }}>Chưa có giao dịch kho.</td></tr>
+            ) : null}
             {transactions.map((item) => (
               <tr key={item.id}>
                 <td>{new Date(item.createdAt).toLocaleString("vi-VN")}</td>
                 <td>{item.sku}</td>
                 <td>{item.type}</td>
                 <td>{item.quantity}</td>
+                <td>{item.beforeStockQuantity} → {item.afterStockQuantity}</td>
+                <td>{item.afterStockQuantity - item.afterReservedQuantity}</td>
+                <td>{item.note || "-"}</td>
                 <td>{item.createdByName ?? "-"}</td>
               </tr>
             ))}
           </tbody>
         </table>
+        <div className="admin-pager">
+          <span className="admin-pager-info">
+            {transactionsLoading ? "Đang tải..." : transactionsMeta.total === 0 ? "Chưa có giao dịch" : `Hiển thị ${(transactionsMeta.page - 1) * transactionsMeta.limit + 1}–${Math.min(transactionsMeta.page * transactionsMeta.limit, transactionsMeta.total)} trên ${transactionsMeta.total} giao dịch`}
+          </span>
+          <div className="admin-pager-controls">
+            <button className="admin-pager-btn" type="button" disabled={transactionsLoading || transactionsMeta.page <= 1} onClick={() => void loadTransactions(transactionsMeta.page - 1)}>Trước</button>
+            <span className="admin-pager-page">Trang {transactionsMeta.page}/{Math.max(1, transactionsMeta.totalPages)}</span>
+            <button className="admin-pager-btn" type="button" disabled={transactionsLoading || transactionsMeta.page >= transactionsMeta.totalPages} onClick={() => void loadTransactions(transactionsMeta.page + 1)}>Sau</button>
+          </div>
+        </div>
       </section>
     </>
   );

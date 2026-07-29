@@ -3,8 +3,8 @@ import { Breadcrumb } from "@/components/shared/Breadcrumb";
 import { ProductCard } from "@/modules/product/components/ProductCard";
 import { ProductDescriptionTabs } from "@/modules/product/components/ProductDescriptionTabs";
 import { ProductDetailInteractive } from "@/modules/product/components/ProductDetailInteractive";
-import { mapProductDetail } from "@/modules/product/mappers";
-import { fetchProductDetail } from "@/modules/product/queries";
+import { mapProductDetail, mapProductListItem } from "@/modules/product/mappers";
+import { fetchFrequentlyBoughtTogether, fetchProductDetail } from "@/modules/product/queries";
 import type { ProductDetail } from "@/modules/product/types";
 
 export async function ProductDetailScreen({
@@ -17,6 +17,7 @@ export async function ProductDetailScreen({
   if (!rawProduct) notFound();
 
   const product = mapProductDetail(rawProduct);
+  const boughtTogether = (await fetchFrequentlyBoughtTogether(rawProduct.id)).map(mapProductListItem);
 
   return (
     <main className="site-main page-below-header flex-1 border-b border-ivy-hairline">
@@ -38,6 +39,18 @@ export async function ProductDetailScreen({
           <div className="mt-12">
             <ProductDescriptionTabs description={product.description} attributes={rawProduct.attributes} />
           </div>
+        )}
+        {boughtTogether.length > 0 && (
+          <section className="mt-16">
+            <h2 className="mb-8 text-center text-[20px] font-semibold uppercase tracking-[3px] text-ivy-dark md:text-[42px]">
+              Thường mua cùng nhau
+            </h2>
+            <div className="grid grid-cols-2 gap-7 sm:grid-cols-3 lg:grid-cols-4">
+              {boughtTogether.slice(0, 4).map((item) => (
+                <ProductCard key={item.id} product={item} />
+              ))}
+            </div>
+          </section>
         )}
         {product.relatedProducts.length > 0 && (
           <section className="mt-16">

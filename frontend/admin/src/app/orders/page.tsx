@@ -31,14 +31,14 @@ export default async function OrdersPage({ searchParams }: { searchParams: Order
 async function OrdersContent({ page, keyword, status }: { page: number; keyword: string; status: string }) {
   const [orderPage, shippingMethods] = await Promise.all([
     listAdminOrders({ page, limit: 20, keyword: keyword || undefined, status: status === "all" ? undefined : status })
-      .catch(() => ({ orders: [], meta: { page, limit: 20, total: 0, totalPages: 0 } })),
+      .catch(() => ({ items: [], meta: { page, limit: 20, total: 0, totalPages: 0 } })),
     listShippingMethods().catch(() => []),
   ]);
 
   return (
     <AdminOrdersClient
       key={`${page}:${keyword}:${status}`}
-      initialOrders={orderPage.orders}
+      initialOrders={orderPage.items}
       pageMeta={orderPage.meta}
       initialKeyword={keyword}
       initialStatus={status}

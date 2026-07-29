@@ -39,7 +39,11 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
     out-of-order: false
-    # Local Supabase startup sets SPRING_FLYWAY_ENABLED=false. Enable only after history review.
+    # Shared Supabase DB carries migrations owned by other branches/services
+    # (forecast-demo, orders-data-source, etc.) that this app doesn't ship.
+    # Ignore those "applied-but-missing-locally" entries so validate doesn't fail;
+    # this app still validates and applies its own migrations normally.
+    ignore-migration-patterns: "*:missing"
     validate-on-migrate: true
 
   data:

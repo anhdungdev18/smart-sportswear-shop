@@ -1,6 +1,6 @@
 import { apiRequestEnvelope } from "@/modules/api/client";
 import { adminEndpoints } from "@/modules/api/endpoints";
-import type { AdminOrderResponse } from "@/modules/orders/types";
+import type { AdminOrderPage, AdminOrderResponse, PageMeta } from "@/modules/orders/types";
 
 export type AdminOrderListParams = {
   page?: number;
@@ -9,21 +9,12 @@ export type AdminOrderListParams = {
   status?: string;
 };
 
-export type OrderPageMeta = {
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
-};
-
-export async function listAdminOrders(query: AdminOrderListParams = {}) {
+export async function listAdminOrders(query: AdminOrderListParams = {}): Promise<AdminOrderPage> {
   const response = await apiRequestEnvelope<AdminOrderResponse[]>(adminEndpoints.orders, {
     query,
-    next: { revalidate: 30 }
+    cache: "no-store"
   });
-
-  return {
-    orders: response.data,
-    meta: (response.meta ?? { page: query.page ?? 1, limit: query.limit ?? 20, total: response.data.length, totalPages: 1 }) as OrderPageMeta
-  };
+  const page = query.page ?? 1;
+  const limit = query.limit ?? 20;
+  return { items: response.data, meta: { page, limit, total: response.data.length, totalPages: 1, ...(response.meta as Partial<PageMeta> | undefined) } };
 }

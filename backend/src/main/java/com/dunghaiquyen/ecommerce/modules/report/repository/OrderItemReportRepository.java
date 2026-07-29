@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.UUID;
 import java.time.Instant;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -22,13 +23,21 @@ public interface OrderItemReportRepository extends JpaRepository<OrderItem, UUID
      * only reading consistent with "rule bán chạy phải dựa trên order items
      * thật" (a cancelled order's items are not a real sale).
      */
-    @Query("select new com.dunghaiquyen.ecommerce.modules.report.dto.BestSellingProductResponse("
+    @Query(value = "select new com.dunghaiquyen.ecommerce.modules.report.dto.BestSellingProductResponse("
             + "p.id, p.name, sum(oi.quantity), sum(oi.lineTotal)) "
             + "from OrderItem oi join oi.product p "
             + "where oi.order.orderStatus <> :excludedStatus "
+            + "and oi.order.createdAt >= :from and oi.order.createdAt <= :to "
             + "group by p.id, p.name "
-            + "order by sum(oi.quantity) desc")
-    List<BestSellingProductResponse> findBestSelling(@Param("excludedStatus") OrderStatus excludedStatus, Pageable pageable);
+            + "order by sum(oi.quantity) desc",
+            countQuery = "select count(distinct p.id) from OrderItem oi join oi.product p "
+                    + "where oi.order.orderStatus <> :excludedStatus "
+                    + "and oi.order.createdAt >= :from and oi.order.createdAt <= :to")
+    Page<BestSellingProductResponse> findBestSellingPage(
+            @Param("excludedStatus") OrderStatus excludedStatus,
+            @Param("from") Instant from,
+            @Param("to") Instant to,
+            Pageable pageable);
 
     @Query("select new com.dunghaiquyen.ecommerce.modules.report.dto.BestSellingProductResponse("
             + "p.id, p.name, sum(oi.quantity), sum(oi.lineTotal)) "

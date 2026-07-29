@@ -1,4 +1,6 @@
 package com.dunghaiquyen.ecommerce.modules.report.dto;
 
-public record ProductReportQuery(Integer limit) {
+import java.time.LocalDate;
+
+public record ProductReportQuery(Integer page, Integer limit, LocalDate dateFrom, LocalDate dateTo) {
 }

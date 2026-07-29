@@ -4,8 +4,7 @@ import { memo, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ApiRequestError } from "@/modules/api/common";
 import { fetchOrderDetail, updateOrderStatus } from "@/modules/orders/browser-api";
-import type { AdminOrderResponse } from "@/modules/orders/types";
-import type { OrderPageMeta } from "@/modules/orders/api";
+import type { AdminOrderResponse, PageMeta } from "@/modules/orders/types";
 import { fetchOrderShipment, updateOrderShipment } from "@/modules/shipping/browser-api";
 import type { ShipmentResponse, ShippingMethodResponse } from "@/modules/shipping/types";
 
@@ -17,6 +16,11 @@ const orderStatuses = [
   "DELIVERED",
   "CANCELLED"
 ] as const;
+
+const nextOrderStatuses: Record<string, readonly string[]> = {
+  PENDING_CONFIRMATION: ["CONFIRMED", "CANCELLED"], CONFIRMED: ["PACKING"],
+  PACKING: ["SHIPPING"], SHIPPING: ["DELIVERED"], DELIVERED: [], CANCELLED: []
+};
 
 const shipmentStatuses = [
   "PENDING",
@@ -98,12 +102,12 @@ const OrderRow = memo(function OrderRow({
       <td>
         <div className="admin-inline-form wrap">
           <select className="select" value={statusDraft} onChange={(event) => onStatusChange(event.target.value)}>
-            {orderStatuses.map((status) => (
+            {[order.orderStatus, ...(nextOrderStatuses[order.orderStatus] ?? [])].map((status) => (
               <option value={status} key={status}>{status}</option>
             ))}
           </select>
           <input className="admin-input" placeholder="Ghi chú nội bộ" value={noteDraft} onChange={(event) => onNoteChange(event.target.value)} />
-          <button className="admin-btn" type="button" onClick={onSaveStatus} disabled={savingId === order.id}>
+          <button className="admin-btn" type="button" onClick={onSaveStatus} disabled={savingId === order.id || statusDraft === order.orderStatus}>
             {savingId === order.id ? "Đang lưu..." : "Lưu trạng thái"}
           </button>
           <button className="admin-btn secondary" type="button" onClick={onLoadDetail} disabled={savingId === `detail:${order.id}`}>
@@ -178,7 +182,7 @@ export function AdminOrdersClient({
 }: {
   initialOrders: AdminOrderResponse[];
   shippingMethods: ShippingMethodResponse[];
-  pageMeta: OrderPageMeta;
+  pageMeta: PageMeta;
   initialKeyword: string;
   initialStatus: string;
 }) {
@@ -212,6 +216,11 @@ export function AdminOrdersClient({
   }, [searchTerm]);
 
   async function handleUpdate(id: string) {
+    const currentOrder = orders.find((item) => item.id === id);
+    if (!currentOrder || (statusDrafts[id] ?? currentOrder.orderStatus) === currentOrder.orderStatus) {
+      setMessage("Hãy chọn trạng thái tiếp theo trước khi lưu.");
+      return;
+    }
     try {
       setSavingId(id);
       setMessage(null);
