@@ -1,6 +1,7 @@
 package com.dunghaiquyen.ecommerce.modules.report.service;
 
 import com.dunghaiquyen.ecommerce.common.time.AppTimeZone;
+import com.dunghaiquyen.ecommerce.common.response.PageMeta;
 import com.dunghaiquyen.ecommerce.config.AppReportProperties;
 import com.dunghaiquyen.ecommerce.config.CacheConfig;
 import com.dunghaiquyen.ecommerce.modules.order.entity.OrderStatus;
@@ -9,6 +10,8 @@ import com.dunghaiquyen.ecommerce.modules.product.entity.ProductVariant;
 import com.dunghaiquyen.ecommerce.modules.product.entity.VariantStatus;
 import com.dunghaiquyen.ecommerce.modules.report.dto.BestSellingProductResponse;
 import com.dunghaiquyen.ecommerce.modules.report.dto.InventoryReportResponse;
+import com.dunghaiquyen.ecommerce.modules.report.dto.CustomerReportQuery;
+import com.dunghaiquyen.ecommerce.modules.report.dto.CustomerReportResponse;
 import com.dunghaiquyen.ecommerce.modules.report.dto.LowStockItemResponse;
 import com.dunghaiquyen.ecommerce.modules.report.dto.OrderReportQuery;
 import com.dunghaiquyen.ecommerce.modules.report.dto.OrderReportResponse;
@@ -22,6 +25,7 @@ import com.dunghaiquyen.ecommerce.modules.report.dto.RevenuePointResponse;
 import com.dunghaiquyen.ecommerce.modules.report.dto.RevenueReportQuery;
 import com.dunghaiquyen.ecommerce.modules.report.dto.RevenueReportResponse;
 import com.dunghaiquyen.ecommerce.modules.report.repository.OrderItemReportRepository;
+import com.dunghaiquyen.ecommerce.modules.report.repository.CustomerReportRepository;
 import com.dunghaiquyen.ecommerce.modules.report.repository.OrderReportRepository;
 import com.dunghaiquyen.ecommerce.modules.report.repository.ProductVariantReportRepository;
 import java.math.BigDecimal;
@@ -82,16 +86,19 @@ public class ReportService {
 
     private final OrderReportRepository orderReportRepository;
     private final OrderItemReportRepository orderItemReportRepository;
+    private final CustomerReportRepository customerReportRepository;
     private final ProductVariantReportRepository productVariantReportRepository;
     private final AppReportProperties reportProperties;
 
     public ReportService(
             OrderReportRepository orderReportRepository,
             OrderItemReportRepository orderItemReportRepository,
+            CustomerReportRepository customerReportRepository,
             ProductVariantReportRepository productVariantReportRepository,
             AppReportProperties reportProperties) {
         this.orderReportRepository = orderReportRepository;
         this.orderItemReportRepository = orderItemReportRepository;
+        this.customerReportRepository = customerReportRepository;
         this.productVariantReportRepository = productVariantReportRepository;
         this.reportProperties = reportProperties;
     }
@@ -191,12 +198,41 @@ public class ReportService {
         return new OrderReportResponse(dateFrom, dateTo, totalOrders, byStatus);
     }
 
-    @Cacheable(value = CacheConfig.REPORT_PRODUCTS, key = "#query.limit() != null ? #query.limit() : 'default'")
     @Transactional(readOnly = true)
     public ProductReportResponse getProductReport(ProductReportQuery query) {
-        List<BestSellingProductResponse> bestSelling = orderItemReportRepository.findBestSelling(
-                OrderStatus.CANCELLED, PageRequest.of(0, resolveProductLimit(query.limit())));
-        return new ProductReportResponse(bestSelling);
+        DateRange range = resolveRange(query.dateFrom(), query.dateTo());
+        var bestSelling = orderItemReportRepository.findBestSelling(
+                OrderStatus.CANCELLED, range.fromInstant(), range.toInstant(),
+                PageRequest.of(resolvePageIndex(query.page()), resolveProductLimit(query.limit())));
+        return new ProductReportResponse(range.dateFrom(), range.dateTo(), bestSelling.getContent(), PageMeta.from(bestSelling));
+    }
+
+    @Transactional(readOnly = true)
+    public CustomerReportResponse getCustomerReport(CustomerReportQuery query) {
+        DateRange range = resolveRange(query.dateFrom(), query.dateTo());
+        var customers = customerReportRepository.findCustomerSales(
+                OrderStatus.CANCELLED, range.fromInstant(), range.toInstant(),
+                PageRequest.of(resolvePageIndex(query.page()), resolveProductLimit(query.limit())));
+        return new CustomerReportResponse(range.dateFrom(), range.dateTo(), customers.getContent(), PageMeta.from(customers));
+    }
+
+    private DateRange resolveRange(LocalDate requestedFrom, LocalDate requestedTo) {
+        LocalDate from = requestedFrom;
+        LocalDate to = requestedTo;
+        if (from != null && to != null && from.isAfter(to)) {
+            LocalDate swap = from;
+            from = to;
+            to = swap;
+        }
+        Instant fromInstant = from != null ? from.atStartOfDay(AppTimeZone.ZONE).toInstant() : FAR_PAST;
+        Instant toInstant = to != null ? to.atTime(LocalTime.MAX).atZone(AppTimeZone.ZONE).toInstant() : FAR_FUTURE;
+        return new DateRange(from, to, fromInstant, toInstant);
+    }
+
+    private record DateRange(LocalDate dateFrom, LocalDate dateTo, Instant fromInstant, Instant toInstant) {}
+
+    private int resolvePageIndex(Integer page) {
+        return page == null || page < 1 ? 0 : page - 1;
     }
 
     @Cacheable(CacheConfig.REPORT_INVENTORY)

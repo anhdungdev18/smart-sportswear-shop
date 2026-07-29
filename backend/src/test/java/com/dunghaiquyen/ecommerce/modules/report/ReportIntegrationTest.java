@@ -346,6 +346,40 @@ class ReportIntegrationTest extends AbstractIntegrationTest {
                 .isEqualTo(6);
     }
 
+    @Test
+    void customerReport_aggregatesOrdersByCustomer_andSupportsDateRange() throws Exception {
+        AdminContext ctx = setUpAdmin();
+        String productId = createActiveProduct(ctx, "Report Customer Product");
+        String variantId = createVariant(ctx, productId, 70000, 50);
+
+        String buyer = uniqueEmail("rpt-customer-buyer");
+        TokenPair token = registerUser(buyer);
+        String addressId = createAddressForUser(buyer);
+        addToCart(token.accessToken(), variantId, 2);
+        createOrder(token.accessToken(), addressId, "COD");
+
+        MvcResult result = mockMvc.perform(get("/api/v1/admin/reports/customers?limit=50&dateFrom="
+                        + LocalDate.now() + "&dateTo=" + LocalDate.now())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + ctx.token()))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        JsonNode rows = json(result.getResponse().getContentAsString()).at("/data/customers");
+        JsonNode mine = null;
+        for (JsonNode row : rows) {
+            if (row.at("/email").asText().equals(buyer)) mine = row;
+        }
+        assertThat(mine).isNotNull();
+        assertThat(mine.at("/totalOrders").asLong()).isEqualTo(1);
+        assertThat(new BigDecimal(mine.at("/totalRevenue").asText())).isGreaterThan(BigDecimal.ZERO);
+
+        MvcResult past = mockMvc.perform(get("/api/v1/admin/reports/customers?dateFrom=2000-01-01&dateTo=2000-01-02")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + ctx.token()))
+                .andExpect(status().isOk())
+                .andReturn();
+        assertThat(json(past.getResponse().getContentAsString()).at("/data/customers").isEmpty()).isTrue();
+    }
+
     // ===== inventory report: current inventory + low stock =====
 
     @Test
@@ -395,6 +429,9 @@ class ReportIntegrationTest extends AbstractIntegrationTest {
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + customer.accessToken()))
                 .andExpect(status().isForbidden());
         mockMvc.perform(get("/api/v1/admin/reports/products")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + customer.accessToken()))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/v1/admin/reports/customers")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + customer.accessToken()))
                 .andExpect(status().isForbidden());
         mockMvc.perform(get("/api/v1/admin/reports/inventory")

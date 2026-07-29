@@ -637,6 +637,40 @@ a {
   color: var(--admin-accent);
 }
 
+.report-filter-form {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.report-filter-form label {
+  display: grid;
+  gap: 6px;
+  color: var(--admin-muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.report-filter-form input {
+  min-height: 38px;
+  padding: 0 11px;
+  border: 1px solid var(--admin-line);
+  border-radius: 9px;
+  background: var(--admin-surface);
+  color: var(--admin-text);
+}
+
+.report-empty {
+  padding: 28px 12px !important;
+  text-align: center;
+  color: var(--admin-muted);
+}
+
+.report-error { color: #b42318; }
+.table-scroll { overflow-x: auto; }
+
+
 .data-table {
   width: 100%;
   border-collapse: separate;
