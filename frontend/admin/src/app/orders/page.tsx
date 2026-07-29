@@ -21,12 +21,9 @@ export default function OrdersPage() {
 }
 
 async function OrdersContent() {
-  const [orders, shippingMethods] = await Promise.all([
-    listAdminOrders().catch(() => []),
-    listShippingMethods().catch(() => []),
-  ]);
+  const [ordersPage, shippingMethods] = await Promise.all([listAdminOrders(), listShippingMethods()]);
 
-  return <AdminOrdersClient initialOrders={orders} shippingMethods={shippingMethods} />;
+  return <AdminOrdersClient initialOrders={ordersPage.items} initialMeta={ordersPage.meta} shippingMethods={shippingMethods} />;
 }
 
 function OrderTableSkeleton() {

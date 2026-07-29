@@ -221,7 +221,7 @@ public class ReturnService {
         Pageable pageable = PageRequest.of(
                 resolvePageIndex(query.page()), resolveLimit(query.limit()), Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<Return> page = returnRepository.findAll(spec, pageable);
-        List<ReturnResponse> items = page.getContent().stream().map(this::assembleResponse).toList();
+        List<ReturnResponse> items = assembleResponses(page.getContent());
         return new ListResult<>(items, PageMeta.from(page));
     }
 
@@ -465,6 +465,29 @@ public class ReturnService {
                 items,
                 returnRequest.getCreatedAt(),
                 returnRequest.getUpdatedAt());
+    }
+
+    /** Batch-loads all return lines for a page, avoiding one item query per return. */
+    private List<ReturnResponse> assembleResponses(List<Return> returns) {
+        if (returns.isEmpty()) {
+            return List.of();
+        }
+        Map<UUID, List<ReturnItemResponse>> itemsByReturn = returnItemRepository
+                .findAllByReturnRequestIdInOrderByIdAsc(returns.stream().map(Return::getId).toList())
+                .stream()
+                .collect(java.util.stream.Collectors.groupingBy(
+                        item -> item.getReturnRequest().getId(),
+                        java.util.stream.Collectors.mapping(this::toItemResponse, java.util.stream.Collectors.toList())));
+        return returns.stream().map(returnRequest -> {
+            Order order = returnRequest.getOrder();
+            return new ReturnResponse(
+                    returnRequest.getId(), order.getId(), order.getOrderCode(), returnRequest.getUser().getId(),
+                    returnRequest.getReturnCode(), returnRequest.getStatus(), returnRequest.getReason(),
+                    returnRequest.getDescription(), returnRequest.getRequestedAt(), returnRequest.getApprovedAt(),
+                    returnRequest.getReceivedAt(), returnRequest.getResolvedAt(),
+                    itemsByReturn.getOrDefault(returnRequest.getId(), List.of()),
+                    returnRequest.getCreatedAt(), returnRequest.getUpdatedAt());
+        }).toList();
     }
 
     private ReturnItemResponse toItemResponse(ReturnItem item) {

@@ -1,9 +1,9 @@
 ﻿"use client";
 
-import { memo, useDeferredValue, useMemo, useRef, useState } from "react";
+import { memo, useRef, useState } from "react";
 import { ApiRequestError } from "@/modules/api/common";
-import { fetchOrderDetail, updateOrderStatus } from "@/modules/orders/browser-api";
-import type { AdminOrderResponse } from "@/modules/orders/types";
+import { fetchOrderDetail, listAdminOrdersPage, updateOrderStatus } from "@/modules/orders/browser-api";
+import type { AdminOrderResponse, PageMeta } from "@/modules/orders/types";
 import { fetchOrderShipment, updateOrderShipment } from "@/modules/shipping/browser-api";
 import type { ShipmentResponse, ShippingMethodResponse } from "@/modules/shipping/types";
 
@@ -15,6 +15,11 @@ const orderStatuses = [
   "DELIVERED",
   "CANCELLED"
 ] as const;
+
+const nextOrderStatuses: Record<string, readonly string[]> = {
+  PENDING_CONFIRMATION: ["CONFIRMED", "CANCELLED"], CONFIRMED: ["PACKING"],
+  PACKING: ["SHIPPING"], SHIPPING: ["DELIVERED"], DELIVERED: [], CANCELLED: []
+};
 
 const shipmentStatuses = [
   "PENDING",
@@ -96,12 +101,12 @@ const OrderRow = memo(function OrderRow({
       <td>
         <div className="admin-inline-form wrap">
           <select className="select" value={statusDraft} onChange={(event) => onStatusChange(event.target.value)}>
-            {orderStatuses.map((status) => (
+            {[order.orderStatus, ...(nextOrderStatuses[order.orderStatus] ?? [])].map((status) => (
               <option value={status} key={status}>{status}</option>
             ))}
           </select>
           <input className="admin-input" placeholder="Ghi chú nội bộ" value={noteDraft} onChange={(event) => onNoteChange(event.target.value)} />
-          <button className="admin-btn" type="button" onClick={onSaveStatus} disabled={savingId === order.id}>
+          <button className="admin-btn" type="button" onClick={onSaveStatus} disabled={savingId === order.id || statusDraft === order.orderStatus}>
             {savingId === order.id ? "Đang lưu..." : "Lưu trạng thái"}
           </button>
           <button className="admin-btn secondary" type="button" onClick={onLoadDetail} disabled={savingId === `detail:${order.id}`}>
@@ -161,11 +166,11 @@ const OrderRow = memo(function OrderRow({
   );
 });
 
-export function AdminOrdersClient({ initialOrders, shippingMethods }: { initialOrders: AdminOrderResponse[]; shippingMethods: ShippingMethodResponse[]; }) {
+export function AdminOrdersClient({ initialOrders, initialMeta, shippingMethods }: { initialOrders: AdminOrderResponse[]; initialMeta: PageMeta; shippingMethods: ShippingMethodResponse[]; }) {
   const [orders, setOrders] = useState(initialOrders);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | (typeof orderStatuses)[number]>("all");
-  const deferredSearchTerm = useDeferredValue(searchTerm);
+  const [meta, setMeta] = useState(initialMeta);
   const [statusDrafts, setStatusDrafts] = useState<Record<string, string>>(Object.fromEntries(initialOrders.map((item) => [item.id, item.orderStatus])));
   const [noteDrafts, setNoteDrafts] = useState<Record<string, string>>({});
   const [shipmentDrafts, setShipmentDrafts] = useState<Record<string, ReturnType<typeof createShipmentDraft>>>({});
@@ -176,18 +181,24 @@ export function AdminOrdersClient({ initialOrders, shippingMethods }: { initialO
   const orderDetailCacheRef = useRef<Record<string, AdminOrderResponse>>({});
   const shipmentCacheRef = useRef<Record<string, ShipmentResponse | null>>({});
 
-  const filteredOrders = useMemo(() => {
-    const keyword = deferredSearchTerm.trim().toLowerCase();
-    return orders.filter((order) => {
-      const matchesStatus = statusFilter === "all" ? true : order.orderStatus === statusFilter;
-      if (!matchesStatus) return false;
-      if (!keyword) return true;
-      const haystack = [order.orderCode, order.customerName, order.customerPhone ?? "", order.paymentMethod, order.paymentStatus].join(" ").toLowerCase();
-      return haystack.includes(keyword);
-    });
-  }, [deferredSearchTerm, orders, statusFilter]);
+  async function loadPage(page: number) {
+    try {
+      setSavingId("list"); setMessage(null);
+      const result = await listAdminOrdersPage(page, meta.limit || 20, searchTerm.trim() || undefined, statusFilter === "all" ? undefined : statusFilter);
+      setOrders(result.items); setMeta(result.meta);
+      setStatusDrafts(Object.fromEntries(result.items.map((item) => [item.id, item.orderStatus])));
+      setNoteDrafts({}); setShipmentDrafts({}); setShipments({}); setOrderDetails({});
+    } catch (error) {
+      setMessage(extractError(error, "Không tải được danh sách đơn hàng"));
+    } finally { setSavingId(null); }
+  }
 
   async function handleUpdate(id: string) {
+    const currentOrder = orders.find((item) => item.id === id);
+    if (!currentOrder || (statusDrafts[id] ?? currentOrder.orderStatus) === currentOrder.orderStatus) {
+      setMessage("Hãy chọn trạng thái tiếp theo trước khi lưu.");
+      return;
+    }
     try {
       setSavingId(id);
       setMessage(null);
@@ -286,9 +297,12 @@ export function AdminOrdersClient({ initialOrders, shippingMethods }: { initialO
           <option value="all">Tất cả trạng thái</option>
           {orderStatuses.map((status) => <option value={status} key={status}>{status}</option>)}
         </select>
+        <button className="admin-btn secondary" type="button" disabled={savingId === "list"} onClick={() => void loadPage(1)}>
+          {savingId === "list" ? "Đang tải..." : "Áp dụng bộ lọc"}
+        </button>
       </div>
-      {filteredOrders.length === 0 ? (
-        <div className="empty-state">{orders.length === 0 ? "Hiện chưa có đơn hàng nào." : "Không có đơn hàng nào khớp bộ lọc hiện tại."}</div>
+      {orders.length === 0 ? (
+        <div className="empty-state">Không có đơn hàng nào khớp bộ lọc hiện tại.</div>
       ) : (
         <table className="data-table">
           <thead>
@@ -301,7 +315,7 @@ export function AdminOrdersClient({ initialOrders, shippingMethods }: { initialO
             </tr>
           </thead>
           <tbody>
-            {filteredOrders.map((order) => (
+            {orders.map((order) => (
               <OrderRow
                 key={order.id}
                 order={order}
@@ -324,6 +338,14 @@ export function AdminOrdersClient({ initialOrders, shippingMethods }: { initialO
           </tbody>
         </table>
       )}
+      <div className="admin-pager">
+        <span className="admin-pager-info">Tổng {meta.total.toLocaleString("vi-VN")} đơn hàng</span>
+        <div className="admin-pager-controls">
+          <button className="admin-pager-btn" type="button" disabled={savingId === "list" || meta.page <= 1} onClick={() => void loadPage(meta.page - 1)}>Trước</button>
+          <span className="admin-pager-page">Trang {meta.page}/{Math.max(1, meta.totalPages)}</span>
+          <button className="admin-pager-btn" type="button" disabled={savingId === "list" || meta.page >= meta.totalPages} onClick={() => void loadPage(meta.page + 1)}>Sau</button>
+        </div>
+      </div>
     </section>
   );
 }

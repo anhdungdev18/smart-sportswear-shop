@@ -1,11 +1,12 @@
-import { apiRequest } from "@/modules/api/client";
+import { apiRequest, apiRequestEnvelope } from "@/modules/api/client";
 import { adminEndpoints } from "@/modules/api/endpoints";
-import type { RefundResponse, ReturnResponse } from "@/modules/returns/types";
+import type { AdminReturnPage, PageMeta, RefundResponse, ReturnResponse } from "@/modules/returns/types";
 
-export async function listAdminReturns() {
-  return apiRequest<ReturnResponse[]>(adminEndpoints.adminReturns, {
-    next: { revalidate: 30 }
+export async function listAdminReturns(page = 1, limit = 10): Promise<AdminReturnPage> {
+  const response = await apiRequestEnvelope<ReturnResponse[]>(adminEndpoints.adminReturns, {
+    query: { page, limit }, cache: "no-store"
   });
+  return { items: response.data, meta: { page, limit, total: 0, totalPages: 0, ...(response.meta as Partial<PageMeta> | undefined) } };
 }
 
 export async function getAdminReturn(id: string) {

@@ -8,4 +8,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface ReturnItemRepository extends JpaRepository<ReturnItem, UUID> {
 
     List<ReturnItem> findAllByReturnRequestIdOrderByIdAsc(UUID returnId);
+
+    List<ReturnItem> findAllByReturnRequestIdInOrderByIdAsc(List<UUID> returnIds);
 }

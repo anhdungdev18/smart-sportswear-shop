@@ -1,6 +1,17 @@
-import { browserApiRequest } from "@/modules/api/browser-client";
+import { browserApiRequest, browserApiRequestEnvelope } from "@/modules/api/browser-client";
 import { adminEndpoints } from "@/modules/api/endpoints";
-import type { RefundResponse, ReturnResponse } from "@/modules/returns/types";
+import type { AdminReturnPage, PageMeta, RefundResponse, ReturnResponse } from "@/modules/returns/types";
+
+export async function listAdminReturnsPage(page = 1, limit = 10, status?: string): Promise<AdminReturnPage> {
+  const response = await browserApiRequestEnvelope<ReturnResponse[]>(adminEndpoints.adminReturns, {
+    query: { page, limit, status }, cache: "no-store"
+  });
+  return { items: response.data, meta: { page, limit, total: 0, totalPages: 0, ...(response.meta as Partial<PageMeta> | undefined) } };
+}
+
+export async function fetchRefundsForReturn(id: string) {
+  return browserApiRequest<RefundResponse[]>(adminEndpoints.adminReturnRefunds(id), { method: "GET", cache: "no-store" });
+}
 
 export async function fetchAdminReturnDetail(id: string) {
   return browserApiRequest<ReturnResponse>(adminEndpoints.adminReturnDetail(id), {

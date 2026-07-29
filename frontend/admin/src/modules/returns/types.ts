@@ -42,3 +42,12 @@ export type RefundResponse = {
   createdAt: string;
   updatedAt: string;
 };
+
+export type ReturnItemResolutionDraft = {
+  conditionStatus: "UNOPENED" | "LIKE_NEW" | "USED" | "DAMAGED";
+  resolution: "REFUND" | "EXCHANGE" | "STORE_CREDIT" | "REJECT";
+  refundAmount: string;
+};
+
+export type PageMeta = { page: number; limit: number; total: number; totalPages: number };
+export type AdminReturnPage = { items: ReturnResponse[]; meta: PageMeta };
