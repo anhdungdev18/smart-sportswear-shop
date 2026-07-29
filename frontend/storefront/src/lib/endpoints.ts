@@ -1,6 +1,7 @@
 export const endpoints = {
   products: "/api/v1/products",
   product: (slugOrId: string) => `/api/v1/products/${slugOrId}`,
+  frequentlyBoughtTogether: (productId: string) => `/api/v1/products/${productId}/frequently-bought-together`,
   productSuggestions: "/api/v1/products/search-suggestions",
   categories: "/api/v1/categories",
   categoryTree: "/api/v1/categories/tree",

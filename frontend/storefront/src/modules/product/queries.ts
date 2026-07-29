@@ -36,6 +36,24 @@ export async function fetchProductDetail(slug: string): Promise<ProductDetail | 
   }
 }
 
+type RecommendationResponse = {
+  type: string;
+  items: Array<{ product: ProductListItem }>;
+};
+
+// "Frequently bought together" (association-rules engine). Returns the recommended
+// products for a given product; empty on any error so the section just hides.
+export async function fetchFrequentlyBoughtTogether(productId: string): Promise<ProductListItem[]> {
+  try {
+    const result = await apiFetch<RecommendationResponse>(endpoints.frequentlyBoughtTogether(productId), {
+      cache: "no-store"
+    });
+    return (result.data?.items ?? []).map((item) => item.product).filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
 export async function fetchHomeBannerSlides(): Promise<BannerSlide[]> {
   try {
     const result = await apiFetch<Banner[]>(endpoints.banners, {
