@@ -176,13 +176,35 @@ app:
     demo-password: ${APP_SEED_DEMO_PASSWORD:Password123}
   forecast-demo:
     enabled: ${FORECAST_DEMO_ENABLED:false}
-    random-seed: ${FORECAST_DEMO_RANDOM_SEED:2026}
-    anchor-date: ${FORECAST_DEMO_ANCHOR_DATE:2026-07-16}
+    random-seed: ${FORECAST_DEMO_RANDOM_SEED:20260725}
+    anchor-date: ${FORECAST_DEMO_ANCHOR_DATE:2026-07-24}
     history-days: ${FORECAST_DEMO_HISTORY_DAYS:180}
-    order-count: ${FORECAST_DEMO_ORDER_COUNT:3000}
-    variant-count: ${FORECAST_DEMO_VARIANT_COUNT:50}
-    marker: ${FORECAST_DEMO_MARKER:[FORECAST_DEMO]}
+    order-count: ${FORECAST_DEMO_ORDER_COUNT:12000}
+    variant-count: ${FORECAST_DEMO_VARIANT_COUNT:120}
+    marker: ${FORECAST_DEMO_MARKER:[FORECAST_DEMO_V2]}
     cleanup-before-seed: ${FORECAST_DEMO_CLEANUP:true}
+    smooth-variants: ${FORECAST_DEMO_SMOOTH_VARIANTS:20}
+    normal-variants: ${FORECAST_DEMO_NORMAL_VARIANTS:20}
+    slow-variants: ${FORECAST_DEMO_SLOW_VARIANTS:15}
+    intermittent-variants: ${FORECAST_DEMO_INTERMITTENT_VARIANTS:20}
+    erratic-variants: ${FORECAST_DEMO_ERRATIC_VARIANTS:15}
+    growing-variants: ${FORECAST_DEMO_GROWING_VARIANTS:10}
+    declining-variants: ${FORECAST_DEMO_DECLINING_VARIANTS:10}
+    new-item-variants: ${FORECAST_DEMO_NEW_ITEM_VARIANTS:5}
+    no-demand-variants: ${FORECAST_DEMO_NO_DEMAND_VARIANTS:5}
+    weekend-multiplier: ${FORECAST_DEMO_WEEKEND_MULTIPLIER:1.30}
+    promotion-multiplier: ${FORECAST_DEMO_PROMOTION_MULTIPLIER:3.00}
+    promotion-day-of-month: ${FORECAST_DEMO_PROMOTION_DAY_OF_MONTH:15}
+    new-item-history-days: ${FORECAST_DEMO_NEW_ITEM_HISTORY_DAYS:30}
+    cancel-rate: ${FORECAST_DEMO_CANCEL_RATE:0.05}
+    inventory-history-enabled: ${FORECAST_DEMO_INVENTORY_HISTORY_ENABLED:true}
+    inventory-history-days: ${FORECAST_DEMO_INVENTORY_HISTORY_DAYS:180}
+    supplier-count: ${FORECAST_DEMO_SUPPLIER_COUNT:3}
+    min-lead-time-days: ${FORECAST_DEMO_MIN_LEAD_TIME_DAYS:7}
+    max-lead-time-days: ${FORECAST_DEMO_MAX_LEAD_TIME_DAYS:30}
+    default-service-level: ${FORECAST_DEMO_DEFAULT_SERVICE_LEVEL:0.95}
+    ground-truth-enabled: ${FORECAST_DEMO_GROUND_TRUTH_ENABLED:true}
+    scenario-version: ${FORECAST_DEMO_SCENARIO_VERSION:synthetic-v2}
   storage:
     provider: ${APP_STORAGE_PROVIDER:none}
   cloudinary:
@@ -200,3 +222,8 @@ info:
 logging:
   level:
     com.dunghaiquyen.ecommerce: ${LOG_LEVEL:INFO}
+
+synthetic:
+  data:
+    allowed: ${SYNTHETIC_DATA_ALLOWED:false}
+    environment: ${SYNTHETIC_DATA_ENVIRONMENT:development}

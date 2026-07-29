@@ -32,4 +32,5 @@ public interface ProductVariantRepository
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select v from ProductVariant v where v.id = :id")
     Optional<ProductVariant> findByIdForUpdate(@Param("id") UUID id);
+
 }

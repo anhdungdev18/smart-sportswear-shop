@@ -1,4 +1,4 @@
-create table forecast_model_evaluations (
+create table if not exists forecast_model_evaluations (
     variant_id uuid primary key references ai_product_variant_snapshot (variant_id) on delete cascade,
     best_algorithm varchar(30) not null,
     mae numeric(12, 4),

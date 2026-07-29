@@ -57,8 +57,8 @@ export function ReplenishmentSuggestionTable({ initialSuggestions, onFillImport 
         if (status.status === 'COMPLETED') {
           await refresh();
           setMessage(status.failed === 0
-            ? `Đã dự báo thành công ${status.succeeded}/${status.requested} SKU trong ${(status.durationMillis / 1000).toFixed(1)} giây.`
-            : `Đã dự báo ${status.succeeded}/${status.requested} SKU; ${status.failed} SKU lỗi đã được cô lập và ghi log.`);
+            ? `Đã xử lý ${status.succeeded}/${status.requested} SKU trong ${(status.durationMillis / 1000).toFixed(1)} giây. Chỉ các SKU cần hành động mới được tạo đề xuất.`
+            : `Đã xử lý ${status.succeeded}/${status.requested} SKU; ${status.failed} SKU lỗi đã được cô lập và ghi log.`);
         } else if (status.status === 'FAILED') {
           setError("Lỗi xảy ra trong quá trình sinh đề xuất. Vui lòng thử lại sau.");
         }

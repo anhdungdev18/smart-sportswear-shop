@@ -49,11 +49,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
 public class SeedDataService {
+
+    private static final Logger log = LoggerFactory.getLogger(SeedDataService.class);
 
     public static final String DEMO_ADMIN_EMAIL = "admin@smartsportswear.local";
     public static final String DEMO_SALES_EMAIL = "sales@smartsportswear.local";
@@ -359,9 +363,13 @@ public class SeedDataService {
                 .anyMatch(r -> r.getUser().getId().equals(customer.getId()))) {
             return;
         }
-        var review = reviewService.create(
-                customer.getId(), product.getId(), new CreateReviewRequest(5, "Rat tot!", "San pham dung nhu mo ta, giao nhanh. [SEED]"));
-        reviewService.updateStatus(review.id(), new UpdateReviewStatusRequest(ReviewStatus.APPROVED));
+        try {
+            var review = reviewService.create(
+                    customer.getId(), product.getId(), new CreateReviewRequest(5, "Rat tot!", "San pham dung nhu mo ta, giao nhanh. [SEED]"));
+            reviewService.updateStatus(review.id(), new UpdateReviewStatusRequest(ReviewStatus.APPROVED));
+        } catch (com.dunghaiquyen.ecommerce.common.exception.BusinessRuleException ex) {
+            log.warn("Skipping seed review for product {} and user {}: {}", product.getId(), customer.getId(), ex.getMessage());
+        }
     }
 
     private User ensureUser(String email, String fullName, String phone, UserRole role) {
@@ -564,3 +572,4 @@ public class SeedDataService {
                 .count();
     }
 }
+

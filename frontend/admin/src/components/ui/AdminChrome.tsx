@@ -3,6 +3,7 @@
 import {
   ArrowCounterClockwise,
   Bell,
+  Brain,
   Books,
   ChartLineUp,
   FileText,
@@ -49,8 +50,10 @@ const navGroups: NavGroup[] = [
       { label: "Tổng quan", href: "/", icon: House },
       { label: "Đơn hàng", href: "/orders", icon: Receipt },
       { label: "Tồn kho", href: "/inventory", icon: Package },
+      { label: "AI Insights", href: "/inventory/ai-insights", icon: Brain },
       { label: "Khách hàng", href: "/customers", icon: Users },
       { label: "Báo cáo", href: "/reports", icon: ChartLineUp },
+      { label: "Admin Copilot", href: "/admin-copilot", icon: Robot },
       { label: "Đổi trả", href: "/returns", icon: ArrowCounterClockwise },
       { label: "Đánh giá", href: "/reviews", icon: Star },
     ],
@@ -91,6 +94,8 @@ function getPageMeta(pathname: string) {
     { prefix: "/customers", title: "Khách hàng", subtitle: "Theo dõi tình trạng tài khoản và phân loại người dùng." },
     { prefix: "/pages", title: "Nội dung", subtitle: "Biên tập các trang tĩnh và nội dung truyền thông của hệ thống." },
     { prefix: "/reports", title: "Báo cáo", subtitle: "Xem snapshot kinh doanh theo thời gian thực từ backend." },
+    { prefix: "/admin-copilot", title: "Admin Copilot", subtitle: "Hỏi đáp vận hành bằng tool read-only, có trace đã redact và nguồn dữ liệu rõ ràng." },
+    { prefix: "/chatbot-config", title: "Cấu hình chatbot", subtitle: "Quan sát provider, prompt, role policy, evaluation và run history của Admin Copilot." },
     { prefix: "/audit-logs", title: "Nhật ký", subtitle: "Theo dõi mọi thao tác nhạy cảm để kiểm soát vận hành." },
     { prefix: "/reviews", title: "Đánh giá", subtitle: "Duyệt, ẩn hoặc xử lý nội dung review từ khách hàng." },
     { prefix: "/returns", title: "Đổi trả", subtitle: "Xử lý hoàn hàng, hoàn tiền và các case hậu mãi." },
@@ -157,6 +162,35 @@ export function AdminTopbar() {
   const router = useRouter();
   const pathname = usePathname();
   const pageMeta = getPageMeta(pathname);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  useEffect(() => {
+    function syncSearchTerm() {
+      const keyword = pathname.startsWith("/products")
+        ? new URLSearchParams(window.location.search).get("q") ?? ""
+        : "";
+      setSearchTerm(keyword);
+    }
+
+    syncSearchTerm();
+    window.addEventListener("popstate", syncSearchTerm);
+    return () => window.removeEventListener("popstate", syncSearchTerm);
+  }, [pathname]);
+
+  function handleSearch(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const params = new URLSearchParams();
+    const keyword = searchTerm.trim();
+
+    if (keyword) {
+      params.set("q", keyword);
+    } else {
+      params.delete("q");
+    }
+
+    const query = params.toString();
+    router.push(`/products${query ? `?${query}` : ""}`);
+  }
 
   async function handleLogout() {
     const refreshToken = getBrowserRefreshToken();
@@ -179,10 +213,15 @@ export function AdminTopbar() {
           <strong>{pageMeta.title}</strong>
           <p>{pageMeta.subtitle}</p>
         </div>
-        <div className="admin-search">
+        <form className="admin-search" role="search" onSubmit={handleSearch}>
           <MagnifyingGlass size={20} />
-          <span>Tìm đơn hàng, SKU, khách hàng hoặc mã chiến dịch...</span>
-        </div>
+          <input
+            aria-label="Tìm kiếm sản phẩm"
+            placeholder="Tìm theo tên, SKU, danh mục hoặc thương hiệu..."
+            value={searchTerm}
+            onChange={(event) => setSearchTerm(event.target.value)}
+          />
+        </form>
       </div>
 
       <div className="admin-actions">

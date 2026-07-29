@@ -33,7 +33,20 @@ public interface OrderItemReportRepository extends JpaRepository<OrderItem, UUID
             countQuery = "select count(distinct p.id) from OrderItem oi join oi.product p "
                     + "where oi.order.orderStatus <> :excludedStatus "
                     + "and oi.order.createdAt >= :from and oi.order.createdAt <= :to")
-    Page<BestSellingProductResponse> findBestSelling(
+    Page<BestSellingProductResponse> findBestSellingPage(
+            @Param("excludedStatus") OrderStatus excludedStatus,
+            @Param("from") Instant from,
+            @Param("to") Instant to,
+            Pageable pageable);
+
+    @Query("select new com.dunghaiquyen.ecommerce.modules.report.dto.BestSellingProductResponse("
+            + "p.id, p.name, sum(oi.quantity), sum(oi.lineTotal)) "
+            + "from OrderItem oi join oi.product p "
+            + "where oi.order.orderStatus <> :excludedStatus "
+            + "and oi.order.createdAt between :from and :to "
+            + "group by p.id, p.name "
+            + "order by sum(oi.quantity) desc, sum(oi.lineTotal) desc")
+    List<BestSellingProductResponse> findBestSellingInRange(
             @Param("excludedStatus") OrderStatus excludedStatus,
             @Param("from") Instant from,
             @Param("to") Instant to,

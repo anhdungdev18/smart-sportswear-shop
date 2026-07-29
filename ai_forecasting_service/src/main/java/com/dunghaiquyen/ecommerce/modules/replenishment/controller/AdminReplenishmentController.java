@@ -3,16 +3,23 @@ package com.dunghaiquyen.ecommerce.modules.replenishment.controller;
 import com.dunghaiquyen.ecommerce.common.response.ApiResponse;
 import com.dunghaiquyen.ecommerce.common.security.CustomUserDetails;
 import com.dunghaiquyen.ecommerce.modules.replenishment.dto.*;
+import com.dunghaiquyen.ecommerce.modules.replenishment.entity.ForecastModelEvaluation;
 import com.dunghaiquyen.ecommerce.modules.replenishment.entity.ForecastRun;
+import com.dunghaiquyen.ecommerce.modules.replenishment.entity.ForecastConfidence;
 import com.dunghaiquyen.ecommerce.modules.replenishment.entity.InventoryPolicy;
 import com.dunghaiquyen.ecommerce.modules.replenishment.entity.ReplenishmentPriority;
 import com.dunghaiquyen.ecommerce.modules.replenishment.entity.ReplenishmentRecommendation;
 import com.dunghaiquyen.ecommerce.modules.replenishment.entity.ReplenishmentStatus;
+import com.dunghaiquyen.ecommerce.modules.replenishment.repository.ForecastModelEvaluationRepository;
 import com.dunghaiquyen.ecommerce.modules.replenishment.repository.InventoryPolicyRepository;
 import com.dunghaiquyen.ecommerce.modules.replenishment.repository.ReplenishmentRecommendationRepository;
 import com.dunghaiquyen.ecommerce.modules.replenishment.service.DailyDemandService;
 import com.dunghaiquyen.ecommerce.modules.replenishment.service.ForecastBacktestService;
+import com.dunghaiquyen.ecommerce.modules.demand.service.DemandClassificationService;
+import com.dunghaiquyen.ecommerce.modules.demand.dto.DemandPattern;
+import com.dunghaiquyen.ecommerce.config.ForecastDataSourceProperties;
 import com.dunghaiquyen.ecommerce.modules.replenishment.service.ForecastGenerationService;
+import com.dunghaiquyen.ecommerce.modules.replenishment.service.DemandForecastService;
 import jakarta.validation.Valid;
 import com.dunghaiquyen.ecommerce.modules.replenishment.service.CoreSnapshotSyncService;
 import com.dunghaiquyen.ecommerce.modules.replenishment.repository.VariantReadRepository;
@@ -48,6 +55,10 @@ public class AdminReplenishmentController {
     private final VariantReadRepository variantRepository;
     private final DailyDemandService dailyDemandService;
     private final ForecastBacktestService forecastBacktestService;
+    private final DemandClassificationService demandClassificationService;
+    private final DemandForecastService demandForecastService;
+    private final ForecastDataSourceProperties dataSourceProperties;
+    private final ForecastModelEvaluationRepository evaluationRepository;
     private final ForecastGenerationService forecastGenerationService;
 
     public AdminReplenishmentController(                                        CoreSnapshotSyncService snapshotSyncService,
@@ -56,6 +67,10 @@ public class AdminReplenishmentController {
                                         VariantReadRepository variantRepository,
                                         DailyDemandService dailyDemandService,
                                         ForecastBacktestService forecastBacktestService,
+                                        DemandClassificationService demandClassificationService,
+                                        DemandForecastService demandForecastService,
+                                        ForecastDataSourceProperties dataSourceProperties,
+                                        ForecastModelEvaluationRepository evaluationRepository,
                                         ForecastGenerationService forecastGenerationService) {
         this.snapshotSyncService = snapshotSyncService;
         this.recommendationRepository = recommendationRepository;
@@ -63,6 +78,10 @@ public class AdminReplenishmentController {
         this.variantRepository = variantRepository;
         this.dailyDemandService = dailyDemandService;
         this.forecastBacktestService = forecastBacktestService;
+        this.demandClassificationService = demandClassificationService;
+        this.demandForecastService = demandForecastService;
+        this.dataSourceProperties = dataSourceProperties;
+        this.evaluationRepository = evaluationRepository;
         this.forecastGenerationService = forecastGenerationService;
     }
 
@@ -76,7 +95,11 @@ public class AdminReplenishmentController {
             @RequestParam(defaultValue = "20") int limit) {
 
         Pageable pageable = PageRequest.of(page - 1, limit);
-        Page<ReplenishmentRecommendation> result = recommendationRepository.searchRecommendations(status, priority, keyword, pageable);
+        Page<ReplenishmentRecommendation> result = recommendationRepository.searchRecommendations(
+                status == null ? null : status.name(),
+                priority == null ? null : priority.name(),
+                keyword,
+                pageable);
 
         List<UUID> variantIds = result.getContent().stream().map(ReplenishmentRecommendation::getVariantId).toList();
         Map<UUID, VariantSnapshot> variantMap = new HashMap<>();
@@ -124,17 +147,38 @@ public class AdminReplenishmentController {
             @RequestBody(required = false) GenerateForecastRequest request) {
         List<UUID> requestedIds = request == null ? List.of() : request.getVariantIds();
         LocalDate today = LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh"));
-        LocalDate from = today.minusDays(180);
+        LocalDate from = today.minusDays(179);
 
         forecastGenerationService.startSync();
 
         java.util.concurrent.CompletableFuture.runAsync(() -> {
             try {
                 snapshotSyncService.sync(from, today, requestedIds);
-                List<UUID> variantIds = requestedIds == null || requestedIds.isEmpty()
-                        ? variantRepository.findAllActiveIds()
-                        : requestedIds;
-                forecastGenerationService.startGenerationAsync(variantIds, from, today);
+                String source = dataSourceProperties.dataSource();
+                demandClassificationService.classifyBatch(from, today, source);
+                List<UUID> requestedVariantIds = requestedIds == null || requestedIds.isEmpty()
+                        ? variantRepository.findAllActiveIds(source) : requestedIds;
+                java.util.Set<UUID> requestedSet = new java.util.HashSet<>(requestedVariantIds);
+                List<UUID> eligibleVariantIds = demandClassificationService.listSaved(source).stream()
+                        .filter(row -> requestedSet.contains(row.variantId()))
+                        .filter(row -> row.classification() != DemandPattern.NO_DEMAND
+                                && row.classification() != DemandPattern.INSUFFICIENT_DATA)
+                        .map(com.dunghaiquyen.ecommerce.modules.demand.dto.DemandClassificationResponse::variantId)
+                        .toList();
+                Map<UUID, ForecastModelEvaluation> existingEvaluations = evaluationRepository
+                        .findAllByVariantIdInAndDataSource(eligibleVariantIds, source).stream()
+                        .collect(java.util.stream.Collectors.toMap(ForecastModelEvaluation::getVariantId, row -> row));
+                List<UUID> variantsNeedingEvaluation = eligibleVariantIds.stream()
+                        .filter(id -> {
+                            ForecastModelEvaluation evaluation = existingEvaluations.get(id);
+                            return evaluation == null || evaluation.getTrainingTo() == null
+                                    || evaluation.getTrainingTo().isBefore(today);
+                        })
+                        .toList();
+                if (!variantsNeedingEvaluation.isEmpty()) {
+                    demandForecastService.evaluateModelsBatch(variantsNeedingEvaluation, from, today);
+                }
+                forecastGenerationService.startGenerationAsync(eligibleVariantIds, from, today);
             } catch (Exception e) {
                 log.error("Failed during sync phase", e);
                 forecastGenerationService.failBatch();
@@ -204,6 +248,7 @@ public class AdminReplenishmentController {
         if (rec.getStatus() != ReplenishmentStatus.PENDING) {
             throw new IllegalStateException("Invalid state transition");
         }
+        ensureActionableConfidence(rec);
         rec.setStatus(ReplenishmentStatus.ACCEPTED);
         rec.setAdminQuantity(rec.getSuggestedQuantity());
         if (request != null && request.getNote() != null) {
@@ -226,6 +271,7 @@ public class AdminReplenishmentController {
             @AuthenticationPrincipal CustomUserDetails principal) {
 
         ReplenishmentRecommendation rec = recommendationRepository.findById(id).orElseThrow();
+        ensureActionableConfidence(rec);
         if (rec.getStatus() != ReplenishmentStatus.PENDING) {
             throw new IllegalStateException("Invalid state transition");
         }
@@ -244,6 +290,14 @@ public class AdminReplenishmentController {
 
         recommendationRepository.save(rec);
         return ApiResponse.ok(null);
+    }
+
+    private void ensureActionableConfidence(ReplenishmentRecommendation recommendation) {
+        ForecastRun run = recommendation.getForecastRun();
+        if (run == null || run.getConfidence() == ForecastConfidence.LOW
+                || run.getConfidence() == ForecastConfidence.INSUFFICIENT) {
+            throw new IllegalStateException("Forecast confidence is too low for an import decision");
+        }
     }
 
     @PostMapping("/suggestions/{id}/dismiss")
@@ -280,11 +334,14 @@ public class AdminReplenishmentController {
             detail.setModelMetrics(List.of());
             return;
         }
+        ForecastModelEvaluation evaluation = evaluationRepository.findById(recommendation.getVariantId()).orElse(null);
         List<DailyDemandService.DailyDemandPoint> points = dailyDemandService
                 .getDailyDemand(List.of(recommendation.getVariantId()), run.getTrainingFrom(), run.getTrainingTo())
                 .getOrDefault(recommendation.getVariantId(), List.of());
         List<Integer> demand = points.stream().map(point -> (int) point.quantity()).toList();
-        int testWindow = Math.min(30, Math.max(0, demand.size() - 1));
+        int testWindow = evaluation != null && evaluation.getTestWindowDays() != null
+                ? Math.min(evaluation.getTestWindowDays(), Math.max(0, demand.size() - 1))
+                : Math.min(30, Math.max(0, demand.size() - 1));
         var backtest = forecastBacktestService.runBacktest(demand, testWindow);
         Map<Integer, Double> predictions = new HashMap<>();
         forecastBacktestService.buildPredictions(demand, testWindow, run.getAlgorithm())
@@ -310,11 +367,33 @@ public class AdminReplenishmentController {
         }
         detail.setModelMetrics(backtest.allMetrics().stream()
                 .map(metric -> new ReplenishmentSuggestionDetailResponse.ModelMetric(
-                        metric.algorithm().name(), metric.mae(), metric.wape(),
+                        metric.algorithm().name(), metric.mae(), metric.wape(), metric.bias(), metric.residualStdDev(),
+                        evaluation != null && evaluation.getBenchmarkAlgorithm() == metric.algorithm(),
                         metric.algorithm() == run.getAlgorithm()))
                 .toList());
         detail.setSelectedModel(run.getAlgorithm().name());
         detail.setSelectionReason("Mô hình có WAPE thấp nhất trên 30 ngày backtest walk-forward; nếu hòa, ưu tiên mô hình đơn giản hơn.");
+        detail.setForecastConfidence(run.getConfidence().name());
+        detail.setResidualStdDev(run.getResidualStdDev() != null ? run.getResidualStdDev().doubleValue() : null);
+        if (evaluation != null) {
+            detail.setSelectionReason(evaluation.getSelectionReason());
+            detail.setDataSource(evaluation.getDataSource());
+            detail.setDemandPattern(evaluation.getDemandPattern());
+            detail.setBias(evaluation.getBias() != null ? evaluation.getBias().doubleValue() : null);
+            detail.setResidualStdDev(evaluation.getResidualStdDev() != null
+                    ? evaluation.getResidualStdDev().doubleValue()
+                    : detail.getResidualStdDev());
+            detail.setBacktestWindows(evaluation.getBacktestWindows());
+            detail.setTestWindowDays(evaluation.getTestWindowDays());
+            detail.setTrainingFrom(evaluation.getTrainingFrom() != null ? evaluation.getTrainingFrom().toString() : null);
+            detail.setTrainingTo(evaluation.getTrainingTo() != null ? evaluation.getTrainingTo().toString() : null);
+            detail.setBenchmarkAlgorithm(evaluation.getBenchmarkAlgorithm() != null ? evaluation.getBenchmarkAlgorithm().name() : null);
+            detail.setBenchmarkMae(evaluation.getBenchmarkMae() != null ? evaluation.getBenchmarkMae().doubleValue() : null);
+            detail.setBenchmarkWape(evaluation.getBenchmarkWape() != null ? evaluation.getBenchmarkWape().doubleValue() : null);
+            detail.setFallbackReason(evaluation.getFallbackReason());
+        } else {
+            detail.setSelectionReason(backtest.reason());
+        }
     }
     private ReplenishmentSuggestionResponse mapToResponse(ReplenishmentRecommendation rec, VariantSnapshot variant) {
         ReplenishmentSuggestionResponse res = new ReplenishmentSuggestionResponse();

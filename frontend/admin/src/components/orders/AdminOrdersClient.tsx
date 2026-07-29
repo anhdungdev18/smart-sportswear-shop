@@ -1,8 +1,9 @@
 ﻿"use client";
 
-import { memo, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ApiRequestError } from "@/modules/api/common";
-import { fetchOrderDetail, listAdminOrdersPage, updateOrderStatus } from "@/modules/orders/browser-api";
+import { fetchOrderDetail, updateOrderStatus } from "@/modules/orders/browser-api";
 import type { AdminOrderResponse, PageMeta } from "@/modules/orders/types";
 import { fetchOrderShipment, updateOrderShipment } from "@/modules/shipping/browser-api";
 import type { ShipmentResponse, ShippingMethodResponse } from "@/modules/shipping/types";
@@ -166,11 +167,29 @@ const OrderRow = memo(function OrderRow({
   );
 });
 
-export function AdminOrdersClient({ initialOrders, initialMeta, shippingMethods }: { initialOrders: AdminOrderResponse[]; initialMeta: PageMeta; shippingMethods: ShippingMethodResponse[]; }) {
+function visiblePages(currentPage: number, totalPages: number) {
+  const count = Math.min(5, totalPages);
+  const start = Math.max(1, Math.min(currentPage - 2, totalPages - count + 1));
+  return Array.from({ length: count }, (_, index) => start + index);
+}
+
+export function AdminOrdersClient({
+  initialOrders,
+  shippingMethods,
+  pageMeta,
+  initialKeyword,
+  initialStatus
+}: {
+  initialOrders: AdminOrderResponse[];
+  shippingMethods: ShippingMethodResponse[];
+  pageMeta: PageMeta;
+  initialKeyword: string;
+  initialStatus: string;
+}) {
+  const router = useRouter();
   const [orders, setOrders] = useState(initialOrders);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | (typeof orderStatuses)[number]>("all");
-  const [meta, setMeta] = useState(initialMeta);
+  const [searchTerm, setSearchTerm] = useState(initialKeyword);
+  const [statusFilter, setStatusFilter] = useState<"all" | (typeof orderStatuses)[number]>(initialStatus as "all" | (typeof orderStatuses)[number]);
   const [statusDrafts, setStatusDrafts] = useState<Record<string, string>>(Object.fromEntries(initialOrders.map((item) => [item.id, item.orderStatus])));
   const [noteDrafts, setNoteDrafts] = useState<Record<string, string>>({});
   const [shipmentDrafts, setShipmentDrafts] = useState<Record<string, ReturnType<typeof createShipmentDraft>>>({});
@@ -181,17 +200,20 @@ export function AdminOrdersClient({ initialOrders, initialMeta, shippingMethods 
   const orderDetailCacheRef = useRef<Record<string, AdminOrderResponse>>({});
   const shipmentCacheRef = useRef<Record<string, ShipmentResponse | null>>({});
 
-  async function loadPage(page: number) {
-    try {
-      setSavingId("list"); setMessage(null);
-      const result = await listAdminOrdersPage(page, meta.limit || 20, searchTerm.trim() || undefined, statusFilter === "all" ? undefined : statusFilter);
-      setOrders(result.items); setMeta(result.meta);
-      setStatusDrafts(Object.fromEntries(result.items.map((item) => [item.id, item.orderStatus])));
-      setNoteDrafts({}); setShipmentDrafts({}); setShipments({}); setOrderDetails({});
-    } catch (error) {
-      setMessage(extractError(error, "Không tải được danh sách đơn hàng"));
-    } finally { setSavingId(null); }
+  function navigate(nextPage: number, keyword = searchTerm, status = statusFilter) {
+    const params = new URLSearchParams();
+    if (nextPage > 1) params.set("page", String(nextPage));
+    if (keyword.trim()) params.set("keyword", keyword.trim());
+    if (status !== "all") params.set("status", status);
+    router.replace(`/orders${params.size ? `?${params.toString()}` : ""}`);
   }
+
+  useEffect(() => {
+    if (searchTerm === initialKeyword) return;
+    const timer = window.setTimeout(() => navigate(1, searchTerm, statusFilter), 400);
+    return () => window.clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm]);
 
   async function handleUpdate(id: string) {
     const currentOrder = orders.find((item) => item.id === id);
@@ -293,13 +315,14 @@ export function AdminOrdersClient({ initialOrders, initialMeta, shippingMethods 
       {message ? <p className="action-message">{message}</p> : null}
       <div className="admin-form-grid" style={{ marginBottom: 16 }}>
         <input className="admin-input" placeholder="Tìm theo mã đơn, tên khách, số điện thoại hoặc thanh toán" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} />
-        <select className="select" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as "all" | (typeof orderStatuses)[number])}>
+        <select className="select" value={statusFilter} onChange={(event) => {
+          const status = event.target.value as "all" | (typeof orderStatuses)[number];
+          setStatusFilter(status);
+          navigate(1, searchTerm, status);
+        }}>
           <option value="all">Tất cả trạng thái</option>
           {orderStatuses.map((status) => <option value={status} key={status}>{status}</option>)}
         </select>
-        <button className="admin-btn secondary" type="button" disabled={savingId === "list"} onClick={() => void loadPage(1)}>
-          {savingId === "list" ? "Đang tải..." : "Áp dụng bộ lọc"}
-        </button>
       </div>
       {orders.length === 0 ? (
         <div className="empty-state">Không có đơn hàng nào khớp bộ lọc hiện tại.</div>
@@ -338,14 +361,28 @@ export function AdminOrdersClient({ initialOrders, initialMeta, shippingMethods 
           </tbody>
         </table>
       )}
-      <div className="admin-pager">
-        <span className="admin-pager-info">Tổng {meta.total.toLocaleString("vi-VN")} đơn hàng</span>
-        <div className="admin-pager-controls">
-          <button className="admin-pager-btn" type="button" disabled={savingId === "list" || meta.page <= 1} onClick={() => void loadPage(meta.page - 1)}>Trước</button>
-          <span className="admin-pager-page">Trang {meta.page}/{Math.max(1, meta.totalPages)}</span>
-          <button className="admin-pager-btn" type="button" disabled={savingId === "list" || meta.page >= meta.totalPages} onClick={() => void loadPage(meta.page + 1)}>Sau</button>
+      {pageMeta.totalPages > 0 ? (
+        <div className="admin-pager">
+          <div className="admin-pager-info">
+            {(pageMeta.page - 1) * pageMeta.limit + 1}–{Math.min(pageMeta.page * pageMeta.limit, pageMeta.total)} / {pageMeta.total.toLocaleString("vi-VN")} đơn hàng
+          </div>
+          <div className="admin-pager-controls" aria-label="Phân trang đơn hàng">
+            <button className="admin-pager-btn" type="button" disabled={pageMeta.page <= 1} onClick={() => navigate(pageMeta.page - 1)}>Trước</button>
+            {visiblePages(pageMeta.page, pageMeta.totalPages).map((page) => (
+              <button
+                className={`admin-pager-btn admin-pager-number${page === pageMeta.page ? " active" : ""}`}
+                type="button"
+                aria-current={page === pageMeta.page ? "page" : undefined}
+                onClick={() => navigate(page)}
+                key={page}
+              >
+                {page}
+              </button>
+            ))}
+            <button className="admin-pager-btn" type="button" disabled={pageMeta.page >= pageMeta.totalPages} onClick={() => navigate(pageMeta.page + 1)}>Sau</button>
+          </div>
         </div>
-      </div>
+      ) : null}
     </section>
   );
 }

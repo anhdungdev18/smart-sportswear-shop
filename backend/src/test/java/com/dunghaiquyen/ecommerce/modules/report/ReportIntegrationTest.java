@@ -236,6 +236,45 @@ class ReportIntegrationTest extends AbstractIntegrationTest {
                 .isEqualTo(1);
     }
 
+    @Test
+    void revenueBreakdown_explainsGrossRealizedDifferenceWithStatusSlices() throws Exception {
+        AdminContext ctx = setUpAdmin();
+        String productId = createActiveProduct(ctx, "Report Revenue Breakdown");
+        String variantId = createVariant(ctx, productId, 100000, 100);
+
+        String paidBuyer = uniqueEmail("rpt-breakdown-paid");
+        TokenPair paidToken = registerUser(paidBuyer);
+        addToCart(paidToken.accessToken(), variantId, 1);
+        String paidAddress = createAddressForUser(paidBuyer);
+        OrderResult paidOrder = createOrder(paidToken.accessToken(), paidAddress, "VNPAY");
+        String txnRef = createPaymentSession(paidToken.accessToken(), paidOrder.id());
+        sendSuccessCallback(txnRef);
+
+        String codBuyer = uniqueEmail("rpt-breakdown-cod");
+        TokenPair codToken = registerUser(codBuyer);
+        addToCart(codToken.accessToken(), variantId, 2);
+        String codAddress = createAddressForUser(codBuyer);
+        OrderResult codOrder = createOrder(codToken.accessToken(), codAddress, "COD");
+        adminSetStatus(ctx, codOrder.id(), "CONFIRMED");
+        adminSetStatus(ctx, codOrder.id(), "PACKING");
+        adminSetStatus(ctx, codOrder.id(), "SHIPPING");
+        adminSetStatus(ctx, codOrder.id(), "DELIVERED");
+
+        MvcResult result = mockMvc.perform(get("/api/v1/admin/reports/revenue/breakdown")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + ctx.token()))
+                .andReturn();
+
+        assertThat(result.getResponse().getStatus()).isEqualTo(200);
+        JsonNode body = json(result.getResponse().getContentAsString()).at("/data");
+        assertThat(body.at("/breakdownAvailable").asBoolean()).isTrue();
+        assertThat(new BigDecimal(body.at("/grossRevenue").asText())).isGreaterThanOrEqualTo(paidOrder.totalAmount());
+        assertThat(new BigDecimal(body.at("/realizedRevenue").asText())).isGreaterThanOrEqualTo(codOrder.totalAmount());
+        assertThat(new BigDecimal(body.at("/codDeliveredUnpaid/amount").asText())).isGreaterThanOrEqualTo(codOrder.totalAmount());
+        assertThat(new BigDecimal(body.at("/paidNotDelivered/amount").asText())).isGreaterThanOrEqualTo(paidOrder.totalAmount());
+        assertThat(body.at("/byPaymentStatus").isArray()).isTrue();
+        assertThat(body.at("/byOrderStatus").isArray()).isTrue();
+    }
+
     // ===== lowStockCount =====
 
     @Test
@@ -301,6 +340,30 @@ class ReportIntegrationTest extends AbstractIntegrationTest {
             }
         }
         assertThat(hasPendingConfirmation).isTrue();
+    }
+
+    @Test
+    void orderStatusTrend_returnsDailyStatusBuckets() throws Exception {
+        AdminContext ctx = setUpAdmin();
+        String productId = createActiveProduct(ctx, "Report Order Trend");
+        String variantId = createVariant(ctx, productId, 60000, 50);
+
+        String buyer = uniqueEmail("rpt-ordertrend-buyer");
+        TokenPair token = registerUser(buyer);
+        addToCart(token.accessToken(), variantId, 1);
+        String address = createAddressForUser(buyer);
+        createOrder(token.accessToken(), address, "COD");
+
+        MvcResult result = mockMvc.perform(get("/api/v1/admin/reports/orders/status-trend?dateFrom="
+                        + LocalDate.now() + "&dateTo=" + LocalDate.now())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + ctx.token()))
+                .andReturn();
+
+        assertThat(result.getResponse().getStatus()).isEqualTo(200);
+        JsonNode body = json(result.getResponse().getContentAsString()).at("/data");
+        assertThat(body.at("/trendAvailable").asBoolean()).isTrue();
+        assertThat(body.at("/points").size()).isEqualTo(1);
+        assertThat(body.at("/points/0/totalOrders").asLong()).isGreaterThanOrEqualTo(1);
     }
 
     // ===== product report: best selling, based on real order items, excluding cancelled =====
