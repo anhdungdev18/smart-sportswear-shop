@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { ACCESS_TOKEN_COOKIE } from "@/modules/auth/session";
+import { ACCESS_TOKEN_COOKIE, USER_ROLE_COOKIE } from "@/modules/auth/session";
 
 /**
  * A non-empty cookie is NOT enough: the access-token JWT expires in ~15 minutes
@@ -32,11 +32,24 @@ function isSessionValid(token: string | undefined): boolean {
   }
 }
 
+function getTokenRole(token: string | undefined): string | null {
+  if (!token) return null;
+  try {
+    let base64 = token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/");
+    base64 += "=".repeat((4 - (base64.length % 4)) % 4);
+    const payload = JSON.parse(atob(base64)) as { role?: unknown };
+    return typeof payload.role === "string" ? payload.role : null;
+  } catch {
+    return null;
+  }
+}
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get(ACCESS_TOKEN_COOKIE)?.value;
   const isLoggedIn = isSessionValid(token);
   const isLoginPage = pathname === "/login";
+  const role = request.cookies.get(USER_ROLE_COOKIE)?.value ?? getTokenRole(token);
 
   if (!isLoggedIn && !isLoginPage) {
     const loginUrl = request.nextUrl.clone();
@@ -51,6 +64,12 @@ export function middleware(request: NextRequest) {
   }
 
   if (isLoggedIn && isLoginPage) {
+    const dashboardUrl = request.nextUrl.clone();
+    dashboardUrl.pathname = "/";
+    return NextResponse.redirect(dashboardUrl);
+  }
+
+  if (isLoggedIn && pathname.startsWith("/inventory") && role === "SALES_STAFF") {
     const dashboardUrl = request.nextUrl.clone();
     dashboardUrl.pathname = "/";
     return NextResponse.redirect(dashboardUrl);

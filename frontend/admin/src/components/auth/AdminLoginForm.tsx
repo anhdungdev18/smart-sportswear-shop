@@ -28,7 +28,7 @@ export function AdminLoginForm() {
         return;
       }
 
-      persistAuthSession(data.tokens);
+      persistAuthSession(data.tokens, data.user.role);
       router.push("/");
       router.refresh();
     } catch (err: unknown) {

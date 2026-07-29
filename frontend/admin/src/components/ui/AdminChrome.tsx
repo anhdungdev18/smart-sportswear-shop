@@ -27,8 +27,9 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { adminLogout } from "@/modules/auth/api";
-import { clearAuthSession, getBrowserRefreshToken } from "@/modules/auth/session";
+import { clearAuthSession, getBrowserRefreshToken, getBrowserUserRole } from "@/modules/auth/session";
 
 type NavItem = {
   label: string;
@@ -105,6 +106,11 @@ function getPageMeta(pathname: string) {
 
 export function Sidebar() {
   const pathname = usePathname();
+  const [role, setRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    setRole(getBrowserUserRole());
+  }, []);
 
   return (
     <aside className="sidebar">
@@ -128,7 +134,7 @@ export function Sidebar() {
           <div key={group.title} className="side-nav-group">
             <p className="side-nav-title">{group.title}</p>
             <div className="side-nav-list">
-              {group.items.map((item) => {
+              {group.items.filter((item) => item.href !== "/inventory" || role !== "SALES_STAFF").map((item) => {
                 const Icon = item.icon;
                 const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
 
