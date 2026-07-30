@@ -1,6 +1,6 @@
 # Chạy dự án local
 
-Chỉ Redis chạy bằng Docker. Backend, admin, storefront và AI service chạy trực tiếp trong các cửa sổ PowerShell riêng.
+Redis và RabbitMQ chạy bằng Docker. Backend, admin, storefront, AI service và visual-search service chạy trực tiếp trong các cửa sổ PowerShell riêng.
 
 ## Chuẩn bị lần đầu
 
@@ -20,16 +20,16 @@ Các file này chứa thông tin riêng và không được commit. Các file `*
 
 ## Chạy từng tác vụ
 
-### 1. Redis
+### 1. Redis và RabbitMQ
 
 ```powershell
-docker compose up -d redis
+docker compose up -d redis rabbitmq
 ```
 
-Dừng Redis:
+Dừng hạ tầng local:
 
 ```powershell
-docker compose stop redis
+docker compose stop redis rabbitmq
 ```
 
 ### 2. Backend
@@ -62,6 +62,21 @@ Mở một cửa sổ PowerShell riêng:
 .\start-ai-service.ps1
 ```
 
+### 6. Visual search (khi cần)
+
+Sao chép `visual-search-service/.env.example` thành `visual-search-service/.env`, điền cấu hình local và chỉ đặt `VISUAL_SEARCH_ENABLED=true` sau khi các giá trị bắt buộc đã có. Sau đó:
+
+```powershell
+cd visual-search-service
+python -m venv .venv
+.\.venv\Scripts\pip install -r requirements-test.txt
+.\.venv\Scripts\uvicorn app.main:app --reload --port 8090
+```
+
+RabbitMQ Management chỉ được bind vào loopback cho môi trường local: <http://127.0.0.1:15672>. Tài khoản mặc định local là `visual_search` / `change-me`; hãy đặt `RABBITMQ_DEFAULT_USER` và `RABBITMQ_DEFAULT_PASS` khác khi dùng ngoài máy phát triển.
+
+RabbitMQ tự nạp topology từ `rabbitmq/definitions.json`: exchange `catalog.events`, main queue, ba retry queue và DLQ. Nếu thay đổi topology trên một volume đã tồn tại, hãy dùng Management UI để kiểm tra trước; không xóa volume chứa message nếu chưa sao lưu hoặc chưa xác nhận dữ liệu có thể bỏ.
+
 Dừng backend, admin, storefront hoặc AI service bằng `Ctrl+C` trong đúng cửa sổ đang chạy tác vụ đó.
 
 ## Địa chỉ local
@@ -72,5 +87,8 @@ Dừng backend, admin, storefront hoặc AI service bằng `Ctrl+C` trong đúng
 - Backend: <http://localhost:8082>
 - Backend health: <http://localhost:8082/actuator/health>
 - Redis: `localhost:6379`
+- RabbitMQ AMQP: `localhost:5672`
+- RabbitMQ Management: <http://127.0.0.1:15672>
+- Visual search: <http://localhost:8090/health/ready>
 
-Dữ liệu chính nằm trên Supabase. Docker Compose không chạy PostgreSQL, backend hoặc frontend.
+Dữ liệu chính nằm trên Supabase. Docker Compose không chạy PostgreSQL, backend, frontend hoặc visual-search service.
