@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response, status
 
 from app.config import Settings, get_settings
+from app.services.readiness import ReadinessChecker
 
 router = APIRouter(tags=["health"])
 
@@ -11,9 +12,23 @@ async def live(settings: Settings = Depends(get_settings)) -> dict[str, str]:
 
 
 @router.get("/health/ready")
-async def ready(settings: Settings = Depends(get_settings)) -> dict[str, object]:
+async def ready(
+    response: Response,
+    settings: Settings = Depends(get_settings),
+) -> dict[str, object]:
+    if not settings.visual_search_enabled:
+        return {"status": "disabled", "enabled": False, "provider": settings.visual_embedding_provider}
+
+    result = await ReadinessChecker(settings).check()
+    if not result.ready:
+        response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
     return {
-        "status": "ready" if settings.visual_search_enabled else "disabled",
-        "enabled": settings.visual_search_enabled,
+        "status": "ready" if result.ready else "not_ready",
+        "enabled": True,
         "provider": settings.visual_embedding_provider,
+        "checks": {
+            "database": result.database,
+            "activeModel": result.active_model,
+            "rabbitmq": result.rabbitmq,
+        },
     }

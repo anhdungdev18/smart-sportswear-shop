@@ -466,14 +466,16 @@ Sau mỗi phase, chạy test phù hợp và báo rõ file thay đổi, test đã
 ### Tiến độ theo kế hoạch 0-15 trong `visual-search-plan.md`
 
 - [x] Phase 1 - Cấu hình môi trường Supabase, Cloudinary, Shopify allowlist, Voyage và RabbitMQ (`Settings` kiểm tra fail-fast khi bật feature; RabbitMQ local có healthcheck, volume và management chỉ bind loopback; hướng dẫn local được cập nhật; verified 2026-07-30 bằng unit tests và `docker compose config`)
+  - [x] Runtime `.env` chạy trực tiếp dùng RabbitMQ `localhost`; Supabase có đúng một model `voyage-multimodal-3.5` 1024 chiều ở trạng thái ACTIVE; readiness kiểm tra thật database/model/RabbitMQ và trả 503 khi dependency chưa sẵn sàng (verified 2026-07-30 bằng `.env` hiện tại)
 - [x] Phase 3 - RabbitMQ exchange, main/retry/DLQ và message contract (`rabbitmq/definitions.json` tự nạp durable topology; retry TTL 30s/5m/1h quay về main queue; reject từ main vào DLQ; JSON Schema v1 giới hạn đúng metadata; verified 2026-07-30 bằng 43 Python tests, `docker compose config`, broker healthy và `rabbitmqctl` xác nhận exchange/queues/bindings thực tế)
+- [x] Phase 7 - Consumer idempotent, manual ACK, retry và DLQ (`aio-pika` worker với prefetch 5; validate event v1; kiểm tra `processed_events`; đọc catalog mới nhất; hash-skip; claim PROCESSING; commit READY + usage + processed; lỗi transient đi retry TTL, lỗi permanent/cạn retry ghi FAILED và vào DLQ; verified 2026-07-30 bằng 55 Python tests, gồm publish/consume/ACK/retry trên RabbitMQ thật)
 
 ### Tiến độ chuỗi triển khai kỹ thuật trong brief
 
 - [x] Phase 1 - Database + contracts (`V34__visual_search_core.sql`, `contracts/catalog-event-v1.schema.json`; verified 2026-07-30 with Spring context + Flyway on PostgreSQL/pgvector Testcontainers)
 - [x] Phase 2 - Visual service core + fake provider tests (FastAPI health endpoints, typed settings/provider contract and deterministic fake; verified 2026-07-30 with 6 unit tests)
 - [x] Phase 3 - Voyage + Cloudinary/Shopify image pipeline (official multimodal REST contract, base64 normalized bytes, document/query input types, bounded retry/dimension checks, exact host/path allowlist, DNS/peer SSRF checks, redirect/byte/MIME/pixel limits and deterministic JPEG hashing; verified 2026-07-30 with 28 Python tests)
-- [ ] Phase 4 - RabbitMQ consumer + retry/DLQ
+- [x] Phase 4 - RabbitMQ consumer + retry/DLQ (manual ACK sau commit hoặc sau khi publish retry/DLQ thành công; persistent republish, retry header phân tầng, idempotency theo event/hash, ACTIVE/deleted/inactive handling và exhausted FAILED state; verified 2026-07-30 bằng 55 Python tests với broker integration)
 - [ ] Phase 5 - Spring outbox + publisher
 - [ ] Phase 6 - Search API
 - [ ] Phase 7 - Backfill/reconciliation

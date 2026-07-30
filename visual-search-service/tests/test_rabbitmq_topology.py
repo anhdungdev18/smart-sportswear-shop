@@ -6,6 +6,14 @@ ROOT = Path(__file__).resolve().parents[2]
 DEFINITIONS = json.loads((ROOT / "rabbitmq" / "definitions.json").read_text())
 
 
+def test_local_visual_search_user_has_vhost_permissions():
+    assert any(item["name"] == "visual_search" for item in DEFINITIONS["users"])
+    assert any(
+        item["user"] == "visual_search" and item["vhost"] == "/"
+        for item in DEFINITIONS["permissions"]
+    )
+
+
 def test_catalog_exchange_is_durable_topic() -> None:
     exchange = next(item for item in DEFINITIONS["exchanges"] if item["name"] == "catalog.events")
 

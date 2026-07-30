@@ -19,6 +19,14 @@ class Settings(BaseSettings):
     voyage_max_attempts: int = Field(default=3, ge=1, le=5)
     database_url: str = ""
     rabbitmq_url: str = "amqp://visual_search:change-me@rabbitmq:5672/"
+    rabbitmq_prefetch_count: int = Field(default=5, ge=1, le=100)
+    rabbitmq_consumer_queue: str = "visual-search.indexing"
+    rabbitmq_retry_queues: str = (
+        "visual-search.indexing.retry.30s,visual-search.indexing.retry.5m,"
+        "visual-search.indexing.retry.1h"
+    )
+    rabbitmq_dlq: str = "visual-search.indexing.dlq"
+    readiness_timeout_seconds: float = Field(default=10, gt=0, le=30)
     internal_service_token: str = ""
     cloudinary_cloud_name: str = ""
     catalog_image_allowed_hosts: str = "res.cloudinary.com,cdn.shopify.com"
@@ -65,6 +73,10 @@ class Settings(BaseSettings):
     @property
     def allowed_hosts(self) -> frozenset[str]:
         return frozenset(host.strip().lower() for host in self.catalog_image_allowed_hosts.split(",") if host.strip())
+
+    @property
+    def retry_queues(self) -> tuple[str, ...]:
+        return tuple(queue.strip() for queue in self.rabbitmq_retry_queues.split(",") if queue.strip())
 
 
 @lru_cache
