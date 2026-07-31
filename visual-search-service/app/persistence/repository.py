@@ -36,6 +36,14 @@ class ExistingEmbedding:
     image_hash: str | None
 
 
+@dataclass(frozen=True, slots=True)
+class SearchCandidate:
+    product_id: UUID
+    image_id: UUID
+    matched_image_url: str
+    similarity: float
+
+
 class VisualSearchRepository:
     def __init__(self, settings: Settings):
         self.database_url = settings.database_url
@@ -181,4 +189,61 @@ class VisualSearchRepository:
                         set status = 'FAILED', last_error = excluded.last_error, updated_at = now()
                         """,
                         (model_id, error[:2000], image_id),
+                    )
+
+    async def search(self, model_id: UUID, vector: tuple[float, ...], limit: int) -> list[SearchCandidate]:
+        encoded = "[" + ",".join(str(value) for value in vector) + "]"
+        image_limit = min(limit * 5, 100)
+        async with await self._connect() as connection:
+            async with connection.cursor() as cursor:
+                await cursor.execute(
+                    """
+                    with ranked_images as (
+                        select e.product_id, e.image_id, pi.image_url,
+                               1 - (e.embedding <=> %s::vector) as similarity
+                        from visual_search.image_embeddings e
+                        join product_images pi on pi.id = e.image_id
+                        join products p on p.id = e.product_id
+                        where e.model_version_id = %s
+                          and e.status = 'READY'
+                          and p.status = 'ACTIVE'
+                        order by e.embedding <=> %s::vector
+                        limit %s
+                    ), ranked_products as (
+                        select distinct on (product_id)
+                               product_id, image_id, image_url, similarity
+                        from ranked_images
+                        order by product_id, similarity desc
+                    )
+                    select product_id, image_id, image_url, similarity
+                    from ranked_products
+                    order by similarity desc
+                    limit %s
+                    """,
+                    (encoded, model_id, encoded, image_limit, limit),
+                )
+                return [SearchCandidate(row[0], row[1], row[2], float(row[3])) for row in await cursor.fetchall()]
+
+    async def record_query_usage(
+        self,
+        model: ModelVersion,
+        result: EmbeddingResult,
+        latency_ms: int,
+        success: bool = True,
+        error_code: str | None = None,
+    ) -> None:
+        async with await self._connect() as connection:
+            async with connection.transaction():
+                async with connection.cursor() as cursor:
+                    await cursor.execute(
+                        """
+                        insert into visual_search.usage_events
+                            (id, provider, model, operation, image_pixels, text_tokens,
+                             latency_ms, success, error_code)
+                        values (%s, %s, %s, 'QUERY_EMBEDDING', %s, %s, %s, %s, %s)
+                        """,
+                        (
+                            uuid4(), model.provider, model.model, result.usage.image_pixels,
+                            result.usage.text_tokens, latency_ms, success, error_code,
+                        ),
                     )

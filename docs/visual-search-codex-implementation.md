@@ -476,8 +476,8 @@ Sau mỗi phase, chạy test phù hợp và báo rõ file thay đổi, test đã
 - [x] Phase 2 - Visual service core + fake provider tests (FastAPI health endpoints, typed settings/provider contract and deterministic fake; verified 2026-07-30 with 6 unit tests)
 - [x] Phase 3 - Voyage + Cloudinary/Shopify image pipeline (official multimodal REST contract, base64 normalized bytes, document/query input types, bounded retry/dimension checks, exact host/path allowlist, DNS/peer SSRF checks, redirect/byte/MIME/pixel limits and deterministic JPEG hashing; verified 2026-07-30 with 28 Python tests)
 - [x] Phase 4 - RabbitMQ consumer + retry/DLQ (manual ACK sau commit hoặc sau khi publish retry/DLQ thành công; persistent republish, retry header phân tầng, idempotency theo event/hash, ACTIVE/deleted/inactive handling và exhausted FAILED state; verified 2026-07-30 bằng 55 Python tests với broker integration)
-- [ ] Phase 5 - Spring outbox + publisher
-- [ ] Phase 6 - Search API
+- [x] Phase 5 - Spring outbox + publisher (catalog image create/delete and real ACTIVE transitions write contract-v1 events in the same DB transaction; scheduled publisher uses persistent messages, mandatory routing, correlated confirms, `FOR UPDATE SKIP LOCKED`, claim lease and bounded exponential retry; compiled and focused unit tests verified 2026-07-31)
+- [x] Phase 6 - Search API (FastAPI internal multipart endpoint validates/normalizes query images, creates query embeddings, runs exact pgvector cosine search grouped by product and records usage; Spring public endpoint applies a separate IP rate limit, calls with an internal token, re-filters ACTIVE products, enriches current commerce data and supports category/gender/price filters; verified 2026-07-31 with 59 Python tests and Spring compilation/focused unit tests)
 - [ ] Phase 7 - Backfill/reconciliation
 - [ ] Phase 8 - Storefront
 - [ ] Phase 9 - Admin/observability

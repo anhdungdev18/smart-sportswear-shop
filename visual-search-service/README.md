@@ -27,6 +27,15 @@ The API call has bounded timeout/retries and validates the configured vector
 dimension. Unit tests use an in-memory HTTP transport and never call Voyage or
 download from the Internet.
 
+## Phase 6 search API
+
+`POST /internal/v1/search?limit=20` accepts a multipart field named `image` and
+requires `X-Internal-Service-Token`. It validates and normalizes the upload,
+creates a query embedding, runs exact cosine search against READY embeddings
+for the ACTIVE model, groups matches by product, and excludes non-ACTIVE
+products. Query images are not stored; only provider usage and latency are
+recorded.
+
 ## Phase 4 indexing worker
 
 Start the durable catalog consumer separately from the HTTP process:

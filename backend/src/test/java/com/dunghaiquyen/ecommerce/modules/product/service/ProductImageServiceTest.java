@@ -17,6 +17,7 @@ import com.dunghaiquyen.ecommerce.modules.product.entity.ProductImage;
 import com.dunghaiquyen.ecommerce.modules.product.mapper.ProductMapper;
 import com.dunghaiquyen.ecommerce.modules.product.repository.ProductImageRepository;
 import com.dunghaiquyen.ecommerce.modules.product.repository.ProductRepository;
+import com.dunghaiquyen.ecommerce.visualsearch.outbox.CatalogOutboxService;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -53,13 +54,17 @@ class ProductImageServiceTest {
     @Mock
     private ImageStorageService imageStorageService;
 
+    @Mock
+    private CatalogOutboxService catalogOutboxService;
+
     private ProductImageService service;
     private UUID productId;
     private Product product;
 
     @BeforeEach
     void setUp() {
-        service = new ProductImageService(productRepository, imageRepository, productMapper, imageStorageService);
+        service = new ProductImageService(
+                productRepository, imageRepository, productMapper, imageStorageService, catalogOutboxService);
         productId = UUID.randomUUID();
         product = new Product();
         product.setId(productId);

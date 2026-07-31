@@ -35,6 +35,8 @@ import com.dunghaiquyen.ecommerce.modules.order.repository.OrderItemRepository;
 import com.dunghaiquyen.ecommerce.modules.product.repository.spec.ProductSpecifications;
 import com.dunghaiquyen.ecommerce.modules.product.util.ThumbnailResolver;
 import com.dunghaiquyen.ecommerce.modules.review.entity.ReviewStatus;
+import com.dunghaiquyen.ecommerce.visualsearch.outbox.CatalogEventType;
+import com.dunghaiquyen.ecommerce.visualsearch.outbox.CatalogOutboxService;
 import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.List;
@@ -75,6 +77,7 @@ public class ProductService {
     private final CartItemRepository cartItemRepository;
     private final InventoryTransactionRepository inventoryTransactionRepository;
     private final OrderItemRepository orderItemRepository;
+    private final CatalogOutboxService catalogOutboxService;
 
     public ProductService(
             ProductRepository productRepository,
@@ -87,7 +90,8 @@ public class ProductService {
             CollectionRepository collectionRepository,
             CartItemRepository cartItemRepository,
             InventoryTransactionRepository inventoryTransactionRepository,
-            OrderItemRepository orderItemRepository) {
+            OrderItemRepository orderItemRepository,
+            CatalogOutboxService catalogOutboxService) {
         this.productRepository = productRepository;
         this.variantRepository = variantRepository;
         this.imageRepository = imageRepository;
@@ -99,6 +103,7 @@ public class ProductService {
         this.cartItemRepository = cartItemRepository;
         this.inventoryTransactionRepository = inventoryTransactionRepository;
         this.orderItemRepository = orderItemRepository;
+        this.catalogOutboxService = catalogOutboxService;
     }
 
     public record ListResult(List<ProductListItemResponse> items, PageMeta meta) {
@@ -278,6 +283,7 @@ public class ProductService {
     public ProductDetailResponse update(UUID id, ProductUpdateRequest request) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
+        ProductStatus previousStatus = product.getStatus();
 
         if (request.slug() != null && productRepository.existsBySlugAndIdNot(request.slug(), id)) {
             throw new BusinessRuleException("Slug already exists: " + request.slug());
@@ -328,6 +334,13 @@ public class ProductService {
             product = productRepository.save(product);
         } catch (DataIntegrityViolationException ex) {
             throw new BusinessRuleException("Slug already exists: " + request.slug());
+        }
+        if (previousStatus != product.getStatus()) {
+            if (product.getStatus() == ProductStatus.ACTIVE) {
+                catalogOutboxService.append(CatalogEventType.PRODUCT_ACTIVATED, product.getId(), null);
+            } else if (previousStatus == ProductStatus.ACTIVE) {
+                catalogOutboxService.append(CatalogEventType.PRODUCT_DEACTIVATED, product.getId(), null);
+            }
         }
         return assembleDetail(product, false);
     }
