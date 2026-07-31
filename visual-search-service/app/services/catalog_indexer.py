@@ -81,6 +81,8 @@ class CatalogIndexer:
             classified = classify_processing_error(error)
             if isinstance(classified, PermanentEventError):
                 await self.repository.mark_failed(image.id, model.id, str(classified))
+            elif isinstance(classified, RetryableEventError):
+                await self.repository.mark_retry_pending(image.id, model.id, str(classified))
             raise classified from error
 
     async def _complete(self, event: CatalogEvent) -> None:
@@ -90,3 +92,4 @@ class CatalogIndexer:
         model = await self.repository.active_model()
         if model is not None:
             await self.repository.mark_failed(event.image_id, model.id, str(error))
+        await self.repository.mark_job_event_failed(event.event_id, str(error))

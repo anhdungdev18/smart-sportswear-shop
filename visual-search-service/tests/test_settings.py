@@ -22,6 +22,9 @@ def test_enabled_configuration_accepts_complete_safe_local_config() -> None:
 
     assert settings.visual_search_enabled is True
     assert settings.allowed_hosts == frozenset({"res.cloudinary.com", "cdn.shopify.com"})
+    assert settings.max_image_pixels == 16_000_000
+    assert settings.reconciliation_enabled is True
+    assert settings.reconciliation_interval_seconds == 3600
 
 
 @pytest.mark.parametrize(

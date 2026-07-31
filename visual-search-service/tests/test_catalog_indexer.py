@@ -5,7 +5,7 @@ from uuid import uuid4
 import pytest
 
 from app.messaging.events import CatalogEvent
-from app.messaging.retry import PermanentEventError
+from app.messaging.retry import PermanentEventError, RetryableEventError
 from app.persistence.repository import CatalogImage, ExistingEmbedding, ModelVersion
 from app.providers.fake import FakeEmbeddingProvider
 from app.services.catalog_indexer import CatalogIndexer
@@ -38,6 +38,7 @@ class FakeRepository:
         self.ready_calls = 0
         self.completed = []
         self.failed = []
+        self.retry_pending = []
 
     async def is_processed(self, _event_id): return self.processed
     async def active_model(self): return self.model
@@ -53,6 +54,8 @@ class FakeRepository:
             self.completed.append(args[0])
     async def mark_processed(self, event_id, _event_type, _event_version): self.completed.append(event_id)
     async def mark_failed(self, image_id, model_id, error): self.failed.append((image_id, model_id, error))
+    async def mark_retry_pending(self, image_id, model_id, error):
+        self.retry_pending.append((image_id, model_id, error))
 
 
 class FakePipeline:
@@ -115,4 +118,22 @@ def test_permanent_image_error_marks_embedding_failed():
         with pytest.raises(PermanentEventError):
             await indexer.handle(event)
         assert len(repo.failed) == 1
+    asyncio.run(scenario())
+
+
+def test_transient_provider_error_releases_processing_claim_for_retry():
+    class FailingProvider:
+        async def embed_document(self, _image, _text=None):
+            raise RetryableEventError("provider busy")
+
+    async def scenario():
+        event = make_event()
+        repo = FakeRepository(event)
+        indexer = CatalogIndexer(repo, FakePipeline(), FailingProvider())
+        with pytest.raises(RetryableEventError):
+            await indexer.handle(event)
+        assert repo.processing_calls == 1
+        assert len(repo.retry_pending) == 1
+        assert repo.failed == []
+
     asyncio.run(scenario())

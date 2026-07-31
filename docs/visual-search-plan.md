@@ -192,7 +192,7 @@ Internal API không được public trực tiếp trong production.
 | Hạng mục | Mức đề xuất |
 |---|---|
 | File upload | Tối đa 5 MB; JPEG, PNG, WebP. |
-| Pixel decode | Tối đa khoảng 12 triệu pixel. |
+| Pixel decode | Tối đa 16 triệu pixel; catalog hiện hữu đã audit có ảnh tới 4000 x 4000, sau đó resize tối đa 1024 x 1024 trước khi gửi model. |
 | Ảnh gửi model | Resize khoảng 1 MP. |
 | Catalog URL allowlist | Chỉ HTTPS; `res.cloudinary.com/<configured-cloud-name>/...` và `cdn.shopify.com/...`. |
 | Cloudinary transformation | `c_limit,w_1024,h_1024,q_auto:good,f_jpg`. |

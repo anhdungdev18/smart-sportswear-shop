@@ -63,3 +63,50 @@ Run the broker integration test after starting RabbitMQ:
 $env:RUN_RABBITMQ_INTEGRATION='1'
 python -m pytest -q
 ```
+
+## Phase 7 backfill and reconciliation
+
+Both maintenance commands are dry-run by default and print only counts/reasons:
+
+```powershell
+python scripts/backfill_embeddings.py
+python scripts/reconcile_embeddings.py --include-failed
+```
+
+After Flyway applies `V35`, the backend outbox publisher and the visual worker
+are healthy, enqueue in a bounded batch:
+
+```powershell
+python scripts/backfill_embeddings.py --enqueue --limit 25
+python scripts/reconcile_embeddings.py --enqueue --include-failed --limit 25
+```
+
+To avoid retrying permanent image-policy failures, retry only transient provider
+failures with `python scripts/reconcile_embeddings.py --enqueue --retryable-failed-only`.
+
+An operator can inspect a delayed retry queue, then move a bounded number back
+to the main queue after fixing the cause:
+
+```powershell
+python scripts/requeue_retry_messages.py visual-search.indexing.retry.1h --max 25
+python scripts/requeue_retry_messages.py visual-search.indexing.retry.1h --max 25 --execute
+python scripts/requeue_retry_messages.py visual-search.indexing.dlq --max 25 --execute
+```
+
+These commands never call the embedding provider directly. They create an
+indexing job plus contract-v1 outbox events; the normal RabbitMQ consumer does
+the indexing and updates job completion counters.
+
+The worker also runs reconciliation automatically. By default it starts after
+60 seconds and then checks once per hour. A PostgreSQL advisory lock plus the
+recent-job check prevents multiple worker replicas from creating duplicate
+scheduled jobs. Permanent image-policy failures are reported but are not
+automatically retried.
+
+```dotenv
+RECONCILIATION_ENABLED=true
+RECONCILIATION_INTERVAL_SECONDS=3600
+RECONCILIATION_INITIAL_DELAY_SECONDS=60
+RECONCILIATION_PROCESSING_TIMEOUT_MINUTES=15
+RECONCILIATION_BATCH_SIZE=100
+```

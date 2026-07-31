@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     voyage_api_url: str = "https://api.voyageai.com/v1/multimodalembeddings"
     voyage_timeout_seconds: float = Field(default=30, gt=0)
     voyage_max_attempts: int = Field(default=3, ge=1, le=5)
+    voyage_min_interval_seconds: float = Field(default=21, ge=0, le=120)
     database_url: str = ""
     rabbitmq_url: str = "amqp://visual_search:change-me@rabbitmq:5672/"
     rabbitmq_prefetch_count: int = Field(default=5, ge=1, le=100)
@@ -26,12 +27,17 @@ class Settings(BaseSettings):
         "visual-search.indexing.retry.1h"
     )
     rabbitmq_dlq: str = "visual-search.indexing.dlq"
+    reconciliation_enabled: bool = True
+    reconciliation_interval_seconds: int = Field(default=3600, ge=60)
+    reconciliation_initial_delay_seconds: int = Field(default=60, ge=0)
+    reconciliation_processing_timeout_minutes: int = Field(default=15, ge=1)
+    reconciliation_batch_size: int = Field(default=100, ge=1, le=1000)
     readiness_timeout_seconds: float = Field(default=10, gt=0, le=30)
     internal_service_token: str = ""
     cloudinary_cloud_name: str = ""
     catalog_image_allowed_hosts: str = "res.cloudinary.com,cdn.shopify.com"
     max_upload_bytes: int = Field(default=5_242_880, gt=0)
-    max_image_pixels: int = Field(default=12_000_000, gt=0)
+    max_image_pixels: int = Field(default=16_000_000, gt=0)
     target_image_max_width: int = Field(default=1024, gt=0)
     target_image_max_height: int = Field(default=1024, gt=0)
     catalog_download_timeout_seconds: float = Field(default=10, gt=0)

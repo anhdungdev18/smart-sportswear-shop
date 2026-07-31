@@ -1,4 +1,7 @@
-from dataclasses import dataclass
+from contextlib import asynccontextmanager
+from dataclasses import dataclass, field
+from datetime import date, datetime, timedelta, timezone
+import json
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -44,7 +47,59 @@ class SearchCandidate:
     similarity: float
 
 
+@dataclass(frozen=True, slots=True)
+class ReconciliationCandidate:
+    image_id: UUID
+    product_id: UUID
+    reason: str
+
+
+@dataclass(frozen=True, slots=True)
+class IndexingJob:
+    id: UUID
+    job_type: str
+    total_count: int
+
+
+@dataclass(frozen=True, slots=True)
+class CoverageStats:
+    total_active_images: int
+    ready: int
+    pending: int
+    processing: int
+    failed: int
+    missing: int
+    coverage_pct: float
+
+
+@dataclass(frozen=True, slots=True)
+class UsageDayStat:
+    day: date
+    operation: str
+    requests: int
+    image_pixels: int
+    text_tokens: int
+    estimated_cost_usd: float
+    success_count: int
+    failure_count: int
+
+
+@dataclass(frozen=True, slots=True)
+class RecentJob:
+    id: UUID
+    job_type: str
+    status: str
+    total_count: int
+    completed_count: int
+    failed_count: int
+    pending_count: int
+    created_at: datetime
+    completed_at: datetime | None
+
+
 class VisualSearchRepository:
+    RECONCILIATION_ADVISORY_LOCK_ID = 7_410_057_007
+
     def __init__(self, settings: Settings):
         self.database_url = settings.database_url
 
@@ -156,12 +211,14 @@ class VisualSearchRepository:
                     )
                     if event_id is not None and event_type is not None and event_version is not None:
                         await self._insert_processed(cursor, event_id, event_type, event_version)
+                        await self._complete_job_item(cursor, event_id)
 
     async def mark_processed(self, event_id: UUID, event_type: str, event_version: int) -> None:
         async with await self._connect() as connection:
             async with connection.transaction():
                 async with connection.cursor() as cursor:
                     await self._insert_processed(cursor, event_id, event_type, event_version)
+                    await self._complete_job_item(cursor, event_id)
 
     @staticmethod
     async def _insert_processed(cursor: Any, event_id: UUID, event_type: str, event_version: int) -> None:
@@ -171,6 +228,54 @@ class VisualSearchRepository:
             values (%s, %s, %s) on conflict (event_id) do nothing
             """,
             (event_id, event_type, event_version),
+        )
+
+    @staticmethod
+    async def _complete_job_item(cursor: Any, event_id: UUID) -> None:
+        await cursor.execute(
+            """
+            update visual_search.indexing_job_items
+            set status = 'COMPLETED', completed_at = now(), updated_at = now()
+            where event_id = %s and status <> 'COMPLETED'
+            returning job_id
+            """,
+            (event_id,),
+        )
+        row = await cursor.fetchone()
+        if row is None:
+            return
+        await VisualSearchRepository._refresh_job(cursor, row[0])
+
+    @staticmethod
+    async def _refresh_job(cursor: Any, job_id: UUID) -> None:
+        await cursor.execute(
+            """
+            with counts as (
+                select count(*) filter (where status = 'PENDING') as pending,
+                       count(*) filter (where status = 'PROCESSING') as processing,
+                       count(*) filter (where status = 'COMPLETED') as completed,
+                       count(*) filter (where status = 'FAILED') as failed
+                from visual_search.indexing_job_items where job_id = %s
+            )
+            update visual_search.indexing_jobs j
+            set pending_count = counts.pending,
+                processing_count = counts.processing,
+                completed_count = counts.completed,
+                failed_count = counts.failed,
+                status = case
+                    when counts.pending = 0 and counts.processing = 0 and counts.failed = 0 then 'COMPLETED'
+                    when counts.pending = 0 and counts.processing = 0 then 'PARTIAL'
+                    else 'RUNNING'
+                end,
+                started_at = coalesce(started_at, now()),
+                completed_at = case
+                    when counts.pending = 0 and counts.processing = 0 then now()
+                    else null
+                end,
+                updated_at = now()
+            from counts where j.id = %s
+            """,
+            (job_id, job_id),
         )
 
     async def mark_failed(self, image_id: UUID | None, model_id: UUID | None, error: str) -> None:
@@ -190,6 +295,168 @@ class VisualSearchRepository:
                         """,
                         (model_id, error[:2000], image_id),
                     )
+
+    async def mark_retry_pending(self, image_id: UUID, model_id: UUID, error: str) -> None:
+        async with await self._connect() as connection:
+            async with connection.transaction():
+                async with connection.cursor() as cursor:
+                    await cursor.execute(
+                        """
+                        update visual_search.image_embeddings
+                        set status = 'PENDING', last_error = %s, updated_at = now()
+                        where image_id = %s and model_version_id = %s
+                          and status = 'PROCESSING'
+                        """,
+                        (error[:2000], image_id, model_id),
+                    )
+
+    async def mark_job_event_failed(self, event_id: UUID, error: str) -> None:
+        async with await self._connect() as connection:
+            async with connection.transaction():
+                async with connection.cursor() as cursor:
+                    await cursor.execute(
+                        """
+                        update visual_search.indexing_job_items
+                        set status = 'FAILED', last_error = %s, updated_at = now()
+                        where event_id = %s returning job_id
+                        """,
+                        (error[:2000], event_id),
+                    )
+                    row = await cursor.fetchone()
+                    if row is not None:
+                        await self._refresh_job(cursor, row[0])
+
+    async def reconciliation_candidates(
+        self, model_id: UUID, processing_timeout: timedelta, include_failed: bool = True
+    ) -> list[ReconciliationCandidate]:
+        async with await self._connect() as connection:
+            async with connection.cursor() as cursor:
+                await cursor.execute(
+                    """
+                    select pi.id, pi.product_id,
+                           case
+                               when e.image_id is null then 'MISSING'
+                               when e.status = 'PROCESSING' then 'PROCESSING_TIMEOUT'
+                               when e.status = 'FAILED' and e.last_error like 'Voyage temporarily unavailable%%'
+                                   then 'FAILED_RETRYABLE'
+                               when e.status = 'FAILED' then 'FAILED_PERMANENT'
+                               else e.status
+                           end as reason
+                    from product_images pi
+                    join products p on p.id = pi.product_id
+                    left join visual_search.image_embeddings e
+                      on e.image_id = pi.id and e.model_version_id = %s
+                    where p.status = 'ACTIVE'
+                      and (
+                        e.image_id is null
+                        or e.status = 'PENDING'
+                        or e.status = 'STALE'
+                        or (%s and e.status = 'FAILED')
+                        or (e.status = 'PROCESSING' and e.last_attempt_at < now() - %s::interval)
+                      )
+                    order by pi.created_at, pi.id
+                    """,
+                    (model_id, include_failed, processing_timeout),
+                )
+                return [ReconciliationCandidate(*row) for row in await cursor.fetchall()]
+
+    @asynccontextmanager
+    async def reconciliation_lock(self):
+        connection = await self._connect()
+        acquired = False
+        try:
+            async with connection.cursor() as cursor:
+                await cursor.execute(
+                    "select pg_try_advisory_lock(%s)",
+                    (self.RECONCILIATION_ADVISORY_LOCK_ID,),
+                )
+                acquired = bool((await cursor.fetchone())[0])
+            yield acquired
+        finally:
+            if acquired:
+                async with connection.cursor() as cursor:
+                    await cursor.execute(
+                        "select pg_advisory_unlock(%s)",
+                        (self.RECONCILIATION_ADVISORY_LOCK_ID,),
+                    )
+            await connection.close()
+
+    async def has_recent_reconciliation_job(self, interval: timedelta) -> bool:
+        async with await self._connect() as connection:
+            async with connection.cursor() as cursor:
+                await cursor.execute(
+                    """
+                    select exists(
+                        select 1 from visual_search.indexing_jobs
+                        where job_type = 'RECONCILIATION'
+                          and created_at >= now() - %s::interval
+                    )
+                    """,
+                    (interval,),
+                )
+                return bool((await cursor.fetchone())[0])
+
+    async def create_indexing_job(
+        self,
+        job_type: str,
+        candidates: list[ReconciliationCandidate],
+        requested_by: UUID | None = None,
+    ) -> IndexingJob:
+        job_id = uuid4()
+        async with await self._connect() as connection:
+            async with connection.transaction():
+                async with connection.cursor() as cursor:
+                    await cursor.execute(
+                        """
+                        insert into visual_search.indexing_jobs
+                            (id, job_type, status, model_version_id, requested_by,
+                             total_count, pending_count, source_counts, completed_at)
+                        select %s, %s, %s, id, %s, %s, %s, %s::jsonb,
+                               case when %s = 0 then now() else null end
+                        from visual_search.model_versions where status = 'ACTIVE'
+                        """,
+                        (
+                            job_id,
+                            job_type,
+                            "COMPLETED" if not candidates else "PENDING",
+                            requested_by,
+                            len(candidates),
+                            len(candidates),
+                            "{}",
+                            len(candidates),
+                        ),
+                    )
+                    if cursor.rowcount != 1:
+                        raise RepositoryUnavailableError("No active visual embedding model is configured")
+                    for candidate in candidates:
+                        event_id = uuid4()
+                        event_type = "PRODUCT_REINDEX_REQUESTED"
+                        payload = {
+                            "eventId": str(event_id),
+                            "eventType": event_type,
+                            "eventVersion": 1,
+                            "productId": str(candidate.product_id),
+                            "imageId": str(candidate.image_id),
+                            "occurredAt": datetime.now(timezone.utc).isoformat(),
+                            "traceId": str(job_id),
+                        }
+                        await cursor.execute(
+                            """
+                            insert into integration_outbox
+                                (id, event_type, event_version, aggregate_type, aggregate_id, payload)
+                            values (%s, %s, 1, 'PRODUCT', %s, %s::jsonb)
+                            """,
+                            (event_id, event_type, candidate.product_id, json.dumps(payload)),
+                        )
+                        await cursor.execute(
+                            """
+                            insert into visual_search.indexing_job_items
+                                (job_id, image_id, event_id)
+                            values (%s, %s, %s)
+                            """,
+                            (job_id, candidate.image_id, event_id),
+                        )
+        return IndexingJob(job_id, job_type, len(candidates))
 
     async def search(self, model_id: UUID, vector: tuple[float, ...], limit: int) -> list[SearchCandidate]:
         encoded = "[" + ",".join(str(value) for value in vector) + "]"
@@ -247,3 +514,97 @@ class VisualSearchRepository:
                             result.usage.text_tokens, latency_ms, success, error_code,
                         ),
                     )
+
+    async def coverage_stats(self) -> CoverageStats:
+        async with await self._connect() as connection:
+            async with connection.cursor() as cursor:
+                await cursor.execute(
+                    """
+                    select
+                        count(pi.id) as total_active,
+                        count(e.image_id) filter (where e.status = 'READY') as ready,
+                        count(e.image_id) filter (where e.status = 'PENDING') as pending,
+                        count(e.image_id) filter (where e.status = 'PROCESSING') as processing,
+                        count(e.image_id) filter (where e.status = 'FAILED') as failed,
+                        count(pi.id) filter (where e.image_id is null) as missing
+                    from product_images pi
+                    join products p on p.id = pi.product_id
+                    left join visual_search.image_embeddings e
+                      on e.image_id = pi.id
+                     and e.model_version_id = (
+                           select id from visual_search.model_versions where status = 'ACTIVE' limit 1
+                       )
+                    where p.status = 'ACTIVE'
+                    """
+                )
+                row = await cursor.fetchone()
+                if row is None:
+                    return CoverageStats(0, 0, 0, 0, 0, 0, 0.0)
+                total, ready, pending, processing, failed, missing = (
+                    int(row[0]), int(row[1]), int(row[2]), int(row[3]), int(row[4]), int(row[5])
+                )
+                pct = round(ready / total * 100, 2) if total > 0 else 0.0
+                return CoverageStats(total, ready, pending, processing, failed, missing, pct)
+
+    async def usage_stats(self, days: int = 30) -> list[UsageDayStat]:
+        async with await self._connect() as connection:
+            async with connection.cursor() as cursor:
+                await cursor.execute(
+                    """
+                    select
+                        occurred_at::date as day,
+                        operation,
+                        count(*) as requests,
+                        coalesce(sum(image_pixels), 0) as image_pixels,
+                        coalesce(sum(text_tokens), 0) as text_tokens,
+                        coalesce(sum(estimated_cost_usd), 0) as estimated_cost_usd,
+                        count(*) filter (where success) as success_count,
+                        count(*) filter (where not success) as failure_count
+                    from visual_search.usage_events
+                    where occurred_at >= now() - (%s || ' days')::interval
+                    group by day, operation
+                    order by day desc, operation
+                    """,
+                    (days,),
+                )
+                return [
+                    UsageDayStat(
+                        day=row[0],
+                        operation=row[1],
+                        requests=int(row[2]),
+                        image_pixels=int(row[3]),
+                        text_tokens=int(row[4]),
+                        estimated_cost_usd=float(row[5]),
+                        success_count=int(row[6]),
+                        failure_count=int(row[7]),
+                    )
+                    for row in await cursor.fetchall()
+                ]
+
+    async def recent_jobs(self, limit: int = 10) -> list[RecentJob]:
+        async with await self._connect() as connection:
+            async with connection.cursor() as cursor:
+                await cursor.execute(
+                    """
+                    select id, job_type, status, total_count, completed_count,
+                           failed_count, pending_count, created_at, completed_at
+                    from visual_search.indexing_jobs
+                    order by created_at desc
+                    limit %s
+                    """,
+                    (limit,),
+                )
+                return [
+                    RecentJob(
+                        id=row[0],
+                        job_type=row[1],
+                        status=row[2],
+                        total_count=int(row[3]),
+                        completed_count=int(row[4]),
+                        failed_count=int(row[5]),
+                        pending_count=int(row[6]),
+                        created_at=row[7],
+                        completed_at=row[8],
+                    )
+                    for row in await cursor.fetchall()
+                ]

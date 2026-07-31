@@ -138,7 +138,7 @@ Nếu repository chưa có outbox tổng quát, tạo bảng có event ID, type,
 - Với Shopify CDN, dùng URL HTTPS đã validate, tải về rồi normalize/resize trong Python; không nối transformation Cloudinary.
 - Chỉ chấp nhận HTTPS và hostname/path đúng allowlist cấu hình. Chống DNS rebinding/private IP nếu HTTP client tự resolve host.
 - Giới hạn redirect, timeout, content length, decoded pixel và MIME.
-- Giới hạn input catalog/query mặc định 5 MB và 12 triệu decoded pixels.
+- Giới hạn input catalog/query mặc định 5 MB và 16 triệu decoded pixels; ngưỡng này bao phủ ảnh catalog đã audit tới 4000 x 4000, sau đó resize tối đa 1024 x 1024 trước khi gửi model.
 - Tính SHA-256 trên normalized bytes. Nếu hash và model version không đổi thì không gọi provider.
 - Gửi bytes/base64 đã normalize cho provider thay vì để provider tự tải URL catalog.
 - Ảnh public không yêu cầu Cloudinary API secret ở visual service; chỉ thêm secret nếu một yêu cầu cụ thể bắt buộc.
@@ -346,11 +346,16 @@ VISUAL_EMBEDDING_DIMS=1024
 VOYAGE_API_KEY=
 DATABASE_URL=
 RABBITMQ_URL=amqp://visual_search:change-me@rabbitmq:5672/
+RECONCILIATION_ENABLED=true
+RECONCILIATION_INTERVAL_SECONDS=3600
+RECONCILIATION_INITIAL_DELAY_SECONDS=60
+RECONCILIATION_PROCESSING_TIMEOUT_MINUTES=15
+RECONCILIATION_BATCH_SIZE=100
 INTERNAL_SERVICE_TOKEN=
 CLOUDINARY_CLOUD_NAME=
 CATALOG_IMAGE_ALLOWED_HOSTS=res.cloudinary.com,cdn.shopify.com
 MAX_UPLOAD_BYTES=5242880
-MAX_IMAGE_PIXELS=12000000
+MAX_IMAGE_PIXELS=16000000
 TARGET_IMAGE_MAX_WIDTH=1024
 TARGET_IMAGE_MAX_HEIGHT=1024
 SEARCH_RATE_LIMIT_PER_MINUTE=10
@@ -478,7 +483,7 @@ Sau mỗi phase, chạy test phù hợp và báo rõ file thay đổi, test đã
 - [x] Phase 4 - RabbitMQ consumer + retry/DLQ (manual ACK sau commit hoặc sau khi publish retry/DLQ thành công; persistent republish, retry header phân tầng, idempotency theo event/hash, ACTIVE/deleted/inactive handling và exhausted FAILED state; verified 2026-07-30 bằng 55 Python tests với broker integration)
 - [x] Phase 5 - Spring outbox + publisher (catalog image create/delete and real ACTIVE transitions write contract-v1 events in the same DB transaction; scheduled publisher uses persistent messages, mandatory routing, correlated confirms, `FOR UPDATE SKIP LOCKED`, claim lease and bounded exponential retry; compiled and focused unit tests verified 2026-07-31)
 - [x] Phase 6 - Search API (FastAPI internal multipart endpoint validates/normalizes query images, creates query embeddings, runs exact pgvector cosine search grouped by product and records usage; Spring public endpoint applies a separate IP rate limit, calls with an internal token, re-filters ACTIVE products, enriches current commerce data and supports category/gender/price filters; verified 2026-07-31 with 59 Python tests and Spring compilation/focused unit tests)
-- [ ] Phase 7 - Backfill/reconciliation
+- [x] Phase 7 - Backfill/reconciliation (verified 2026-08-01: migrations V34/V35 applied; catalog limit raised to 16 MP for audited 3506-4000 px source images while normalized output remains 1024 px; transient failures release PROCESSING claims to PENDING and reconciliation includes PENDING; the worker runs reconciliation automatically every hour with a PostgreSQL advisory lock/recent-job guard and skips permanent failures; admin API `/internal/v1/admin/coverage|usage|jobs|retry-failed` uses internal token auth; Supabase coverage is 576/576 READY with 0 PENDING/PROCESSING/FAILED/MISSING; final recovery jobs completed 9/9, 22/22 and 6/6)
 - [ ] Phase 8 - Storefront
 - [ ] Phase 9 - Admin/observability
 - [ ] Phase 10 - Benchmark, hardening và rollout docs
