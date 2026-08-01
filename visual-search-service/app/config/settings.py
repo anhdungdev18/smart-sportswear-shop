@@ -44,6 +44,7 @@ class Settings(BaseSettings):
     catalog_download_max_redirects: int = Field(default=3, ge=0, le=5)
     search_rate_limit_per_minute: int = Field(default=10, gt=0)
     monthly_budget_usd: float = Field(default=20, ge=0)
+    image_cost_per_megapixel_usd: float = Field(default=0.0006, ge=0)
     store_query_images: bool = False
 
     @model_validator(mode="after")

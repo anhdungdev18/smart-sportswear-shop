@@ -65,6 +65,9 @@ class FakeRepository:
             raise RepositoryUnavailableError("down")
         return OperationsStats(self._model, 3, 1, 2)
 
+    async def current_month_cost(self) -> float:
+        return 5.0
+
     async def coverage_stats(self) -> CoverageStats:
         if self._raise_unavailable:
             raise RepositoryUnavailableError("down")
@@ -159,6 +162,10 @@ def test_operations_returns_model_and_outbox_counts():
         "main_queue_messages": 4,
         "retry_queue_messages": 3,
         "dlq_messages": 2,
+        "monthly_cost_usd": 5.0,
+        "monthly_budget_usd": 20.0,
+        "budget_usage_pct": 25.0,
+        "budget_exhausted": False,
     }
 
 

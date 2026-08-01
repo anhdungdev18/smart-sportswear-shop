@@ -47,6 +47,7 @@ public class SecurityConfig {
     private static final String[] PUBLIC_ANY_METHOD_ENDPOINTS = {
             "/api/v1/cart/**",
             "/api/v1/products/search-by-image",
+            "/api/v1/visual-search/status",
             "/api/v1/recommendations/logs",
             "/api/v1/payments/callback",
             "/v3/api-docs/**",

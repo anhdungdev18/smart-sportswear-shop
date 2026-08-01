@@ -105,11 +105,28 @@ class OperationsStats:
     outbox_failed: int
 
 
+@dataclass(frozen=True, slots=True)
+class ModelVersionStats:
+    id: UUID
+    provider: str
+    model: str
+    dimensions: int
+    status: str
+    target_image_count: int
+    ready_image_count: int
+    failed_image_count: int
+    activated_at: datetime | None
+
+
 class VisualSearchRepository:
     RECONCILIATION_ADVISORY_LOCK_ID = 7_410_057_007
 
     def __init__(self, settings: Settings):
         self.database_url = settings.database_url
+        self.image_cost_per_megapixel_usd = settings.image_cost_per_megapixel_usd
+
+    def _estimated_cost(self, image_pixels: int) -> float:
+        return max(0, image_pixels) / 1_000_000 * self.image_cost_per_megapixel_usd
 
     async def _connect(self) -> psycopg.AsyncConnection[Any]:
         try:
@@ -129,6 +146,70 @@ class VisualSearchRepository:
     async def active_model(self) -> ModelVersion | None:
         async with await self._connect() as connection:
             return await self.active_model_on(connection)
+
+    async def current_month_cost(self) -> float:
+        async with await self._connect() as connection:
+            async with connection.cursor() as cursor:
+                await cursor.execute(
+                    """select coalesce(sum(estimated_cost_usd), 0)
+                       from visual_search.usage_events
+                       where occurred_at >= date_trunc('month', now())"""
+                )
+                return float((await cursor.fetchone())[0])
+
+    async def model_versions(self) -> list[ModelVersionStats]:
+        async with await self._connect() as connection:
+            async with connection.cursor() as cursor:
+                await cursor.execute(
+                    """
+                    select m.id, m.provider, m.model, m.dimensions, m.status,
+                           (select count(*) from product_images pi join products p on p.id=pi.product_id
+                            where p.status='ACTIVE')::int,
+                           (select count(*) from visual_search.image_embeddings e
+                            join products p on p.id=e.product_id
+                            where e.model_version_id=m.id and e.status='READY' and p.status='ACTIVE')::int,
+                           (select count(*) from visual_search.image_embeddings e
+                            join products p on p.id=e.product_id
+                            where e.model_version_id=m.id and e.status='FAILED' and p.status='ACTIVE')::int,
+                           m.activated_at
+                    from visual_search.model_versions m order by m.created_at desc
+                    """
+                )
+                return [ModelVersionStats(*row) for row in await cursor.fetchall()]
+
+    async def activate_model_version(self, model_id: UUID) -> ModelVersionStats:
+        async with await self._connect() as connection:
+            async with connection.transaction():
+                async with connection.cursor() as cursor:
+                    await cursor.execute(
+                        "select status from visual_search.model_versions where id=%s for update", (model_id,)
+                    )
+                    row = await cursor.fetchone()
+                    if row is None:
+                        raise ValueError("Model version not found")
+                    await cursor.execute(
+                        """select count(*)::int,
+                                  count(*) filter(where e.status='READY')::int
+                           from product_images pi join products p on p.id=pi.product_id
+                           left join visual_search.image_embeddings e
+                             on e.image_id=pi.id and e.model_version_id=%s
+                           where p.status='ACTIVE'""", (model_id,)
+                    )
+                    total, ready = await cursor.fetchone()
+                    if total == 0 or ready / total < 0.98:
+                        raise ValueError(f"Model coverage {ready}/{total} is below the 98% activation gate")
+                    await cursor.execute(
+                        "update visual_search.model_versions set status='INACTIVE', updated_at=now() where status='ACTIVE' and id<>%s",
+                        (model_id,),
+                    )
+                    await cursor.execute(
+                        """update visual_search.model_versions
+                           set status='ACTIVE', target_image_count=%s, ready_image_count=%s,
+                               activated_at=now(), updated_at=now() where id=%s""",
+                        (total, ready, model_id),
+                    )
+        versions = await self.model_versions()
+        return next(version for version in versions if version.id == model_id)
 
     @staticmethod
     async def active_model_on(connection: psycopg.AsyncConnection[Any]) -> ModelVersion | None:
@@ -216,10 +297,12 @@ class VisualSearchRepository:
                     await cursor.execute(
                         """
                         insert into visual_search.usage_events
-                            (id, provider, model, operation, image_pixels, text_tokens, latency_ms, success)
-                        values (%s, %s, %s, 'DOCUMENT_EMBEDDING', %s, %s, %s, true)
+                            (id, provider, model, operation, image_pixels, text_tokens,
+                             estimated_cost_usd, latency_ms, success)
+                        values (%s, %s, %s, 'DOCUMENT_EMBEDDING', %s, %s, %s, %s, true)
                         """,
-                        (uuid4(), model.provider, model.model, result.usage.image_pixels, result.usage.text_tokens, latency_ms),
+                        (uuid4(), model.provider, model.model, result.usage.image_pixels,
+                         result.usage.text_tokens, self._estimated_cost(result.usage.image_pixels), latency_ms),
                     )
                     if event_id is not None and event_type is not None and event_version is not None:
                         await self._insert_processed(cursor, event_id, event_type, event_version)
@@ -542,9 +625,8 @@ class VisualSearchRepository:
             async with connection.transaction():
                 await self.record_query_usage_on(connection, model, result, latency_ms, success, error_code)
 
-    @staticmethod
     async def record_query_usage_on(
-        connection: psycopg.AsyncConnection[Any], model: ModelVersion, result: EmbeddingResult,
+        self, connection: psycopg.AsyncConnection[Any], model: ModelVersion, result: EmbeddingResult,
         latency_ms: int, success: bool = True, error_code: str | None = None,
     ) -> None:
         async with connection.cursor() as cursor:
@@ -552,12 +634,13 @@ class VisualSearchRepository:
                         """
                         insert into visual_search.usage_events
                             (id, provider, model, operation, image_pixels, text_tokens,
-                             latency_ms, success, error_code)
-                        values (%s, %s, %s, 'QUERY_EMBEDDING', %s, %s, %s, %s, %s)
+                             estimated_cost_usd, latency_ms, success, error_code)
+                        values (%s, %s, %s, 'QUERY_EMBEDDING', %s, %s, %s, %s, %s, %s)
                         """,
                         (
                             uuid4(), model.provider, model.model, result.usage.image_pixels,
-                            result.usage.text_tokens, latency_ms, success, error_code,
+                            result.usage.text_tokens, self._estimated_cost(result.usage.image_pixels),
+                            latency_ms, success, error_code,
                         ),
             )
 

@@ -3,6 +3,7 @@ package com.dunghaiquyen.ecommerce.visualsearch.api;
 import com.dunghaiquyen.ecommerce.common.response.ApiResponse;
 import org.springframework.security.access.prepost.PreAuthorize;
 import jakarta.validation.Valid;
+import java.util.UUID;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -62,5 +63,15 @@ public class AdminVisualSearchController {
             @Valid @RequestBody VisualSearchReindexRequest request) {
         return ApiResponse.ok("Reindex job queued", client.postAdmin(
                 "/internal/v1/admin/reindex", request, VisualSearchRetryResponse.class));
+    }
+
+    @GetMapping("/models")
+    public ApiResponse<VisualSearchModelResponse.ListResponse> models() {
+        return ApiResponse.ok(client.getAdmin("/internal/v1/admin/models", VisualSearchModelResponse.ListResponse.class));
+    }
+
+    @PostMapping("/models/{modelId}/activate")
+    public ApiResponse<VisualSearchModelResponse> activateModel(@org.springframework.web.bind.annotation.PathVariable UUID modelId) {
+        return ApiResponse.ok(client.postAdmin("/internal/v1/admin/models/" + modelId + "/activate", VisualSearchModelResponse.class));
     }
 }

@@ -54,6 +54,7 @@ def test_search_normalizes_embeds_and_returns_candidates() -> None:
     try:
         with (
             patch("app.api.search.build_provider", return_value=provider),
+            patch("app.api.search.VisualSearchRepository.current_month_cost", new=AsyncMock(return_value=0)),
             patch("app.api.search.VisualSearchRepository._connect", new=AsyncMock(return_value=connection)),
             patch("app.api.search.VisualSearchRepository.active_model_on", new=AsyncMock(return_value=model)),
             patch("app.api.search.VisualSearchRepository.search_on", new=AsyncMock(return_value=[candidate])),
@@ -95,6 +96,7 @@ def test_search_returns_controlled_error_when_provider_is_unavailable() -> None:
     try:
         with (
             patch("app.api.search.build_provider", return_value=provider),
+            patch("app.api.search.VisualSearchRepository.current_month_cost", new=AsyncMock(return_value=0)),
             patch("app.api.search.VisualSearchRepository._connect", new=AsyncMock(return_value=connection)),
             patch("app.api.search.VisualSearchRepository.active_model_on", new=AsyncMock(return_value=model)),
         ):
@@ -108,3 +110,16 @@ def test_search_returns_controlled_error_when_provider_is_unavailable() -> None:
     assert response.status_code == 503
     assert response.json()["detail"] == "Visual embedding provider is unavailable"
     assert "upstream detail" not in response.text
+
+
+def test_search_stops_when_monthly_budget_is_exhausted() -> None:
+    app.dependency_overrides[get_settings] = enabled_settings
+    try:
+        with patch("app.api.search.VisualSearchRepository.current_month_cost", new=AsyncMock(return_value=20)):
+            response = TestClient(app).post(
+                "/internal/v1/search", headers={"X-Internal-Service-Token": "secret"},
+                files={"image": ("query.png", png_bytes(), "image/png")},
+            )
+    finally:
+        app.dependency_overrides.clear()
+    assert response.status_code == 429

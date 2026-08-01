@@ -1,16 +1,21 @@
 import { browserApiRequest } from "@/modules/api/browser-client";
-import type { VisualSearchCoverage, VisualSearchJobs, VisualSearchOperations, VisualSearchRetry, VisualSearchUsage } from "./types";
+import type { VisualSearchCoverage, VisualSearchJobs, VisualSearchModels, VisualSearchOperations, VisualSearchRetry, VisualSearchUsage } from "./types";
 
 const base = "/api/v1/admin/visual-search";
 
 export async function getVisualSearchDashboard() {
-  const [coverage, operations, usage, jobs] = await Promise.all([
+  const [coverage, operations, usage, jobs, models] = await Promise.all([
     browserApiRequest<VisualSearchCoverage>(`${base}/coverage`),
     browserApiRequest<VisualSearchOperations>(`${base}/operations`),
     browserApiRequest<VisualSearchUsage>(`${base}/usage`, { query: { days: 30 } }),
     browserApiRequest<VisualSearchJobs>(`${base}/jobs`, { query: { limit: 10 } }),
+    browserApiRequest<VisualSearchModels>(`${base}/models`),
   ]);
-  return { coverage, operations, usage, jobs };
+  return { coverage, operations, usage, jobs, models };
+}
+
+export function activateVisualSearchModel(modelId: string) {
+  return browserApiRequest(`${base}/models/${modelId}/activate`, { method: "POST" });
 }
 
 export function retryFailedEmbeddings() {

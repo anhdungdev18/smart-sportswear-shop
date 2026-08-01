@@ -61,6 +61,16 @@ public class VisualSearchClient {
         }
     }
 
+    public boolean isReady() {
+        if (!properties.enabled()) return false;
+        try {
+            restClient.get().uri("/health/ready").retrieve().toBodilessEntity();
+            return true;
+        } catch (RestClientException ex) {
+            return false;
+        }
+    }
+
     public <T> T getAdmin(String path, Class<T> responseType) {
         return executeAdmin(path, responseType, null, false);
     }

@@ -126,9 +126,15 @@ Available internal endpoints:
 - `GET /internal/v1/admin/coverage`, `/usage` and `/jobs`.
 - `POST /internal/v1/admin/retry-failed` and `/backfill-missing`.
 - `POST /internal/v1/admin/reindex` with exactly one `image_id` or `product_id`.
+- `GET /internal/v1/admin/models` and `POST /models/{id}/activate` provide
+  transaction-safe model activation/rollback with a minimum 98% READY gate.
 
 All maintenance actions create indexing jobs and transactional outbox events;
 they never call the embedding provider from the HTTP request.
+
+Usage cost is estimated using `IMAGE_COST_PER_MEGAPIXEL_USD` (default
+`0.0006`). Operations exposes monthly cost/budget, and query embedding stops
+with HTTP 429 when `MONTHLY_BUDGET_USD` reaches 100%.
 
 ## Phase 10 benchmark and rollout
 

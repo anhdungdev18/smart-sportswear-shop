@@ -53,6 +53,12 @@ async def search_by_image(
 
     repository = VisualSearchRepository(settings)
     try:
+        monthly_cost = await repository.current_month_cost()
+        if settings.monthly_budget_usd == 0 or monthly_cost >= settings.monthly_budget_usd:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Visual search monthly AI budget is exhausted",
+            )
         async with await repository._connect() as connection:
             model = await repository.active_model_on(connection)
             if model is None:

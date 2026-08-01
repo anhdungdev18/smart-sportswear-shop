@@ -12,5 +12,9 @@ public record VisualSearchOperationsResponse(
         @JsonAlias("rabbitmq_available") boolean rabbitmqAvailable,
         @JsonAlias("main_queue_messages") Integer mainQueueMessages,
         @JsonAlias("retry_queue_messages") Integer retryQueueMessages,
-        @JsonAlias("dlq_messages") Integer dlqMessages) {
+        @JsonAlias("dlq_messages") Integer dlqMessages,
+        @JsonAlias("monthly_cost_usd") double monthlyCostUsd,
+        @JsonAlias("monthly_budget_usd") double monthlyBudgetUsd,
+        @JsonAlias("budget_usage_pct") double budgetUsagePct,
+        @JsonAlias("budget_exhausted") boolean budgetExhausted) {
 }
