@@ -79,6 +79,13 @@ spring:
           auth: ${MAIL_SMTP_AUTH:false}
           starttls:
             enable: ${MAIL_SMTP_STARTTLS_ENABLE:false}
+  rabbitmq:
+    addresses: ${RABBITMQ_ADDRESSES:localhost:5672}
+    username: ${RABBITMQ_USERNAME:visual_search}
+    password: ${RABBITMQ_PASSWORD:change-me}
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    connection-timeout: 3s
 
 server:
   port: ${SERVER_PORT:8080}
@@ -100,6 +107,17 @@ management:
       enabled: true
 
 app:
+  visual-search:
+    enabled: ${VISUAL_SEARCH_ENABLED:false}
+    service-url: ${VISUAL_SEARCH_SERVICE_URL:http://localhost:8091}
+    internal-token: ${VISUAL_SEARCH_INTERNAL_TOKEN:}
+    request-timeout-seconds: ${VISUAL_SEARCH_REQUEST_TIMEOUT_SECONDS:5}
+    rate-limit-per-minute: ${VISUAL_SEARCH_RATE_LIMIT_PER_MINUTE:10}
+    outbox:
+      poll-delay-ms: ${VISUAL_SEARCH_OUTBOX_POLL_DELAY_MS:1000}
+      batch-size: ${VISUAL_SEARCH_OUTBOX_BATCH_SIZE:25}
+      confirm-timeout-seconds: ${VISUAL_SEARCH_OUTBOX_CONFIRM_TIMEOUT_SECONDS:5}
+      max-attempts: ${VISUAL_SEARCH_OUTBOX_MAX_ATTEMPTS:10}
   ai:
     sync-secret: ${AI_SYNC_SECRET:dev-only-ai-sync-secret-change-me}
   cors:

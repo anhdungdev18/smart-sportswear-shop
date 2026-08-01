@@ -1,0 +1,127 @@
+{
+  "users": [
+    {
+      "name": "visual_search",
+      "password_hash": "lw6DpHxWUGQowdz1/nnoJdnvh1/9AW6oRsh3p+W4EgcbYFzp",
+      "hashing_algorithm": "rabbit_password_hashing_sha256",
+      "tags": "management"
+    }
+  ],
+  "vhosts": [
+    { "name": "/" }
+  ],
+  "permissions": [
+    {
+      "user": "visual_search",
+      "vhost": "/",
+      "configure": ".*",
+      "write": ".*",
+      "read": ".*"
+    }
+  ],
+  "exchanges": [
+    {
+      "name": "catalog.events",
+      "vhost": "/",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    }
+  ],
+  "queues": [
+    {
+      "name": "visual-search.indexing",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "",
+        "x-dead-letter-routing-key": "visual-search.indexing.dlq"
+      }
+    },
+    {
+      "name": "visual-search.indexing.retry.30s",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 30000,
+        "x-dead-letter-exchange": "",
+        "x-dead-letter-routing-key": "visual-search.indexing"
+      }
+    },
+    {
+      "name": "visual-search.indexing.retry.5m",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 300000,
+        "x-dead-letter-exchange": "",
+        "x-dead-letter-routing-key": "visual-search.indexing"
+      }
+    },
+    {
+      "name": "visual-search.indexing.retry.1h",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-message-ttl": 3600000,
+        "x-dead-letter-exchange": "",
+        "x-dead-letter-routing-key": "visual-search.indexing"
+      }
+    },
+    {
+      "name": "visual-search.indexing.dlq",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    }
+  ],
+  "bindings": [
+    {
+      "source": "catalog.events",
+      "vhost": "/",
+      "destination": "visual-search.indexing",
+      "destination_type": "queue",
+      "routing_key": "product.image.created",
+      "arguments": {}
+    },
+    {
+      "source": "catalog.events",
+      "vhost": "/",
+      "destination": "visual-search.indexing",
+      "destination_type": "queue",
+      "routing_key": "product.image.deleted",
+      "arguments": {}
+    },
+    {
+      "source": "catalog.events",
+      "vhost": "/",
+      "destination": "visual-search.indexing",
+      "destination_type": "queue",
+      "routing_key": "product.activated",
+      "arguments": {}
+    },
+    {
+      "source": "catalog.events",
+      "vhost": "/",
+      "destination": "visual-search.indexing",
+      "destination_type": "queue",
+      "routing_key": "product.deactivated",
+      "arguments": {}
+    },
+    {
+      "source": "catalog.events",
+      "vhost": "/",
+      "destination": "visual-search.indexing",
+      "destination_type": "queue",
+      "routing_key": "product.reindex.requested",
+      "arguments": {}
+    }
+  ]
+}

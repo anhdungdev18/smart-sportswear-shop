@@ -1,0 +1,150 @@
+{
+  "generatedAt": "2026-07-30T08:15:52.200380+00:00",
+  "model": "voyage-multimodal-3.5",
+  "dimensions": 1024,
+  "groundTruth": {
+    "kind": "alternate-catalog-view-of-same-product",
+    "purpose": "Phase-0 feasibility only; not the final out-of-catalog acceptance benchmark",
+    "sampleCount": 4,
+    "sourceCounts": {
+      "cloudinary": 2,
+      "shopify": 2
+    },
+    "categoryCounts": {
+      "giay-da-bong-fg": 2,
+      "ao-chay-bo": 2
+    }
+  },
+  "catalogAudit": {
+    "totalProducts": 228,
+    "activeProducts": 107,
+    "inactiveProducts": 121,
+    "totalImages": 676,
+    "activeImages": 576,
+    "inactiveImages": 100,
+    "activeShopifyImages": 442,
+    "activeCloudinaryImages": 134,
+    "missingPublicId": 142,
+    "relativeOrNonHttpsImages": 100,
+    "activeProductsWithImages": 102,
+    "activeProductsWithoutImages": 5
+  },
+  "pipeline": {
+    "successfulPairs": 4,
+    "failedCandidates": 1,
+    "failures": [
+      {
+        "productId": "04ae4c5f-d30b-46fa-b959-c6dd695a75a8",
+        "source": "shopify",
+        "reason": "Image exceeds the decoded pixel limit"
+      }
+    ],
+    "items": [
+      {
+        "productId": "26dec191-01f5-4886-a64d-b2807079db58",
+        "source": "cloudinary",
+        "documentNormalizedSize": [
+          1024,
+          1024
+        ],
+        "queryNormalizedSize": [
+          1024,
+          1024
+        ],
+        "documentBytes": 57159,
+        "queryBytes": 65702
+      },
+      {
+        "productId": "3ce96ab3-649a-415f-9a09-d30572cf454e",
+        "source": "cloudinary",
+        "documentNormalizedSize": [
+          1024,
+          1024
+        ],
+        "queryNormalizedSize": [
+          1024,
+          1024
+        ],
+        "documentBytes": 61304,
+        "queryBytes": 39136
+      },
+      {
+        "productId": "067ff97f-f0fc-449d-b39b-f9bffec54bbf",
+        "source": "shopify",
+        "documentNormalizedSize": [
+          1024,
+          1024
+        ],
+        "queryNormalizedSize": [
+          1024,
+          1024
+        ],
+        "documentBytes": 30759,
+        "queryBytes": 142197
+      },
+      {
+        "productId": "08a5f39e-b5a3-4cb4-a248-1ec5497baf58",
+        "source": "shopify",
+        "documentNormalizedSize": [
+          773,
+          1024
+        ],
+        "queryNormalizedSize": [
+          773,
+          1024
+        ],
+        "documentBytes": 73254,
+        "queryBytes": 79407
+      }
+    ]
+  },
+  "voyage": {
+    "documentBatchLatencyMs": 3623.88,
+    "queryBatchLatencyMs": 3653.32
+  },
+  "metrics": {
+    "queryCount": 4,
+    "recallAt1": 1.0,
+    "recallAt5": 1.0,
+    "categoryAccuracy": 1.0,
+    "meanReciprocalRank": 1.0,
+    "results": [
+      {
+        "productId": "26dec191-01f5-4886-a64d-b2807079db58",
+        "source": "cloudinary",
+        "category": "giay-da-bong-fg",
+        "expectedRank": 1,
+        "topProductId": "26dec191-01f5-4886-a64d-b2807079db58",
+        "topSimilarity": 0.696395
+      },
+      {
+        "productId": "3ce96ab3-649a-415f-9a09-d30572cf454e",
+        "source": "cloudinary",
+        "category": "giay-da-bong-fg",
+        "expectedRank": 1,
+        "topProductId": "3ce96ab3-649a-415f-9a09-d30572cf454e",
+        "topSimilarity": 0.81247
+      },
+      {
+        "productId": "067ff97f-f0fc-449d-b39b-f9bffec54bbf",
+        "source": "shopify",
+        "category": "ao-chay-bo",
+        "expectedRank": 1,
+        "topProductId": "067ff97f-f0fc-449d-b39b-f9bffec54bbf",
+        "topSimilarity": 0.672831
+      },
+      {
+        "productId": "08a5f39e-b5a3-4cb4-a248-1ec5497baf58",
+        "source": "shopify",
+        "category": "ao-chay-bo",
+        "expectedRank": 1,
+        "topProductId": "08a5f39e-b5a3-4cb4-a248-1ec5497baf58",
+        "topSimilarity": 0.839364
+      }
+    ]
+  },
+  "preliminaryGate": {
+    "recallAt5Target": 0.8,
+    "passed": true
+  }
+}

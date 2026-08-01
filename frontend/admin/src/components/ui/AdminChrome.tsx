@@ -51,6 +51,7 @@ const navGroups: NavGroup[] = [
       { label: "Đơn hàng", href: "/orders", icon: Receipt },
       { label: "Tồn kho", href: "/inventory", icon: Package },
       { label: "AI Insights", href: "/inventory/ai-insights", icon: Brain },
+      { label: "Visual Search", href: "/visual-search", icon: ImageSquare },
       { label: "Khách hàng", href: "/customers", icon: Users },
       { label: "Báo cáo", href: "/reports", icon: ChartLineUp },
       { label: "Admin Copilot", href: "/admin-copilot", icon: Robot },
@@ -84,6 +85,7 @@ const navGroups: NavGroup[] = [
 function getPageMeta(pathname: string) {
   const metaByPrefix = [
     { prefix: "/orders", title: "Đơn hàng", subtitle: "Theo dõi xử lý đơn, giao vận và tiến độ chăm sóc khách hàng." },
+    { prefix: "/visual-search", title: "Visual Search", subtitle: "Theo dõi coverage embedding, usage AI và hàng đợi đồng bộ ảnh." },
     { prefix: "/inventory", title: "Tồn kho", subtitle: "Kiểm soát nhập xuất, điều chỉnh và cảnh báo SKU tồn thấp." },
     { prefix: "/products", title: "Sản phẩm", subtitle: "Quản lý thông tin sản phẩm, biến thể, ảnh và bộ sưu tập." },
     { prefix: "/categories", title: "Danh mục", subtitle: "Sắp xếp hệ thống danh mục để storefront và tìm kiếm rõ ràng hơn." },
