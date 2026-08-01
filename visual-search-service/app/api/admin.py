@@ -4,27 +4,61 @@ All endpoints require the X-Internal-Service-Token header; never expose to
 public internet in production.
 """
 import hmac
+from dataclasses import dataclass
 from datetime import date
 from uuid import UUID
 
+import aio_pika
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
 from pydantic import BaseModel
 
 from app.config import Settings, get_settings
 from app.persistence.repository import (
     CoverageStats,
+    OperationsStats,
     RecentJob,
     RepositoryUnavailableError,
     UsageDayStat,
     VisualSearchRepository,
 )
-from app.services.indexing_jobs import IndexingJobService
+from app.services.indexing_jobs import IndexingJobService, ReconciliationReport
 
 router = APIRouter(prefix="/internal/v1/admin", tags=["admin"])
 
 
 def get_repository(settings: Settings = Depends(get_settings)) -> VisualSearchRepository:
     return VisualSearchRepository(settings)
+
+
+@dataclass(frozen=True, slots=True)
+class QueueStats:
+    available: bool
+    main: int | None = None
+    retry: int | None = None
+    dlq: int | None = None
+
+
+async def get_queue_stats(settings: Settings = Depends(get_settings)) -> QueueStats:
+    connection = None
+    try:
+        connection = await aio_pika.connect_robust(
+            settings.rabbitmq_url, timeout=settings.readiness_timeout_seconds
+        )
+        channel = await connection.channel()
+        main = await channel.declare_queue(settings.rabbitmq_consumer_queue, passive=True)
+        retries = [await channel.declare_queue(name, passive=True) for name in settings.retry_queues]
+        dlq = await channel.declare_queue(settings.rabbitmq_dlq, passive=True)
+        return QueueStats(
+            True,
+            main.declaration_result.message_count,
+            sum(queue.declaration_result.message_count for queue in retries),
+            dlq.declaration_result.message_count,
+        )
+    except Exception:
+        return QueueStats(False)
+    finally:
+        if connection is not None:
+            await connection.close()
 
 
 # ---------------------------------------------------------------------------
@@ -94,9 +128,113 @@ class RetryFailedResponse(BaseModel):
     enqueued_count: int
 
 
+class OperationsResponse(BaseModel):
+    provider: str | None
+    model: str | None
+    dimensions: int | None
+    outbox_pending: int
+    outbox_publishing: int
+    outbox_failed: int
+    rabbitmq_available: bool
+    main_queue_messages: int | None
+    retry_queue_messages: int | None
+    dlq_messages: int | None
+
+
+class ReindexRequest(BaseModel):
+    image_id: UUID | None = None
+    product_id: UUID | None = None
+
+
+class EnqueueResponse(BaseModel):
+    job_id: str
+    enqueued_count: int
+
+
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
+
+
+@router.get(
+    "/operations",
+    response_model=OperationsResponse,
+    dependencies=[Depends(require_internal_token)],
+    summary="Active model and transactional outbox status",
+)
+async def get_operations(
+    settings: Settings = Depends(get_settings),
+    repo: VisualSearchRepository = Depends(get_repository),
+    queues: QueueStats = Depends(get_queue_stats),
+) -> OperationsResponse:
+    if not settings.visual_search_enabled:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Visual search is disabled")
+    try:
+        stats: OperationsStats = await repo.operations_stats()
+    except RepositoryUnavailableError as exc:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Database unavailable") from exc
+    return OperationsResponse(
+        provider=stats.model.provider if stats.model else None,
+        model=stats.model.model if stats.model else None,
+        dimensions=stats.model.dimensions if stats.model else None,
+        outbox_pending=stats.outbox_pending,
+        outbox_publishing=stats.outbox_publishing,
+        outbox_failed=stats.outbox_failed,
+        rabbitmq_available=queues.available,
+        main_queue_messages=queues.main,
+        retry_queue_messages=queues.retry,
+        dlq_messages=queues.dlq,
+    )
+
+
+@router.post(
+    "/backfill-missing",
+    response_model=EnqueueResponse,
+    dependencies=[Depends(require_internal_token)],
+    summary="Enqueue ACTIVE catalog images missing an embedding",
+)
+async def backfill_missing(
+    settings: Settings = Depends(get_settings),
+    repo: VisualSearchRepository = Depends(get_repository),
+) -> EnqueueResponse:
+    if not settings.visual_search_enabled:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Visual search is disabled")
+    try:
+        service = IndexingJobService(repo)
+        report = await service.inspect(include_failed=False)
+        candidates = tuple(item for item in report.candidates if item.reason == "MISSING")
+        filtered = ReconciliationReport(total=len(candidates), reasons={"MISSING": len(candidates)}, candidates=candidates)
+        job = await service.enqueue("BACKFILL", filtered)
+        return EnqueueResponse(job_id=str(job.id), enqueued_count=job.total_count)
+    except (RepositoryUnavailableError, RuntimeError) as exc:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc)) from exc
+
+
+@router.post(
+    "/reindex",
+    response_model=EnqueueResponse,
+    dependencies=[Depends(require_internal_token)],
+    summary="Reindex one image or all images of one ACTIVE product",
+)
+async def reindex(
+    request: ReindexRequest,
+    settings: Settings = Depends(get_settings),
+    repo: VisualSearchRepository = Depends(get_repository),
+) -> EnqueueResponse:
+    if not settings.visual_search_enabled:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Visual search is disabled")
+    if (request.image_id is None) == (request.product_id is None):
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Provide exactly one image_id or product_id")
+    try:
+        candidates = await repo.targeted_candidates(image_id=request.image_id, product_id=request.product_id)
+        if not candidates:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No ACTIVE catalog image matched")
+        service = IndexingJobService(repo)
+        report = ReconciliationReport(total=len(candidates), reasons={"REQUESTED": len(candidates)}, candidates=tuple(candidates))
+        job = await service.enqueue("IMAGE" if request.image_id else "PRODUCT", report)
+        return EnqueueResponse(job_id=str(job.id), enqueued_count=job.total_count)
+    except RepositoryUnavailableError as exc:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Database unavailable") from exc
 
 
 @router.get(

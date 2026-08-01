@@ -5,6 +5,7 @@ import { HeaderActionsLive } from "@/components/layout/HeaderActionsLive";
 import { SearchIcon } from "@/components/shared/icons";
 import { buildHeaderNavItems } from "@/modules/category/navigation";
 import { fetchCategoryTree } from "@/modules/category/queries";
+import { VisualSearchDialog } from "@/modules/visual-search/VisualSearchDialog";
 
 export async function Header() {
   const navigationItems = buildHeaderNavItems(await fetchCategoryTree());
@@ -37,6 +38,8 @@ export async function Header() {
             <button type="submit" className="flex items-center justify-center text-ivy-dark" aria-label="Tìm kiếm">
               <SearchIcon className="size-3.75" />
             </button>
+            <span className="h-5 w-px bg-ivy-hairline" aria-hidden="true" />
+            <VisualSearchDialog />
           </form>
           <div className="flex justify-end">
             <HeaderActionsLive />

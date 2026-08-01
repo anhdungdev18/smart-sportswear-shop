@@ -97,6 +97,14 @@ class RecentJob:
     completed_at: datetime | None
 
 
+@dataclass(frozen=True, slots=True)
+class OperationsStats:
+    model: ModelVersion | None
+    outbox_pending: int
+    outbox_publishing: int
+    outbox_failed: int
+
+
 class VisualSearchRepository:
     RECONCILIATION_ADVISORY_LOCK_ID = 7_410_057_007
 
@@ -360,6 +368,27 @@ class VisualSearchRepository:
                 )
                 return [ReconciliationCandidate(*row) for row in await cursor.fetchall()]
 
+    async def targeted_candidates(
+        self, *, image_id: UUID | None = None, product_id: UUID | None = None
+    ) -> list[ReconciliationCandidate]:
+        if (image_id is None) == (product_id is None):
+            raise ValueError("Exactly one of image_id or product_id is required")
+        async with await self._connect() as connection:
+            async with connection.cursor() as cursor:
+                await cursor.execute(
+                    """
+                    select pi.id, pi.product_id, 'REQUESTED'
+                    from product_images pi
+                    join products p on p.id = pi.product_id
+                    where p.status = 'ACTIVE'
+                      and (%s::uuid is null or pi.id = %s)
+                      and (%s::uuid is null or pi.product_id = %s)
+                    order by pi.created_at, pi.id
+                    """,
+                    (image_id, image_id, product_id, product_id),
+                )
+                return [ReconciliationCandidate(*row) for row in await cursor.fetchall()]
+
     @asynccontextmanager
     async def reconciliation_lock(self):
         connection = await self._connect()
@@ -608,3 +637,36 @@ class VisualSearchRepository:
                     )
                     for row in await cursor.fetchall()
                 ]
+
+    async def operations_stats(self) -> OperationsStats:
+        async with await self._connect() as connection:
+            async with connection.cursor() as cursor:
+                await cursor.execute(
+                    """
+                    select id, provider, model, dimensions
+                    from visual_search.model_versions
+                    where status = 'ACTIVE'
+                    limit 1
+                    """
+                )
+                model_row = await cursor.fetchone()
+                model = (
+                    ModelVersion(model_row[0], model_row[1], model_row[2], int(model_row[3]))
+                    if model_row else None
+                )
+                await cursor.execute(
+                    """
+                    select
+                        count(*) filter (where status = 'PENDING'),
+                        count(*) filter (where status = 'PUBLISHING'),
+                        count(*) filter (where status = 'FAILED')
+                    from integration_outbox
+                    """
+                )
+                row = await cursor.fetchone()
+                return OperationsStats(
+                    model=model,
+                    outbox_pending=int(row[0]) if row else 0,
+                    outbox_publishing=int(row[1]) if row else 0,
+                    outbox_failed=int(row[2]) if row else 0,
+                )

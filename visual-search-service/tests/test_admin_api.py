@@ -17,6 +17,7 @@ from app.persistence.repository import (
     CoverageStats,
     IndexingJob,
     ModelVersion,
+    OperationsStats,
     ReconciliationCandidate,
     RecentJob,
     RepositoryUnavailableError,
@@ -59,6 +60,11 @@ class FakeRepository:
         self._raise_unavailable = raise_unavailable
         self.created_job: tuple | None = None
 
+    async def operations_stats(self) -> OperationsStats:
+        if self._raise_unavailable:
+            raise RepositoryUnavailableError("down")
+        return OperationsStats(self._model, 3, 1, 2)
+
     async def coverage_stats(self) -> CoverageStats:
         if self._raise_unavailable:
             raise RepositoryUnavailableError("down")
@@ -80,6 +86,11 @@ class FakeRepository:
     async def reconciliation_candidates(self, model_id, timeout, include_failed):
         return self._candidates
 
+    async def targeted_candidates(self, *, image_id=None, product_id=None):
+        if image_id is not None:
+            return [ReconciliationCandidate(image_id, uuid4(), "REQUESTED")]
+        return self._candidates
+
     async def create_indexing_job(
         self, job_type: str, candidates: list, requested_by=None
     ) -> IndexingJob:
@@ -94,13 +105,14 @@ class FakeRepository:
 
 def _make_client(repo: FakeRepository) -> TestClient:
     """Create a TestClient with the fake repository injected via DI override."""
-    from app.api.admin import get_repository
+    from app.api.admin import QueueStats, get_queue_stats, get_repository
     from app.config import get_settings
 
     app = create_app()
 
     app.dependency_overrides[get_settings] = lambda: VALID_SETTINGS
     app.dependency_overrides[get_repository] = lambda: repo
+    app.dependency_overrides[get_queue_stats] = lambda: QueueStats(True, 4, 3, 2)
     return TestClient(app, raise_server_exceptions=True)
 
 
@@ -130,6 +142,56 @@ def test_coverage_returns_correct_fields():
         "missing": 96,
         "coverage_pct": 69.44,
     }
+
+
+def test_operations_returns_model_and_outbox_counts():
+    client = _make_client(FakeRepository())
+    resp = client.get("/internal/v1/admin/operations", headers=headers())
+    assert resp.status_code == 200
+    assert resp.json() == {
+        "provider": "voyage",
+        "model": "voyage-multimodal-3.5",
+        "dimensions": 1024,
+        "outbox_pending": 3,
+        "outbox_publishing": 1,
+        "outbox_failed": 2,
+        "rabbitmq_available": True,
+        "main_queue_messages": 4,
+        "retry_queue_messages": 3,
+        "dlq_messages": 2,
+    }
+
+
+def test_backfill_missing_only_enqueues_missing_candidates():
+    candidates = [
+        ReconciliationCandidate(uuid4(), uuid4(), "MISSING"),
+        ReconciliationCandidate(uuid4(), uuid4(), "PENDING"),
+    ]
+    repo = FakeRepository(candidates=candidates)
+    resp = _make_client(repo).post("/internal/v1/admin/backfill-missing", headers=headers())
+    assert resp.status_code == 200
+    assert resp.json()["enqueued_count"] == 1
+    assert repo.created_job[0] == "BACKFILL"
+
+
+def test_reindex_image_enqueues_image_job():
+    image_id = uuid4()
+    repo = FakeRepository()
+    resp = _make_client(repo).post(
+        "/internal/v1/admin/reindex", headers=headers(), json={"image_id": str(image_id)}
+    )
+    assert resp.status_code == 200
+    assert resp.json()["enqueued_count"] == 1
+    assert repo.created_job[0] == "IMAGE"
+
+
+def test_reindex_rejects_ambiguous_target():
+    resp = _make_client(FakeRepository()).post(
+        "/internal/v1/admin/reindex",
+        headers=headers(),
+        json={"image_id": str(uuid4()), "product_id": str(uuid4())},
+    )
+    assert resp.status_code == 422
 
 
 def test_coverage_unauthorized_without_token():

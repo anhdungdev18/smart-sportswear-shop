@@ -110,3 +110,22 @@ RECONCILIATION_INITIAL_DELAY_SECONDS=60
 RECONCILIATION_PROCESSING_TIMEOUT_MINUTES=15
 RECONCILIATION_BATCH_SIZE=100
 ```
+
+## Phase 9 admin observability
+
+The internal admin API is protected by `X-Internal-Service-Token` and is never
+called directly by browser code. Spring Boot exposes an ADMIN-only proxy under
+`/api/v1/admin/visual-search`; the admin application renders it at
+`/visual-search`.
+
+Available internal endpoints:
+
+- `GET /internal/v1/admin/operations`: active model, outbox status and
+  main/retry/DLQ queue depth. Database metrics remain available if RabbitMQ is
+  temporarily unreachable.
+- `GET /internal/v1/admin/coverage`, `/usage` and `/jobs`.
+- `POST /internal/v1/admin/retry-failed` and `/backfill-missing`.
+- `POST /internal/v1/admin/reindex` with exactly one `image_id` or `product_id`.
+
+All maintenance actions create indexing jobs and transactional outbox events;
+they never call the embedding provider from the HTTP request.

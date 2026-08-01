@@ -1,6 +1,9 @@
 package com.dunghaiquyen.ecommerce.visualsearch.api;
 
 import com.dunghaiquyen.ecommerce.common.exception.BusinessRuleException;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import java.time.Duration;
 import java.util.List;
 import org.springframework.core.io.ByteArrayResource;
@@ -54,6 +57,44 @@ public class VisualSearchClient {
                     ? HttpStatus.UNPROCESSABLE_ENTITY : HttpStatus.SERVICE_UNAVAILABLE;
             throw new BusinessRuleException(status, "Visual search request failed");
         } catch (RestClientException | java.io.IOException ex) {
+            throw new BusinessRuleException(HttpStatus.SERVICE_UNAVAILABLE, "Visual search is temporarily unavailable");
+        }
+    }
+
+    public <T> T getAdmin(String path, Class<T> responseType) {
+        return executeAdmin(path, responseType, null, false);
+    }
+
+    public <T> T postAdmin(String path, Class<T> responseType) {
+        return executeAdmin(path, responseType, null, true);
+    }
+
+    public <T> T postAdmin(String path, Object body, Class<T> responseType) {
+        return executeAdmin(path, responseType, body, true);
+    }
+
+    private <T> T executeAdmin(String path, Class<T> responseType, Object body, boolean post) {
+        try {
+            RestClient.RequestHeadersSpec<?> request;
+            if (body != null) {
+                ObjectMapper mapper = new ObjectMapper()
+                        .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
+                        .setSerializationInclusion(JsonInclude.Include.NON_NULL);
+                request = restClient.post().uri(path)
+                        .header("X-Internal-Service-Token", properties.internalToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .body(mapper.writeValueAsString(body));
+            } else if (post) {
+                request = restClient.post().uri(path).header("X-Internal-Service-Token", properties.internalToken());
+            } else {
+                request = restClient.get().uri(path).header("X-Internal-Service-Token", properties.internalToken());
+            }
+            T response = request.retrieve().body(responseType);
+            if (response == null) {
+                throw new BusinessRuleException(HttpStatus.SERVICE_UNAVAILABLE, "Visual search returned an empty response");
+            }
+            return response;
+        } catch (RestClientException | com.fasterxml.jackson.core.JsonProcessingException ex) {
             throw new BusinessRuleException(HttpStatus.SERVICE_UNAVAILABLE, "Visual search is temporarily unavailable");
         }
     }
