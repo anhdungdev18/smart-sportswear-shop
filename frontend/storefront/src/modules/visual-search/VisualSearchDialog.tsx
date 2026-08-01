@@ -53,6 +53,9 @@ function errorMessage(error: unknown): string {
 
 export function VisualSearchDialog() {
   const inputRef = useRef<HTMLInputElement>(null);
+  const openerRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLElement>(null);
+  const busyRef = useRef(false);
   const [open, setOpen] = useState(false);
   const [source, setSource] = useState<string>();
   const [zoom, setZoom] = useState(1);
@@ -62,14 +65,30 @@ export function VisualSearchDialog() {
   const [hasSearched, setHasSearched] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
+  busyRef.current = busy;
 
   useEffect(() => () => { if (source) URL.revokeObjectURL(source); }, [source]);
   useEffect(() => {
     if (!open) return;
-    const onKeyDown = (event: KeyboardEvent) => { if (event.key === "Escape" && !busy) setOpen(false); };
+    const previousFocus = document.activeElement as HTMLElement | null;
+    const returnFocus = previousFocus ?? openerRef.current;
+    const focusable = () => Array.from(dialogRef.current?.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    ) ?? []);
+    requestAnimationFrame(() => focusable()[0]?.focus());
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !busyRef.current) setOpen(false);
+      if (event.key !== "Tab") return;
+      const items = focusable();
+      if (items.length === 0) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    };
     document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [open, busy]);
+    return () => { document.removeEventListener("keydown", onKeyDown); returnFocus?.focus(); };
+  }, [open]);
 
   function chooseFile(file?: File) {
     setError(undefined);
@@ -110,12 +129,12 @@ export function VisualSearchDialog() {
 
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)} className="flex size-8 shrink-0 items-center justify-center rounded-md text-ivy-dark hover:bg-[#f3f3f3]" aria-label="Tìm sản phẩm bằng hình ảnh">
+      <button ref={openerRef} type="button" onClick={() => setOpen(true)} className="flex size-8 shrink-0 items-center justify-center rounded-md text-ivy-dark hover:bg-[#f3f3f3]" aria-label="Tìm sản phẩm bằng hình ảnh">
         <Camera className="size-[18px]" />
       </button>
       {open ? (
         <div className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-black/45 px-3 py-6 md:py-12" role="dialog" aria-modal="true" aria-labelledby="visual-search-title" onMouseDown={(event) => { if (event.target === event.currentTarget && !busy) setOpen(false); }}>
-          <section className="w-full max-w-6xl rounded-2xl bg-white p-5 shadow-2xl md:p-8">
+          <section ref={dialogRef} className="w-full max-w-6xl rounded-2xl bg-white p-5 shadow-2xl md:p-8">
             <header className="mb-6 flex items-start justify-between gap-4">
               <div>
                 <h2 id="visual-search-title" className="text-xl font-semibold text-ivy-dark">Tìm kiếm bằng hình ảnh</h2>

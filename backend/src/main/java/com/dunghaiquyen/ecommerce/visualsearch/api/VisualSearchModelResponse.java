@@ -8,6 +8,7 @@ public record VisualSearchModelResponse(
         @JsonAlias("target_image_count") int targetImageCount,
         @JsonAlias("ready_image_count") int readyImageCount,
         @JsonAlias("failed_image_count") int failedImageCount,
-        @JsonAlias("activated_at") String activatedAt) {
+        @JsonAlias("activated_at") String activatedAt,
+        int revision) {
     public record ListResponse(List<VisualSearchModelResponse> models) {}
 }

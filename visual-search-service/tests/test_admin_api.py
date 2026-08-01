@@ -326,6 +326,20 @@ def test_retry_failed_response_schema_with_failures():
     assert data["job_id"] == job_id
 
 
+def test_retry_failed_enqueues_only_retryable_failures():
+    candidates = [
+        ReconciliationCandidate(uuid4(), uuid4(), "FAILED_RETRYABLE"),
+        ReconciliationCandidate(uuid4(), uuid4(), "FAILED_PERMANENT"),
+    ]
+    repo = FakeRepository(candidates=candidates)
+
+    resp = _make_client(repo).post("/internal/v1/admin/retry-failed", headers=headers())
+
+    assert resp.status_code == 200
+    assert resp.json()["enqueued_count"] == 1
+    assert repo.created_job[1][0].reason == "FAILED_RETRYABLE"
+
+
 def test_recent_job_response_schema():
     from app.api.admin import RecentJobResponse
     jid = str(uuid4())

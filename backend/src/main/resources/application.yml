@@ -89,6 +89,10 @@ spring:
 
 server:
   port: ${SERVER_PORT:8080}
+  # Honor Forwarded/X-Forwarded-* only after the deployment proxy has sanitized
+  # inbound forwarding headers. Session/user identity remains the visual-search
+  # rate-limit key, with the resolved client address used by other web features.
+  forward-headers-strategy: ${SERVER_FORWARD_HEADERS_STRATEGY:framework}
 
 management:
   health:

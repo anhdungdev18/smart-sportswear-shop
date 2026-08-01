@@ -70,6 +70,13 @@ public class AdminVisualSearchController {
         return ApiResponse.ok(client.getAdmin("/internal/v1/admin/models", VisualSearchModelResponse.ListResponse.class));
     }
 
+    @PostMapping("/models")
+    public ApiResponse<VisualSearchModelResponse> createModel(
+            @Valid @RequestBody VisualSearchCreateModelRequest request) {
+        return ApiResponse.ok(client.postAdmin(
+                "/internal/v1/admin/models", request, VisualSearchModelResponse.class));
+    }
+
     @PostMapping("/models/{modelId}/activate")
     public ApiResponse<VisualSearchModelResponse> activateModel(@org.springframework.web.bind.annotation.PathVariable UUID modelId) {
         return ApiResponse.ok(client.postAdmin("/internal/v1/admin/models/" + modelId + "/activate", VisualSearchModelResponse.class));

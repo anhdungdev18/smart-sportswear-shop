@@ -11,6 +11,9 @@ import com.dunghaiquyen.ecommerce.visualsearch.api.VisualSearchRateLimiter;
 import com.dunghaiquyen.ecommerce.visualsearch.api.VisualSearchResult;
 import com.dunghaiquyen.ecommerce.visualsearch.api.VisualSearchService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import com.dunghaiquyen.ecommerce.common.security.CustomUserDetails;
+import com.dunghaiquyen.ecommerce.modules.cart.web.CartIdentityResolver;
 import java.math.BigDecimal;
 import java.util.UUID;
 import java.util.List;
@@ -22,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 /**
  * Public, read-only catalog browsing (API_SPEC_PHASE1.md 5.3/5.4) - only
@@ -36,14 +40,17 @@ public class ProductController {
     private final ProductService productService;
     private final VisualSearchService visualSearchService;
     private final VisualSearchRateLimiter visualSearchRateLimiter;
+    private final CartIdentityResolver cartIdentityResolver;
 
     public ProductController(
             ProductService productService,
             VisualSearchService visualSearchService,
-            VisualSearchRateLimiter visualSearchRateLimiter) {
+            VisualSearchRateLimiter visualSearchRateLimiter,
+            CartIdentityResolver cartIdentityResolver) {
         this.productService = productService;
         this.visualSearchService = visualSearchService;
         this.visualSearchRateLimiter = visualSearchRateLimiter;
+        this.cartIdentityResolver = cartIdentityResolver;
     }
 
     @GetMapping
@@ -67,9 +74,15 @@ public class ProductController {
             @RequestParam(required = false) Gender gender,
             @RequestParam(required = false) BigDecimal minPrice,
             @RequestParam(required = false) BigDecimal maxPrice,
-            HttpServletRequest request) {
+            HttpServletRequest request,
+            HttpServletResponse response,
+            @AuthenticationPrincipal CustomUserDetails principal) {
         int boundedLimit = Math.max(1, Math.min(limit, 20));
-        visualSearchRateLimiter.check(request.getRemoteAddr());
+        var owner = cartIdentityResolver.resolve(request, response, principal);
+        String clientKey = owner.userId() != null
+                ? "user:" + owner.userId()
+                : "session:" + owner.sessionId();
+        visualSearchRateLimiter.check(clientKey);
         return ApiResponse.ok(visualSearchService.search(
                 image, boundedLimit, categoryId, gender, minPrice, maxPrice));
     }

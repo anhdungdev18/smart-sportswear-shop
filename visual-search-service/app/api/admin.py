@@ -10,7 +10,7 @@ from uuid import UUID
 
 import aio_pika
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.config import Settings, get_settings
 from app.persistence.repository import (
@@ -118,6 +118,8 @@ class RecentJobResponse(BaseModel):
     pending_count: int
     created_at: str
     completed_at: str | None
+    source_counts: dict[str, int] = Field(default_factory=dict)
+    error_summary: dict[str, int] = Field(default_factory=dict)
 
 
 class JobsResponse(BaseModel):
@@ -156,6 +158,13 @@ class ModelVersionResponse(BaseModel):
     ready_image_count: int
     failed_image_count: int
     activated_at: str | None
+    revision: int = 1
+
+
+class CreateModelVersionRequest(BaseModel):
+    provider: str
+    model: str
+    dimensions: int
 
 
 class ModelVersionsResponse(BaseModel):
@@ -219,6 +228,7 @@ def _model_response(item: ModelVersionStats) -> ModelVersionResponse:
         status=item.status, target_image_count=item.target_image_count,
         ready_image_count=item.ready_image_count, failed_image_count=item.failed_image_count,
         activated_at=item.activated_at.isoformat() if item.activated_at else None,
+        revision=item.revision,
     )
 
 
@@ -226,6 +236,21 @@ def _model_response(item: ModelVersionStats) -> ModelVersionResponse:
 async def get_models(repo: VisualSearchRepository = Depends(get_repository)) -> ModelVersionsResponse:
     try:
         return ModelVersionsResponse(models=[_model_response(item) for item in await repo.model_versions()])
+    except RepositoryUnavailableError as exc:
+        raise HTTPException(status_code=503, detail="Database unavailable") from exc
+
+
+@router.post("/models", response_model=ModelVersionResponse, dependencies=[Depends(require_internal_token)])
+async def create_model(
+    request: CreateModelVersionRequest,
+    repo: VisualSearchRepository = Depends(get_repository),
+) -> ModelVersionResponse:
+    provider = request.provider.strip().lower()
+    model = request.model.strip()
+    if not provider or not model or request.dimensions <= 0:
+        raise HTTPException(status_code=422, detail="provider, model and positive dimensions are required")
+    try:
+        return _model_response(await repo.create_model_version(provider, model, request.dimensions))
     except RepositoryUnavailableError as exc:
         raise HTTPException(status_code=503, detail="Database unavailable") from exc
 
@@ -382,6 +407,8 @@ async def get_jobs(
                 pending_count=job.pending_count,
                 created_at=job.created_at.isoformat(),
                 completed_at=job.completed_at.isoformat() if job.completed_at else None,
+                source_counts=job.source_counts,
+                error_summary=job.error_summary,
             )
             for job in jobs
         ]
@@ -403,10 +430,11 @@ async def retry_failed(
     try:
         service = IndexingJobService(repo)
         report = await service.inspect(include_failed=True)
+        retryable = tuple(c for c in report.candidates if c.reason == "FAILED_RETRYABLE")
         failed_only_report = report.__class__(
-            total=sum(1 for c in report.candidates if c.reason == "FAILED"),
-            reasons={"FAILED": sum(1 for c in report.candidates if c.reason == "FAILED")},
-            candidates=tuple(c for c in report.candidates if c.reason == "FAILED"),
+            total=len(retryable),
+            reasons={"FAILED_RETRYABLE": len(retryable)},
+            candidates=retryable,
         )
         if failed_only_report.total == 0:
             return RetryFailedResponse(job_id="", enqueued_count=0)

@@ -21,6 +21,8 @@ import org.springframework.web.multipart.MultipartFile;
 @Service
 public class VisualSearchService {
 
+    static final int CANDIDATE_LIMIT = 50;
+
     private final VisualSearchProperties properties;
     private final VisualSearchClient client;
     private final ProductService productService;
@@ -51,7 +53,7 @@ public class VisualSearchService {
         }
 
         // Fetch a wider candidate set before commerce filters are applied.
-        List<VisualSearchCandidate> candidates = client.search(image, 20);
+        List<VisualSearchCandidate> candidates = client.search(image, CANDIDATE_LIMIT);
         List<UUID> ids = candidates.stream().map(VisualSearchCandidate::productId).distinct().toList();
         Map<UUID, ProductListItemResponse> products = productService
                 .assembleListItemsByIds(ids, ProductStatus.ACTIVE).stream()
