@@ -128,12 +128,16 @@ class VisualSearchRepository:
 
     async def active_model(self) -> ModelVersion | None:
         async with await self._connect() as connection:
-            async with connection.cursor() as cursor:
-                await cursor.execute(
-                    "select id, provider, model, dimensions from visual_search.model_versions where status = 'ACTIVE'"
-                )
-                row = await cursor.fetchone()
-                return ModelVersion(*row) if row else None
+            return await self.active_model_on(connection)
+
+    @staticmethod
+    async def active_model_on(connection: psycopg.AsyncConnection[Any]) -> ModelVersion | None:
+        async with connection.cursor() as cursor:
+            await cursor.execute(
+                "select id, provider, model, dimensions from visual_search.model_versions where status = 'ACTIVE'"
+            )
+            row = await cursor.fetchone()
+            return ModelVersion(*row) if row else None
 
     async def get_image(self, image_id: UUID) -> CatalogImage | None:
         async with await self._connect() as connection:
@@ -488,11 +492,17 @@ class VisualSearchRepository:
         return IndexingJob(job_id, job_type, len(candidates))
 
     async def search(self, model_id: UUID, vector: tuple[float, ...], limit: int) -> list[SearchCandidate]:
+        async with await self._connect() as connection:
+            return await self.search_on(connection, model_id, vector, limit)
+
+    @staticmethod
+    async def search_on(
+        connection: psycopg.AsyncConnection[Any], model_id: UUID, vector: tuple[float, ...], limit: int
+    ) -> list[SearchCandidate]:
         encoded = "[" + ",".join(str(value) for value in vector) + "]"
         image_limit = min(limit * 5, 100)
-        async with await self._connect() as connection:
-            async with connection.cursor() as cursor:
-                await cursor.execute(
+        async with connection.cursor() as cursor:
+            await cursor.execute(
                     """
                     with ranked_images as (
                         select e.product_id, e.image_id, pi.image_url,
@@ -517,8 +527,8 @@ class VisualSearchRepository:
                     limit %s
                     """,
                     (encoded, model_id, encoded, image_limit, limit),
-                )
-                return [SearchCandidate(row[0], row[1], row[2], float(row[3])) for row in await cursor.fetchall()]
+            )
+            return [SearchCandidate(row[0], row[1], row[2], float(row[3])) for row in await cursor.fetchall()]
 
     async def record_query_usage(
         self,
@@ -530,8 +540,15 @@ class VisualSearchRepository:
     ) -> None:
         async with await self._connect() as connection:
             async with connection.transaction():
-                async with connection.cursor() as cursor:
-                    await cursor.execute(
+                await self.record_query_usage_on(connection, model, result, latency_ms, success, error_code)
+
+    @staticmethod
+    async def record_query_usage_on(
+        connection: psycopg.AsyncConnection[Any], model: ModelVersion, result: EmbeddingResult,
+        latency_ms: int, success: bool = True, error_code: str | None = None,
+    ) -> None:
+        async with connection.cursor() as cursor:
+            await cursor.execute(
                         """
                         insert into visual_search.usage_events
                             (id, provider, model, operation, image_pixels, text_tokens,
@@ -542,7 +559,7 @@ class VisualSearchRepository:
                             uuid4(), model.provider, model.model, result.usage.image_pixels,
                             result.usage.text_tokens, latency_ms, success, error_code,
                         ),
-                    )
+            )
 
     async def coverage_stats(self) -> CoverageStats:
         async with await self._connect() as connection:

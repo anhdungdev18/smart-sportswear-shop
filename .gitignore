@@ -29,6 +29,7 @@ QueryProducts.java
 db.sql
 *.backup
 image/
+evidence/visual-search/synthetic-benchmark/benchmark-images/
 # Old cloner template directory (content moved to frontend/storefront)
 ai-website-cloner-template/
 

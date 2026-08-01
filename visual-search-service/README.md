@@ -8,7 +8,7 @@ Independent FastAPI service for catalog image embeddings and visual product sear
 python -m venv .venv
 .\.venv\Scripts\pip install -r requirements-test.txt
 .\.venv\Scripts\pytest
-.\.venv\Scripts\uvicorn app.main:app --reload --port 8090
+.\.venv\Scripts\python scripts\run_api.py
 ```
 
 Copy `.env.example` to `.env` for local overrides. Never commit provider or internal-service secrets.
@@ -129,3 +129,28 @@ Available internal endpoints:
 
 All maintenance actions create indexing jobs and transactional outbox events;
 they never call the embedding provider from the HTTP request.
+
+## Phase 10 benchmark and rollout
+
+The acceptance benchmark uses at least 100 independently sourced images across
+`tops`, `bottoms` and `shoes`. `accessories` is N/A because the audited ACTIVE
+catalog currently has no accessory product with an image, and becomes required
+when one is added. The benchmark rejects a rollout unless
+Recall@5 is at least 80%, top-result category accuracy is at least 90%, and
+end-to-end p95 latency is at most 3 seconds. See
+`evidence/visual-search/benchmark-manifest.example.json` for the manifest shape:
+
+```powershell
+python scripts/benchmark_search.py ..\evidence\visual-search\benchmark-manifest.json `
+  --output ..\evidence\visual-search\phase10-benchmark-report.json
+```
+
+Benchmark images must remain outside Git and must not be catalog originals,
+copies or direct crops. The full staged rollout, monitoring and non-destructive
+rollback procedure is in `docs/visual-search-rollout.md`.
+
+When independent photos are unavailable, an explicitly approved synthetic
+robustness set can be reproduced with `python scripts/build_synthetic_benchmark.py
+../evidence/visual-search/synthetic-benchmark`. Generated images are ignored by
+Git; the manifest records source IDs, seeds and transformations. This mode does
+not claim real-world generalization.
