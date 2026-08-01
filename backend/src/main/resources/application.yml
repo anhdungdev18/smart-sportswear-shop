@@ -115,7 +115,7 @@ app:
     enabled: ${VISUAL_SEARCH_ENABLED:false}
     service-url: ${VISUAL_SEARCH_SERVICE_URL:http://127.0.0.1:8090}
     internal-token: ${VISUAL_SEARCH_INTERNAL_TOKEN:}
-    request-timeout-seconds: ${VISUAL_SEARCH_REQUEST_TIMEOUT_SECONDS:5}
+    request-timeout-seconds: ${VISUAL_SEARCH_REQUEST_TIMEOUT_SECONDS:15}
     rate-limit-per-minute: ${VISUAL_SEARCH_RATE_LIMIT_PER_MINUTE:10}
     outbox:
       poll-delay-ms: ${VISUAL_SEARCH_OUTBOX_POLL_DELAY_MS:1000}

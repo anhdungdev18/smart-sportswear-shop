@@ -38,7 +38,9 @@ def require_internal_token(
 @router.post("/search", response_model=SearchResponse, dependencies=[Depends(require_internal_token)])
 async def search_by_image(
     image: UploadFile = File(...),
-    limit: int = Query(default=20, ge=1, le=20),
+    # The public API returns at most 20 results, but Spring intentionally asks
+    # for a wider pool before applying category, gender, price and stock filters.
+    limit: int = Query(default=20, ge=1, le=50),
     settings: Settings = Depends(get_settings),
 ) -> SearchResponse:
     if not settings.visual_search_enabled:

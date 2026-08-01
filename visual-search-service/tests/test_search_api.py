@@ -49,6 +49,7 @@ def test_search_normalizes_embeds_and_returns_candidates() -> None:
     provider.embed_query.return_value = EmbeddingResult((0.5, 0.5, 0.5, 0.5), "fake", 4, EmbeddingUsage(16, 0))
     connection = AsyncMock()
     connection.__aenter__.return_value = connection
+    search_on = AsyncMock(return_value=[candidate])
 
     app.dependency_overrides[get_settings] = enabled_settings
     try:
@@ -57,11 +58,11 @@ def test_search_normalizes_embeds_and_returns_candidates() -> None:
             patch("app.api.search.VisualSearchRepository.current_month_cost", new=AsyncMock(return_value=0)),
             patch("app.api.search.VisualSearchRepository._connect", new=AsyncMock(return_value=connection)),
             patch("app.api.search.VisualSearchRepository.active_model_on", new=AsyncMock(return_value=model)),
-            patch("app.api.search.VisualSearchRepository.search_on", new=AsyncMock(return_value=[candidate])),
+            patch("app.api.search.VisualSearchRepository.search_on", new=search_on),
             patch("app.api.search.VisualSearchRepository.record_query_usage_on", new=AsyncMock()),
         ):
             response = TestClient(app).post(
-                "/internal/v1/search?limit=5",
+                "/internal/v1/search?limit=50",
                 headers={"X-Internal-Service-Token": "secret"},
                 files={"image": ("query.png", png_bytes(), "image/png")},
             )
@@ -69,6 +70,7 @@ def test_search_normalizes_embeds_and_returns_candidates() -> None:
         app.dependency_overrides.clear()
 
     assert response.status_code == 200
+    assert search_on.await_args.args[-1] == 50
     assert response.json()["candidates"][0]["product_id"] == str(candidate.product_id)
     assert response.json()["candidates"][0]["similarity"] == 0.91
 

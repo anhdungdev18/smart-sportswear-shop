@@ -42,7 +42,7 @@ export function ProductCard({ product }: { product: Product }) {
         ) : null}
 
         <div className="thumb-product group relative mb-4 aspect-[332/498] overflow-hidden bg-[#f7f7f7]">
-          <Link href={product.href} className="block">
+          <Link href={product.href} className="relative block h-full">
             <Image
               src={product.image}
               alt={product.name}

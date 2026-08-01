@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { Camera, ImagePlus, LoaderCircle, Search, X } from "lucide-react";
+import { Camera, ImagePlus, LoaderCircle, Search, SwitchCamera, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { ApiError } from "@/lib/api";
 import { mapProductListItem } from "@/modules/product/mappers";
@@ -55,8 +55,13 @@ export function VisualSearchDialog() {
   const inputRef = useRef<HTMLInputElement>(null);
   const openerRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const busyRef = useRef(false);
   const [open, setOpen] = useState(false);
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const [cameraStream, setCameraStream] = useState<MediaStream>();
+  const [facingMode, setFacingMode] = useState<"user" | "environment">("environment");
   const [source, setSource] = useState<string>();
   const [zoom, setZoom] = useState(1);
   const [positionX, setPositionX] = useState(50);
@@ -67,7 +72,13 @@ export function VisualSearchDialog() {
   const [error, setError] = useState<string>();
   busyRef.current = busy;
 
-  useEffect(() => () => { if (source) URL.revokeObjectURL(source); }, [source]);
+  useEffect(() => () => {
+    if (source) URL.revokeObjectURL(source);
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+  }, [source]);
+  useEffect(() => {
+    if (videoRef.current && cameraStream) videoRef.current.srcObject = cameraStream;
+  }, [cameraOpen, cameraStream]);
   useEffect(() => {
     if (!open) return;
     const previousFocus = document.activeElement as HTMLElement | null;
@@ -77,7 +88,13 @@ export function VisualSearchDialog() {
     ) ?? []);
     requestAnimationFrame(() => focusable()[0]?.focus());
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !busyRef.current) setOpen(false);
+      if (event.key === "Escape" && !busyRef.current) {
+        streamRef.current?.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+        setCameraStream(undefined);
+        setCameraOpen(false);
+        setOpen(false);
+      }
       if (event.key !== "Tab") return;
       const items = focusable();
       if (items.length === 0) return;
@@ -102,6 +119,60 @@ export function VisualSearchDialog() {
     setZoom(1);
     setPositionX(50);
     setPositionY(50);
+  }
+
+  function stopCamera() {
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+    setCameraStream(undefined);
+    setCameraOpen(false);
+  }
+
+  function closeDialog() {
+    stopCamera();
+    setOpen(false);
+  }
+
+  async function startCamera(mode: "user" | "environment" = facingMode) {
+    setError(undefined);
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setError("Trình duyệt này không hỗ trợ camera. Hãy dùng Chrome hoặc Edge trên localhost/HTTPS.");
+      return;
+    }
+    stopCamera();
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: false,
+        video: { facingMode: { ideal: mode }, width: { ideal: 1280 }, height: { ideal: 720 } },
+      });
+      streamRef.current = stream;
+      setFacingMode(mode);
+      setCameraStream(stream);
+      setCameraOpen(true);
+    } catch (cause) {
+      const denied = cause instanceof DOMException && (cause.name === "NotAllowedError" || cause.name === "SecurityError");
+      setError(denied
+        ? "Bạn chưa cấp quyền camera. Hãy cho phép Camera trong thanh địa chỉ rồi thử lại."
+        : "Không mở được camera. Hãy kiểm tra camera có đang được ứng dụng khác sử dụng không.");
+    }
+  }
+
+  async function capturePhoto() {
+    const video = videoRef.current;
+    if (!video || video.videoWidth === 0 || video.videoHeight === 0) {
+      setError("Camera chưa sẵn sàng. Vui lòng đợi một chút rồi chụp lại.");
+      return;
+    }
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const context = canvas.getContext("2d");
+    if (!context) return setError("Trình duyệt không thể chụp ảnh từ camera.");
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.9));
+    if (!blob) return setError("Không thể tạo ảnh chụp từ camera.");
+    stopCamera();
+    chooseFile(new File([blob], `camera-${Date.now()}.jpg`, { type: "image/jpeg" }));
   }
 
   async function submit() {
@@ -133,22 +204,40 @@ export function VisualSearchDialog() {
         <Camera className="size-[18px]" />
       </button>
       {open ? (
-        <div className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-black/45 px-3 py-6 md:py-12" role="dialog" aria-modal="true" aria-labelledby="visual-search-title" onMouseDown={(event) => { if (event.target === event.currentTarget && !busy) setOpen(false); }}>
+        <div className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-black/45 px-3 py-6 md:py-12" role="dialog" aria-modal="true" aria-labelledby="visual-search-title" onMouseDown={(event) => { if (event.target === event.currentTarget && !busy) closeDialog(); }}>
           <section ref={dialogRef} className="w-full max-w-6xl rounded-2xl bg-white p-5 shadow-2xl md:p-8">
             <header className="mb-6 flex items-start justify-between gap-4">
               <div>
                 <h2 id="visual-search-title" className="text-xl font-semibold text-ivy-dark">Tìm kiếm bằng hình ảnh</h2>
                 <p className="mt-1 text-sm text-ivy-text-muted">Chọn hoặc chụp ảnh, căn sản phẩm vào khung rồi bắt đầu tìm kiếm.</p>
               </div>
-              <button type="button" onClick={() => setOpen(false)} disabled={busy} className="rounded-full p-2 hover:bg-[#f3f3f3] disabled:opacity-50" aria-label="Đóng"><X className="size-5" /></button>
+              <button type="button" onClick={closeDialog} disabled={busy} className="rounded-full p-2 hover:bg-[#f3f3f3] disabled:opacity-50" aria-label="Đóng"><X className="size-5" /></button>
             </header>
 
-            {!source ? (
-              <button type="button" onClick={() => inputRef.current?.click()} className="flex min-h-72 w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-ivy-hairline bg-[#fafafa] px-6 text-center hover:border-ivy-text-muted">
-                <ImagePlus className="mb-4 size-10 text-ivy-text-muted" />
-                <span className="font-medium text-ivy-dark">Chọn ảnh sản phẩm</span>
-                <span className="mt-2 text-sm text-ivy-text-muted">JPG, PNG hoặc WebP · tối đa 5 MB · hỗ trợ camera trên điện thoại</span>
-              </button>
+            {cameraOpen ? (
+              <div className="mx-auto max-w-3xl">
+                <div className="relative aspect-video overflow-hidden rounded-xl bg-black">
+                  <video ref={videoRef} autoPlay playsInline muted className={`h-full w-full object-cover ${facingMode === "user" ? "-scale-x-100" : ""}`} />
+                </div>
+                <div className="mt-4 flex flex-wrap justify-center gap-3">
+                  <button type="button" onClick={capturePhoto} className="flex h-11 items-center gap-2 rounded-tl-xl rounded-br-xl bg-ivy-dark px-6 text-sm font-semibold text-white"><Camera className="size-4" />Chụp ảnh</button>
+                  <button type="button" onClick={() => startCamera(facingMode === "user" ? "environment" : "user")} className="flex h-11 items-center gap-2 border border-ivy-hairline px-5 text-sm text-ivy-text hover:bg-[#fafafa]"><SwitchCamera className="size-4" />Đổi camera</button>
+                  <button type="button" onClick={stopCamera} className="h-11 border border-ivy-hairline px-5 text-sm text-ivy-text hover:bg-[#fafafa]">Hủy</button>
+                </div>
+              </div>
+            ) : !source ? (
+              <div className="grid gap-4 sm:grid-cols-2">
+                <button type="button" onClick={() => inputRef.current?.click()} className="flex min-h-72 flex-col items-center justify-center rounded-xl border-2 border-dashed border-ivy-hairline bg-[#fafafa] px-6 text-center hover:border-ivy-text-muted">
+                  <ImagePlus className="mb-4 size-10 text-ivy-text-muted" />
+                  <span className="font-medium text-ivy-dark">Chọn ảnh sản phẩm</span>
+                  <span className="mt-2 text-sm text-ivy-text-muted">JPG, PNG hoặc WebP · tối đa 5 MB</span>
+                </button>
+                <button type="button" onClick={() => startCamera()} className="flex min-h-72 flex-col items-center justify-center rounded-xl border-2 border-dashed border-ivy-hairline bg-[#fafafa] px-6 text-center hover:border-ivy-text-muted">
+                  <Camera className="mb-4 size-10 text-ivy-text-muted" />
+                  <span className="font-medium text-ivy-dark">Mở camera</span>
+                  <span className="mt-2 text-sm text-ivy-text-muted">Chụp trực tiếp bằng camera laptop hoặc điện thoại</span>
+                </button>
+              </div>
             ) : !hasSearched ? (
               <div className="grid gap-7 md:grid-cols-[minmax(0,1fr)_300px]">
                 <div className="relative mx-auto aspect-square w-full max-w-[560px] overflow-hidden rounded-xl bg-[#f3f3f3]">
@@ -160,6 +249,7 @@ export function VisualSearchDialog() {
                   <label className="text-sm text-ivy-text">Di chuyển ngang <input type="range" min="0" max="100" value={positionX} onChange={(e) => setPositionX(Number(e.target.value))} className="mt-2 w-full accent-[#221f20]" /></label>
                   <label className="text-sm text-ivy-text">Di chuyển dọc <input type="range" min="0" max="100" value={positionY} onChange={(e) => setPositionY(Number(e.target.value))} className="mt-2 w-full accent-[#221f20]" /></label>
                   <button type="button" onClick={submit} disabled={busy} className="flex h-11 items-center justify-center gap-2 rounded-tl-xl rounded-br-xl bg-ivy-dark px-5 text-sm font-semibold text-white disabled:opacity-60">{busy ? <LoaderCircle className="size-4 animate-spin" /> : <Search className="size-4" />}{busy ? "Đang tìm kiếm..." : "Tìm sản phẩm tương tự"}</button>
+                  <button type="button" onClick={() => startCamera()} disabled={busy} className="flex h-10 items-center justify-center gap-2 border border-ivy-hairline text-sm text-ivy-text hover:bg-[#fafafa] disabled:opacity-60"><Camera className="size-4" />Chụp lại bằng camera</button>
                   <button type="button" onClick={() => inputRef.current?.click()} disabled={busy} className="h-10 border border-ivy-hairline text-sm text-ivy-text hover:bg-[#fafafa]">Chọn ảnh khác</button>
                 </div>
               </div>
@@ -173,7 +263,17 @@ export function VisualSearchDialog() {
                   <div className="grid grid-cols-2 gap-x-5 gap-y-10 sm:grid-cols-3 lg:grid-cols-4">
                     {results.map((result) => {
                       const product = mapProductListItem({ ...result.product, thumbnail: result.matchedImageUrl || result.product.thumbnail });
-                      return <div key={result.product.id}><div className="mb-2 text-xs text-ivy-text-muted">Tương đồng {Math.round(result.similarity * 100)}%</div><ProductCard product={product} /></div>;
+                      return (
+                        <div
+                          key={result.product.id}
+                          onClickCapture={(event) => {
+                            if ((event.target as HTMLElement).closest("a")) closeDialog();
+                          }}
+                        >
+                          <div className="mb-2 text-xs text-ivy-text-muted">Tương đồng {Math.round(result.similarity * 100)}%</div>
+                          <ProductCard product={product} />
+                        </div>
+                      );
                     })}
                   </div>
                 ) : (

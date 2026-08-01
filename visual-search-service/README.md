@@ -30,7 +30,9 @@ download from the Internet.
 ## Phase 6 search API
 
 `POST /internal/v1/search?limit=20` accepts a multipart field named `image` and
-requires `X-Internal-Service-Token`. It validates and normalizes the upload,
+allows up to 50 internal candidates so Spring can apply commerce filters before
+returning at most 20 public results. It requires `X-Internal-Service-Token`,
+validates and normalizes the upload,
 creates a query embedding, runs exact cosine search against READY embeddings
 for the ACTIVE model, groups matches by product, and excludes non-ACTIVE
 products. Query images are not stored; only provider usage and latency are
