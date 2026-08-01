@@ -1,1 +1,1 @@
-ALTER TABLE forecast_runs ADD COLUMN daily_forecast jsonb;
+ALTER TABLE forecast_runs ADD COLUMN IF NOT EXISTS daily_forecast jsonb;

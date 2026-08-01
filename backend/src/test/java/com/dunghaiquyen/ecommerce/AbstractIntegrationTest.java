@@ -56,6 +56,8 @@ public abstract class AbstractIntegrationTest {
         registry.add("spring.datasource.username", POSTGRES::getUsername);
         registry.add("spring.datasource.password", POSTGRES::getPassword);
         registry.add("spring.flyway.enabled", () -> "true");
+    }
+
     @TestConfiguration
     static class NoCacheTestConfiguration {
 

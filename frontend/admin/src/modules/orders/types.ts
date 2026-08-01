@@ -29,3 +29,6 @@ export type AdminOrderResponse = {
   items: OrderItemResponse[];
   createdAt: string;
 };
+
+export type PageMeta = { page: number; limit: number; total: number; totalPages: number };
+export type AdminOrderPage = { items: AdminOrderResponse[]; meta: PageMeta };

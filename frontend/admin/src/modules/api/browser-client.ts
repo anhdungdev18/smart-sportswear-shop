@@ -25,6 +25,11 @@ function getBrowserAccessToken() {
 }
 
 export async function browserApiRequest<T>(path: string, init?: BrowserApiRequestInit) {
+  const payload = await browserApiRequestEnvelope<T>(path, init);
+  return payload.data;
+}
+
+export async function browserApiRequestEnvelope<T>(path: string, init?: BrowserApiRequestInit): Promise<ApiEnvelope<T>> {
   if (shouldUseMockApi()) {
     throw new ApiRequestError(0, "NEXT_PUBLIC_API_BASE_URL is not configured", null);
   }
@@ -57,5 +62,8 @@ export async function browserApiRequest<T>(path: string, init?: BrowserApiReques
     throw new ApiRequestError(response.status, response.statusText, payload);
   }
 
-  return ((payload as ApiEnvelope<T>)?.data ?? payload) as T;
+  if (payload && typeof payload === "object" && "data" in payload) {
+    return payload as ApiEnvelope<T>;
+  }
+  return { data: payload as T };
 }

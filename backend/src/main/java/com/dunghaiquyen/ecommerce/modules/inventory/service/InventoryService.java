@@ -290,7 +290,9 @@ public class InventoryService {
             spec = spec.and(InventoryVariantSpecifications.keywordMatches(query.keyword().trim()));
         }
         Pageable pageable = PageRequest.of(
-                resolvePageIndex(query.page()), resolveLimit(query.limit()), Sort.by(Sort.Direction.DESC, "createdAt"));
+                resolvePageIndex(query.page()),
+                resolveLimit(query.limit()),
+                Sort.by(Sort.Direction.DESC, "createdAt").and(Sort.by(Sort.Direction.DESC, "id")));
         Page<ProductVariant> page = variantRepository.findAll(spec, pageable);
         Map<UUID, String> thumbnailByProductId = resolveThumbnails(page.getContent());
         List<InventoryItemResponse> items = page.getContent().stream()
@@ -317,7 +319,9 @@ public class InventoryService {
                     query.dateTo().atTime(LocalTime.MAX).atZone(AppTimeZone.ZONE).toInstant()));
         }
         Pageable pageable = PageRequest.of(
-                resolvePageIndex(query.page()), resolveLimit(query.limit()), Sort.by(Sort.Direction.DESC, "createdAt"));
+                resolvePageIndex(query.page()),
+                resolveLimit(query.limit()),
+                Sort.by(Sort.Direction.DESC, "createdAt").and(Sort.by(Sort.Direction.DESC, "id")));
         Page<InventoryTransaction> page = transactionRepository.findAll(spec, pageable);
         List<InventoryTransactionResponse> items =
                 page.getContent().stream().map(this::toTransactionResponse).toList();

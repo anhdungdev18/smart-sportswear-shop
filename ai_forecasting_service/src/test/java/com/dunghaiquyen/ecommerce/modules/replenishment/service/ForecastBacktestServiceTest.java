@@ -8,8 +8,10 @@ import com.dunghaiquyen.ecommerce.modules.replenishment.forecasting.EwmaForecast
 import com.dunghaiquyen.ecommerce.modules.replenishment.forecasting.ForecastAlgorithm;
 import com.dunghaiquyen.ecommerce.modules.replenishment.forecasting.ForecastResult;
 import com.dunghaiquyen.ecommerce.modules.replenishment.forecasting.MovingAverageForecastAlgorithm;
+import com.dunghaiquyen.ecommerce.modules.replenishment.forecasting.NaiveForecastAlgorithm;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -20,6 +22,7 @@ class ForecastBacktestServiceTest {
     @BeforeEach
     void setUp() {
         List<ForecastAlgorithm> algorithms = List.of(
+                new NaiveForecastAlgorithm(),
                 new MovingAverageForecastAlgorithm(),
                 new EwmaForecastAlgorithm(),
                 new CrostonForecastAlgorithm());
@@ -29,8 +32,8 @@ class ForecastBacktestServiceTest {
     @Test
     void runBacktest_withNotEnoughData() {
         ForecastBacktestService.BacktestResult result = service.runBacktest(List.of(1, 2, 3), 5);
-        assertThat(result.confidence()).isEqualTo(ForecastConfidence.LOW);
-        assertThat(result.bestAlgorithm()).isEqualTo(ForecastAlgorithmType.MOVING_AVERAGE);
+        assertThat(result.confidence()).isEqualTo(ForecastConfidence.INSUFFICIENT);
+        assertThat(result.bestAlgorithm()).isEqualTo(ForecastAlgorithmType.NAIVE);
     }
 
     @Test
@@ -46,7 +49,7 @@ class ForecastBacktestServiceTest {
 
         ForecastBacktestService.BacktestResult result = service.runBacktest(demand, 30);
         
-        assertThat(result.allMetrics()).hasSize(3);
+        assertThat(result.allMetrics()).hasSize(4);
         // MA should perfectly predict 10 every time. Error = 0.
         assertThat(result.bestMetric().mae()).isEqualTo(0.0);
         assertThat(result.bestMetric().wape()).isEqualTo(0.0);
@@ -62,6 +65,7 @@ class ForecastBacktestServiceTest {
         assertThat(result.bestMetric().mae()).isEqualTo(1.0);
         assertThat(result.bestMetric().wape()).isCloseTo(
                 1.0 / 3.0, org.assertj.core.data.Offset.offset(1.0e-12));
+        assertThat(result.bestMetric().bias()).isEqualTo(0.0);
     }
 
     @Test
@@ -70,7 +74,7 @@ class ForecastBacktestServiceTest {
         var result = service.runBacktest(List.of(5, 5, 5, 0, 0), 2);
         assertThat(result.bestMetric().mae()).isEqualTo(2.0);
         assertThat(result.bestMetric().wape()).isNull();
-        assertThat(result.confidence()).isEqualTo(ForecastConfidence.LOW);
+        assertThat(result.confidence()).isEqualTo(ForecastConfidence.INSUFFICIENT);
     }
 
     @Test
@@ -88,6 +92,24 @@ class ForecastBacktestServiceTest {
                 fixedAlgorithm(ForecastAlgorithmType.MOVING_AVERAGE, 5.0)));
         assertThat(service.runBacktest(List.of(5, 5, 5, 5, 5), 2).bestAlgorithm())
                 .isEqualTo(ForecastAlgorithmType.MOVING_AVERAGE);
+    }
+
+    @Test
+    void runBacktest_restrictsCandidateAlgorithmsAndKeepsNaiveBenchmark() {
+        service = new ForecastBacktestService(List.of(
+                fixedAlgorithm(ForecastAlgorithmType.NAIVE, 8.0),
+                fixedAlgorithm(ForecastAlgorithmType.CROSTON, 5.0),
+                fixedAlgorithm(ForecastAlgorithmType.MOVING_AVERAGE, 1.0)));
+
+        var result = service.runBacktest(
+                List.of(5, 5, 5, 5, 5, 5),
+                2,
+                Set.of(ForecastAlgorithmType.NAIVE, ForecastAlgorithmType.CROSTON));
+
+        assertThat(result.allMetrics()).extracting(ForecastBacktestService.BacktestMetric::algorithm)
+                .containsExactly(ForecastAlgorithmType.NAIVE, ForecastAlgorithmType.CROSTON);
+        assertThat(result.bestAlgorithm()).isEqualTo(ForecastAlgorithmType.CROSTON);
+        assertThat(result.benchmarkMetric().algorithm()).isEqualTo(ForecastAlgorithmType.NAIVE);
     }
 
     @Test

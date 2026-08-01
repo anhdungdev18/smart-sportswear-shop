@@ -11,6 +11,18 @@ export type InventoryItemResponse = {
   availableQuantity: number;
 };
 
+export type PageMeta = {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+};
+
+export type InventoryPage<T> = {
+  items: T[];
+  meta: PageMeta;
+};
+
 export type InventoryTransactionResponse = {
   id: string;
   variantId: string;

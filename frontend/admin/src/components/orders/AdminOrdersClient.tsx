@@ -1,9 +1,10 @@
 ﻿"use client";
 
-import { memo, useDeferredValue, useMemo, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ApiRequestError } from "@/modules/api/common";
 import { fetchOrderDetail, updateOrderStatus } from "@/modules/orders/browser-api";
-import type { AdminOrderResponse } from "@/modules/orders/types";
+import type { AdminOrderResponse, PageMeta } from "@/modules/orders/types";
 import { fetchOrderShipment, updateOrderShipment } from "@/modules/shipping/browser-api";
 import type { ShipmentResponse, ShippingMethodResponse } from "@/modules/shipping/types";
 
@@ -15,6 +16,11 @@ const orderStatuses = [
   "DELIVERED",
   "CANCELLED"
 ] as const;
+
+const nextOrderStatuses: Record<string, readonly string[]> = {
+  PENDING_CONFIRMATION: ["CONFIRMED", "CANCELLED"], CONFIRMED: ["PACKING"],
+  PACKING: ["SHIPPING"], SHIPPING: ["DELIVERED"], DELIVERED: [], CANCELLED: []
+};
 
 const shipmentStatuses = [
   "PENDING",
@@ -96,12 +102,12 @@ const OrderRow = memo(function OrderRow({
       <td>
         <div className="admin-inline-form wrap">
           <select className="select" value={statusDraft} onChange={(event) => onStatusChange(event.target.value)}>
-            {orderStatuses.map((status) => (
+            {[order.orderStatus, ...(nextOrderStatuses[order.orderStatus] ?? [])].map((status) => (
               <option value={status} key={status}>{status}</option>
             ))}
           </select>
           <input className="admin-input" placeholder="Ghi chú nội bộ" value={noteDraft} onChange={(event) => onNoteChange(event.target.value)} />
-          <button className="admin-btn" type="button" onClick={onSaveStatus} disabled={savingId === order.id}>
+          <button className="admin-btn" type="button" onClick={onSaveStatus} disabled={savingId === order.id || statusDraft === order.orderStatus}>
             {savingId === order.id ? "Đang lưu..." : "Lưu trạng thái"}
           </button>
           <button className="admin-btn secondary" type="button" onClick={onLoadDetail} disabled={savingId === `detail:${order.id}`}>
@@ -161,11 +167,29 @@ const OrderRow = memo(function OrderRow({
   );
 });
 
-export function AdminOrdersClient({ initialOrders, shippingMethods }: { initialOrders: AdminOrderResponse[]; shippingMethods: ShippingMethodResponse[]; }) {
+function visiblePages(currentPage: number, totalPages: number) {
+  const count = Math.min(5, totalPages);
+  const start = Math.max(1, Math.min(currentPage - 2, totalPages - count + 1));
+  return Array.from({ length: count }, (_, index) => start + index);
+}
+
+export function AdminOrdersClient({
+  initialOrders,
+  shippingMethods,
+  pageMeta,
+  initialKeyword,
+  initialStatus
+}: {
+  initialOrders: AdminOrderResponse[];
+  shippingMethods: ShippingMethodResponse[];
+  pageMeta: PageMeta;
+  initialKeyword: string;
+  initialStatus: string;
+}) {
+  const router = useRouter();
   const [orders, setOrders] = useState(initialOrders);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | (typeof orderStatuses)[number]>("all");
-  const deferredSearchTerm = useDeferredValue(searchTerm);
+  const [searchTerm, setSearchTerm] = useState(initialKeyword);
+  const [statusFilter, setStatusFilter] = useState<"all" | (typeof orderStatuses)[number]>(initialStatus as "all" | (typeof orderStatuses)[number]);
   const [statusDrafts, setStatusDrafts] = useState<Record<string, string>>(Object.fromEntries(initialOrders.map((item) => [item.id, item.orderStatus])));
   const [noteDrafts, setNoteDrafts] = useState<Record<string, string>>({});
   const [shipmentDrafts, setShipmentDrafts] = useState<Record<string, ReturnType<typeof createShipmentDraft>>>({});
@@ -176,18 +200,27 @@ export function AdminOrdersClient({ initialOrders, shippingMethods }: { initialO
   const orderDetailCacheRef = useRef<Record<string, AdminOrderResponse>>({});
   const shipmentCacheRef = useRef<Record<string, ShipmentResponse | null>>({});
 
-  const filteredOrders = useMemo(() => {
-    const keyword = deferredSearchTerm.trim().toLowerCase();
-    return orders.filter((order) => {
-      const matchesStatus = statusFilter === "all" ? true : order.orderStatus === statusFilter;
-      if (!matchesStatus) return false;
-      if (!keyword) return true;
-      const haystack = [order.orderCode, order.customerName, order.customerPhone ?? "", order.paymentMethod, order.paymentStatus].join(" ").toLowerCase();
-      return haystack.includes(keyword);
-    });
-  }, [deferredSearchTerm, orders, statusFilter]);
+  function navigate(nextPage: number, keyword = searchTerm, status = statusFilter) {
+    const params = new URLSearchParams();
+    if (nextPage > 1) params.set("page", String(nextPage));
+    if (keyword.trim()) params.set("keyword", keyword.trim());
+    if (status !== "all") params.set("status", status);
+    router.replace(`/orders${params.size ? `?${params.toString()}` : ""}`);
+  }
+
+  useEffect(() => {
+    if (searchTerm === initialKeyword) return;
+    const timer = window.setTimeout(() => navigate(1, searchTerm, statusFilter), 400);
+    return () => window.clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm]);
 
   async function handleUpdate(id: string) {
+    const currentOrder = orders.find((item) => item.id === id);
+    if (!currentOrder || (statusDrafts[id] ?? currentOrder.orderStatus) === currentOrder.orderStatus) {
+      setMessage("Hãy chọn trạng thái tiếp theo trước khi lưu.");
+      return;
+    }
     try {
       setSavingId(id);
       setMessage(null);
@@ -282,13 +315,17 @@ export function AdminOrdersClient({ initialOrders, shippingMethods }: { initialO
       {message ? <p className="action-message">{message}</p> : null}
       <div className="admin-form-grid" style={{ marginBottom: 16 }}>
         <input className="admin-input" placeholder="Tìm theo mã đơn, tên khách, số điện thoại hoặc thanh toán" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} />
-        <select className="select" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as "all" | (typeof orderStatuses)[number])}>
+        <select className="select" value={statusFilter} onChange={(event) => {
+          const status = event.target.value as "all" | (typeof orderStatuses)[number];
+          setStatusFilter(status);
+          navigate(1, searchTerm, status);
+        }}>
           <option value="all">Tất cả trạng thái</option>
           {orderStatuses.map((status) => <option value={status} key={status}>{status}</option>)}
         </select>
       </div>
-      {filteredOrders.length === 0 ? (
-        <div className="empty-state">{orders.length === 0 ? "Hiện chưa có đơn hàng nào." : "Không có đơn hàng nào khớp bộ lọc hiện tại."}</div>
+      {orders.length === 0 ? (
+        <div className="empty-state">Không có đơn hàng nào khớp bộ lọc hiện tại.</div>
       ) : (
         <table className="data-table">
           <thead>
@@ -301,7 +338,7 @@ export function AdminOrdersClient({ initialOrders, shippingMethods }: { initialO
             </tr>
           </thead>
           <tbody>
-            {filteredOrders.map((order) => (
+            {orders.map((order) => (
               <OrderRow
                 key={order.id}
                 order={order}
@@ -324,6 +361,28 @@ export function AdminOrdersClient({ initialOrders, shippingMethods }: { initialO
           </tbody>
         </table>
       )}
+      {pageMeta.totalPages > 0 ? (
+        <div className="admin-pager">
+          <div className="admin-pager-info">
+            {(pageMeta.page - 1) * pageMeta.limit + 1}–{Math.min(pageMeta.page * pageMeta.limit, pageMeta.total)} / {pageMeta.total.toLocaleString("vi-VN")} đơn hàng
+          </div>
+          <div className="admin-pager-controls" aria-label="Phân trang đơn hàng">
+            <button className="admin-pager-btn" type="button" disabled={pageMeta.page <= 1} onClick={() => navigate(pageMeta.page - 1)}>Trước</button>
+            {visiblePages(pageMeta.page, pageMeta.totalPages).map((page) => (
+              <button
+                className={`admin-pager-btn admin-pager-number${page === pageMeta.page ? " active" : ""}`}
+                type="button"
+                aria-current={page === pageMeta.page ? "page" : undefined}
+                onClick={() => navigate(page)}
+                key={page}
+              >
+                {page}
+              </button>
+            ))}
+            <button className="admin-pager-btn" type="button" disabled={pageMeta.page >= pageMeta.totalPages} onClick={() => navigate(pageMeta.page + 1)}>Sau</button>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

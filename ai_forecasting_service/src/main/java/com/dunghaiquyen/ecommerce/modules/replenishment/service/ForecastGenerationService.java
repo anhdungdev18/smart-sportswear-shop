@@ -34,6 +34,7 @@ public class ForecastGenerationService {
     private final AtomicInteger failedCount = new AtomicInteger();
     private final CopyOnWriteArrayList<UUID> failedIds = new CopyOnWriteArrayList<>();
     private final AtomicReference<Instant> startedAt = new AtomicReference<>();
+    private final AtomicReference<Instant> finishedAt = new AtomicReference<>();
 
     public ForecastGenerationService(
             DemandForecastService demandForecastService,
@@ -43,7 +44,9 @@ public class ForecastGenerationService {
     }
 
     public ForecastGenerationStatus getStatus() {
-        long duration = startedAt.get() != null ? Duration.between(startedAt.get(), Instant.now()).toMillis() : 0;
+        Instant start = startedAt.get();
+        Instant end = finishedAt.get();
+        long duration = start != null ? Duration.between(start, end != null ? end : Instant.now()).toMillis() : 0;
         return new ForecastGenerationStatus(
             currentStatus.get(),
             requestedCount.get(),
@@ -60,10 +63,11 @@ public class ForecastGenerationService {
             // If it is COMPLETED or FAILED, we can allow a new run
             if (!currentStatus.compareAndSet(Status.COMPLETED, Status.SYNCING) &&
                 !currentStatus.compareAndSet(Status.FAILED, Status.SYNCING)) {
-                throw new IllegalStateException("A batch is already running");
+                throw new IllegalArgumentException("A batch is already running");
             }
         }
         startedAt.set(Instant.now());
+        finishedAt.set(null);
         requestedCount.set(0);
         processedCount.set(0);
         succeededCount.set(0);
@@ -104,10 +108,12 @@ public class ForecastGenerationService {
                 CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
                 
                 long totalMillis = System.currentTimeMillis() - batchStart;
+                finishedAt.set(Instant.now());
                 currentStatus.set(Status.COMPLETED);
                 log.info("Forecast batch completed in {}ms: requested={}, succeeded={}, failed={}", 
                          totalMillis, requestedCount.get(), succeededCount.get(), failedCount.get());
             } catch (Exception e) {
+                finishedAt.set(Instant.now());
                 currentStatus.set(Status.FAILED);
                 log.error("Forecast batch orchestration failed", e);
             }
@@ -147,10 +153,12 @@ public class ForecastGenerationService {
                 CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
                 
                 long totalMillis = System.currentTimeMillis() - batchStart;
+                finishedAt.set(Instant.now());
                 currentStatus.set(Status.COMPLETED);
                 log.info("Evaluation batch completed in {}ms: requested={}, succeeded={}, failed={}", 
                          totalMillis, requestedCount.get(), succeededCount.get(), failedCount.get());
             } catch (Exception e) {
+                finishedAt.set(Instant.now());
                 currentStatus.set(Status.FAILED);
                 log.error("Evaluation batch orchestration failed", e);
             }
@@ -158,6 +166,7 @@ public class ForecastGenerationService {
     }
 
     public void failBatch() {
+        finishedAt.set(Instant.now());
         currentStatus.set(Status.FAILED);
     }
 }

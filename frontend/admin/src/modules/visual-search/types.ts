@@ -1,0 +1,5 @@
+export type VisualSearchCoverage = { totalActiveImages: number; ready: number; pending: number; processing: number; failed: number; missing: number; coveragePct: number };
+export type VisualSearchOperations = { provider: string | null; model: string | null; dimensions: number | null; outboxPending: number; outboxPublishing: number; outboxFailed: number; rabbitmqAvailable: boolean; mainQueueMessages: number | null; retryQueueMessages: number | null; dlqMessages: number | null };
+export type VisualSearchUsage = { days: number; rows: Array<{ day: string; operation: string; requests: number; imagePixels: number; textTokens: number; estimatedCostUsd: number; successCount: number; failureCount: number }> };
+export type VisualSearchJobs = { jobs: Array<{ id: string; jobType: string; status: string; totalCount: number; completedCount: number; failedCount: number; pendingCount: number; createdAt: string; completedAt: string | null }> };
+export type VisualSearchRetry = { jobId: string; enqueuedCount: number };

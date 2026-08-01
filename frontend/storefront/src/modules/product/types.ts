@@ -90,6 +90,13 @@ export interface ProductSuggestion {
   minPrice: number;
 }
 
+export interface VisualSearchResult {
+  product: ProductListItem;
+  matchedImageId: string;
+  matchedImageUrl: string;
+  similarity: number;
+}
+
 export interface ProductColorSwatch {
   id: string;
   image: string;

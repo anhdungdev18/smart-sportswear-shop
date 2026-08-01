@@ -3,6 +3,7 @@ export const adminEndpoints = {
   orderReport: "/api/v1/admin/reports/orders",
   revenueReport: "/api/v1/admin/reports/revenue",
   topProducts: "/api/v1/admin/reports/products",
+  customerReport: "/api/v1/admin/reports/customers",
   inventoryReport: "/api/v1/admin/reports/inventory",
   inventory: "/api/v1/admin/inventory",
   inventoryTransactions: "/api/v1/admin/inventory/transactions",

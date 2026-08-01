@@ -7,6 +7,7 @@ import com.dunghaiquyen.ecommerce.modules.replenishment.forecasting.ForecastResu
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -23,58 +24,83 @@ public class ForecastBacktestService {
             double mae,
             Double wape,
             double residualStdDev,
+            double bias,
+            int windows,
             double sumActual) {}
 
     public record BacktestResult(
             ForecastAlgorithmType bestAlgorithm,
             BacktestMetric bestMetric,
+            BacktestMetric benchmarkMetric,
             ForecastConfidence confidence,
+            String reason,
             List<BacktestMetric> allMetrics) {}
 
     public BacktestResult runBacktest(List<Integer> dailyDemand, int testWindowDays) {
+        return runBacktest(dailyDemand, testWindowDays, algorithms.stream().map(ForecastAlgorithm::type).collect(java.util.stream.Collectors.toSet()));
+    }
+
+    public BacktestResult runBacktest(List<Integer> dailyDemand, int testWindowDays, Set<ForecastAlgorithmType> candidateTypes) {
         if (dailyDemand == null || dailyDemand.size() <= testWindowDays) {
-            // Not enough data to backtest
             return new BacktestResult(
-                    ForecastAlgorithmType.MOVING_AVERAGE, null, ForecastConfidence.LOW, List.of());
+                    ForecastAlgorithmType.NAIVE, null, null, ForecastConfidence.INSUFFICIENT,
+                    "Khong du lich su de backtest rolling-origin.", List.of());
         }
 
-        int nTest = testWindowDays;
-        int nTrain = dailyDemand.size() - nTest;
+        int windowCount = Math.max(1, Math.min(3, (dailyDemand.size() - testWindowDays) / Math.max(1, testWindowDays)));
 
         List<BacktestMetric> metrics = new ArrayList<>();
 
         for (ForecastAlgorithm algo : algorithms) {
+            if (candidateTypes != null && !candidateTypes.isEmpty() && !candidateTypes.contains(algo.type())) {
+                continue;
+            }
             double sumAbsError = 0;
             double sumActual = 0;
             double sumSqError = 0;
+            double sumError = 0;
+            int observations = 0;
 
-            for (int i = 0; i < nTest; i++) {
-                List<Integer> history = dailyDemand.subList(0, nTrain + i);
-                int actual = dailyDemand.get(nTrain + i);
+            for (int window = 0; window < windowCount; window++) {
+                int firstTestIndex = dailyDemand.size() - ((windowCount - window) * testWindowDays);
+                for (int i = 0; i < testWindowDays; i++) {
+                    int actualIndex = firstTestIndex + i;
+                    List<Integer> history = dailyDemand.subList(0, actualIndex);
+                    int actual = dailyDemand.get(actualIndex);
 
-                ForecastResult result = algo.forecast(history, 1);
-                double predicted = result.dailyForecast().isEmpty() ? 0.0 : result.dailyForecast().get(0);
+                    ForecastResult result = algo.forecast(history, 1);
+                    double predicted = result.dailyForecast().isEmpty() ? 0.0 : Math.max(0.0, result.dailyForecast().get(0));
 
-                double error = actual - predicted;
-                sumAbsError += Math.abs(error);
-                sumActual += actual;
-                sumSqError += error * error;
+                    double error = actual - predicted;
+                    sumAbsError += Math.abs(error);
+                    sumActual += actual;
+                    sumSqError += error * error;
+                    sumError += error;
+                    observations++;
+                }
             }
 
-            double mae = sumAbsError / nTest;
+            double mae = sumAbsError / observations;
             Double wape = sumActual > 0 ? (sumAbsError / sumActual) : null;
-            double residualStdDev = Math.sqrt(sumSqError / nTest);
+            double residualStdDev = Math.sqrt(sumSqError / observations);
+            double bias = sumActual > 0 ? (sumError / sumActual) : 0.0;
 
-            metrics.add(new BacktestMetric(algo.type(), mae, wape, residualStdDev, sumActual));
+            metrics.add(new BacktestMetric(algo.type(), mae, wape, residualStdDev, bias, windowCount, sumActual));
         }
 
         BacktestMetric bestMetric = selectBestMetric(metrics);
+        BacktestMetric benchmarkMetric = metrics.stream()
+                .filter(metric -> metric.algorithm() == ForecastAlgorithmType.NAIVE)
+                .findFirst()
+                .orElse(null);
         ForecastConfidence confidence = calculateConfidence(dailyDemand, bestMetric);
 
         return new BacktestResult(
-                bestMetric != null ? bestMetric.algorithm() : ForecastAlgorithmType.MOVING_AVERAGE,
+                bestMetric != null ? bestMetric.algorithm() : ForecastAlgorithmType.NAIVE,
                 bestMetric,
+                benchmarkMetric,
                 confidence,
+                buildReason(bestMetric, benchmarkMetric, confidence),
                 metrics);
     }
 
@@ -117,30 +143,52 @@ public class ForecastBacktestService {
 
     private int getAlgorithmPriority(ForecastAlgorithmType type) {
         return switch (type) {
-            case MOVING_AVERAGE -> 1;
-            case EWMA -> 2;
-            case CROSTON -> 3;
+            case NAIVE -> 1;
+            case MOVING_AVERAGE -> 2;
+            case EWMA -> 3;
+            case CROSTON -> 4;
+            case ROBUST_MEDIAN -> 5;
             default -> 99;
         };
     }
 
     private ForecastConfidence calculateConfidence(List<Integer> dailyDemand, BacktestMetric metric) {
         if (metric == null || metric.wape() == null) {
-            return ForecastConfidence.LOW;
+            return ForecastConfidence.INSUFFICIENT;
         }
 
         int totalDays = dailyDemand.size();
         long daysWithDemand = dailyDemand.stream().filter(d -> d != null && d > 0).count();
         double wape = metric.wape();
+        double absBias = Math.abs(metric.bias());
 
-        if (totalDays >= 90 && daysWithDemand >= 20 && wape <= 0.25) {
+        if (totalDays >= 120 && daysWithDemand >= 30 && metric.windows() >= 3 && wape <= 0.30 && absBias <= 0.25) {
             return ForecastConfidence.HIGH;
         }
 
-        if (totalDays >= 60 && daysWithDemand >= 10 && wape <= 0.50) {
+        if (totalDays >= 60 && daysWithDemand >= 12 && metric.windows() >= 1 && wape <= 0.60) {
             return ForecastConfidence.MEDIUM;
         }
 
         return ForecastConfidence.LOW;
+    }
+
+    private String buildReason(BacktestMetric bestMetric, BacktestMetric benchmarkMetric, ForecastConfidence confidence) {
+        if (bestMetric == null) {
+            return "Khong co candidate model kha dung cho backtest.";
+        }
+        String benchmark = "";
+        if (benchmarkMetric != null && benchmarkMetric.wape() != null) {
+            benchmark = String.format("; naive baseline WAPE %.4f", benchmarkMetric.wape());
+        }
+        return String.format(
+                "Chon %s qua rolling-origin backtest %d window: MAE %.4f, WAPE %s, bias %.4f%s, confidence %s.",
+                bestMetric.algorithm(),
+                bestMetric.windows(),
+                bestMetric.mae(),
+                bestMetric.wape() == null ? "N/A" : String.format("%.4f", bestMetric.wape()),
+                bestMetric.bias(),
+                benchmark,
+                confidence);
     }
 }

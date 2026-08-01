@@ -12,6 +12,8 @@ import com.dunghaiquyen.ecommerce.modules.product.entity.ProductImage;
 import com.dunghaiquyen.ecommerce.modules.product.mapper.ProductMapper;
 import com.dunghaiquyen.ecommerce.modules.product.repository.ProductImageRepository;
 import com.dunghaiquyen.ecommerce.modules.product.repository.ProductRepository;
+import com.dunghaiquyen.ecommerce.visualsearch.outbox.CatalogEventType;
+import com.dunghaiquyen.ecommerce.visualsearch.outbox.CatalogOutboxService;
 import java.util.List;
 import java.util.UUID;
 import org.slf4j.Logger;
@@ -34,16 +36,19 @@ public class ProductImageService {
     private final ProductImageRepository imageRepository;
     private final ProductMapper productMapper;
     private final ImageStorageService imageStorageService;
+    private final CatalogOutboxService catalogOutboxService;
 
     public ProductImageService(
             ProductRepository productRepository,
             ProductImageRepository imageRepository,
             ProductMapper productMapper,
-            ImageStorageService imageStorageService) {
+            ImageStorageService imageStorageService,
+            CatalogOutboxService catalogOutboxService) {
         this.productRepository = productRepository;
         this.imageRepository = imageRepository;
         this.productMapper = productMapper;
         this.imageStorageService = imageStorageService;
+        this.catalogOutboxService = catalogOutboxService;
     }
 
     /** Legacy flow: admin pastes an already-hosted image URL directly (no upload). Kept side by side with uploadImage - see class javadoc on uploadImage for the tradeoff. */
@@ -119,6 +124,7 @@ public class ProductImageService {
         }
 
         String publicId = image.getPublicId();
+        catalogOutboxService.append(CatalogEventType.PRODUCT_IMAGE_DELETED, productId, imageId);
         imageRepository.delete(image);
         if (publicId != null && !publicId.isBlank()) {
             scheduleRemoteDeleteAfterCommit(publicId);
@@ -200,7 +206,9 @@ public class ProductImageService {
         image.setPrimary(makePrimary);
 
         try {
-            return imageRepository.saveAndFlush(image);
+            ProductImage saved = imageRepository.saveAndFlush(image);
+            catalogOutboxService.append(CatalogEventType.PRODUCT_IMAGE_CREATED, product.getId(), saved.getId());
+            return saved;
         } catch (DataIntegrityViolationException ex) {
             throw new BusinessRuleException("Another image was just set as primary for this product, please retry");
         }

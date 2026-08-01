@@ -1,9 +1,20 @@
-import { apiRequest } from "@/modules/api/client";
+import { apiRequestEnvelope } from "@/modules/api/client";
 import { adminEndpoints } from "@/modules/api/endpoints";
-import type { AdminOrderResponse } from "@/modules/orders/types";
+import type { AdminOrderPage, AdminOrderResponse, PageMeta } from "@/modules/orders/types";
 
-export async function listAdminOrders() {
-  return apiRequest<AdminOrderResponse[]>(adminEndpoints.orders, {
-    next: { revalidate: 30 }
+export type AdminOrderListParams = {
+  page?: number;
+  limit?: number;
+  keyword?: string;
+  status?: string;
+};
+
+export async function listAdminOrders(query: AdminOrderListParams = {}): Promise<AdminOrderPage> {
+  const response = await apiRequestEnvelope<AdminOrderResponse[]>(adminEndpoints.orders, {
+    query,
+    cache: "no-store"
   });
+  const page = query.page ?? 1;
+  const limit = query.limit ?? 20;
+  return { items: response.data, meta: { page, limit, total: response.data.length, totalPages: 1, ...(response.meta as Partial<PageMeta> | undefined) } };
 }

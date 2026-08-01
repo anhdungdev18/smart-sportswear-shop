@@ -5,6 +5,11 @@ import { endpoints } from "@/lib/endpoints";
 export const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ?? "http://localhost:8080";
 
+function getApiBase(): string {
+  if (typeof window !== "undefined") return API_BASE;
+  return process.env.SERVER_API_BASE_URL?.replace(/\/$/, "") || API_BASE;
+}
+
 export type ApiEnvelope<T> = {
   data: T;
   meta?: Record<string, unknown>;
@@ -28,7 +33,7 @@ function buildUrl(
   path: string,
   query?: Record<string, QueryValue | QueryValue[]>,
 ): string {
-  const base = API_BASE.replace(/\/$/, "");
+  const base = getApiBase();
   const pathname = path.startsWith("/") ? path : `/${path}`;
   const url = new URL(`${base}${pathname}`);
   for (const [k, v] of Object.entries(query ?? {})) {
@@ -98,7 +103,10 @@ export async function apiFetch<T>(
   }
 
   const isGet = !rest.method || rest.method.toUpperCase() === "GET";
-  const nextOptions = next ?? (isGet && !token ? { revalidate: 60 } : undefined);
+  // `cache: "no-store"` and `next.revalidate` are mutually exclusive in Next.js.
+  // Only provide the default revalidation policy when the caller has not
+  // explicitly selected a cache mode.
+  const nextOptions = next ?? (isGet && !token && rest.cache == null ? { revalidate: 60 } : undefined);
 
   const res = await fetch(buildUrl(path, query), {
     ...rest,

@@ -13,6 +13,11 @@ type ApiRequestInit = RequestInit & {
 };
 
 export async function apiRequest<T>(path: string, init?: ApiRequestInit) {
+  const payload = await apiRequestEnvelope<T>(path, init);
+  return payload.data;
+}
+
+export async function apiRequestEnvelope<T>(path: string, init?: ApiRequestInit): Promise<ApiEnvelope<T>> {
   if (shouldUseMockApi()) {
     throw new ApiRequestError(0, "NEXT_PUBLIC_API_BASE_URL is not configured", null);
   }
@@ -45,5 +50,8 @@ export async function apiRequest<T>(path: string, init?: ApiRequestInit) {
     throw new ApiRequestError(response.status, response.statusText, payload);
   }
 
-  return ((payload as ApiEnvelope<T>)?.data ?? payload) as T;
+  if (payload && typeof payload === "object" && "data" in payload) {
+    return payload as ApiEnvelope<T>;
+  }
+  return { data: payload as T };
 }
