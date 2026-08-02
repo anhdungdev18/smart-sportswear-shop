@@ -31,6 +31,8 @@ public record ProductListQuery(
         BigDecimal maxPrice,
         String size,
         String color,
+        /** Product-level discount band derived from variant price/compareAtPrice. */
+        String discount,
         Gender gender,
         String sportType,
         /** Football-boot surface facet: FG (natural grass), TF/AG (artificial), IC (futsal). */
