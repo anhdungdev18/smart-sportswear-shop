@@ -8,6 +8,7 @@ import { emitSessionChange, getAccessToken, onSessionChange } from "@/lib/sessio
 import { getCart, removeCartItem, updateCartItem } from "@/modules/cart/api";
 import { NO_IMAGE } from "@/modules/ui/placeholder";
 import type { CartResponse } from "@/modules/cart/types";
+import { saveCheckoutSelection } from "@/modules/checkout/selection";
 
 export function CartPageClient() {
   const [cart, setCart] = useState<CartResponse | null>(null);
@@ -15,6 +16,7 @@ export function CartPageClient() {
   const [error, setError] = useState<string | null>(null);
   const [pendingItemId, setPendingItemId] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const loadCart = async () => {
     setLoading(true);
@@ -22,6 +24,7 @@ export function CartPageClient() {
     try {
       const response = await getCart();
       setCart(response);
+      setSelectedIds(response.items.map((item) => item.id));
       emitSessionChange();
     } catch (err) {
       setError(getApiErrorMessage(err, "Không thể tải giỏ hàng."));
@@ -46,7 +49,9 @@ export function CartPageClient() {
     };
   }, []);
 
-  const subtotal = useMemo(() => cart?.subtotal ?? 0, [cart]);
+  const selectedSubtotal = useMemo(() => cart?.items
+    .filter((item) => selectedIds.includes(item.id))
+    .reduce((sum, item) => sum + item.lineTotal, 0) ?? 0, [cart, selectedIds]);
 
   const handleQuantityChange = async (itemId: string, quantity: number) => {
     if (quantity < 1) return;
@@ -87,7 +92,8 @@ export function CartPageClient() {
 
         <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_380px]">
           <section className="overflow-hidden border border-ivy-hairline">
-            <div className="hidden grid-cols-[120px_minmax(0,1fr)_140px_140px_120px] border-b border-ivy-hairline px-6 py-4 text-[13px] font-semibold uppercase tracking-[0.04em] text-ivy-text-muted md:grid">
+            <div className="hidden grid-cols-[24px_120px_minmax(0,1fr)_140px_140px_120px] border-b border-ivy-hairline px-6 py-4 text-[13px] font-semibold uppercase tracking-[0.04em] text-ivy-text-muted md:grid">
+              <span />
               <span>Sản phẩm</span>
               <span>Thông tin</span>
               <span>Đơn giá</span>
@@ -102,8 +108,17 @@ export function CartPageClient() {
                 {cart.items.map((item) => (
                   <div
                     key={item.id}
-                    className="grid gap-5 border-b border-ivy-hairline px-6 py-6 md:grid-cols-[120px_minmax(0,1fr)_140px_140px_120px] md:items-center"
+                    className="grid gap-5 border-b border-ivy-hairline px-6 py-6 md:grid-cols-[24px_120px_minmax(0,1fr)_140px_140px_120px] md:items-center"
                   >
+                    <input
+                      type="checkbox"
+                      aria-label={`Chọn ${item.productName} để thanh toán`}
+                      checked={selectedIds.includes(item.id)}
+                      onChange={(event) => setSelectedIds((current) => event.target.checked
+                        ? [...current, item.id]
+                        : current.filter((id) => id !== item.id))}
+                      className="size-4 accent-ivy-dark"
+                    />
                     <Link href={`/sanpham/${item.productId}`} className="relative aspect-[0.78] w-[120px] overflow-hidden bg-[#f5f5f5]">
                       <Image
                         src={item.thumbnail || NO_IMAGE}
@@ -175,7 +190,7 @@ export function CartPageClient() {
             <div className="space-y-4 border-b border-ivy-hairline pb-6">
               <div className="flex items-center justify-between text-[15px] text-ivy-text">
                 <span>Tạm tính</span>
-                <span>{subtotal.toLocaleString("vi-VN")}đ</span>
+                <span>{selectedSubtotal.toLocaleString("vi-VN")}đ</span>
               </div>
               <div className="flex items-center justify-between text-[15px] text-ivy-text">
                 <span>Phí vận chuyển</span>
@@ -184,12 +199,16 @@ export function CartPageClient() {
             </div>
             <div className="flex items-center justify-between py-6 text-[24px] font-semibold text-ivy-dark">
               <span>Tổng cộng</span>
-              <span>{subtotal.toLocaleString("vi-VN")}đ</span>
+              <span>{selectedSubtotal.toLocaleString("vi-VN")}đ</span>
             </div>
 
             <div className="space-y-4">
               <Link
                 href="/thanh-toan"
+                onClick={(event) => {
+                  if (selectedIds.length === 0) event.preventDefault();
+                  else saveCheckoutSelection(selectedIds);
+                }}
                 className="flex h-12 w-full items-center justify-center rounded-tl-[20px] rounded-br-[20px] bg-ivy-dark text-[14px] font-semibold uppercase tracking-[0.05em] text-white"
               >
                 Tiến hành thanh toán

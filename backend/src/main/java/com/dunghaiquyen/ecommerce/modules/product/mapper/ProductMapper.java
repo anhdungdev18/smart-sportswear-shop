@@ -10,7 +10,7 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface ProductMapper {
 
-    @Mapping(target = "availableQuantity", expression = "java(variant.getStockQuantity() - variant.getReservedQuantity())")
+    @Mapping(target = "availableQuantity", expression = "java(variant.getStatus() == com.dunghaiquyen.ecommerce.modules.product.entity.VariantStatus.ACTIVE ? Math.max(0, variant.getStockQuantity() - variant.getReservedQuantity()) : 0)")
     ProductVariantResponse toVariantResponse(ProductVariant variant);
 
     // ProductImage's boolean field is named "primary" (Lombok getter isPrimary(),

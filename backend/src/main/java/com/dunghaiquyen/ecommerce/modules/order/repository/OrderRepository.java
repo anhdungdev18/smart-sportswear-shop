@@ -4,6 +4,11 @@ import com.dunghaiquyen.ecommerce.modules.order.entity.Order;
 import jakarta.persistence.LockModeType;
 import java.util.Optional;
 import java.util.UUID;
+import java.time.Instant;
+import java.util.List;
+import com.dunghaiquyen.ecommerce.modules.order.entity.OrderStatus;
+import com.dunghaiquyen.ecommerce.modules.order.entity.PaymentMethod;
+import com.dunghaiquyen.ecommerce.modules.payment.entity.PaymentStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Lock;
@@ -24,4 +29,7 @@ public interface OrderRepository extends JpaRepository<Order, UUID>, JpaSpecific
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select o from Order o where o.id = :id")
     Optional<Order> findByIdForUpdate(@Param("id") UUID id);
+
+    List<Order> findTop100ByOrderStatusAndPaymentMethodAndPaymentStatusInAndCreatedAtBeforeOrderByCreatedAtAsc(
+            OrderStatus orderStatus, PaymentMethod paymentMethod, List<PaymentStatus> paymentStatuses, Instant cutoff);
 }

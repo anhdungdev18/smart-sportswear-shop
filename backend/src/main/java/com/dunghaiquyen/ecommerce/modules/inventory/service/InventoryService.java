@@ -74,14 +74,17 @@ public class InventoryService {
     private final ProductVariantRepository variantRepository;
     private final InventoryTransactionRepository transactionRepository;
     private final ProductImageRepository imageRepository;
+    private final InventoryRealtimeService realtimeService;
 
     public InventoryService(
             ProductVariantRepository variantRepository,
             InventoryTransactionRepository transactionRepository,
-            ProductImageRepository imageRepository) {
+            ProductImageRepository imageRepository,
+            InventoryRealtimeService realtimeService) {
         this.variantRepository = variantRepository;
         this.transactionRepository = transactionRepository;
         this.imageRepository = imageRepository;
+        this.realtimeService = realtimeService;
     }
 
     public record ListResult<T>(List<T> items, PageMeta meta) {
@@ -154,6 +157,23 @@ public class InventoryService {
                 variant.getReservedQuantity(),
                 actor,
                 "Order " + order.getOrderCode() + " cancelled - reserved stock released");
+    }
+
+    @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = CacheConfig.REPORT_OVERVIEW, allEntries = true),
+            @CacheEvict(value = CacheConfig.REPORT_INVENTORY, allEntries = true),
+            @CacheEvict(value = CacheConfig.REPORT_PRODUCTS, allEntries = true)
+    })
+    public void restockReturn(UUID variantId, int quantity, Order order, User actor) {
+        ProductVariant variant = lockVariant(variantId);
+        int beforeStock = variant.getStockQuantity();
+        int beforeReserved = variant.getReservedQuantity();
+        variant.setStockQuantity(beforeStock + quantity);
+        variantRepository.save(variant);
+        log(variant, order, InventoryTransactionType.RETURN_RESTOCK, quantity,
+                beforeStock, beforeReserved, beforeReserved, actor,
+                "Accepted customer return restocked");
     }
 
     /** Manual warehouse receipt - never touches reservedQuantity (TASK_BREAKDOWN_PHASE1.md I2). */
@@ -437,5 +457,6 @@ public class InventoryService {
         tx.setNote(note);
         tx.setCreatedBy(actor);
         transactionRepository.save(tx);
+        realtimeService.publishAfterCommit(variant);
     }
 }

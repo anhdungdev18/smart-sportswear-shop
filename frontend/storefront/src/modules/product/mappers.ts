@@ -10,6 +10,7 @@ export function mapProductListItem(p: ProductListItem): Product {
     hoverImage: p.thumbnail ?? NO_IMAGE,
     price: p.minPrice,
     oldPrice: p.maxPrice > p.minPrice ? p.maxPrice : undefined,
+    isOutOfStock: p.availableQuantity <= 0,
     colors: [],
     sizes: [],
   };

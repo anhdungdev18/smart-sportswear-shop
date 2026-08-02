@@ -25,7 +25,7 @@ export function ProductCard({ product }: { product: Product }) {
       onMouseLeave={() => setSizePopupOpen(false)}
     >
       <div className="product relative">
-        {product.ribbon ? (
+        {product.ribbon && !product.isOutOfStock ? (
           <span
             className={cn(
               "absolute left-0 top-2 z-10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.04em] text-white",
@@ -40,7 +40,6 @@ export function ProductCard({ product }: { product: Product }) {
             -{product.discountPercent}%
           </span>
         ) : null}
-
         <div className="thumb-product group relative mb-4 aspect-[332/498] overflow-hidden bg-[#f7f7f7]">
           <Link href={product.href} className="relative block h-full">
             <Image
@@ -59,11 +58,18 @@ export function ProductCard({ product }: { product: Product }) {
             />
           </Link>
 
+          {product.isOutOfStock ? (
+            <span className="pointer-events-none absolute left-3 top-3 z-20 rounded-tl-[10px] rounded-br-[10px] bg-[#221F20]/95 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-white shadow-sm">
+              Hết hàng
+            </span>
+          ) : null}
+
           <div className="add-to-cart absolute bottom-0 right-0">
             <button
               type="button"
-              className="flex h-8 w-8 items-center justify-center rounded-tl-[16px] rounded-br-[16px] border border-transparent bg-[#221F20] text-white transition-colors hover:border-[#221F20] hover:bg-white hover:text-[#221F20]"
-              aria-label="Thêm vào giỏ hàng"
+              disabled={product.isOutOfStock}
+              className="flex h-8 w-8 items-center justify-center rounded-tl-[16px] rounded-br-[16px] border border-transparent bg-[#221F20] text-white transition-colors hover:border-[#221F20] hover:bg-white hover:text-[#221F20] disabled:cursor-not-allowed disabled:bg-[#A8A9AD] disabled:text-white"
+              aria-label={product.isOutOfStock ? "Sản phẩm đã hết hàng" : "Thêm vào giỏ hàng"}
             >
               <ShoppingBagIcon className="h-4 w-4" />
             </button>

@@ -45,7 +45,13 @@ public class CheckoutPreviewService {
      */
     @Transactional(readOnly = true)
     public CheckoutPreviewResponse preview(UUID userId, CheckoutPreviewRequest request) {
-        OrderService.CartLinesCheckResult linesResult = orderService.checkCartLines(userId);
+        boolean buyNow = request.buyNowVariantId() != null;
+        if (buyNow && request.cartItemIds() != null && !request.cartItemIds().isEmpty()) {
+            throw new BusinessRuleException(HttpStatus.UNPROCESSABLE_ENTITY, "Choose either buy now or cart checkout");
+        }
+        OrderService.CartLinesCheckResult linesResult = buyNow
+                ? orderService.checkBuyNowLine(request.buyNowVariantId(), request.buyNowQuantity())
+                : orderService.checkCartLines(userId, request.cartItemIds());
         if (linesResult.lines().isEmpty()) {
             throw new BusinessRuleException(HttpStatus.UNPROCESSABLE_ENTITY, "Cart is empty");
         }

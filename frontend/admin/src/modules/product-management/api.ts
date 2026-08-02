@@ -1,4 +1,4 @@
-﻿import { apiRequest, shouldUseMockApi, type ApiQuery } from "@/modules/api/client";
+﻿import { apiRequest, apiRequestEnvelope, shouldUseMockApi, type ApiQuery } from "@/modules/api/client";
 import { adminEndpoints } from "@/modules/api/endpoints";
 import { adminProducts, productStats, type AdminProduct } from "@/modules/product-management/products";
 import { NO_IMAGE } from "@/modules/ui/placeholder";
@@ -74,6 +74,7 @@ function mapAdminStatus(status: AdminProductListItemResponse["status"], stock: n
 // catalog in the admin, we page through every batch instead of stopping at the
 // first 100 — otherwise products beyond the newest page are invisible.
 const ADMIN_PAGE_SIZE = 100;
+const INVENTORY_PAGE_SIZE = 100;
 
 async function fetchAllAdminProducts() {
   const all: AdminProductListItemResponse[] = [];
@@ -85,6 +86,27 @@ async function fetchAllAdminProducts() {
     all.push(...batch);
     if (batch.length < ADMIN_PAGE_SIZE) break;
   }
+  return all;
+}
+
+async function fetchAllInventoryItems() {
+  const all: InventoryItemResponse[] = [];
+
+  for (let page = 1; ; page += 1) {
+    const response = await apiRequestEnvelope<InventoryItemResponse[]>(adminEndpoints.inventory, {
+      query: { page, limit: INVENTORY_PAGE_SIZE },
+      next: { revalidate: 30 }
+    });
+    all.push(...response.data);
+
+    const totalPages = Number(response.meta?.totalPages);
+    if (Number.isFinite(totalPages) && totalPages > 0) {
+      if (page >= totalPages) break;
+    } else if (response.data.length < INVENTORY_PAGE_SIZE) {
+      break;
+    }
+  }
+
   return all;
 }
 
@@ -100,10 +122,7 @@ async function loadAdminProductDataset(query: AdminProductListQuery = {}) {
         });
 
   const [inventoryResponse, productReport] = await Promise.all([
-    apiRequest<InventoryItemResponse[]>(adminEndpoints.inventory, {
-      query: { limit: 500 },
-      next: { revalidate: 30 }
-    }).catch(() => [] as InventoryItemResponse[]),
+    fetchAllInventoryItems(),
     apiRequest<ProductReportResponse>(adminEndpoints.topProducts, { next: { revalidate: 30 } })
       .catch(() => ({ bestSelling: [] } as ProductReportResponse))
   ]);

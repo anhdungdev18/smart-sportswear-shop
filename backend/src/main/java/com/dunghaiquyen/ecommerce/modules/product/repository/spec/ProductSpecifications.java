@@ -14,11 +14,12 @@ import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Subquery;
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 import org.springframework.data.jpa.domain.Specification;
 
 /**
- * size/color/minPrice/maxPrice are independent facets, each implemented as its
+ * Size/color and one-sided price filters are independent facets, each implemented as its
  * own EXISTS-subquery against product_variants: "product has size M" and
  * "product has color Black" can each be satisfied by a DIFFERENT variant of
  * the same product. This matches how faceted filters normally read (not "one
@@ -26,6 +27,7 @@ import org.springframework.data.jpa.domain.Specification;
  * explosion. All variant-based filters exclude INACTIVE variants so a
  * discontinued variant cannot make a product match a facet that is otherwise
  * not really available.
+ * A two-sided price range is intentionally evaluated against one variant.
  */
 public final class ProductSpecifications {
 
@@ -136,12 +138,55 @@ public final class ProductSpecifications {
         return variantExists((variantRoot, cb) -> cb.equal(variantRoot.get("color"), color));
     }
 
+    public static Specification<Product> hasVariantColorFamily(String colorFamily) {
+        List<String> tokens = switch (colorFamily.toUpperCase()) {
+            case "BLACK" -> List.of("black", "đen");
+            case "WHITE" -> List.of("white", "trắng");
+            case "BLUE" -> List.of("blue", "navy", "cobalt", "xanh dương", "xanh biển");
+            case "YELLOW" -> List.of("yellow", "vàng", "solar");
+            case "PINK" -> List.of("pink", "hồng");
+            case "RED" -> List.of("red", "đỏ");
+            case "GRAY" -> List.of("gray", "grey", "xám");
+            case "BEIGE" -> List.of("beige", "be");
+            case "BROWN" -> List.of("brown", "nâu");
+            case "GREEN" -> List.of("green", "xanh lá");
+            case "ORANGE" -> List.of("orange", "cam");
+            case "PURPLE" -> List.of("purple", "violet", "tím");
+            default -> List.of(colorFamily.toLowerCase());
+        };
+        return variantExists((variantRoot, cb) -> cb.or(tokens.stream()
+                .map(token -> cb.like(cb.lower(variantRoot.get("color")), "%" + token + "%"))
+                .toArray(jakarta.persistence.criteria.Predicate[]::new)));
+    }
+
     public static Specification<Product> hasVariantPriceGte(BigDecimal minPrice) {
         return variantExists((variantRoot, cb) -> cb.greaterThanOrEqualTo(variantRoot.get("price"), minPrice));
     }
 
     public static Specification<Product> hasVariantPriceLte(BigDecimal maxPrice) {
         return variantExists((variantRoot, cb) -> cb.lessThanOrEqualTo(variantRoot.get("price"), maxPrice));
+    }
+
+    public static Specification<Product> hasVariantPriceBetween(BigDecimal minPrice, BigDecimal maxPrice) {
+        return variantExists((variantRoot, cb) -> cb.between(variantRoot.get("price"), minPrice, maxPrice));
+    }
+
+    public static Specification<Product> hasVariantDiscountBand(String band) {
+        return variantExists((variantRoot, cb) -> {
+            var price = variantRoot.<BigDecimal>get("price");
+            var compareAt = variantRoot.<BigDecimal>get("compareAtPrice");
+            var discounted = cb.and(cb.isNotNull(compareAt), cb.greaterThan(compareAt, price));
+            var price100 = cb.prod(price, BigDecimal.valueOf(100));
+            var compare70 = cb.prod(compareAt, BigDecimal.valueOf(70));
+            var compare50 = cb.prod(compareAt, BigDecimal.valueOf(50));
+            return switch (band.toLowerCase()) {
+                case "lt30" -> cb.and(discounted, cb.greaterThan(price100, compare70));
+                case "30to50" -> cb.and(discounted, cb.lessThanOrEqualTo(price100, compare70),
+                        cb.greaterThanOrEqualTo(price100, compare50));
+                case "gt50" -> cb.and(discounted, cb.lessThan(price100, compare50));
+                default -> cb.disjunction();
+            };
+        });
     }
 
     /**

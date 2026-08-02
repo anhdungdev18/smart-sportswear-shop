@@ -32,6 +32,11 @@ export const endpoints = {
     mine: "/api/v1/orders/me",
     detail: (id: string) => `/api/v1/orders/${id}`,
   },
+  payments: {
+    create: "/api/v1/payments/create",
+    callback: "/api/v1/payments/callback",
+    byOrder: (orderId: string) => `/api/v1/payments/${orderId}`,
+  },
   notifications: {
     mine: "/api/v1/notifications/me",
     unreadCount: "/api/v1/notifications/me/unread-count",

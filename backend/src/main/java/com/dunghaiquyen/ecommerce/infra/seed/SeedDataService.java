@@ -487,7 +487,7 @@ public class SeedDataService {
         cartItemRepository.save(cartItem);
 
         OrderResponse createdOrder = orderService.createOrderFromCart(
-                customer.getId(), new CreateOrderRequest(address.getId(), paymentMethod, note));
+                customer.getId(), new CreateOrderRequest(address.getId(), paymentMethod, note, null, null, null));
         UUID orderId = createdOrder.id();
 
         if (markPaid) {

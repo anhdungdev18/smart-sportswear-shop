@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.PostMapping;
+import jakarta.servlet.http.HttpServletRequest;
 
 /** Money-movement actions only - ADMIN/SALES_STAFF, no WAREHOUSE_STAFF (see AdminReturnController's javadoc on the same boundary). */
 @RestController
@@ -34,5 +36,14 @@ public class AdminRefundController {
             @PathVariable UUID id,
             @Valid @RequestBody UpdateRefundStatusRequest request) {
         return ApiResponse.ok("Refund status updated", returnService.updateRefundStatus(id, request, principal.getUser()));
+    }
+
+    @PostMapping("/{id}/submit")
+    public ApiResponse<RefundResponse> submit(
+            @AuthenticationPrincipal CustomUserDetails principal,
+            @PathVariable UUID id,
+            HttpServletRequest request) {
+        return ApiResponse.ok("VNPay refund submitted",
+                returnService.submitVnpayRefund(id, principal.getUser(), request.getRemoteAddr()));
     }
 }

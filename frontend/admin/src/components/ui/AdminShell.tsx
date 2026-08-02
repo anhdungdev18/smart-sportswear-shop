@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { AdminTopbar, Sidebar } from "@/components/ui/AdminChrome";
+import { ADMIN_AI_WORKSPACES_ENABLED } from "@/config/feature-flags";
 
 /** Các route không cần topbar để trang có thể dùng toàn bộ chiều cao */
 const FULLSCREEN_ROUTES = ["/admin-copilot"];
@@ -9,7 +10,7 @@ const FULLSCREEN_ROUTES = ["/admin-copilot"];
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isLoginPage = pathname === "/login";
-  const isFullscreen = FULLSCREEN_ROUTES.some((r) => pathname.startsWith(r));
+  const isFullscreen = ADMIN_AI_WORKSPACES_ENABLED && FULLSCREEN_ROUTES.some((r) => pathname.startsWith(r));
 
   if (isLoginPage) {
     return <>{children}</>;

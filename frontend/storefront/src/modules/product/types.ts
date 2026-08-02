@@ -14,6 +14,7 @@ export interface ProductListItem {
   thumbnail?: string;
   minPrice: number;
   maxPrice: number;
+  availableQuantity: number;
   status: string;
   productType: string;
 }
@@ -120,6 +121,7 @@ export interface Product {
   oldPrice?: number;
   discountPercent?: number;
   ribbon?: "new" | "bestseller";
+  isOutOfStock: boolean;
   colors: ProductColorSwatch[];
   sizes: ProductSize[];
 }

@@ -6,6 +6,7 @@ import com.dunghaiquyen.ecommerce.modules.payment.dto.CreatePaymentRequest;
 import com.dunghaiquyen.ecommerce.modules.payment.dto.CreatePaymentResponse;
 import com.dunghaiquyen.ecommerce.modules.payment.dto.PaymentResponse;
 import com.dunghaiquyen.ecommerce.modules.payment.service.PaymentService;
+import com.dunghaiquyen.ecommerce.modules.payment.service.VnpayTransactionService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -30,9 +31,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class PaymentController {
 
     private final PaymentService paymentService;
+    private final VnpayTransactionService transactionService;
 
-    public PaymentController(PaymentService paymentService) {
+    public PaymentController(PaymentService paymentService, VnpayTransactionService transactionService) {
         this.paymentService = paymentService;
+        this.transactionService = transactionService;
     }
 
     @PostMapping("/create")
@@ -66,5 +69,12 @@ public class PaymentController {
         List<PaymentResponse> response =
                 paymentService.getPaymentsByOrder(orderId, principal.getUserId(), principal.getUser().getRole());
         return ApiResponse.ok(response);
+    }
+
+    @PostMapping("/{paymentId}/query")
+    @PreAuthorize("hasAnyRole('ADMIN','SALES_STAFF')")
+    public ApiResponse<Map<String, Object>> query(
+            @PathVariable UUID paymentId, HttpServletRequest request) {
+        return ApiResponse.ok(transactionService.queryPayment(paymentId, request.getRemoteAddr()));
     }
 }

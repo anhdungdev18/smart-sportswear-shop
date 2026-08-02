@@ -144,41 +144,45 @@ public class OrderService {
             @CacheEvict(value = CacheConfig.REPORT_PRODUCTS, allEntries = true)
     })
     public OrderResponse createOrderFromCart(UUID userId, CreateOrderRequest request) {
-        // Locked, not a plain read: two concurrent checkout requests for the same
-        // user/cart would otherwise both read the same non-empty cart items before
-        // either clears them, and (if stock allows) both create an order from the
-        // same cart. The second request blocks here until the first commits, then
-        // re-reads cart items fresh below and finds them already gone.
-        Cart cart = cartRepository.findByUserIdForUpdate(userId)
-                .orElseThrow(() -> new BusinessRuleException(HttpStatus.UNPROCESSABLE_ENTITY, "Cart is empty"));
-        List<CartItem> cartItems = cartItemRepository.findAllByCartId(cart.getId());
-        if (cartItems.isEmpty()) {
-            throw new BusinessRuleException(HttpStatus.UNPROCESSABLE_ENTITY, "Cart is empty");
+        boolean buyNow = request.buyNowVariantId() != null;
+        if (buyNow && request.cartItemIds() != null && !request.cartItemIds().isEmpty()) {
+            throw new BusinessRuleException(HttpStatus.UNPROCESSABLE_ENTITY, "Choose either buy now or cart checkout");
+        }
+
+        List<CartItem> cartItems = List.of();
+        List<ValidatedLine> validated = new ArrayList<>();
+        if (buyNow) {
+            int quantity = requireBuyNowQuantity(request.buyNowQuantity());
+            VariantCheck check = checkVariant(request.buyNowVariantId(), quantity, true);
+            throwIfInvalid(check);
+            validated.add(new ValidatedLine(quantity, check.variant()));
+        } else {
+            // Lock the cart so the same cart lines cannot be checked out twice concurrently.
+            Cart cart = cartRepository.findByUserIdForUpdate(userId)
+                    .orElseThrow(() -> new BusinessRuleException(HttpStatus.UNPROCESSABLE_ENTITY, "Cart is empty"));
+            cartItems = selectCartItems(cartItemRepository.findAllByCartId(cart.getId()), request.cartItemIds());
+            if (cartItems.isEmpty()) {
+                throw new BusinessRuleException(HttpStatus.UNPROCESSABLE_ENTITY, "Cart is empty");
+            }
+
+            List<CartItem> sortedItems = cartItems.stream()
+                    .sorted(Comparator.comparing(ci -> ci.getVariant().getId()))
+                    .toList();
+            for (CartItem cartItem : sortedItems) {
+                LineCheck check = checkLine(cartItem, true);
+                if (!check.isValid()) {
+                    if (check.errorStatus() == HttpStatus.NOT_FOUND) {
+                        throw new ResourceNotFoundException(check.errorMessage());
+                    }
+                    throw new BusinessRuleException(check.errorStatus(), check.errorMessage());
+                }
+                validated.add(new ValidatedLine(cartItem.getQuantity(), check.variant()));
+            }
         }
 
         Address address = addressRepository.findById(request.addressId())
                 .filter(a -> a.getUser().getId().equals(userId))
                 .orElseThrow(() -> new ResourceNotFoundException("Address not found"));
-
-        // Phase 1: lock + validate every line BEFORE writing anything. Sorted by
-        // variant id so concurrent checkouts/admin actions always acquire row
-        // locks in the same order - avoids a classic deadlock where two
-        // transactions lock the same two rows in opposite order.
-        List<CartItem> sortedItems = cartItems.stream()
-                .sorted(Comparator.comparing(ci -> ci.getVariant().getId()))
-                .toList();
-
-        List<ValidatedLine> validated = new ArrayList<>();
-        for (CartItem cartItem : sortedItems) {
-            LineCheck check = checkLine(cartItem, true);
-            if (!check.isValid()) {
-                if (check.errorStatus() == HttpStatus.NOT_FOUND) {
-                    throw new ResourceNotFoundException(check.errorMessage());
-                }
-                throw new BusinessRuleException(check.errorStatus(), check.errorMessage());
-            }
-            validated.add(new ValidatedLine(cartItem.getQuantity(), check.variant()));
-        }
 
         // Phase 2: build the order using prices read just now, under lock - never
         // anything cached from an earlier cart response.
@@ -237,7 +241,9 @@ public class OrderService {
 
         // Phase 4: the cart that was just turned into an order must not still
         // offer the same items for a second checkout.
-        cartItemRepository.deleteAll(cartItems);
+        if (!buyNow) {
+            cartItemRepository.deleteAll(cartItems);
+        }
 
         // Phase O: confirmation email. Runs inside this same transaction and
         // never throws (see NotificationService's class javadoc) - a failed
@@ -443,30 +449,53 @@ public class OrderService {
     }
 
     private LineCheck checkLine(CartItem cartItem, boolean lockForUpdate) {
+        VariantCheck check = checkVariant(cartItem.getVariant().getId(), cartItem.getQuantity(), lockForUpdate);
+        return new LineCheck(cartItem, check.variant(), check.lineTotal(), check.errorStatus(), check.errorMessage());
+    }
+
+    private record VariantCheck(
+            ProductVariant variant, BigDecimal lineTotal, HttpStatus errorStatus, String errorMessage) {
+        boolean isValid() { return errorMessage == null; }
+    }
+
+    private VariantCheck checkVariant(UUID variantId, int quantity, boolean lockForUpdate) {
         var variantOpt = lockForUpdate
-                ? variantRepository.findByIdForUpdate(cartItem.getVariant().getId())
-                : variantRepository.findById(cartItem.getVariant().getId());
+                ? variantRepository.findByIdForUpdate(variantId)
+                : variantRepository.findById(variantId);
         if (variantOpt.isEmpty()) {
-            return new LineCheck(cartItem, null, null, HttpStatus.NOT_FOUND, "Variant not found");
+            return new VariantCheck(null, null, HttpStatus.NOT_FOUND, "Variant not found");
         }
         ProductVariant variant = variantOpt.get();
-        if (variant.getStatus() == VariantStatus.INACTIVE) {
-            return new LineCheck(
-                    cartItem, variant, null, HttpStatus.UNPROCESSABLE_ENTITY,
+        if (variant.getStatus() != VariantStatus.ACTIVE) {
+            return new VariantCheck(
+                    variant, null, HttpStatus.UNPROCESSABLE_ENTITY,
                     "Variant " + variant.getSku() + " is no longer available");
         }
         if (variant.getProduct().getStatus() != ProductStatus.ACTIVE) {
-            return new LineCheck(
-                    cartItem, variant, null, HttpStatus.UNPROCESSABLE_ENTITY,
+            return new VariantCheck(
+                    variant, null, HttpStatus.UNPROCESSABLE_ENTITY,
                     "Product " + variant.getProduct().getName() + " is no longer available");
         }
         int available = variant.getStockQuantity() - variant.getReservedQuantity();
-        if (cartItem.getQuantity() > available) {
-            return new LineCheck(
-                    cartItem, variant, null, HttpStatus.UNPROCESSABLE_ENTITY, "Insufficient stock for " + variant.getSku());
+        if (quantity > available) {
+            return new VariantCheck(
+                    variant, null, HttpStatus.UNPROCESSABLE_ENTITY, "Insufficient stock for " + variant.getSku());
         }
-        BigDecimal lineTotal = variant.getPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity()));
-        return new LineCheck(cartItem, variant, lineTotal, null, null);
+        BigDecimal lineTotal = variant.getPrice().multiply(BigDecimal.valueOf(quantity));
+        return new VariantCheck(variant, lineTotal, null, null);
+    }
+
+    private int requireBuyNowQuantity(Integer quantity) {
+        if (quantity == null || quantity <= 0) {
+            throw new BusinessRuleException(HttpStatus.UNPROCESSABLE_ENTITY, "Buy now quantity must be greater than 0");
+        }
+        return quantity;
+    }
+
+    private void throwIfInvalid(VariantCheck check) {
+        if (check.isValid()) return;
+        if (check.errorStatus() == HttpStatus.NOT_FOUND) throw new ResourceNotFoundException(check.errorMessage());
+        throw new BusinessRuleException(check.errorStatus(), check.errorMessage());
     }
 
     /** One cart line's checkout-preview verdict - public/DTO-safe (no entity references), used by CheckoutPreviewService. */
@@ -504,13 +533,49 @@ public class OrderService {
      */
     @Transactional(readOnly = true)
     public CartLinesCheckResult checkCartLines(UUID userId) {
+        return checkCartLines(userId, null);
+    }
+
+    @Transactional(readOnly = true)
+    public CartLinesCheckResult checkCartLines(UUID userId, List<UUID> cartItemIds) {
         var cartOpt = cartRepository.findByUserId(userId);
         if (cartOpt.isEmpty()) {
             return new CartLinesCheckResult(List.of());
         }
-        List<CartItem> items = cartItemRepository.findAllByCartId(cartOpt.get().getId());
+        List<CartItem> items = selectCartItems(
+                cartItemRepository.findAllByCartId(cartOpt.get().getId()), cartItemIds);
         List<CartLineCheck> checks = items.stream().map(ci -> toCartLineCheck(ci, checkLine(ci, false))).toList();
         return new CartLinesCheckResult(checks);
+    }
+
+    @Transactional(readOnly = true)
+    public CartLinesCheckResult checkBuyNowLine(UUID variantId, Integer requestedQuantity) {
+        int quantity = requireBuyNowQuantity(requestedQuantity);
+        VariantCheck check = checkVariant(variantId, quantity, false);
+        ProductVariant variant = check.variant();
+        CartLineCheck line = new CartLineCheck(
+                variantId,
+                variant != null ? variant.getProduct().getId() : null,
+                variant != null ? variant.getProduct().getName() : null,
+                variant != null ? variant.getSku() : null,
+                quantity,
+                variant != null ? variant.getPrice() : null,
+                check.isValid() ? check.lineTotal() : BigDecimal.ZERO,
+                check.isValid(),
+                check.errorMessage());
+        return new CartLinesCheckResult(List.of(line));
+    }
+
+    private List<CartItem> selectCartItems(List<CartItem> allItems, List<UUID> requestedIds) {
+        if (requestedIds == null || requestedIds.isEmpty()) {
+            return allItems;
+        }
+        java.util.Set<UUID> ids = new java.util.LinkedHashSet<>(requestedIds);
+        List<CartItem> selected = allItems.stream().filter(item -> ids.contains(item.getId())).toList();
+        if (selected.size() != ids.size()) {
+            throw new BusinessRuleException(HttpStatus.UNPROCESSABLE_ENTITY, "Selected cart items are invalid");
+        }
+        return selected;
     }
 
     private CartLineCheck toCartLineCheck(CartItem cartItem, LineCheck check) {

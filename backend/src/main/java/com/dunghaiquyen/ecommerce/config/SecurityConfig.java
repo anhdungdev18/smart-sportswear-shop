@@ -37,6 +37,7 @@ public class SecurityConfig {
             "/api/v1/banners/active",
             "/api/v1/pages/*",
             "/api/v1/settings/public",
+            "/api/v1/inventory/stream",
             "/api/v1/collections",
             "/api/v1/collections/*"
     };

@@ -50,4 +50,7 @@ public class ReturnItem extends AbstractCreatedAtEntity {
 
     @Column(name = "refund_amount", precision = 12, scale = 2)
     private BigDecimal refundAmount;
+
+    @Column(nullable = false)
+    private boolean restocked;
 }

@@ -15,6 +15,8 @@ public record RefundResponse(
         BigDecimal amount,
         RefundProvider provider,
         RefundStatus status,
+        String gatewayRequestId,
+        String gatewayTransactionNo,
         String reason,
         Instant refundedAt,
         Instant createdAt,

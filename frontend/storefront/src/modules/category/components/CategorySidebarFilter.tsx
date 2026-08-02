@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 
 interface ColorSwatch {
   label: string;
+  value: string;
   hex: string;
 }
 
@@ -14,18 +15,18 @@ const CLOTH_SIZES = ["S", "M", "L", "XL", "XXL"] as const;
 const SHOE_SIZES = ["38", "39", "40", "41", "42", "43", "44", "45"] as const;
 
 const COLOR_SWATCHES: ColorSwatch[] = [
-  { label: "Đen", hex: "#1A1A1A" },
-  { label: "Trắng", hex: "#F5F5F5" },
-  { label: "Xanh dương", hex: "#1565C0" },
-  { label: "Vàng", hex: "#F5C518" },
-  { label: "Hồng", hex: "#E91E8C" },
-  { label: "Đỏ đô", hex: "#8B0000" },
-  { label: "Xám", hex: "#757575" },
-  { label: "Be", hex: "#C8A97E" },
-  { label: "Nâu", hex: "#5D4037" },
-  { label: "Xanh lá", hex: "#2E7D32" },
-  { label: "Cam", hex: "#E8813A" },
-  { label: "Tím", hex: "#9C27B0" },
+  { label: "Đen", value: "BLACK", hex: "#1A1A1A" },
+  { label: "Trắng", value: "WHITE", hex: "#F5F5F5" },
+  { label: "Xanh dương", value: "BLUE", hex: "#1565C0" },
+  { label: "Vàng", value: "YELLOW", hex: "#F5C518" },
+  { label: "Hồng", value: "PINK", hex: "#E91E8C" },
+  { label: "Đỏ", value: "RED", hex: "#8B0000" },
+  { label: "Xám", value: "GRAY", hex: "#757575" },
+  { label: "Be", value: "BEIGE", hex: "#C8A97E" },
+  { label: "Nâu", value: "BROWN", hex: "#5D4037" },
+  { label: "Xanh lá", value: "GREEN", hex: "#2E7D32" },
+  { label: "Cam", value: "ORANGE", hex: "#E8813A" },
+  { label: "Tím", value: "PURPLE", hex: "#9C27B0" },
 ];
 
 const DISCOUNT_OPTIONS = [
@@ -39,8 +40,6 @@ const SURFACE_OPTIONS = [
   { label: "Cỏ nhân tạo (TF/AG)", value: "TF" },
   { label: "Futsal (IC)", value: "IC" },
 ] as const;
-
-const MATERIAL_OPTIONS = ["Polyester", "Nylon", "Spandex", "Cotton"] as const;
 
 type SizeType = "cloth" | "shoe" | "both";
 
@@ -109,6 +108,7 @@ export function CategorySidebarFilter({
   initialMinPrice,
   initialMaxPrice,
   initialSurface,
+  initialDiscount,
   showSurface = false,
   sizeType = "both",
 }: {
@@ -117,6 +117,7 @@ export function CategorySidebarFilter({
   initialMinPrice?: number;
   initialMaxPrice?: number;
   initialSurface?: string;
+  initialDiscount?: string;
   showSurface?: boolean;
   sizeType?: SizeType;
 }) {
@@ -125,26 +126,24 @@ export function CategorySidebarFilter({
   const [openColor, setOpenColor] = useState(false);
   const [openPrice, setOpenPrice] = useState(false);
   const [openDiscount, setOpenDiscount] = useState(false);
-  const [openAdvanced, setOpenAdvanced] = useState(false);
   const [selectedSurface, setSelectedSurface] = useState<string | null>(initialSurface ?? null);
 
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [isPending, setIsPending] = useState(false);
+  const [pendingUrl, setPendingUrl] = useState<string | null>(null);
 
   const [selectedSize, setSelectedSize] = useState<string | null>(initialSize ?? null);
   const [selectedColor, setSelectedColor] = useState<string | null>(initialColor ?? null);
-  const [selectedDiscount, setSelectedDiscount] = useState<string | null>(null);
-  const [selectedMaterials, setSelectedMaterials] = useState<string[]>([]);
+  const [selectedDiscount, setSelectedDiscount] = useState<string | null>(initialDiscount ?? null);
   const [priceRange, setPriceRange] = useState<[number, number]>([
     initialMinPrice ?? MIN_PRICE,
     initialMaxPrice ?? MAX_PRICE,
   ]);
 
-  function toggleMaterial(m: string) {
-    setSelectedMaterials((prev) => (prev.includes(m) ? prev.filter((x) => x !== m) : [...prev, m]));
-  }
+  const currentQuery = searchParams.toString();
+  const currentUrl = currentQuery ? `${pathname}?${currentQuery}` : pathname;
+  const isPending = pendingUrl !== null && pendingUrl !== currentUrl;
 
   function handleMinChange(value: number) {
     setPriceRange(([, max]) => [Math.min(value, max), max]);
@@ -173,24 +172,32 @@ export function CategorySidebarFilter({
     if (priceRange[1] < MAX_PRICE) params.set("maxPrice", String(priceRange[1]));
     else params.delete("maxPrice");
 
-    setIsPending(true);
+    if (selectedDiscount) params.set("discount", selectedDiscount);
+    else params.delete("discount");
+
+    const query = params.toString();
+    const nextUrl = query ? `${pathname}?${query}` : pathname;
+    if (nextUrl === currentUrl) return;
+    setPendingUrl(nextUrl);
     startTransition(() => {
-      router.push(`${pathname}${params.toString() ? `?${params}` : ""}`, { scroll: false });
+      router.push(nextUrl, { scroll: false });
     });
   }
 
   function clearFilters() {
     const params = new URLSearchParams(searchParams.toString());
-    ["page", "size", "color", "minPrice", "maxPrice", "surface"].forEach((k) => params.delete(k));
+    ["page", "size", "color", "minPrice", "maxPrice", "surface", "discount"].forEach((k) => params.delete(k));
     setSelectedSize(null);
     setSelectedColor(null);
     setSelectedSurface(null);
     setPriceRange([MIN_PRICE, MAX_PRICE]);
     setSelectedDiscount(null);
-    setSelectedMaterials([]);
-    setIsPending(true);
+    const query = params.toString();
+    const nextUrl = query ? `${pathname}?${query}` : pathname;
+    if (nextUrl === currentUrl) return;
+    setPendingUrl(nextUrl);
     startTransition(() => {
-      router.push(`${pathname}${params.toString() ? `?${params}` : ""}`, { scroll: false });
+      router.push(nextUrl, { scroll: false });
     });
   }
 
@@ -252,7 +259,7 @@ export function CategorySidebarFilter({
       <FilterSection label="Màu sắc" open={openColor} onToggle={() => setOpenColor((p) => !p)}>
         <div className="flex flex-wrap gap-3">
           {COLOR_SWATCHES.map((swatch) => {
-            const checked = selectedColor === swatch.label;
+            const checked = selectedColor === swatch.value;
             return (
               <button
                 key={swatch.label}
@@ -260,7 +267,7 @@ export function CategorySidebarFilter({
                 title={swatch.label}
                 aria-label={swatch.label}
                 aria-pressed={checked}
-                onClick={() => setSelectedColor((p) => (p === swatch.label ? null : swatch.label))}
+                onClick={() => setSelectedColor((p) => (p === swatch.value ? null : swatch.value))}
                 className={cn(
                   "size-5 rounded-full border border-gray-200 transition-transform",
                   checked && "ring-2 ring-ivy-dark ring-offset-2 scale-110",
@@ -329,27 +336,6 @@ export function CategorySidebarFilter({
             </li>
           ))}
         </ul>
-      </FilterSection>
-
-      <FilterSection label="Nâng cao" open={openAdvanced} onToggle={() => setOpenAdvanced((p) => !p)}>
-        <div>
-          <p className="mb-3 text-[12px] font-semibold uppercase tracking-wider text-gray-400">Chất liệu</p>
-          <ul className="space-y-3">
-            {MATERIAL_OPTIONS.map((m) => (
-              <li key={m}>
-                <label className="flex cursor-pointer items-center gap-2 text-[13px] text-gray-700">
-                  <input
-                    type="checkbox"
-                    checked={selectedMaterials.includes(m)}
-                    onChange={() => toggleMaterial(m)}
-                    className="size-4 accent-ivy-dark"
-                  />
-                  {m}
-                </label>
-              </li>
-            ))}
-          </ul>
-        </div>
       </FilterSection>
 
       <div className="mt-6 flex gap-3">

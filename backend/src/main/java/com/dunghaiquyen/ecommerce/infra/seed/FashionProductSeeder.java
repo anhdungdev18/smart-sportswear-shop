@@ -813,10 +813,10 @@ public class FashionProductSeeder {
         banner = bannerRepository.save(banner);
 
         String[][] slides = {
-            {"/images/ivymoda/banner/6a051c7c1a148911a0f04bb13704e9e4.webp",
-             "/lookbook/mua-giai-2024-25",   "Mùa Giải 2024/25 – Hàng Mới Về"},
-            {"/images/ivymoda/banner/da4faa3fe3af0cef91c4696275413c54.webp",
-             "/lookbook/sale-cuoi-mua",      "Sale Cuối Mùa – Giảm Tới 50%"},
+            {"/images/slideshow_2.webp",
+             "/danh-muc/giay-da-bong-tf", "Giày đá bóng sân cỏ nhân tạo"},
+            {"/images/slideshow_5.webp",
+             "/danh-muc/giay-da-bong-tf", "Ice Cold Precision Pack - Adidas"},
         };
         for (int idx = 0; idx < slides.length; idx++) {
             BannerItem item = new BannerItem();

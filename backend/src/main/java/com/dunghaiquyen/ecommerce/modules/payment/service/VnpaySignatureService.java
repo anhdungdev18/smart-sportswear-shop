@@ -29,6 +29,10 @@ public class VnpaySignatureService {
         return hmacSha512(properties.hashSecret(), buildHashData(params));
     }
 
+    public String hashRaw(String data) {
+        return hmacSha512(properties.hashSecret(), data);
+    }
+
     /**
      * True only if vnp_SecureHash is present and matches the hash recomputed over
      * every OTHER param. Constant-time compare to avoid a timing side-channel.
