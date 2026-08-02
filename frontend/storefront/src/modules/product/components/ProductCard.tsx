@@ -40,6 +40,11 @@ export function ProductCard({ product }: { product: Product }) {
             -{product.discountPercent}%
           </span>
         ) : null}
+        {product.isOutOfStock ? (
+          <span className="absolute bottom-2 left-2 z-10 rounded-sm bg-ivy-dark px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-white">
+            Hết hàng
+          </span>
+        ) : null}
 
         <div className="thumb-product group relative mb-4 aspect-[332/498] overflow-hidden bg-[#f7f7f7]">
           <Link href={product.href} className="relative block h-full">
@@ -62,8 +67,9 @@ export function ProductCard({ product }: { product: Product }) {
           <div className="add-to-cart absolute bottom-0 right-0">
             <button
               type="button"
-              className="flex h-8 w-8 items-center justify-center rounded-tl-[16px] rounded-br-[16px] border border-transparent bg-[#221F20] text-white transition-colors hover:border-[#221F20] hover:bg-white hover:text-[#221F20]"
-              aria-label="Thêm vào giỏ hàng"
+              disabled={product.isOutOfStock}
+              className="flex h-8 w-8 items-center justify-center rounded-tl-[16px] rounded-br-[16px] border border-transparent bg-[#221F20] text-white transition-colors hover:border-[#221F20] hover:bg-white hover:text-[#221F20] disabled:cursor-not-allowed disabled:bg-[#A8A9AD] disabled:text-white"
+              aria-label={product.isOutOfStock ? "Sản phẩm đã hết hàng" : "Thêm vào giỏ hàng"}
             >
               <ShoppingBagIcon className="h-4 w-4" />
             </button>

@@ -153,7 +153,7 @@ public class CartService {
     }
 
     private void validateAddable(ProductVariant variant) {
-        if (variant.getStatus() == VariantStatus.INACTIVE) {
+        if (variant.getStatus() != VariantStatus.ACTIVE) {
             throw new BusinessRuleException(HttpStatus.UNPROCESSABLE_ENTITY, "Variant is not available");
         }
         if (variant.getProduct().getStatus() != ProductStatus.ACTIVE) {

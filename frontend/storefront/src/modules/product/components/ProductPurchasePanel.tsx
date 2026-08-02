@@ -123,8 +123,10 @@ export function ProductPurchasePanel({
     );
   }, [variants, selectedColorLabel, selectedSizeLabel]);
 
+  const productOutOfStock =
+    variants.length === 0 || variants.every((variant) => variant.availableQuantity <= 0);
   const selectionUnavailable =
-    variants.length > 0 && (!selectedVariant || selectedVariant.availableQuantity <= 0);
+    productOutOfStock || !selectedVariant || selectedVariant.availableQuantity <= 0;
 
   // Price shown reflects the selected color (colors may be priced differently).
   const displayPrice = useMemo(() => {
@@ -343,6 +345,11 @@ export function ProductPurchasePanel({
 
       {error ? <p className="mb-4 text-[14px] text-[#C62127]">{error}</p> : null}
       {message ? <p className="mb-4 text-[14px] text-[#257A4D]">{message}</p> : null}
+      {productOutOfStock ? (
+        <p className="mb-4 border border-[#C62127]/30 bg-[#C62127]/5 px-4 py-3 text-[14px] font-semibold uppercase tracking-[0.04em] text-[#C62127]">
+          Hết hàng
+        </p>
+      ) : null}
 
       <div className="mb-5 flex flex-col gap-3 md:flex-row">
         <button
@@ -359,7 +366,7 @@ export function ProductPurchasePanel({
           disabled={pending !== null || selectionUnavailable}
           className="h-12 rounded-tl-[18px] rounded-br-[18px] border border-ivy-dark px-8 text-[14px] font-semibold uppercase tracking-[0.03em] text-ivy-dark disabled:opacity-60"
         >
-          {pending === "buy" ? "Đang xử lý..." : "Mua hàng"}
+          {selectionUnavailable ? "Hết hàng" : pending === "buy" ? "Đang xử lý..." : "Mua hàng"}
         </button>
         <button
           type="button"

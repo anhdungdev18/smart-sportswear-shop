@@ -346,6 +346,26 @@ class CartIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
+    void addItem_outOfStockVariant_returns422_evenWhenPhysicalStockRemains() throws Exception {
+        AdminContext ctx = setUpAdmin();
+        String productId = createActiveProduct(ctx);
+        String variantId = createVariant(ctx, productId, 10);
+
+        mockMvc.perform(patch("/api/v1/admin/variants/" + variantId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + ctx.token())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"OUT_OF_STOCK\"}"))
+                .andExpect(status().isOk());
+
+        MvcResult result = perform(
+                post("/api/v1/cart/items").contentType(MediaType.APPLICATION_JSON).content(addItemBody(variantId, 1)),
+                null, null);
+        assertThat(result.getResponse().getStatus()).isEqualTo(422);
+        assertThat(json(result.getResponse().getContentAsString()).at("/message").asText())
+                .isEqualTo("Variant is not available");
+    }
+
+    @Test
     void addItem_draftProduct_returns422() throws Exception {
         AdminContext ctx = setUpAdmin();
         String productId = createActiveProduct(ctx);

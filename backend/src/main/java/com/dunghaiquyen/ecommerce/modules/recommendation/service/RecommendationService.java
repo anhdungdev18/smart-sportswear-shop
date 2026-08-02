@@ -466,6 +466,10 @@ public class RecommendationService {
         BigDecimal maxPrice = visiblePrices.stream()
                 .max(Comparator.naturalOrder())
                 .orElse(null);
+        int availableQuantity = variants.stream()
+                .filter(this::isAvailableVariant)
+                .mapToInt(v -> Math.max(0, v.getStockQuantity() - v.getReservedQuantity()))
+                .sum();
 
         return new ProductListItemResponse(
                 product.getId(),
@@ -477,6 +481,7 @@ public class RecommendationService {
                 ThumbnailResolver.resolve(images),
                 minPrice,
                 maxPrice,
+                availableQuantity,
                 product.getStatus(),
                 product.getProductType()
         );

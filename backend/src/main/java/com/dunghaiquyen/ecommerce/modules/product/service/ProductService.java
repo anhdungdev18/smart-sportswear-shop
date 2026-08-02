@@ -574,6 +574,10 @@ public class ProductService {
                 .toList();
         BigDecimal minPrice = visiblePrices.stream().min(Comparator.naturalOrder()).orElse(null);
         BigDecimal maxPrice = visiblePrices.stream().max(Comparator.naturalOrder()).orElse(null);
+        int availableQuantity = variants.stream()
+                .filter(v -> v.getStatus() == VariantStatus.ACTIVE)
+                .mapToInt(v -> Math.max(0, v.getStockQuantity() - v.getReservedQuantity()))
+                .sum();
 
         return new ProductListItemResponse(
                 product.getId(),
@@ -585,6 +589,7 @@ public class ProductService {
                 pickThumbnail(images),
                 minPrice,
                 maxPrice,
+                availableQuantity,
                 product.getStatus(),
                 product.getProductType());
     }
