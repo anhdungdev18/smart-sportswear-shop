@@ -80,7 +80,9 @@ class CatalogIndexer:
         except Exception as error:
             classified = classify_processing_error(error)
             if isinstance(classified, PermanentEventError):
-                await self.repository.mark_failed(image.id, model.id, str(classified))
+                await self.repository.mark_failed(
+                    image.id, model.id, str(classified), type(classified).__name__
+                )
             elif isinstance(classified, RetryableEventError):
                 await self.repository.mark_retry_pending(image.id, model.id, str(classified))
             raise classified from error
@@ -91,5 +93,7 @@ class CatalogIndexer:
     async def mark_exhausted(self, event: CatalogEvent, error: Exception) -> None:
         model = await self.repository.active_model()
         if model is not None:
-            await self.repository.mark_failed(event.image_id, model.id, str(error))
-        await self.repository.mark_job_event_failed(event.event_id, str(error))
+            await self.repository.mark_failed(
+                event.image_id, model.id, str(error), type(error).__name__
+            )
+        await self.repository.mark_job_event_failed(event.event_id, str(error), type(error).__name__)

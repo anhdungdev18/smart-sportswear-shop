@@ -10,7 +10,7 @@ from uuid import UUID
 
 import aio_pika
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from app.config import Settings, get_settings
 from app.persistence.repository import (
@@ -19,6 +19,7 @@ from app.persistence.repository import (
     RecentJob,
     RepositoryUnavailableError,
     UsageDayStat,
+    ModelVersionStats,
     VisualSearchRepository,
 )
 from app.services.indexing_jobs import IndexingJobService, ReconciliationReport
@@ -117,6 +118,8 @@ class RecentJobResponse(BaseModel):
     pending_count: int
     created_at: str
     completed_at: str | None
+    source_counts: dict[str, int] = Field(default_factory=dict)
+    error_summary: dict[str, int] = Field(default_factory=dict)
 
 
 class JobsResponse(BaseModel):
@@ -139,6 +142,33 @@ class OperationsResponse(BaseModel):
     main_queue_messages: int | None
     retry_queue_messages: int | None
     dlq_messages: int | None
+    monthly_cost_usd: float
+    monthly_budget_usd: float
+    budget_usage_pct: float
+    budget_exhausted: bool
+
+
+class ModelVersionResponse(BaseModel):
+    id: str
+    provider: str
+    model: str
+    dimensions: int
+    status: str
+    target_image_count: int
+    ready_image_count: int
+    failed_image_count: int
+    activated_at: str | None
+    revision: int = 1
+
+
+class CreateModelVersionRequest(BaseModel):
+    provider: str
+    model: str
+    dimensions: int
+
+
+class ModelVersionsResponse(BaseModel):
+    models: list[ModelVersionResponse]
 
 
 class ReindexRequest(BaseModel):
@@ -171,6 +201,7 @@ async def get_operations(
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Visual search is disabled")
     try:
         stats: OperationsStats = await repo.operations_stats()
+        monthly_cost = await repo.current_month_cost()
     except RepositoryUnavailableError as exc:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Database unavailable") from exc
     return OperationsResponse(
@@ -184,7 +215,55 @@ async def get_operations(
         main_queue_messages=queues.main,
         retry_queue_messages=queues.retry,
         dlq_messages=queues.dlq,
+        monthly_cost_usd=monthly_cost,
+        monthly_budget_usd=settings.monthly_budget_usd,
+        budget_usage_pct=(monthly_cost / settings.monthly_budget_usd * 100) if settings.monthly_budget_usd else 100.0,
+        budget_exhausted=settings.monthly_budget_usd == 0 or monthly_cost >= settings.monthly_budget_usd,
     )
+
+
+def _model_response(item: ModelVersionStats) -> ModelVersionResponse:
+    return ModelVersionResponse(
+        id=str(item.id), provider=item.provider, model=item.model, dimensions=item.dimensions,
+        status=item.status, target_image_count=item.target_image_count,
+        ready_image_count=item.ready_image_count, failed_image_count=item.failed_image_count,
+        activated_at=item.activated_at.isoformat() if item.activated_at else None,
+        revision=item.revision,
+    )
+
+
+@router.get("/models", response_model=ModelVersionsResponse, dependencies=[Depends(require_internal_token)])
+async def get_models(repo: VisualSearchRepository = Depends(get_repository)) -> ModelVersionsResponse:
+    try:
+        return ModelVersionsResponse(models=[_model_response(item) for item in await repo.model_versions()])
+    except RepositoryUnavailableError as exc:
+        raise HTTPException(status_code=503, detail="Database unavailable") from exc
+
+
+@router.post("/models", response_model=ModelVersionResponse, dependencies=[Depends(require_internal_token)])
+async def create_model(
+    request: CreateModelVersionRequest,
+    repo: VisualSearchRepository = Depends(get_repository),
+) -> ModelVersionResponse:
+    provider = request.provider.strip().lower()
+    model = request.model.strip()
+    if not provider or not model or request.dimensions <= 0:
+        raise HTTPException(status_code=422, detail="provider, model and positive dimensions are required")
+    try:
+        return _model_response(await repo.create_model_version(provider, model, request.dimensions))
+    except RepositoryUnavailableError as exc:
+        raise HTTPException(status_code=503, detail="Database unavailable") from exc
+
+
+@router.post("/models/{model_id}/activate", response_model=ModelVersionResponse,
+             dependencies=[Depends(require_internal_token)])
+async def activate_model(model_id: UUID, repo: VisualSearchRepository = Depends(get_repository)) -> ModelVersionResponse:
+    try:
+        return _model_response(await repo.activate_model_version(model_id))
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
+    except RepositoryUnavailableError as exc:
+        raise HTTPException(status_code=503, detail="Database unavailable") from exc
 
 
 @router.post(
@@ -328,6 +407,8 @@ async def get_jobs(
                 pending_count=job.pending_count,
                 created_at=job.created_at.isoformat(),
                 completed_at=job.completed_at.isoformat() if job.completed_at else None,
+                source_counts=job.source_counts,
+                error_summary=job.error_summary,
             )
             for job in jobs
         ]
@@ -349,10 +430,11 @@ async def retry_failed(
     try:
         service = IndexingJobService(repo)
         report = await service.inspect(include_failed=True)
+        retryable = tuple(c for c in report.candidates if c.reason == "FAILED_RETRYABLE")
         failed_only_report = report.__class__(
-            total=sum(1 for c in report.candidates if c.reason == "FAILED"),
-            reasons={"FAILED": sum(1 for c in report.candidates if c.reason == "FAILED")},
-            candidates=tuple(c for c in report.candidates if c.reason == "FAILED"),
+            total=len(retryable),
+            reasons={"FAILED_RETRYABLE": len(retryable)},
+            candidates=retryable,
         )
         if failed_only_report.total == 0:
             return RetryFailedResponse(job_id="", enqueued_count=0)

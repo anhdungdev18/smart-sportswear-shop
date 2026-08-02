@@ -1,0 +1,1137 @@
+{
+  "manifest": "..\\evidence\\visual-search\\synthetic-benchmark\\benchmark-manifest.json",
+  "serviceUrl": "http://127.0.0.1:8090",
+  "criteria": {
+    "minimumSamples": 100,
+    "requiredStrata": [
+      "tops",
+      "bottoms",
+      "shoes"
+    ],
+    "notApplicableStrata": {
+      "accessories": "No ACTIVE accessory product with an image exists in the audited catalog"
+    },
+    "recallAt5": 0.8,
+    "categoryAccuracy": 0.9,
+    "p95Ms": 3000
+  },
+  "metrics": {
+    "sample_count": 100,
+    "strata": [
+      "bottoms",
+      "shoes",
+      "tops"
+    ],
+    "recall_at_1": 0.98,
+    "recall_at_5": 1.0,
+    "category_accuracy": 1.0,
+    "latency_p95_ms": 2978.23,
+    "passed": true,
+    "failures": [],
+    "not_applicable_strata": [
+      "accessories"
+    ]
+  },
+  "samples": [
+    {
+      "id": "synthetic-001",
+      "latencyMs": 2571.48,
+      "returnedProductIds": [
+        "002509c0-7ed5-4f78-bf49-b59f3738fa4b",
+        "eb6d44b9-9b6b-485c-bfb4-c641dac6fa9d",
+        "ddf64bb3-7422-46c7-8179-f98de5dfff47",
+        "63e82ed6-1b6d-4ee6-8a18-a6190807d32e",
+        "88e7df5b-2c12-4dac-9f2a-ab27d53b7bf4"
+      ]
+    },
+    {
+      "id": "synthetic-002",
+      "latencyMs": 3155.66,
+      "returnedProductIds": [
+        "034a7087-a6a6-4ae5-9b84-5f711681c09e",
+        "a47ebb19-5938-401a-92fd-5b8b4ce6b157",
+        "dfb91988-b2e9-49a3-8a93-8cfadf805255",
+        "63e82ed6-1b6d-4ee6-8a18-a6190807d32e",
+        "46d92538-a553-4489-913a-ac6b5e2c1fd8"
+      ]
+    },
+    {
+      "id": "synthetic-003",
+      "latencyMs": 2509.03,
+      "returnedProductIds": [
+        "04ae4c5f-d30b-46fa-b959-c6dd695a75a8",
+        "c96104a4-3511-4feb-b96d-5a8e7d58232d",
+        "c3b179ac-b273-4710-aacb-f920c65cf731",
+        "7a265465-0734-45f1-a554-d1c2da094818",
+        "067ff97f-f0fc-449d-b39b-f9bffec54bbf"
+      ]
+    },
+    {
+      "id": "synthetic-004",
+      "latencyMs": 2506.94,
+      "returnedProductIds": [
+        "067ff97f-f0fc-449d-b39b-f9bffec54bbf",
+        "15ccb5ab-3544-49e2-b2f5-d75600831dd3",
+        "14c0492e-8364-40a5-986f-186dfa86ddae",
+        "04ae4c5f-d30b-46fa-b959-c6dd695a75a8",
+        "dcbfce5b-7c24-4401-9e2b-fa1c1e66e23f"
+      ]
+    },
+    {
+      "id": "synthetic-005",
+      "latencyMs": 2594.37,
+      "returnedProductIds": [
+        "08a5f39e-b5a3-4cb4-a248-1ec5497baf58",
+        "15ccb5ab-3544-49e2-b2f5-d75600831dd3",
+        "04ae4c5f-d30b-46fa-b959-c6dd695a75a8",
+        "c96104a4-3511-4feb-b96d-5a8e7d58232d",
+        "495ad06e-391a-451a-878b-a705854c53f6"
+      ]
+    },
+    {
+      "id": "synthetic-006",
+      "latencyMs": 2452.39,
+      "returnedProductIds": [
+        "0935a269-25b5-4e0c-a5fe-5c52ddd8f4cf",
+        "e112023e-aa09-4a4e-b0fd-d7e1d496f06b",
+        "3dc3415d-23b0-4e26-bf41-7fa1ec5b0602",
+        "b4824adc-74cd-482b-b7b3-ca5cfac4ce25",
+        "25dedef8-d3a1-4b9f-88b5-7cc730ad03ea"
+      ]
+    },
+    {
+      "id": "synthetic-007",
+      "latencyMs": 2484.99,
+      "returnedProductIds": [
+        "093b5464-33e6-4482-8d22-bcc1b206f8f8",
+        "dfb91988-b2e9-49a3-8a93-8cfadf805255",
+        "ddf64bb3-7422-46c7-8179-f98de5dfff47",
+        "034a7087-a6a6-4ae5-9b84-5f711681c09e",
+        "12579258-c3b3-4e0b-9a14-3f33da568167"
+      ]
+    },
+    {
+      "id": "synthetic-008",
+      "latencyMs": 2782.22,
+      "returnedProductIds": [
+        "0a03a06d-9986-4102-b5e7-49173c0bfa33",
+        "c59c911e-73cb-4289-bf8c-74816a8ed8ea",
+        "26a0edca-8871-4482-994c-17a83355fa33",
+        "9b06f6b0-7037-4ec1-9a09-b994f7bc9b8e",
+        "0e7f523a-c114-4a4f-aa2e-7fc28802e8f9"
+      ]
+    },
+    {
+      "id": "synthetic-009",
+      "latencyMs": 2623.49,
+      "returnedProductIds": [
+        "0e7f523a-c114-4a4f-aa2e-7fc28802e8f9",
+        "76ad31de-cafd-40e2-8cc9-1553b9e7eb3a",
+        "c59c911e-73cb-4289-bf8c-74816a8ed8ea",
+        "0a03a06d-9986-4102-b5e7-49173c0bfa33",
+        "12f1875f-a908-4cb2-8bdf-45b98a04558d"
+      ]
+    },
+    {
+      "id": "synthetic-010",
+      "latencyMs": 2611.53,
+      "returnedProductIds": [
+        "103c5964-659c-4a3b-85bd-517497ef37ba",
+        "b3ba7f5c-4bc7-4abe-af64-a00193962ae4",
+        "c59c911e-73cb-4289-bf8c-74816a8ed8ea",
+        "63e82ed6-1b6d-4ee6-8a18-a6190807d32e",
+        "62a2c180-462d-40da-8989-08a4f1173406"
+      ]
+    },
+    {
+      "id": "synthetic-011",
+      "latencyMs": 2426.38,
+      "returnedProductIds": [
+        "12579258-c3b3-4e0b-9a14-3f33da568167",
+        "ddf64bb3-7422-46c7-8179-f98de5dfff47",
+        "88e7df5b-2c12-4dac-9f2a-ab27d53b7bf4",
+        "eb6d44b9-9b6b-485c-bfb4-c641dac6fa9d",
+        "002509c0-7ed5-4f78-bf49-b59f3738fa4b"
+      ]
+    },
+    {
+      "id": "synthetic-012",
+      "latencyMs": 2801.69,
+      "returnedProductIds": [
+        "12f1875f-a908-4cb2-8bdf-45b98a04558d",
+        "b83e4541-8188-4d48-ba53-103e69b5e1f2",
+        "c2ea4a67-180b-48c8-a66e-4ba615951301",
+        "0e7f523a-c114-4a4f-aa2e-7fc28802e8f9",
+        "fbdb05b3-d190-482e-843d-99a2c08d5c35"
+      ]
+    },
+    {
+      "id": "synthetic-013",
+      "latencyMs": 2651.85,
+      "returnedProductIds": [
+        "14c0492e-8364-40a5-986f-186dfa86ddae",
+        "81362022-dd99-4e23-806b-e62e161c04bb",
+        "c71597cf-b444-4ce4-9c05-6210fc3cebb5",
+        "dcbfce5b-7c24-4401-9e2b-fa1c1e66e23f",
+        "067ff97f-f0fc-449d-b39b-f9bffec54bbf"
+      ]
+    },
+    {
+      "id": "synthetic-014",
+      "latencyMs": 2863.14,
+      "returnedProductIds": [
+        "1a08f249-6f02-43dd-8b38-adc41ea694c0",
+        "c1d70946-e9f0-42f4-976e-335f84efa5c0",
+        "b3ba7f5c-4bc7-4abe-af64-a00193962ae4",
+        "dfb91988-b2e9-49a3-8a93-8cfadf805255",
+        "63e82ed6-1b6d-4ee6-8a18-a6190807d32e"
+      ]
+    },
+    {
+      "id": "synthetic-015",
+      "latencyMs": 2755.75,
+      "returnedProductIds": [
+        "20d31b73-a6fd-4caa-8ad9-9d8320a8d9f9",
+        "864ba6c0-61ff-4594-a08c-7df190afd80e",
+        "c93fe810-cafc-4e63-b13b-ea97a0349448",
+        "ffb83692-2001-400e-90ff-7eeb8f510373",
+        "3fbc8be1-fc0a-4f96-a0e2-9ab1580daa0b"
+      ]
+    },
+    {
+      "id": "synthetic-016",
+      "latencyMs": 2721.5,
+      "returnedProductIds": [
+        "23d8e9bc-58e3-48a3-8a69-73698dbe4f95",
+        "d2d101ee-c431-419a-8e81-21a8281671d3",
+        "14c0492e-8364-40a5-986f-186dfa86ddae",
+        "81362022-dd99-4e23-806b-e62e161c04bb",
+        "067ff97f-f0fc-449d-b39b-f9bffec54bbf"
+      ]
+    },
+    {
+      "id": "synthetic-017",
+      "latencyMs": 2741.78,
+      "returnedProductIds": [
+        "26a0edca-8871-4482-994c-17a83355fa33",
+        "0a03a06d-9986-4102-b5e7-49173c0bfa33",
+        "12f1875f-a908-4cb2-8bdf-45b98a04558d",
+        "76ad31de-cafd-40e2-8cc9-1553b9e7eb3a",
+        "0e7f523a-c114-4a4f-aa2e-7fc28802e8f9"
+      ]
+    },
+    {
+      "id": "synthetic-018",
+      "latencyMs": 2981.69,
+      "returnedProductIds": [
+        "29275735-f169-45f4-9f93-3848d0a065a6",
+        "64ad1470-fb76-442e-ae1f-029c32f28672",
+        "e20e7eb3-a414-4707-8968-67893ff5de1e",
+        "6e4fec73-0bbe-4e6e-bdc6-1570f0380115",
+        "b7857956-7979-4c7d-944d-60787734d72f"
+      ]
+    },
+    {
+      "id": "synthetic-019",
+      "latencyMs": 2685.48,
+      "returnedProductIds": [
+        "3dc3415d-23b0-4e26-bf41-7fa1ec5b0602",
+        "0935a269-25b5-4e0c-a5fe-5c52ddd8f4cf",
+        "d2d101ee-c431-419a-8e81-21a8281671d3",
+        "14c0492e-8364-40a5-986f-186dfa86ddae",
+        "81362022-dd99-4e23-806b-e62e161c04bb"
+      ]
+    },
+    {
+      "id": "synthetic-020",
+      "latencyMs": 2867.15,
+      "returnedProductIds": [
+        "46d92538-a553-4489-913a-ac6b5e2c1fd8",
+        "12579258-c3b3-4e0b-9a14-3f33da568167",
+        "12f1875f-a908-4cb2-8bdf-45b98a04558d",
+        "034a7087-a6a6-4ae5-9b84-5f711681c09e",
+        "6d727caf-4a5d-42eb-bc74-be8097c2efd2"
+      ]
+    },
+    {
+      "id": "synthetic-021",
+      "latencyMs": 2739.63,
+      "returnedProductIds": [
+        "47896feb-ea05-4f7d-a5bf-176aa3a35bd7",
+        "15ccb5ab-3544-49e2-b2f5-d75600831dd3",
+        "ae8189e6-833d-4983-984f-270a59934f5c",
+        "c71597cf-b444-4ce4-9c05-6210fc3cebb5",
+        "207c5247-b839-4159-bcb4-1bd9006645ae"
+      ]
+    },
+    {
+      "id": "synthetic-022",
+      "latencyMs": 2965.11,
+      "returnedProductIds": [
+        "495ad06e-391a-451a-878b-a705854c53f6",
+        "207c5247-b839-4159-bcb4-1bd9006645ae",
+        "864ba6c0-61ff-4594-a08c-7df190afd80e",
+        "132c2fa0-a142-43d6-bf8d-9d18feaa0ba7",
+        "aeb2a1f9-6dc8-4d94-a412-94194a42f403"
+      ]
+    },
+    {
+      "id": "synthetic-023",
+      "latencyMs": 2870.74,
+      "returnedProductIds": [
+        "4a9a0036-53ee-4b5d-99f3-4340996ebb3f",
+        "fbdb05b3-d190-482e-843d-99a2c08d5c35",
+        "12f1875f-a908-4cb2-8bdf-45b98a04558d",
+        "88e7df5b-2c12-4dac-9f2a-ab27d53b7bf4",
+        "62a2c180-462d-40da-8989-08a4f1173406"
+      ]
+    },
+    {
+      "id": "synthetic-024",
+      "latencyMs": 2508.5,
+      "returnedProductIds": [
+        "595b9f95-0d5a-45dc-9f47-88379cf02226",
+        "7c31255c-1e95-4a87-b752-246a369670b5",
+        "e20e7eb3-a414-4707-8968-67893ff5de1e",
+        "5c1cc97a-1bbd-4aef-a20e-0cf2e94fd666",
+        "c93fe810-cafc-4e63-b13b-ea97a0349448"
+      ]
+    },
+    {
+      "id": "synthetic-025",
+      "latencyMs": 2751.29,
+      "returnedProductIds": [
+        "6170d7b7-dde7-4f17-a1c0-757a6e9f056f",
+        "bf771f36-7075-420a-81dd-9bfbbc3158ae",
+        "14c0492e-8364-40a5-986f-186dfa86ddae",
+        "c5f52641-1356-4c17-8811-b2c5aaf1f489",
+        "c71597cf-b444-4ce4-9c05-6210fc3cebb5"
+      ]
+    },
+    {
+      "id": "synthetic-026",
+      "latencyMs": 2576.07,
+      "returnedProductIds": [
+        "62a2c180-462d-40da-8989-08a4f1173406",
+        "63e82ed6-1b6d-4ee6-8a18-a6190807d32e",
+        "eb6d44b9-9b6b-485c-bfb4-c641dac6fa9d",
+        "b83e4541-8188-4d48-ba53-103e69b5e1f2",
+        "002509c0-7ed5-4f78-bf49-b59f3738fa4b"
+      ]
+    },
+    {
+      "id": "synthetic-027",
+      "latencyMs": 3062.94,
+      "returnedProductIds": [
+        "63e82ed6-1b6d-4ee6-8a18-a6190807d32e",
+        "62a2c180-462d-40da-8989-08a4f1173406",
+        "eb6d44b9-9b6b-485c-bfb4-c641dac6fa9d",
+        "002509c0-7ed5-4f78-bf49-b59f3738fa4b",
+        "b83e4541-8188-4d48-ba53-103e69b5e1f2"
+      ]
+    },
+    {
+      "id": "synthetic-028",
+      "latencyMs": 2660.54,
+      "returnedProductIds": [
+        "64ad1470-fb76-442e-ae1f-029c32f28672",
+        "8c7e365e-15c9-4308-b706-16a0a4889d90",
+        "e20e7eb3-a414-4707-8968-67893ff5de1e",
+        "29275735-f169-45f4-9f93-3848d0a065a6",
+        "5c1cc97a-1bbd-4aef-a20e-0cf2e94fd666"
+      ]
+    },
+    {
+      "id": "synthetic-029",
+      "latencyMs": 2734.93,
+      "returnedProductIds": [
+        "699e059b-1e0c-438d-b48d-e34ca26edf6e",
+        "3dc3415d-23b0-4e26-bf41-7fa1ec5b0602",
+        "d2d101ee-c431-419a-8e81-21a8281671d3",
+        "0935a269-25b5-4e0c-a5fe-5c52ddd8f4cf",
+        "12f1875f-a908-4cb2-8bdf-45b98a04558d"
+      ]
+    },
+    {
+      "id": "synthetic-030",
+      "latencyMs": 2789.38,
+      "returnedProductIds": [
+        "6d727caf-4a5d-42eb-bc74-be8097c2efd2",
+        "ddf64bb3-7422-46c7-8179-f98de5dfff47",
+        "a47ebb19-5938-401a-92fd-5b8b4ce6b157",
+        "034a7087-a6a6-4ae5-9b84-5f711681c09e",
+        "46d92538-a553-4489-913a-ac6b5e2c1fd8"
+      ]
+    },
+    {
+      "id": "synthetic-031",
+      "latencyMs": 2704.84,
+      "returnedProductIds": [
+        "6e4fec73-0bbe-4e6e-bdc6-1570f0380115",
+        "595b9f95-0d5a-45dc-9f47-88379cf02226",
+        "29275735-f169-45f4-9f93-3848d0a065a6",
+        "b7857956-7979-4c7d-944d-60787734d72f",
+        "e20e7eb3-a414-4707-8968-67893ff5de1e"
+      ]
+    },
+    {
+      "id": "synthetic-032",
+      "latencyMs": 2635.38,
+      "returnedProductIds": [
+        "71831629-35bd-4a8d-8473-752e9de01609",
+        "103c5964-659c-4a3b-85bd-517497ef37ba",
+        "12579258-c3b3-4e0b-9a14-3f33da568167",
+        "dfb91988-b2e9-49a3-8a93-8cfadf805255",
+        "6d727caf-4a5d-42eb-bc74-be8097c2efd2"
+      ]
+    },
+    {
+      "id": "synthetic-033",
+      "latencyMs": 3161.26,
+      "returnedProductIds": [
+        "76ad31de-cafd-40e2-8cc9-1553b9e7eb3a",
+        "0e7f523a-c114-4a4f-aa2e-7fc28802e8f9",
+        "12f1875f-a908-4cb2-8bdf-45b98a04558d",
+        "88e7df5b-2c12-4dac-9f2a-ab27d53b7bf4",
+        "c2ea4a67-180b-48c8-a66e-4ba615951301"
+      ]
+    },
+    {
+      "id": "synthetic-034",
+      "latencyMs": 2782.54,
+      "returnedProductIds": [
+        "7a265465-0734-45f1-a554-d1c2da094818",
+        "495ad06e-391a-451a-878b-a705854c53f6",
+        "c96104a4-3511-4feb-b96d-5a8e7d58232d",
+        "08a5f39e-b5a3-4cb4-a248-1ec5497baf58",
+        "04ae4c5f-d30b-46fa-b959-c6dd695a75a8"
+      ]
+    },
+    {
+      "id": "synthetic-035",
+      "latencyMs": 3283.43,
+      "returnedProductIds": [
+        "132c2fa0-a142-43d6-bf8d-9d18feaa0ba7",
+        "495ad06e-391a-451a-878b-a705854c53f6",
+        "73e9b3e7-a880-4eb8-bff2-85490a462f3b",
+        "207c5247-b839-4159-bcb4-1bd9006645ae",
+        "c71597cf-b444-4ce4-9c05-6210fc3cebb5"
+      ]
+    },
+    {
+      "id": "synthetic-036",
+      "latencyMs": 2838.88,
+      "returnedProductIds": [
+        "15ccb5ab-3544-49e2-b2f5-d75600831dd3",
+        "dcbfce5b-7c24-4401-9e2b-fa1c1e66e23f",
+        "47896feb-ea05-4f7d-a5bf-176aa3a35bd7",
+        "aeb2a1f9-6dc8-4d94-a412-94194a42f403",
+        "bf771f36-7075-420a-81dd-9bfbbc3158ae"
+      ]
+    },
+    {
+      "id": "synthetic-037",
+      "latencyMs": 2450.01,
+      "returnedProductIds": [
+        "207c5247-b839-4159-bcb4-1bd9006645ae",
+        "89424d00-81c4-4b6a-a4d0-35587b294b8c",
+        "15ccb5ab-3544-49e2-b2f5-d75600831dd3",
+        "aeb2a1f9-6dc8-4d94-a412-94194a42f403",
+        "864ba6c0-61ff-4594-a08c-7df190afd80e"
+      ]
+    },
+    {
+      "id": "synthetic-038",
+      "latencyMs": 2585.7,
+      "returnedProductIds": [
+        "25dedef8-d3a1-4b9f-88b5-7cc730ad03ea",
+        "e112023e-aa09-4a4e-b0fd-d7e1d496f06b",
+        "b4824adc-74cd-482b-b7b3-ca5cfac4ce25",
+        "c93fe810-cafc-4e63-b13b-ea97a0349448",
+        "29275735-f169-45f4-9f93-3848d0a065a6"
+      ]
+    },
+    {
+      "id": "synthetic-039",
+      "latencyMs": 2698.6,
+      "returnedProductIds": [
+        "3fbc8be1-fc0a-4f96-a0e2-9ab1580daa0b",
+        "132c2fa0-a142-43d6-bf8d-9d18feaa0ba7",
+        "25dedef8-d3a1-4b9f-88b5-7cc730ad03ea",
+        "5c647dc5-15cf-4b8c-8d03-bb46f719d28b",
+        "207c5247-b839-4159-bcb4-1bd9006645ae"
+      ]
+    },
+    {
+      "id": "synthetic-040",
+      "latencyMs": 2779.23,
+      "returnedProductIds": [
+        "50b8cfa7-6498-4753-9dbd-5db3c82d941c",
+        "fb28cfcf-f88c-4934-856b-7e397103df0f",
+        "8c7e365e-15c9-4308-b706-16a0a4889d90",
+        "b7857956-7979-4c7d-944d-60787734d72f",
+        "c93fe810-cafc-4e63-b13b-ea97a0349448"
+      ]
+    },
+    {
+      "id": "synthetic-041",
+      "latencyMs": 2663.1,
+      "returnedProductIds": [
+        "5c1cc97a-1bbd-4aef-a20e-0cf2e94fd666",
+        "e20e7eb3-a414-4707-8968-67893ff5de1e",
+        "8c7e365e-15c9-4308-b706-16a0a4889d90",
+        "207c5247-b839-4159-bcb4-1bd9006645ae",
+        "c93fe810-cafc-4e63-b13b-ea97a0349448"
+      ]
+    },
+    {
+      "id": "synthetic-042",
+      "latencyMs": 2719.86,
+      "returnedProductIds": [
+        "5c647dc5-15cf-4b8c-8d03-bb46f719d28b",
+        "7c31255c-1e95-4a87-b752-246a369670b5",
+        "50b8cfa7-6498-4753-9dbd-5db3c82d941c",
+        "b4824adc-74cd-482b-b7b3-ca5cfac4ce25",
+        "fb28cfcf-f88c-4934-856b-7e397103df0f"
+      ]
+    },
+    {
+      "id": "synthetic-043",
+      "latencyMs": 2536.43,
+      "returnedProductIds": [
+        "663f5170-9c34-41d6-ab80-a55246765672",
+        "5c647dc5-15cf-4b8c-8d03-bb46f719d28b",
+        "25dedef8-d3a1-4b9f-88b5-7cc730ad03ea",
+        "c3b179ac-b273-4710-aacb-f920c65cf731",
+        "3fbc8be1-fc0a-4f96-a0e2-9ab1580daa0b"
+      ]
+    },
+    {
+      "id": "synthetic-044",
+      "latencyMs": 2534.37,
+      "returnedProductIds": [
+        "73e9b3e7-a880-4eb8-bff2-85490a462f3b",
+        "132c2fa0-a142-43d6-bf8d-9d18feaa0ba7",
+        "ae8189e6-833d-4983-984f-270a59934f5c",
+        "207c5247-b839-4159-bcb4-1bd9006645ae",
+        "b3cf6b79-7ccd-40ea-b3ca-31406364077b"
+      ]
+    },
+    {
+      "id": "synthetic-045",
+      "latencyMs": 2537.78,
+      "returnedProductIds": [
+        "864ba6c0-61ff-4594-a08c-7df190afd80e",
+        "c0b7e560-6c30-4ebb-93ad-f4800bec2665",
+        "15ccb5ab-3544-49e2-b2f5-d75600831dd3",
+        "207c5247-b839-4159-bcb4-1bd9006645ae",
+        "25dedef8-d3a1-4b9f-88b5-7cc730ad03ea"
+      ]
+    },
+    {
+      "id": "synthetic-046",
+      "latencyMs": 2723.03,
+      "returnedProductIds": [
+        "89424d00-81c4-4b6a-a4d0-35587b294b8c",
+        "aeb2a1f9-6dc8-4d94-a412-94194a42f403",
+        "207c5247-b839-4159-bcb4-1bd9006645ae",
+        "15ccb5ab-3544-49e2-b2f5-d75600831dd3",
+        "132c2fa0-a142-43d6-bf8d-9d18feaa0ba7"
+      ]
+    },
+    {
+      "id": "synthetic-047",
+      "latencyMs": 2578.15,
+      "returnedProductIds": [
+        "8c7e365e-15c9-4308-b706-16a0a4889d90",
+        "89424d00-81c4-4b6a-a4d0-35587b294b8c",
+        "5c1cc97a-1bbd-4aef-a20e-0cf2e94fd666",
+        "e20e7eb3-a414-4707-8968-67893ff5de1e",
+        "207c5247-b839-4159-bcb4-1bd9006645ae"
+      ]
+    },
+    {
+      "id": "synthetic-048",
+      "latencyMs": 2978.23,
+      "returnedProductIds": [
+        "ae8189e6-833d-4983-984f-270a59934f5c",
+        "132c2fa0-a142-43d6-bf8d-9d18feaa0ba7",
+        "47896feb-ea05-4f7d-a5bf-176aa3a35bd7",
+        "89424d00-81c4-4b6a-a4d0-35587b294b8c",
+        "aeb2a1f9-6dc8-4d94-a412-94194a42f403"
+      ]
+    },
+    {
+      "id": "synthetic-049",
+      "latencyMs": 2644.24,
+      "returnedProductIds": [
+        "aeb2a1f9-6dc8-4d94-a412-94194a42f403",
+        "89424d00-81c4-4b6a-a4d0-35587b294b8c",
+        "207c5247-b839-4159-bcb4-1bd9006645ae",
+        "132c2fa0-a142-43d6-bf8d-9d18feaa0ba7",
+        "15ccb5ab-3544-49e2-b2f5-d75600831dd3"
+      ]
+    },
+    {
+      "id": "synthetic-050",
+      "latencyMs": 2659.0,
+      "returnedProductIds": [
+        "c0b7e560-6c30-4ebb-93ad-f4800bec2665",
+        "b3cf6b79-7ccd-40ea-b3ca-31406364077b",
+        "dcbfce5b-7c24-4401-9e2b-fa1c1e66e23f",
+        "7a265465-0734-45f1-a554-d1c2da094818",
+        "bf771f36-7075-420a-81dd-9bfbbc3158ae"
+      ]
+    },
+    {
+      "id": "synthetic-051",
+      "latencyMs": 2891.32,
+      "returnedProductIds": [
+        "c93fe810-cafc-4e63-b13b-ea97a0349448",
+        "aeb2a1f9-6dc8-4d94-a412-94194a42f403",
+        "25dedef8-d3a1-4b9f-88b5-7cc730ad03ea",
+        "3fbc8be1-fc0a-4f96-a0e2-9ab1580daa0b",
+        "132c2fa0-a142-43d6-bf8d-9d18feaa0ba7"
+      ]
+    },
+    {
+      "id": "synthetic-052",
+      "latencyMs": 2741.01,
+      "returnedProductIds": [
+        "dcbfce5b-7c24-4401-9e2b-fa1c1e66e23f",
+        "c0b7e560-6c30-4ebb-93ad-f4800bec2665",
+        "b3cf6b79-7ccd-40ea-b3ca-31406364077b",
+        "bf771f36-7075-420a-81dd-9bfbbc3158ae",
+        "0935a269-25b5-4e0c-a5fe-5c52ddd8f4cf"
+      ]
+    },
+    {
+      "id": "synthetic-053",
+      "latencyMs": 2711.52,
+      "returnedProductIds": [
+        "e20e7eb3-a414-4707-8968-67893ff5de1e",
+        "5c1cc97a-1bbd-4aef-a20e-0cf2e94fd666",
+        "6e4fec73-0bbe-4e6e-bdc6-1570f0380115",
+        "64ad1470-fb76-442e-ae1f-029c32f28672",
+        "c93fe810-cafc-4e63-b13b-ea97a0349448"
+      ]
+    },
+    {
+      "id": "synthetic-054",
+      "latencyMs": 2480.24,
+      "returnedProductIds": [
+        "fb28cfcf-f88c-4934-856b-7e397103df0f",
+        "50b8cfa7-6498-4753-9dbd-5db3c82d941c",
+        "c93fe810-cafc-4e63-b13b-ea97a0349448",
+        "e20e7eb3-a414-4707-8968-67893ff5de1e",
+        "b7857956-7979-4c7d-944d-60787734d72f"
+      ]
+    },
+    {
+      "id": "synthetic-055",
+      "latencyMs": 2547.7,
+      "returnedProductIds": [
+        "207c5247-b839-4159-bcb4-1bd9006645ae",
+        "132c2fa0-a142-43d6-bf8d-9d18feaa0ba7",
+        "89424d00-81c4-4b6a-a4d0-35587b294b8c",
+        "aeb2a1f9-6dc8-4d94-a412-94194a42f403",
+        "15ccb5ab-3544-49e2-b2f5-d75600831dd3"
+      ]
+    },
+    {
+      "id": "synthetic-056",
+      "latencyMs": 2530.46,
+      "returnedProductIds": [
+        "15ccb5ab-3544-49e2-b2f5-d75600831dd3",
+        "207c5247-b839-4159-bcb4-1bd9006645ae",
+        "c71597cf-b444-4ce4-9c05-6210fc3cebb5",
+        "47896feb-ea05-4f7d-a5bf-176aa3a35bd7",
+        "aeb2a1f9-6dc8-4d94-a412-94194a42f403"
+      ]
+    },
+    {
+      "id": "synthetic-057",
+      "latencyMs": 2623.27,
+      "returnedProductIds": [
+        "c93fe810-cafc-4e63-b13b-ea97a0349448",
+        "aeb2a1f9-6dc8-4d94-a412-94194a42f403",
+        "207c5247-b839-4159-bcb4-1bd9006645ae",
+        "15ccb5ab-3544-49e2-b2f5-d75600831dd3",
+        "132c2fa0-a142-43d6-bf8d-9d18feaa0ba7"
+      ]
+    },
+    {
+      "id": "synthetic-058",
+      "latencyMs": 2650.87,
+      "returnedProductIds": [
+        "25dedef8-d3a1-4b9f-88b5-7cc730ad03ea",
+        "89424d00-81c4-4b6a-a4d0-35587b294b8c",
+        "5c647dc5-15cf-4b8c-8d03-bb46f719d28b",
+        "132c2fa0-a142-43d6-bf8d-9d18feaa0ba7",
+        "3fbc8be1-fc0a-4f96-a0e2-9ab1580daa0b"
+      ]
+    },
+    {
+      "id": "synthetic-059",
+      "latencyMs": 2771.28,
+      "returnedProductIds": [
+        "3fbc8be1-fc0a-4f96-a0e2-9ab1580daa0b",
+        "5c647dc5-15cf-4b8c-8d03-bb46f719d28b",
+        "25dedef8-d3a1-4b9f-88b5-7cc730ad03ea",
+        "132c2fa0-a142-43d6-bf8d-9d18feaa0ba7",
+        "663f5170-9c34-41d6-ab80-a55246765672"
+      ]
+    },
+    {
+      "id": "synthetic-060",
+      "latencyMs": 2566.54,
+      "returnedProductIds": [
+        "50b8cfa7-6498-4753-9dbd-5db3c82d941c",
+        "fb28cfcf-f88c-4934-856b-7e397103df0f",
+        "3fbc8be1-fc0a-4f96-a0e2-9ab1580daa0b",
+        "8c7e365e-15c9-4308-b706-16a0a4889d90",
+        "e20e7eb3-a414-4707-8968-67893ff5de1e"
+      ]
+    },
+    {
+      "id": "synthetic-061",
+      "latencyMs": 2626.34,
+      "returnedProductIds": [
+        "5c1cc97a-1bbd-4aef-a20e-0cf2e94fd666",
+        "5c647dc5-15cf-4b8c-8d03-bb46f719d28b",
+        "8c7e365e-15c9-4308-b706-16a0a4889d90",
+        "3fbc8be1-fc0a-4f96-a0e2-9ab1580daa0b",
+        "64ad1470-fb76-442e-ae1f-029c32f28672"
+      ]
+    },
+    {
+      "id": "synthetic-062",
+      "latencyMs": 2825.51,
+      "returnedProductIds": [
+        "5c647dc5-15cf-4b8c-8d03-bb46f719d28b",
+        "7c31255c-1e95-4a87-b752-246a369670b5",
+        "50b8cfa7-6498-4753-9dbd-5db3c82d941c",
+        "fb28cfcf-f88c-4934-856b-7e397103df0f",
+        "b4824adc-74cd-482b-b7b3-ca5cfac4ce25"
+      ]
+    },
+    {
+      "id": "synthetic-063",
+      "latencyMs": 2565.49,
+      "returnedProductIds": [
+        "663f5170-9c34-41d6-ab80-a55246765672",
+        "3fbc8be1-fc0a-4f96-a0e2-9ab1580daa0b",
+        "aeb2a1f9-6dc8-4d94-a412-94194a42f403",
+        "132c2fa0-a142-43d6-bf8d-9d18feaa0ba7",
+        "207c5247-b839-4159-bcb4-1bd9006645ae"
+      ]
+    },
+    {
+      "id": "synthetic-064",
+      "latencyMs": 2439.75,
+      "returnedProductIds": [
+        "73e9b3e7-a880-4eb8-bff2-85490a462f3b",
+        "ae8189e6-833d-4983-984f-270a59934f5c",
+        "dcbfce5b-7c24-4401-9e2b-fa1c1e66e23f",
+        "132c2fa0-a142-43d6-bf8d-9d18feaa0ba7",
+        "495ad06e-391a-451a-878b-a705854c53f6"
+      ]
+    },
+    {
+      "id": "synthetic-065",
+      "latencyMs": 2683.52,
+      "returnedProductIds": [
+        "864ba6c0-61ff-4594-a08c-7df190afd80e",
+        "20d31b73-a6fd-4caa-8ad9-9d8320a8d9f9",
+        "ffb83692-2001-400e-90ff-7eeb8f510373",
+        "495ad06e-391a-451a-878b-a705854c53f6",
+        "c93fe810-cafc-4e63-b13b-ea97a0349448"
+      ]
+    },
+    {
+      "id": "synthetic-066",
+      "latencyMs": 2560.59,
+      "returnedProductIds": [
+        "89424d00-81c4-4b6a-a4d0-35587b294b8c",
+        "15ccb5ab-3544-49e2-b2f5-d75600831dd3",
+        "207c5247-b839-4159-bcb4-1bd9006645ae",
+        "132c2fa0-a142-43d6-bf8d-9d18feaa0ba7",
+        "aeb2a1f9-6dc8-4d94-a412-94194a42f403"
+      ]
+    },
+    {
+      "id": "synthetic-067",
+      "latencyMs": 2595.14,
+      "returnedProductIds": [
+        "8c7e365e-15c9-4308-b706-16a0a4889d90",
+        "5c1cc97a-1bbd-4aef-a20e-0cf2e94fd666",
+        "e20e7eb3-a414-4707-8968-67893ff5de1e",
+        "89424d00-81c4-4b6a-a4d0-35587b294b8c",
+        "c93fe810-cafc-4e63-b13b-ea97a0349448"
+      ]
+    },
+    {
+      "id": "synthetic-068",
+      "latencyMs": 2800.09,
+      "returnedProductIds": [
+        "1a814912-dffc-4811-bbd6-02090b010c1c",
+        "26dec191-01f5-4886-a64d-b2807079db58",
+        "ab90b889-e398-48b5-afdc-61442e1aec80",
+        "eb08d9cb-83e1-4afa-bc0c-3c677dcfacf3",
+        "4bd80b15-d729-4042-aafe-a68fcb2989d5"
+      ]
+    },
+    {
+      "id": "synthetic-069",
+      "latencyMs": 2724.9,
+      "returnedProductIds": [
+        "26dec191-01f5-4886-a64d-b2807079db58",
+        "4bd80b15-d729-4042-aafe-a68fcb2989d5",
+        "f12743fa-69c3-4d60-bcce-6ed3790b6832",
+        "ab90b889-e398-48b5-afdc-61442e1aec80",
+        "1a814912-dffc-4811-bbd6-02090b010c1c"
+      ]
+    },
+    {
+      "id": "synthetic-070",
+      "latencyMs": 2466.54,
+      "returnedProductIds": [
+        "3ce96ab3-649a-415f-9a09-d30572cf454e",
+        "433def68-0266-4445-8924-334e3c37b142",
+        "fbccb321-cffb-46b4-8388-046577d6ba8c",
+        "98b67df5-a7ba-4c9a-8ebc-7ffcd07d41e8",
+        "54e753ed-1eb9-4c49-b4fe-ffee3cc4811c"
+      ]
+    },
+    {
+      "id": "synthetic-071",
+      "latencyMs": 2690.15,
+      "returnedProductIds": [
+        "3f58c864-b0bd-45b6-b246-eac0eb987c81",
+        "4c56a2a2-dedc-47d3-915a-72aad53fb2ab",
+        "98b67df5-a7ba-4c9a-8ebc-7ffcd07d41e8",
+        "433def68-0266-4445-8924-334e3c37b142",
+        "fbccb321-cffb-46b4-8388-046577d6ba8c"
+      ]
+    },
+    {
+      "id": "synthetic-072",
+      "latencyMs": 2586.6,
+      "returnedProductIds": [
+        "433def68-0266-4445-8924-334e3c37b142",
+        "fbccb321-cffb-46b4-8388-046577d6ba8c",
+        "3ce96ab3-649a-415f-9a09-d30572cf454e",
+        "3f58c864-b0bd-45b6-b246-eac0eb987c81",
+        "54e753ed-1eb9-4c49-b4fe-ffee3cc4811c"
+      ]
+    },
+    {
+      "id": "synthetic-073",
+      "latencyMs": 2685.33,
+      "returnedProductIds": [
+        "47a4c9f4-90f6-4374-bd7d-546023b0d665",
+        "54e753ed-1eb9-4c49-b4fe-ffee3cc4811c",
+        "98b67df5-a7ba-4c9a-8ebc-7ffcd07d41e8",
+        "921c53f7-495d-43d5-9c03-aacfc5fd95e3",
+        "3f58c864-b0bd-45b6-b246-eac0eb987c81"
+      ]
+    },
+    {
+      "id": "synthetic-074",
+      "latencyMs": 2446.4,
+      "returnedProductIds": [
+        "4bd80b15-d729-4042-aafe-a68fcb2989d5",
+        "26dec191-01f5-4886-a64d-b2807079db58",
+        "ab90b889-e398-48b5-afdc-61442e1aec80",
+        "f12743fa-69c3-4d60-bcce-6ed3790b6832",
+        "1a814912-dffc-4811-bbd6-02090b010c1c"
+      ]
+    },
+    {
+      "id": "synthetic-075",
+      "latencyMs": 2706.31,
+      "returnedProductIds": [
+        "4c56a2a2-dedc-47d3-915a-72aad53fb2ab",
+        "98b67df5-a7ba-4c9a-8ebc-7ffcd07d41e8",
+        "3f58c864-b0bd-45b6-b246-eac0eb987c81",
+        "54e753ed-1eb9-4c49-b4fe-ffee3cc4811c",
+        "fbccb321-cffb-46b4-8388-046577d6ba8c"
+      ]
+    },
+    {
+      "id": "synthetic-076",
+      "latencyMs": 2706.2,
+      "returnedProductIds": [
+        "53d310ac-efd8-4f40-81b3-56a93c011328",
+        "76cbdce1-5e10-45d8-9f24-92fb605ba0cd",
+        "433def68-0266-4445-8924-334e3c37b142",
+        "fbccb321-cffb-46b4-8388-046577d6ba8c",
+        "98b67df5-a7ba-4c9a-8ebc-7ffcd07d41e8"
+      ]
+    },
+    {
+      "id": "synthetic-077",
+      "latencyMs": 2643.7,
+      "returnedProductIds": [
+        "54e753ed-1eb9-4c49-b4fe-ffee3cc4811c",
+        "98b67df5-a7ba-4c9a-8ebc-7ffcd07d41e8",
+        "4c56a2a2-dedc-47d3-915a-72aad53fb2ab",
+        "fbccb321-cffb-46b4-8388-046577d6ba8c",
+        "d3d129ad-8cc9-4918-8ee4-4aad4e4adf6e"
+      ]
+    },
+    {
+      "id": "synthetic-078",
+      "latencyMs": 2615.73,
+      "returnedProductIds": [
+        "76cbdce1-5e10-45d8-9f24-92fb605ba0cd",
+        "53d310ac-efd8-4f40-81b3-56a93c011328",
+        "fbccb321-cffb-46b4-8388-046577d6ba8c",
+        "433def68-0266-4445-8924-334e3c37b142",
+        "98b67df5-a7ba-4c9a-8ebc-7ffcd07d41e8"
+      ]
+    },
+    {
+      "id": "synthetic-079",
+      "latencyMs": 2568.55,
+      "returnedProductIds": [
+        "78a0e26f-ca7e-497d-a66c-eec26c4c61c2",
+        "b98330db-4c1a-44ea-b596-4b01e2d54b70",
+        "f12743fa-69c3-4d60-bcce-6ed3790b6832",
+        "433def68-0266-4445-8924-334e3c37b142",
+        "fbccb321-cffb-46b4-8388-046577d6ba8c"
+      ]
+    },
+    {
+      "id": "synthetic-080",
+      "latencyMs": 2797.94,
+      "returnedProductIds": [
+        "921c53f7-495d-43d5-9c03-aacfc5fd95e3",
+        "98b67df5-a7ba-4c9a-8ebc-7ffcd07d41e8",
+        "54e753ed-1eb9-4c49-b4fe-ffee3cc4811c",
+        "47a4c9f4-90f6-4374-bd7d-546023b0d665",
+        "433def68-0266-4445-8924-334e3c37b142"
+      ]
+    },
+    {
+      "id": "synthetic-081",
+      "latencyMs": 2758.73,
+      "returnedProductIds": [
+        "98b67df5-a7ba-4c9a-8ebc-7ffcd07d41e8",
+        "d3d129ad-8cc9-4918-8ee4-4aad4e4adf6e",
+        "54e753ed-1eb9-4c49-b4fe-ffee3cc4811c",
+        "53d310ac-efd8-4f40-81b3-56a93c011328",
+        "76cbdce1-5e10-45d8-9f24-92fb605ba0cd"
+      ]
+    },
+    {
+      "id": "synthetic-082",
+      "latencyMs": 2713.22,
+      "returnedProductIds": [
+        "ab90b889-e398-48b5-afdc-61442e1aec80",
+        "4bd80b15-d729-4042-aafe-a68fcb2989d5",
+        "f12743fa-69c3-4d60-bcce-6ed3790b6832",
+        "26dec191-01f5-4886-a64d-b2807079db58",
+        "eb08d9cb-83e1-4afa-bc0c-3c677dcfacf3"
+      ]
+    },
+    {
+      "id": "synthetic-083",
+      "latencyMs": 2637.33,
+      "returnedProductIds": [
+        "b98330db-4c1a-44ea-b596-4b01e2d54b70",
+        "78a0e26f-ca7e-497d-a66c-eec26c4c61c2",
+        "f12743fa-69c3-4d60-bcce-6ed3790b6832",
+        "eb08d9cb-83e1-4afa-bc0c-3c677dcfacf3",
+        "98b67df5-a7ba-4c9a-8ebc-7ffcd07d41e8"
+      ]
+    },
+    {
+      "id": "synthetic-084",
+      "latencyMs": 2708.56,
+      "returnedProductIds": [
+        "d3d129ad-8cc9-4918-8ee4-4aad4e4adf6e",
+        "98b67df5-a7ba-4c9a-8ebc-7ffcd07d41e8",
+        "fbccb321-cffb-46b4-8388-046577d6ba8c",
+        "54e753ed-1eb9-4c49-b4fe-ffee3cc4811c",
+        "433def68-0266-4445-8924-334e3c37b142"
+      ]
+    },
+    {
+      "id": "synthetic-085",
+      "latencyMs": 2449.15,
+      "returnedProductIds": [
+        "eb08d9cb-83e1-4afa-bc0c-3c677dcfacf3",
+        "f12743fa-69c3-4d60-bcce-6ed3790b6832",
+        "26dec191-01f5-4886-a64d-b2807079db58",
+        "ab90b889-e398-48b5-afdc-61442e1aec80",
+        "1a814912-dffc-4811-bbd6-02090b010c1c"
+      ]
+    },
+    {
+      "id": "synthetic-086",
+      "latencyMs": 2637.87,
+      "returnedProductIds": [
+        "f12743fa-69c3-4d60-bcce-6ed3790b6832",
+        "eb08d9cb-83e1-4afa-bc0c-3c677dcfacf3",
+        "ab90b889-e398-48b5-afdc-61442e1aec80",
+        "4bd80b15-d729-4042-aafe-a68fcb2989d5",
+        "26dec191-01f5-4886-a64d-b2807079db58"
+      ]
+    },
+    {
+      "id": "synthetic-087",
+      "latencyMs": 2611.32,
+      "returnedProductIds": [
+        "fbccb321-cffb-46b4-8388-046577d6ba8c",
+        "433def68-0266-4445-8924-334e3c37b142",
+        "54e753ed-1eb9-4c49-b4fe-ffee3cc4811c",
+        "98b67df5-a7ba-4c9a-8ebc-7ffcd07d41e8",
+        "3f58c864-b0bd-45b6-b246-eac0eb987c81"
+      ]
+    },
+    {
+      "id": "synthetic-088",
+      "latencyMs": 2629.37,
+      "returnedProductIds": [
+        "1a814912-dffc-4811-bbd6-02090b010c1c",
+        "26dec191-01f5-4886-a64d-b2807079db58",
+        "4bd80b15-d729-4042-aafe-a68fcb2989d5",
+        "f12743fa-69c3-4d60-bcce-6ed3790b6832",
+        "ab90b889-e398-48b5-afdc-61442e1aec80"
+      ]
+    },
+    {
+      "id": "synthetic-089",
+      "latencyMs": 2550.7,
+      "returnedProductIds": [
+        "26dec191-01f5-4886-a64d-b2807079db58",
+        "4bd80b15-d729-4042-aafe-a68fcb2989d5",
+        "eb08d9cb-83e1-4afa-bc0c-3c677dcfacf3",
+        "f12743fa-69c3-4d60-bcce-6ed3790b6832",
+        "1a814912-dffc-4811-bbd6-02090b010c1c"
+      ]
+    },
+    {
+      "id": "synthetic-090",
+      "latencyMs": 2470.93,
+      "returnedProductIds": [
+        "3ce96ab3-649a-415f-9a09-d30572cf454e",
+        "433def68-0266-4445-8924-334e3c37b142",
+        "fbccb321-cffb-46b4-8388-046577d6ba8c",
+        "3f58c864-b0bd-45b6-b246-eac0eb987c81",
+        "98b67df5-a7ba-4c9a-8ebc-7ffcd07d41e8"
+      ]
+    },
+    {
+      "id": "synthetic-091",
+      "latencyMs": 2722.52,
+      "returnedProductIds": [
+        "3f58c864-b0bd-45b6-b246-eac0eb987c81",
+        "98b67df5-a7ba-4c9a-8ebc-7ffcd07d41e8",
+        "4c56a2a2-dedc-47d3-915a-72aad53fb2ab",
+        "fbccb321-cffb-46b4-8388-046577d6ba8c",
+        "433def68-0266-4445-8924-334e3c37b142"
+      ]
+    },
+    {
+      "id": "synthetic-092",
+      "latencyMs": 2605.34,
+      "returnedProductIds": [
+        "433def68-0266-4445-8924-334e3c37b142",
+        "3ce96ab3-649a-415f-9a09-d30572cf454e",
+        "fbccb321-cffb-46b4-8388-046577d6ba8c",
+        "3f58c864-b0bd-45b6-b246-eac0eb987c81",
+        "76cbdce1-5e10-45d8-9f24-92fb605ba0cd"
+      ]
+    },
+    {
+      "id": "synthetic-093",
+      "latencyMs": 2534.23,
+      "returnedProductIds": [
+        "47a4c9f4-90f6-4374-bd7d-546023b0d665",
+        "98b67df5-a7ba-4c9a-8ebc-7ffcd07d41e8",
+        "3ce96ab3-649a-415f-9a09-d30572cf454e",
+        "54e753ed-1eb9-4c49-b4fe-ffee3cc4811c",
+        "3f58c864-b0bd-45b6-b246-eac0eb987c81"
+      ]
+    },
+    {
+      "id": "synthetic-094",
+      "latencyMs": 2933.68,
+      "returnedProductIds": [
+        "4bd80b15-d729-4042-aafe-a68fcb2989d5",
+        "26dec191-01f5-4886-a64d-b2807079db58",
+        "f12743fa-69c3-4d60-bcce-6ed3790b6832",
+        "ab90b889-e398-48b5-afdc-61442e1aec80",
+        "eb08d9cb-83e1-4afa-bc0c-3c677dcfacf3"
+      ]
+    },
+    {
+      "id": "synthetic-095",
+      "latencyMs": 2559.79,
+      "returnedProductIds": [
+        "4c56a2a2-dedc-47d3-915a-72aad53fb2ab",
+        "54e753ed-1eb9-4c49-b4fe-ffee3cc4811c",
+        "3f58c864-b0bd-45b6-b246-eac0eb987c81",
+        "98b67df5-a7ba-4c9a-8ebc-7ffcd07d41e8",
+        "d3d129ad-8cc9-4918-8ee4-4aad4e4adf6e"
+      ]
+    },
+    {
+      "id": "synthetic-096",
+      "latencyMs": 2497.39,
+      "returnedProductIds": [
+        "53d310ac-efd8-4f40-81b3-56a93c011328",
+        "76cbdce1-5e10-45d8-9f24-92fb605ba0cd",
+        "433def68-0266-4445-8924-334e3c37b142",
+        "3ce96ab3-649a-415f-9a09-d30572cf454e",
+        "98b67df5-a7ba-4c9a-8ebc-7ffcd07d41e8"
+      ]
+    },
+    {
+      "id": "synthetic-097",
+      "latencyMs": 2487.7,
+      "returnedProductIds": [
+        "54e753ed-1eb9-4c49-b4fe-ffee3cc4811c",
+        "98b67df5-a7ba-4c9a-8ebc-7ffcd07d41e8",
+        "4c56a2a2-dedc-47d3-915a-72aad53fb2ab",
+        "fbccb321-cffb-46b4-8388-046577d6ba8c",
+        "d3d129ad-8cc9-4918-8ee4-4aad4e4adf6e"
+      ]
+    },
+    {
+      "id": "synthetic-098",
+      "latencyMs": 2649.66,
+      "returnedProductIds": [
+        "76cbdce1-5e10-45d8-9f24-92fb605ba0cd",
+        "53d310ac-efd8-4f40-81b3-56a93c011328",
+        "98b67df5-a7ba-4c9a-8ebc-7ffcd07d41e8",
+        "4c56a2a2-dedc-47d3-915a-72aad53fb2ab",
+        "54e753ed-1eb9-4c49-b4fe-ffee3cc4811c"
+      ]
+    },
+    {
+      "id": "synthetic-099",
+      "latencyMs": 2536.8,
+      "returnedProductIds": [
+        "78a0e26f-ca7e-497d-a66c-eec26c4c61c2",
+        "b98330db-4c1a-44ea-b596-4b01e2d54b70",
+        "433def68-0266-4445-8924-334e3c37b142",
+        "54e753ed-1eb9-4c49-b4fe-ffee3cc4811c",
+        "fbccb321-cffb-46b4-8388-046577d6ba8c"
+      ]
+    },
+    {
+      "id": "synthetic-100",
+      "latencyMs": 2529.95,
+      "returnedProductIds": [
+        "921c53f7-495d-43d5-9c03-aacfc5fd95e3",
+        "98b67df5-a7ba-4c9a-8ebc-7ffcd07d41e8",
+        "53d310ac-efd8-4f40-81b3-56a93c011328",
+        "433def68-0266-4445-8924-334e3c37b142",
+        "1a814912-dffc-4811-bbd6-02090b010c1c"
+      ]
+    }
+  ]
+}

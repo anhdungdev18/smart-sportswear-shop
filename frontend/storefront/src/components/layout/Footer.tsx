@@ -33,7 +33,7 @@ export function Footer() {
       <div className="container mx-auto max-w-[1368px] px-4 py-12 md:px-0">
         <div className="grid gap-10 lg:grid-cols-[220px_1fr_360px] lg:gap-8">
           <div className="flex flex-col items-start gap-4">
-            <Image src="/images/ivymoda/common/logo-johns.png" alt="John's Sport Shop" width={141} height={70} />
+            <Image src="/images/ivymoda/common/logo-johns.png" alt="John's Sport Shop" width={141} height={70} className="h-auto" />
 
             <div className="flex items-center gap-3">
               <a href="https://www.dmca.com/Protection/Status.aspx?ID=0cfdeac4-6e7f-4fca-941f-57a0a0962777" target="_blank" rel="nofollow">

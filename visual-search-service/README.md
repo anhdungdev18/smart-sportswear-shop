@@ -8,7 +8,7 @@ Independent FastAPI service for catalog image embeddings and visual product sear
 python -m venv .venv
 .\.venv\Scripts\pip install -r requirements-test.txt
 .\.venv\Scripts\pytest
-.\.venv\Scripts\uvicorn app.main:app --reload --port 8090
+.\.venv\Scripts\python scripts\run_api.py
 ```
 
 Copy `.env.example` to `.env` for local overrides. Never commit provider or internal-service secrets.
@@ -30,7 +30,9 @@ download from the Internet.
 ## Phase 6 search API
 
 `POST /internal/v1/search?limit=20` accepts a multipart field named `image` and
-requires `X-Internal-Service-Token`. It validates and normalizes the upload,
+allows up to 50 internal candidates so Spring can apply commerce filters before
+returning at most 20 public results. It requires `X-Internal-Service-Token`,
+validates and normalizes the upload,
 creates a query embedding, runs exact cosine search against READY embeddings
 for the ACTIVE model, groups matches by product, and excludes non-ACTIVE
 products. Query images are not stored; only provider usage and latency are
@@ -126,6 +128,37 @@ Available internal endpoints:
 - `GET /internal/v1/admin/coverage`, `/usage` and `/jobs`.
 - `POST /internal/v1/admin/retry-failed` and `/backfill-missing`.
 - `POST /internal/v1/admin/reindex` with exactly one `image_id` or `product_id`.
+- `GET /internal/v1/admin/models` and `POST /models/{id}/activate` provide
+  transaction-safe model activation/rollback with a minimum 98% READY gate.
 
 All maintenance actions create indexing jobs and transactional outbox events;
 they never call the embedding provider from the HTTP request.
+
+Usage cost is estimated using `IMAGE_COST_PER_MEGAPIXEL_USD` (default
+`0.0006`). Operations exposes monthly cost/budget, and query embedding stops
+with HTTP 429 when `MONTHLY_BUDGET_USD` reaches 100%.
+
+## Phase 10 benchmark and rollout
+
+The acceptance benchmark uses at least 100 independently sourced images across
+`tops`, `bottoms` and `shoes`. `accessories` is N/A because the audited ACTIVE
+catalog currently has no accessory product with an image, and becomes required
+when one is added. The benchmark rejects a rollout unless
+Recall@5 is at least 80%, top-result category accuracy is at least 90%, and
+end-to-end p95 latency is at most 3 seconds. See
+`evidence/visual-search/benchmark-manifest.example.json` for the manifest shape:
+
+```powershell
+python scripts/benchmark_search.py ..\evidence\visual-search\benchmark-manifest.json `
+  --output ..\evidence\visual-search\phase10-benchmark-report.json
+```
+
+Benchmark images must remain outside Git and must not be catalog originals,
+copies or direct crops. The full staged rollout, monitoring and non-destructive
+rollback procedure is in `docs/visual-search-rollout.md`.
+
+When independent photos are unavailable, an explicitly approved synthetic
+robustness set can be reproduced with `python scripts/build_synthetic_benchmark.py
+../evidence/visual-search/synthetic-benchmark`. Generated images are ignored by
+Git; the manifest records source IDs, seeds and transformations. This mode does
+not claim real-world generalization.

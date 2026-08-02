@@ -1,0 +1,2407 @@
+{
+  "benchmarkType": "synthetic-robustness",
+  "limitations": "Catalog-derived simulations measure transformation robustness, not real-world generalization.",
+  "seed": 20260801,
+  "samples": [
+    {
+      "id": "synthetic-001",
+      "image": "benchmark-images/synthetic-001.jpg",
+      "stratum": "tops",
+      "expectedProductIds": [
+        "002509c0-7ed5-4f78-bf49-b59f3738fa4b"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "a14b0e64-6351-44d1-8a79-b68781592842",
+        "sourceProductName": "Adidas Men's Colombia 26 Home Authentic Jersey",
+        "seed": 20260802,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-002",
+      "image": "benchmark-images/synthetic-002.jpg",
+      "stratum": "tops",
+      "expectedProductIds": [
+        "034a7087-a6a6-4ae5-9b84-5f711681c09e"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "baab4ec3-a183-4cd4-a796-3cba8939d18c",
+        "sourceProductName": "Nike England Away Jersey 2026",
+        "seed": 20260803,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-003",
+      "image": "benchmark-images/synthetic-003.jpg",
+      "stratum": "tops",
+      "expectedProductIds": [
+        "04ae4c5f-d30b-46fa-b959-c6dd695a75a8"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "1593f8da-0a83-48d9-8109-b3d4f29a41e0",
+        "sourceProductName": "Flower Flow Air Singlet",
+        "seed": 20260804,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-004",
+      "image": "benchmark-images/synthetic-004.jpg",
+      "stratum": "tops",
+      "expectedProductIds": [
+        "067ff97f-f0fc-449d-b39b-f9bffec54bbf"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "01ba7f46-9d6e-4e72-a05d-3f694d61ce94",
+        "sourceProductName": "Flower Combat T-Shirt",
+        "seed": 20260805,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-005",
+      "image": "benchmark-images/synthetic-005.jpg",
+      "stratum": "tops",
+      "expectedProductIds": [
+        "08a5f39e-b5a3-4cb4-a248-1ec5497baf58"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "03a1a4ea-bcdd-427f-ba5a-3e9a16b99c20",
+        "sourceProductName": "Women's Tech Golden Hour Vest",
+        "seed": 20260806,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-006",
+      "image": "benchmark-images/synthetic-006.jpg",
+      "stratum": "tops",
+      "expectedProductIds": [
+        "0935a269-25b5-4e0c-a5fe-5c52ddd8f4cf"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "26fd978c-39ce-4233-910e-abfe52d6aafb",
+        "sourceProductName": "Statement Combat Pro T-Shirt",
+        "seed": 20260807,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-007",
+      "image": "benchmark-images/synthetic-007.jpg",
+      "stratum": "tops",
+      "expectedProductIds": [
+        "093b5464-33e6-4482-8d22-bcc1b206f8f8"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "0298c70c-c539-4c17-a8c4-30b9399f9e7d",
+        "sourceProductName": "Nike Chelsea Home Jersey 26/27",
+        "seed": 20260808,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-008",
+      "image": "benchmark-images/synthetic-008.jpg",
+      "stratum": "tops",
+      "expectedProductIds": [
+        "0a03a06d-9986-4102-b5e7-49173c0bfa33"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "af42be51-29a4-4458-b333-d9fb67da1ab2",
+        "sourceProductName": "Adidas Juventus Icon Jersey 2025",
+        "seed": 20260809,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-009",
+      "image": "benchmark-images/synthetic-009.jpg",
+      "stratum": "tops",
+      "expectedProductIds": [
+        "0e7f523a-c114-4a4f-aa2e-7fc28802e8f9"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "3827a5c8-ee4f-4d47-83eb-b369a1ab30f8",
+        "sourceProductName": "Adidas Italy Away Jersey 2026",
+        "seed": 20260810,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-010",
+      "image": "benchmark-images/synthetic-010.jpg",
+      "stratum": "tops",
+      "expectedProductIds": [
+        "103c5964-659c-4a3b-85bd-517497ef37ba"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "671d28bd-6093-4f16-8543-ab4d3774c1f9",
+        "sourceProductName": "Adidas Real Madrid Away Jersey 25/26",
+        "seed": 20260811,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-011",
+      "image": "benchmark-images/synthetic-011.jpg",
+      "stratum": "tops",
+      "expectedProductIds": [
+        "12579258-c3b3-4e0b-9a14-3f33da568167"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "b32ef5cc-55af-45e0-a9f7-66ac5a65d3ce",
+        "sourceProductName": "Nike Brazil Away Jersey 2026",
+        "seed": 20260812,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-012",
+      "image": "benchmark-images/synthetic-012.jpg",
+      "stratum": "tops",
+      "expectedProductIds": [
+        "12f1875f-a908-4cb2-8bdf-45b98a04558d"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "f84a8814-8df5-4fe6-bf5e-0e73a30bd665",
+        "sourceProductName": "Adidas Men's Germany Away Jersey 1994",
+        "seed": 20260813,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-013",
+      "image": "benchmark-images/synthetic-013.jpg",
+      "stratum": "tops",
+      "expectedProductIds": [
+        "14c0492e-8364-40a5-986f-186dfa86ddae"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "024d2728-c283-43eb-862b-495dcdfd8c62",
+        "sourceProductName": "Universe Combat T-Shirt",
+        "seed": 20260814,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-014",
+      "image": "benchmark-images/synthetic-014.jpg",
+      "stratum": "tops",
+      "expectedProductIds": [
+        "1a08f249-6f02-43dd-8b38-adc41ea694c0"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "9372bb46-84db-41ab-8bd5-e5ac6a6cb0b2",
+        "sourceProductName": "Adidas Liverpool FC Home Jersey 25/26",
+        "seed": 20260815,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-015",
+      "image": "benchmark-images/synthetic-015.jpg",
+      "stratum": "tops",
+      "expectedProductIds": [
+        "20d31b73-a6fd-4caa-8ad9-9d8320a8d9f9"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "0ed4a04e-1813-460e-ba46-32305028eeae",
+        "sourceProductName": "Men's Core Vest",
+        "seed": 20260816,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-016",
+      "image": "benchmark-images/synthetic-016.jpg",
+      "stratum": "tops",
+      "expectedProductIds": [
+        "23d8e9bc-58e3-48a3-8a69-73698dbe4f95"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "2e2d4517-07f7-42bb-a336-44179729bea7",
+        "sourceProductName": "High Five Pace T-Shirt",
+        "seed": 20260817,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-017",
+      "image": "benchmark-images/synthetic-017.jpg",
+      "stratum": "tops",
+      "expectedProductIds": [
+        "26a0edca-8871-4482-994c-17a83355fa33"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "f9659cb9-9318-4a88-ac8a-3f8c1acbab6a",
+        "sourceProductName": "Adidas Juventus 3rd Jersey 25/26",
+        "seed": 20260818,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-018",
+      "image": "benchmark-images/synthetic-018.jpg",
+      "stratum": "tops",
+      "expectedProductIds": [
+        "29275735-f169-45f4-9f93-3848d0a065a6"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "076b2b10-65b4-4791-bb80-b2d35ee0727e",
+        "sourceProductName": "Men's Tech S/S Tee",
+        "seed": 20260819,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-019",
+      "image": "benchmark-images/synthetic-019.jpg",
+      "stratum": "tops",
+      "expectedProductIds": [
+        "3dc3415d-23b0-4e26-bf41-7fa1ec5b0602"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "168886db-3221-4ad1-b483-790e0404fc0b",
+        "sourceProductName": "Statement Pace T-shirt",
+        "seed": 20260820,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-020",
+      "image": "benchmark-images/synthetic-020.jpg",
+      "stratum": "tops",
+      "expectedProductIds": [
+        "46d92538-a553-4489-913a-ac6b5e2c1fd8"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "259dfae2-4027-4529-b01b-57a3b576fde0",
+        "sourceProductName": "Nike USA Energy Jersey 2026",
+        "seed": 20260821,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-021",
+      "image": "benchmark-images/synthetic-021.jpg",
+      "stratum": "tops",
+      "expectedProductIds": [
+        "47896feb-ea05-4f7d-a5bf-176aa3a35bd7"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "1ae55f32-2b22-4acc-8414-09ad1fc92783",
+        "sourceProductName": "Women's Tech Race S/S Tee",
+        "seed": 20260822,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-022",
+      "image": "benchmark-images/synthetic-022.jpg",
+      "stratum": "tops",
+      "expectedProductIds": [
+        "495ad06e-391a-451a-878b-a705854c53f6"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "61046ce8-273b-40cc-9b79-dd0756c8f5f0",
+        "sourceProductName": "Women's Core Vest",
+        "seed": 20260823,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-023",
+      "image": "benchmark-images/synthetic-023.jpg",
+      "stratum": "tops",
+      "expectedProductIds": [
+        "4a9a0036-53ee-4b5d-99f3-4340996ebb3f"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "ecb1ac8e-dbcc-4423-a578-f433d4b0c202",
+        "sourceProductName": "Adidas Men's Mexico 26 Home Authentic Jersey",
+        "seed": 20260824,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-024",
+      "image": "benchmark-images/synthetic-024.jpg",
+      "stratum": "tops",
+      "expectedProductIds": [
+        "595b9f95-0d5a-45dc-9f47-88379cf02226"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "07693169-c277-4110-b4f4-ffcc6e2a5337",
+        "sourceProductName": "Men's Core L/S Tee",
+        "seed": 20260825,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-025",
+      "image": "benchmark-images/synthetic-025.jpg",
+      "stratum": "tops",
+      "expectedProductIds": [
+        "6170d7b7-dde7-4f17-a1c0-757a6e9f056f"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "5b4911c0-f74c-4793-8cad-c4f6986b783c",
+        "sourceProductName": "Women's Core L/S Tee",
+        "seed": 20260826,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-026",
+      "image": "benchmark-images/synthetic-026.jpg",
+      "stratum": "tops",
+      "expectedProductIds": [
+        "62a2c180-462d-40da-8989-08a4f1173406"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "8af1d73a-7262-4019-9b8f-56dd9d28f800",
+        "sourceProductName": "Adidas Men's Spain 26 Home Jersey",
+        "seed": 20260827,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-027",
+      "image": "benchmark-images/synthetic-027.jpg",
+      "stratum": "tops",
+      "expectedProductIds": [
+        "63e82ed6-1b6d-4ee6-8a18-a6190807d32e"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "15c7896b-9547-4835-898c-1e3f552c6388",
+        "sourceProductName": "Adidas Men's Spain 26 Home Authentic Jersey",
+        "seed": 20260828,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-028",
+      "image": "benchmark-images/synthetic-028.jpg",
+      "stratum": "tops",
+      "expectedProductIds": [
+        "64ad1470-fb76-442e-ae1f-029c32f28672"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "0a6b6d1a-4b35-4a27-a335-4c247f53356b",
+        "sourceProductName": "Men's Core S/S Tee",
+        "seed": 20260829,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-029",
+      "image": "benchmark-images/synthetic-029.jpg",
+      "stratum": "tops",
+      "expectedProductIds": [
+        "699e059b-1e0c-438d-b48d-e34ca26edf6e"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "00461d1e-488f-4b18-b74f-49270c7a75a2",
+        "sourceProductName": "Statement Motion T-shirt",
+        "seed": 20260830,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-030",
+      "image": "benchmark-images/synthetic-030.jpg",
+      "stratum": "tops",
+      "expectedProductIds": [
+        "6d727caf-4a5d-42eb-bc74-be8097c2efd2"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "5c819214-066d-417b-a7e9-7cf63170fdd2",
+        "sourceProductName": "France 2026 Stadium Away Men's Nike Dri-FIT Soccer Replica Jersey",
+        "seed": 20260831,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-031",
+      "image": "benchmark-images/synthetic-031.jpg",
+      "stratum": "tops",
+      "expectedProductIds": [
+        "6e4fec73-0bbe-4e6e-bdc6-1570f0380115"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "3c304e0a-cef7-4b6f-a83b-291c01dec401",
+        "sourceProductName": "Men's Tech Reflect L/S Tee",
+        "seed": 20260832,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-032",
+      "image": "benchmark-images/synthetic-032.jpg",
+      "stratum": "tops",
+      "expectedProductIds": [
+        "71831629-35bd-4a8d-8473-752e9de01609"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "0fac351b-93bc-4bee-8e0a-10241318020c",
+        "sourceProductName": "Puma Manchester City FC 3rd Jersey 25/26",
+        "seed": 20260833,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-033",
+      "image": "benchmark-images/synthetic-033.jpg",
+      "stratum": "tops",
+      "expectedProductIds": [
+        "76ad31de-cafd-40e2-8cc9-1553b9e7eb3a"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "7d9cacbb-2a21-46b7-a23c-155f17701e11",
+        "sourceProductName": "Adidas Men's Japan 26 Away Jersey",
+        "seed": 20260834,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-034",
+      "image": "benchmark-images/synthetic-034.jpg",
+      "stratum": "tops",
+      "expectedProductIds": [
+        "7a265465-0734-45f1-a554-d1c2da094818"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "3557f82f-158a-4114-a4c1-15d963d6424e",
+        "sourceProductName": "Women's Tech Race Vest",
+        "seed": 20260835,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-035",
+      "image": "benchmark-images/synthetic-035.jpg",
+      "stratum": "bottoms",
+      "expectedProductIds": [
+        "132c2fa0-a142-43d6-bf8d-9d18feaa0ba7"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "06c641b0-6e3d-4e3c-85de-264241a4dc16",
+        "sourceProductName": "Women's Core Twin Short",
+        "seed": 20260836,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-036",
+      "image": "benchmark-images/synthetic-036.jpg",
+      "stratum": "bottoms",
+      "expectedProductIds": [
+        "15ccb5ab-3544-49e2-b2f5-d75600831dd3"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "399962c3-8b46-41ec-8429-2dba742f9a2c",
+        "sourceProductName": "Women's Tech 4.5\"Short",
+        "seed": 20260837,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-037",
+      "image": "benchmark-images/synthetic-037.jpg",
+      "stratum": "bottoms",
+      "expectedProductIds": [
+        "207c5247-b839-4159-bcb4-1bd9006645ae"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "1f71c911-1446-419e-8373-b59196055d40",
+        "sourceProductName": "Women's Tech 4.5\" Twin Short",
+        "seed": 20260838,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-038",
+      "image": "benchmark-images/synthetic-038.jpg",
+      "stratum": "bottoms",
+      "expectedProductIds": [
+        "25dedef8-d3a1-4b9f-88b5-7cc730ad03ea"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "2c426c6e-2d75-439e-9f22-f5cbc4f4b39e",
+        "sourceProductName": "Men's Tech All-Terrain 5\" Short",
+        "seed": 20260839,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-039",
+      "image": "benchmark-images/synthetic-039.jpg",
+      "stratum": "bottoms",
+      "expectedProductIds": [
+        "3fbc8be1-fc0a-4f96-a0e2-9ab1580daa0b"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "0d8fa58b-b61c-405c-ab17-71af75622e86",
+        "sourceProductName": "Men's Tech 7\" Twin Short",
+        "seed": 20260840,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-040",
+      "image": "benchmark-images/synthetic-040.jpg",
+      "stratum": "bottoms",
+      "expectedProductIds": [
+        "50b8cfa7-6498-4753-9dbd-5db3c82d941c"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "102ff010-9213-4602-ba9e-0483652783f4",
+        "sourceProductName": "Men's Tech 5\" Short",
+        "seed": 20260841,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-041",
+      "image": "benchmark-images/synthetic-041.jpg",
+      "stratum": "bottoms",
+      "expectedProductIds": [
+        "5c1cc97a-1bbd-4aef-a20e-0cf2e94fd666"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "0b26675d-c349-4d14-a9d5-eed0fc0c10cf",
+        "sourceProductName": "Men's Core 5\" Short",
+        "seed": 20260842,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-042",
+      "image": "benchmark-images/synthetic-042.jpg",
+      "stratum": "bottoms",
+      "expectedProductIds": [
+        "5c647dc5-15cf-4b8c-8d03-bb46f719d28b"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "2477efe0-f613-43fb-accf-b2999e58057f",
+        "sourceProductName": "Men's Tech Race 5\" Short",
+        "seed": 20260843,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-043",
+      "image": "benchmark-images/synthetic-043.jpg",
+      "stratum": "bottoms",
+      "expectedProductIds": [
+        "663f5170-9c34-41d6-ab80-a55246765672"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "26663f72-9873-4b97-bd98-2cb375d78012",
+        "sourceProductName": "Men's Tech Race Short",
+        "seed": 20260844,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-044",
+      "image": "benchmark-images/synthetic-044.jpg",
+      "stratum": "bottoms",
+      "expectedProductIds": [
+        "73e9b3e7-a880-4eb8-bff2-85490a462f3b"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "15269320-5c57-45ff-bfc2-7053fe6f366b",
+        "sourceProductName": "Women's Tech Race Stretch Short",
+        "seed": 20260845,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-045",
+      "image": "benchmark-images/synthetic-045.jpg",
+      "stratum": "bottoms",
+      "expectedProductIds": [
+        "864ba6c0-61ff-4594-a08c-7df190afd80e"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "4bd0f172-3773-4676-a9e4-51f6f26e1dec",
+        "sourceProductName": "Men's Core Racer Short",
+        "seed": 20260846,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-046",
+      "image": "benchmark-images/synthetic-046.jpg",
+      "stratum": "bottoms",
+      "expectedProductIds": [
+        "89424d00-81c4-4b6a-a4d0-35587b294b8c"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "524c6527-1a1a-4aa9-af49-22883e7cf434",
+        "sourceProductName": "Women's Tech All-Terrain 7\" Stretch Short",
+        "seed": 20260847,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-047",
+      "image": "benchmark-images/synthetic-047.jpg",
+      "stratum": "bottoms",
+      "expectedProductIds": [
+        "8c7e365e-15c9-4308-b706-16a0a4889d90"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "4e3ec4fc-8011-437c-bb3e-10dbfed98a8d",
+        "sourceProductName": "Men's Core Stretch Short",
+        "seed": 20260848,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-048",
+      "image": "benchmark-images/synthetic-048.jpg",
+      "stratum": "bottoms",
+      "expectedProductIds": [
+        "ae8189e6-833d-4983-984f-270a59934f5c"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "1da7aa1b-6879-414c-9fb8-7950b638ce74",
+        "sourceProductName": "Women's Tech Race Short",
+        "seed": 20260849,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-049",
+      "image": "benchmark-images/synthetic-049.jpg",
+      "stratum": "bottoms",
+      "expectedProductIds": [
+        "aeb2a1f9-6dc8-4d94-a412-94194a42f403"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "5d612c51-4fe3-4a88-931e-a16050cf090a",
+        "sourceProductName": "Women's Tech Race Twin Short",
+        "seed": 20260850,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-050",
+      "image": "benchmark-images/synthetic-050.jpg",
+      "stratum": "bottoms",
+      "expectedProductIds": [
+        "c0b7e560-6c30-4ebb-93ad-f4800bec2665"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "27da7861-c4a3-444f-a392-31226516ec39",
+        "sourceProductName": "Women's Tech All-Terrain 5\" Twin Short",
+        "seed": 20260851,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-051",
+      "image": "benchmark-images/synthetic-051.jpg",
+      "stratum": "bottoms",
+      "expectedProductIds": [
+        "c93fe810-cafc-4e63-b13b-ea97a0349448"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "4c47c9ee-b60e-403a-9dda-ddece263a607",
+        "sourceProductName": "Men's Tech Race Twin Short",
+        "seed": 20260852,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-052",
+      "image": "benchmark-images/synthetic-052.jpg",
+      "stratum": "bottoms",
+      "expectedProductIds": [
+        "dcbfce5b-7c24-4401-9e2b-fa1c1e66e23f"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "35d3b61c-f77f-40e6-931b-6f2b71625848",
+        "sourceProductName": "Women's Tech Stretch Short",
+        "seed": 20260853,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-053",
+      "image": "benchmark-images/synthetic-053.jpg",
+      "stratum": "bottoms",
+      "expectedProductIds": [
+        "e20e7eb3-a414-4707-8968-67893ff5de1e"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "3b024b07-0edf-4e38-8acf-c038569cd17a",
+        "sourceProductName": "Men's Core 5\" Twin Short",
+        "seed": 20260854,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-054",
+      "image": "benchmark-images/synthetic-054.jpg",
+      "stratum": "bottoms",
+      "expectedProductIds": [
+        "fb28cfcf-f88c-4934-856b-7e397103df0f"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "403b7353-74b1-49e6-bfc1-41c096b2d64d",
+        "sourceProductName": "Men's Tech 5\" Twin Short",
+        "seed": 20260855,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-055",
+      "image": "benchmark-images/synthetic-055.jpg",
+      "stratum": "bottoms",
+      "expectedProductIds": [
+        "132c2fa0-a142-43d6-bf8d-9d18feaa0ba7"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "2fcf7fc6-055c-4042-a8a9-b823ae2012bd",
+        "sourceProductName": "Women's Core Twin Short",
+        "seed": 20260856,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-056",
+      "image": "benchmark-images/synthetic-056.jpg",
+      "stratum": "bottoms",
+      "expectedProductIds": [
+        "15ccb5ab-3544-49e2-b2f5-d75600831dd3"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "52fb3f7b-aa77-4a23-b217-f4d2bd85a729",
+        "sourceProductName": "Women's Tech 4.5\"Short",
+        "seed": 20260857,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-057",
+      "image": "benchmark-images/synthetic-057.jpg",
+      "stratum": "bottoms",
+      "expectedProductIds": [
+        "207c5247-b839-4159-bcb4-1bd9006645ae"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "32cc2a89-3edc-4c2a-8daf-add4cfa05d95",
+        "sourceProductName": "Women's Tech 4.5\" Twin Short",
+        "seed": 20260858,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-058",
+      "image": "benchmark-images/synthetic-058.jpg",
+      "stratum": "bottoms",
+      "expectedProductIds": [
+        "25dedef8-d3a1-4b9f-88b5-7cc730ad03ea"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "aafaf0dd-8890-4caf-a7c9-94cea57f1132",
+        "sourceProductName": "Men's Tech All-Terrain 5\" Short",
+        "seed": 20260859,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-059",
+      "image": "benchmark-images/synthetic-059.jpg",
+      "stratum": "bottoms",
+      "expectedProductIds": [
+        "3fbc8be1-fc0a-4f96-a0e2-9ab1580daa0b"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "2056cebb-88fa-4690-9e43-210582e27a64",
+        "sourceProductName": "Men's Tech 7\" Twin Short",
+        "seed": 20260860,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-060",
+      "image": "benchmark-images/synthetic-060.jpg",
+      "stratum": "bottoms",
+      "expectedProductIds": [
+        "50b8cfa7-6498-4753-9dbd-5db3c82d941c"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "261e5cf7-40d8-49a9-90dd-161698e998cb",
+        "sourceProductName": "Men's Tech 5\" Short",
+        "seed": 20260861,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-061",
+      "image": "benchmark-images/synthetic-061.jpg",
+      "stratum": "bottoms",
+      "expectedProductIds": [
+        "5c1cc97a-1bbd-4aef-a20e-0cf2e94fd666"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "4ace9eef-fd56-4ffe-9c3c-eb7df4d3a89d",
+        "sourceProductName": "Men's Core 5\" Short",
+        "seed": 20260862,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-062",
+      "image": "benchmark-images/synthetic-062.jpg",
+      "stratum": "bottoms",
+      "expectedProductIds": [
+        "5c647dc5-15cf-4b8c-8d03-bb46f719d28b"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "34f06905-1ecb-40f2-96f8-829476dd34d8",
+        "sourceProductName": "Men's Tech Race 5\" Short",
+        "seed": 20260863,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-063",
+      "image": "benchmark-images/synthetic-063.jpg",
+      "stratum": "bottoms",
+      "expectedProductIds": [
+        "663f5170-9c34-41d6-ab80-a55246765672"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "4f9f16f0-858f-4c60-81c7-0c6f5b9904df",
+        "sourceProductName": "Men's Tech Race Short",
+        "seed": 20260864,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-064",
+      "image": "benchmark-images/synthetic-064.jpg",
+      "stratum": "bottoms",
+      "expectedProductIds": [
+        "73e9b3e7-a880-4eb8-bff2-85490a462f3b"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "3a0b7a82-b1dc-4687-9090-08118ea08540",
+        "sourceProductName": "Women's Tech Race Stretch Short",
+        "seed": 20260865,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-065",
+      "image": "benchmark-images/synthetic-065.jpg",
+      "stratum": "bottoms",
+      "expectedProductIds": [
+        "864ba6c0-61ff-4594-a08c-7df190afd80e"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "7608b1b7-bc11-4e81-9dcc-4b339a8c4377",
+        "sourceProductName": "Men's Core Racer Short",
+        "seed": 20260866,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-066",
+      "image": "benchmark-images/synthetic-066.jpg",
+      "stratum": "bottoms",
+      "expectedProductIds": [
+        "89424d00-81c4-4b6a-a4d0-35587b294b8c"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "817b848c-0d30-4173-899f-049e13427a3f",
+        "sourceProductName": "Women's Tech All-Terrain 7\" Stretch Short",
+        "seed": 20260867,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-067",
+      "image": "benchmark-images/synthetic-067.jpg",
+      "stratum": "bottoms",
+      "expectedProductIds": [
+        "8c7e365e-15c9-4308-b706-16a0a4889d90"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "62e08573-6bab-4d53-91d2-a93b1dfba0d7",
+        "sourceProductName": "Men's Core Stretch Short",
+        "seed": 20260868,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-068",
+      "image": "benchmark-images/synthetic-068.jpg",
+      "stratum": "shoes",
+      "expectedProductIds": [
+        "1a814912-dffc-4811-bbd6-02090b010c1c"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "9ae063c2-0ad3-42d7-8518-9bfee605b5c9",
+        "sourceProductName": "Morelia Neo IV Pro AS",
+        "seed": 20260869,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-069",
+      "image": "benchmark-images/synthetic-069.jpg",
+      "stratum": "shoes",
+      "expectedProductIds": [
+        "26dec191-01f5-4886-a64d-b2807079db58"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "11659ff2-e4bb-4d0b-b862-34849b142373",
+        "sourceProductName": "Mizuno Morelia Neo V Japan FG",
+        "seed": 20260870,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-070",
+      "image": "benchmark-images/synthetic-070.jpg",
+      "stratum": "shoes",
+      "expectedProductIds": [
+        "3ce96ab3-649a-415f-9a09-d30572cf454e"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "54acc09f-c1b6-46b1-9a51-7f32a2f6c33d",
+        "sourceProductName": "Nike Mercurial Superfly 11 Academy FG - Breakout Pack",
+        "seed": 20260871,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-071",
+      "image": "benchmark-images/synthetic-071.jpg",
+      "stratum": "shoes",
+      "expectedProductIds": [
+        "3f58c864-b0bd-45b6-b246-eac0eb987c81"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "577ab353-f9ad-4e84-9b61-99afd4ea8556",
+        "sourceProductName": "Nike Mercurial Vapor 16 Academy Turf",
+        "seed": 20260872,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-072",
+      "image": "benchmark-images/synthetic-072.jpg",
+      "stratum": "shoes",
+      "expectedProductIds": [
+        "433def68-0266-4445-8924-334e3c37b142"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "51de3023-5794-43a4-a209-8a7b3cffd2c2",
+        "sourceProductName": "Nike Mercurial Superfly 11 Elite FG - Breakout Pack",
+        "seed": 20260873,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-073",
+      "image": "benchmark-images/synthetic-073.jpg",
+      "stratum": "shoes",
+      "expectedProductIds": [
+        "47a4c9f4-90f6-4374-bd7d-546023b0d665"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "89e618a9-b2b0-4416-a354-deca573bbc67",
+        "sourceProductName": "Nike Mercurial Superfly 11 Academy TF - Shadow Pack",
+        "seed": 20260874,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-074",
+      "image": "benchmark-images/synthetic-074.jpg",
+      "stratum": "shoes",
+      "expectedProductIds": [
+        "4bd80b15-d729-4042-aafe-a68fcb2989d5"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "9cd04b1a-86ec-474d-a11c-7b73df6428da",
+        "sourceProductName": "Mizuno Morelia Neo V Beta Japan FG",
+        "seed": 20260875,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-075",
+      "image": "benchmark-images/synthetic-075.jpg",
+      "stratum": "shoes",
+      "expectedProductIds": [
+        "4c56a2a2-dedc-47d3-915a-72aad53fb2ab"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "4c2df860-1c73-4133-a142-8d2a40ab6315",
+        "sourceProductName": "Nike Mercurial Vapor 16 Academy TF - United Pack",
+        "seed": 20260876,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-076",
+      "image": "benchmark-images/synthetic-076.jpg",
+      "stratum": "shoes",
+      "expectedProductIds": [
+        "53d310ac-efd8-4f40-81b3-56a93c011328"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "51b951d6-4903-4642-ba2f-bfc496d233fe",
+        "sourceProductName": "Nike Mercurial Superfly 11 Elite SE FG",
+        "seed": 20260877,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-077",
+      "image": "benchmark-images/synthetic-077.jpg",
+      "stratum": "shoes",
+      "expectedProductIds": [
+        "54e753ed-1eb9-4c49-b4fe-ffee3cc4811c"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "9d5a376b-1528-467e-8008-f5ffd459e3ce",
+        "sourceProductName": "Nike Mercurial Vapor 16 Pro FG",
+        "seed": 20260878,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-078",
+      "image": "benchmark-images/synthetic-078.jpg",
+      "stratum": "shoes",
+      "expectedProductIds": [
+        "76cbdce1-5e10-45d8-9f24-92fb605ba0cd"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "708ce071-fd95-4137-918b-d94065e36006",
+        "sourceProductName": "Nike Mercurial Superfly 11 Elite SE AG",
+        "seed": 20260879,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-079",
+      "image": "benchmark-images/synthetic-079.jpg",
+      "stratum": "shoes",
+      "expectedProductIds": [
+        "78a0e26f-ca7e-497d-a66c-eec26c4c61c2"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "48fbfbd0-6204-478d-8a66-9a16c149150e",
+        "sourceProductName": "Adidas Predator Elite FG",
+        "seed": 20260880,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-080",
+      "image": "benchmark-images/synthetic-080.jpg",
+      "stratum": "shoes",
+      "expectedProductIds": [
+        "921c53f7-495d-43d5-9c03-aacfc5fd95e3"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "e0552c60-952b-41cb-8f98-f904847d2f02",
+        "sourceProductName": "Nike Mercurial Vapor 16 Elite Mbappe FG",
+        "seed": 20260881,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-081",
+      "image": "benchmark-images/synthetic-081.jpg",
+      "stratum": "shoes",
+      "expectedProductIds": [
+        "98b67df5-a7ba-4c9a-8ebc-7ffcd07d41e8"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "31f40e39-783a-4492-ac1b-a998230a7cf3",
+        "sourceProductName": "Nike Mercurial Vapor 16 Elite FG",
+        "seed": 20260882,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-082",
+      "image": "benchmark-images/synthetic-082.jpg",
+      "stratum": "shoes",
+      "expectedProductIds": [
+        "ab90b889-e398-48b5-afdc-61442e1aec80"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "c592c4a6-cc1c-4b38-9ba3-e49147f39eb8",
+        "sourceProductName": "Mizuno Morelia Neo IV Pro FG",
+        "seed": 20260883,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-083",
+      "image": "benchmark-images/synthetic-083.jpg",
+      "stratum": "shoes",
+      "expectedProductIds": [
+        "b98330db-4c1a-44ea-b596-4b01e2d54b70"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "19c9d913-1f55-4323-b683-6369a0eedc56",
+        "sourceProductName": "Adidas Predator Elite Laceless FG",
+        "seed": 20260884,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-084",
+      "image": "benchmark-images/synthetic-084.jpg",
+      "stratum": "shoes",
+      "expectedProductIds": [
+        "d3d129ad-8cc9-4918-8ee4-4aad4e4adf6e"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "a8b1c666-fdd2-4544-9955-6bc427ef900a",
+        "sourceProductName": "Nike Mercurial Vapor 16 Elite",
+        "seed": 20260885,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-085",
+      "image": "benchmark-images/synthetic-085.jpg",
+      "stratum": "shoes",
+      "expectedProductIds": [
+        "eb08d9cb-83e1-4afa-bc0c-3c677dcfacf3"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "06e6cc92-3cc6-4f9a-84de-60bfcdacdb57",
+        "sourceProductName": "Morelia Neo IV (MIJ)",
+        "seed": 20260886,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-086",
+      "image": "benchmark-images/synthetic-086.jpg",
+      "stratum": "shoes",
+      "expectedProductIds": [
+        "f12743fa-69c3-4d60-bcce-6ed3790b6832"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "beab2f92-85d2-4443-af5a-f2e92d9a3366",
+        "sourceProductName": "Mizuno Morelia Neo IV Beta Elite",
+        "seed": 20260887,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-087",
+      "image": "benchmark-images/synthetic-087.jpg",
+      "stratum": "shoes",
+      "expectedProductIds": [
+        "fbccb321-cffb-46b4-8388-046577d6ba8c"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "2878db66-c2ef-465a-b0ee-710796cc2f41",
+        "sourceProductName": "Nike Mercurial Vapor 16 Vini JR Pro FG",
+        "seed": 20260888,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-088",
+      "image": "benchmark-images/synthetic-088.jpg",
+      "stratum": "shoes",
+      "expectedProductIds": [
+        "1a814912-dffc-4811-bbd6-02090b010c1c"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "fa17fd9b-663c-4d9f-88f4-6bf6179fd1b5",
+        "sourceProductName": "Morelia Neo IV Pro AS",
+        "seed": 20260889,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-089",
+      "image": "benchmark-images/synthetic-089.jpg",
+      "stratum": "shoes",
+      "expectedProductIds": [
+        "26dec191-01f5-4886-a64d-b2807079db58"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "ef132d31-7a61-4d5c-a6b4-ba0b1fc897ff",
+        "sourceProductName": "Mizuno Morelia Neo V Japan FG",
+        "seed": 20260890,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-090",
+      "image": "benchmark-images/synthetic-090.jpg",
+      "stratum": "shoes",
+      "expectedProductIds": [
+        "3ce96ab3-649a-415f-9a09-d30572cf454e"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "55c5134b-d846-4358-bd97-ad300fb47c72",
+        "sourceProductName": "Nike Mercurial Superfly 11 Academy FG - Breakout Pack",
+        "seed": 20260891,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-091",
+      "image": "benchmark-images/synthetic-091.jpg",
+      "stratum": "shoes",
+      "expectedProductIds": [
+        "3f58c864-b0bd-45b6-b246-eac0eb987c81"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "b803e773-231c-4424-b97d-83b9af162071",
+        "sourceProductName": "Nike Mercurial Vapor 16 Academy Turf",
+        "seed": 20260892,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-092",
+      "image": "benchmark-images/synthetic-092.jpg",
+      "stratum": "shoes",
+      "expectedProductIds": [
+        "433def68-0266-4445-8924-334e3c37b142"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "feef26b0-7511-4d61-aa24-cad4b6c0df08",
+        "sourceProductName": "Nike Mercurial Superfly 11 Elite FG - Breakout Pack",
+        "seed": 20260893,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-093",
+      "image": "benchmark-images/synthetic-093.jpg",
+      "stratum": "shoes",
+      "expectedProductIds": [
+        "47a4c9f4-90f6-4374-bd7d-546023b0d665"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "f2c46de5-189b-403d-82cb-32db73508dd1",
+        "sourceProductName": "Nike Mercurial Superfly 11 Academy TF - Shadow Pack",
+        "seed": 20260894,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-094",
+      "image": "benchmark-images/synthetic-094.jpg",
+      "stratum": "shoes",
+      "expectedProductIds": [
+        "4bd80b15-d729-4042-aafe-a68fcb2989d5"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "1e50230b-17f2-44d6-bf65-620fd799f27f",
+        "sourceProductName": "Mizuno Morelia Neo V Beta Japan FG",
+        "seed": 20260895,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-095",
+      "image": "benchmark-images/synthetic-095.jpg",
+      "stratum": "shoes",
+      "expectedProductIds": [
+        "4c56a2a2-dedc-47d3-915a-72aad53fb2ab"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "79393af0-3003-4f34-a73d-5928a825aa5a",
+        "sourceProductName": "Nike Mercurial Vapor 16 Academy TF - United Pack",
+        "seed": 20260896,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-096",
+      "image": "benchmark-images/synthetic-096.jpg",
+      "stratum": "shoes",
+      "expectedProductIds": [
+        "53d310ac-efd8-4f40-81b3-56a93c011328"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "2f0326c1-4a38-4657-8111-496a953e910b",
+        "sourceProductName": "Nike Mercurial Superfly 11 Elite SE FG",
+        "seed": 20260897,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-097",
+      "image": "benchmark-images/synthetic-097.jpg",
+      "stratum": "shoes",
+      "expectedProductIds": [
+        "54e753ed-1eb9-4c49-b4fe-ffee3cc4811c"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "ae643ecc-f67d-4160-ad92-86dc30fa9210",
+        "sourceProductName": "Nike Mercurial Vapor 16 Pro FG",
+        "seed": 20260898,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-098",
+      "image": "benchmark-images/synthetic-098.jpg",
+      "stratum": "shoes",
+      "expectedProductIds": [
+        "76cbdce1-5e10-45d8-9f24-92fb605ba0cd"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "8c738af8-6c01-4328-a827-72d7bb838aeb",
+        "sourceProductName": "Nike Mercurial Superfly 11 Elite SE AG",
+        "seed": 20260899,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-099",
+      "image": "benchmark-images/synthetic-099.jpg",
+      "stratum": "shoes",
+      "expectedProductIds": [
+        "78a0e26f-ca7e-497d-a66c-eec26c4c61c2"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "554684d6-769a-46f1-8cef-fc5ea2ab0024",
+        "sourceProductName": "Adidas Predator Elite FG",
+        "seed": 20260900,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    },
+    {
+      "id": "synthetic-100",
+      "image": "benchmark-images/synthetic-100.jpg",
+      "stratum": "shoes",
+      "expectedProductIds": [
+        "921c53f7-495d-43d5-9c03-aacfc5fd95e3"
+      ],
+      "provenance": {
+        "kind": "catalog-derived-camera-simulation",
+        "sourceImageId": "a29d2244-220d-4e4c-a5bf-ec7ba75537f2",
+        "sourceProductName": "Nike Mercurial Vapor 16 Elite Mbappe FG",
+        "seed": 20260901,
+        "operations": [
+          "rotation",
+          "background",
+          "brightness",
+          "contrast",
+          "color",
+          "noise",
+          "blur",
+          "jpeg"
+        ]
+      }
+    }
+  ]
+}

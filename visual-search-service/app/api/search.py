@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from app.config import Settings, get_settings
 from app.persistence.repository import RepositoryUnavailableError, VisualSearchRepository
 from app.providers.factory import build_provider
+from app.providers.voyage import VoyageProviderError
 from app.services.errors import ImagePipelineError
 from app.services.image_pipeline import ImagePipeline
 
@@ -37,7 +38,9 @@ def require_internal_token(
 @router.post("/search", response_model=SearchResponse, dependencies=[Depends(require_internal_token)])
 async def search_by_image(
     image: UploadFile = File(...),
-    limit: int = Query(default=20, ge=1, le=20),
+    # The public API returns at most 20 results, but Spring intentionally asks
+    # for a wider pool before applying category, gender, price and stock filters.
+    limit: int = Query(default=20, ge=1, le=50),
     settings: Settings = Depends(get_settings),
 ) -> SearchResponse:
     if not settings.visual_search_enabled:
@@ -52,16 +55,29 @@ async def search_by_image(
 
     repository = VisualSearchRepository(settings)
     try:
-        model = await repository.active_model()
-        if model is None:
-            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="No active visual model")
-        started = time.perf_counter()
-        result = (await build_provider(settings).embed_query(normalized.content)).validate_dimensions(model.dimensions)
-        latency_ms = round((time.perf_counter() - started) * 1000)
-        candidates = await repository.search(model.id, result.vector, limit)
-        await repository.record_query_usage(model, result, latency_ms)
+        monthly_cost = await repository.current_month_cost()
+        if settings.monthly_budget_usd == 0 or monthly_cost >= settings.monthly_budget_usd:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Visual search monthly AI budget is exhausted",
+            )
+        async with await repository._connect() as connection:
+            model = await repository.active_model_on(connection)
+            if model is None:
+                raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="No active visual model")
+            started = time.perf_counter()
+            result = (await build_provider(settings).embed_query(normalized.content)).validate_dimensions(model.dimensions)
+            latency_ms = round((time.perf_counter() - started) * 1000)
+            candidates = await repository.search_on(connection, model.id, result.vector, limit)
+            await repository.record_query_usage_on(connection, model, result, latency_ms)
+            await connection.commit()
     except RepositoryUnavailableError as exc:
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Visual search is unavailable") from exc
+    except (VoyageProviderError, ValueError) as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Visual embedding provider is unavailable",
+        ) from exc
 
     return SearchResponse(
         candidates=[

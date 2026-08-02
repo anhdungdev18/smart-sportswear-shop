@@ -70,8 +70,26 @@ Sao chép `visual-search-service/.env.example` thành `visual-search-service/.en
 cd visual-search-service
 python -m venv .venv
 .\.venv\Scripts\pip install -r requirements-test.txt
-.\.venv\Scripts\uvicorn app.main:app --reload --port 8090
+.\.venv\Scripts\python scripts\run_api.py
 ```
+
+Mở thêm một cửa sổ PowerShell cho worker (bắt buộc với index/backfill):
+
+```powershell
+cd visual-search-service
+python -m app.worker
+```
+
+Sau khi backend publisher và worker đều healthy, kiểm tra backfill ở chế độ dry-run
+trước khi enqueue. Không chạy lại backfill production nếu coverage đã đầy đủ:
+
+```powershell
+cd visual-search-service
+python scripts/backfill_embeddings.py
+```
+
+Quy trình benchmark, rollout theo nhóm nhỏ và rollback nằm tại
+`docs/visual-search-rollout.md`.
 
 RabbitMQ Management chỉ được bind vào loopback cho môi trường local: <http://127.0.0.1:15672>. Tài khoản mặc định local là `visual_search` / `change-me`; hãy đặt `RABBITMQ_DEFAULT_USER` và `RABBITMQ_DEFAULT_PASS` khác khi dùng ngoài máy phát triển.
 

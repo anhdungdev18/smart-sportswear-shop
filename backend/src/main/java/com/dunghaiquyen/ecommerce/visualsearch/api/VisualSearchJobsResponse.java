@@ -3,6 +3,7 @@ package com.dunghaiquyen.ecommerce.visualsearch.api;
 import com.fasterxml.jackson.annotation.JsonAlias;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 
 public record VisualSearchJobsResponse(List<Job> jobs) {
     public record Job(
@@ -14,6 +15,8 @@ public record VisualSearchJobsResponse(List<Job> jobs) {
             @JsonAlias("failed_count") int failedCount,
             @JsonAlias("pending_count") int pendingCount,
             @JsonAlias("created_at") OffsetDateTime createdAt,
-            @JsonAlias("completed_at") OffsetDateTime completedAt) {
+            @JsonAlias("completed_at") OffsetDateTime completedAt,
+            @JsonAlias("source_counts") Map<String, Integer> sourceCounts,
+            @JsonAlias("error_summary") Map<String, Integer> errorSummary) {
     }
 }

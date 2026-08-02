@@ -1,0 +1,11 @@
+{
+  "description": "Copy this file beside at least 100 independently sourced query images across tops, bottoms and shoes. Accessories are N/A until the ACTIVE catalog contains an accessory with an image. Do not use catalog originals, direct copies, or crops.",
+  "samples": [
+    {
+      "id": "external-top-001",
+      "image": "benchmark-images/external-top-001.jpg",
+      "stratum": "tops",
+      "expectedProductIds": ["00000000-0000-0000-0000-000000000000"]
+    }
+  ]
+}

@@ -1,8 +1,10 @@
 package com.dunghaiquyen.ecommerce.visualsearch.api;
 
 import com.dunghaiquyen.ecommerce.common.exception.BusinessRuleException;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import java.time.Duration;
 import java.time.Instant;
-import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
@@ -13,7 +15,10 @@ public class VisualSearchRateLimiter {
     }
 
     private final VisualSearchProperties properties;
-    private final ConcurrentHashMap<String, Window> windows = new ConcurrentHashMap<>();
+    private final Cache<String, Window> windows = Caffeine.newBuilder()
+            .expireAfterAccess(Duration.ofMinutes(2))
+            .maximumSize(100_000)
+            .build();
 
     public VisualSearchRateLimiter(VisualSearchProperties properties) {
         this.properties = properties;
@@ -21,7 +26,7 @@ public class VisualSearchRateLimiter {
 
     public void check(String clientKey) {
         long minute = Instant.now().getEpochSecond() / 60;
-        Window updated = windows.compute(clientKey, (key, current) ->
+        Window updated = windows.asMap().compute(clientKey, (key, current) ->
                 current == null || current.minute() != minute
                         ? new Window(minute, 1)
                         : new Window(minute, current.count() + 1));

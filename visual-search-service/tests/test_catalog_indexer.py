@@ -53,7 +53,8 @@ class FakeRepository:
         if args[0] is not None:
             self.completed.append(args[0])
     async def mark_processed(self, event_id, _event_type, _event_version): self.completed.append(event_id)
-    async def mark_failed(self, image_id, model_id, error): self.failed.append((image_id, model_id, error))
+    async def mark_failed(self, image_id, model_id, error, failure_code="PermanentEventError"):
+        self.failed.append((image_id, model_id, error, failure_code))
     async def mark_retry_pending(self, image_id, model_id, error):
         self.retry_pending.append((image_id, model_id, error))
 

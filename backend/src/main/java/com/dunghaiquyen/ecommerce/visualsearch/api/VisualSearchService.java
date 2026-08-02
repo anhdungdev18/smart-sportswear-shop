@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Function;
+import java.util.Comparator;
 import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -19,6 +20,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 @Service
 public class VisualSearchService {
+
+    static final int CANDIDATE_LIMIT = 50;
 
     private final VisualSearchProperties properties;
     private final VisualSearchClient client;
@@ -50,7 +53,7 @@ public class VisualSearchService {
         }
 
         // Fetch a wider candidate set before commerce filters are applied.
-        List<VisualSearchCandidate> candidates = client.search(image, 20);
+        List<VisualSearchCandidate> candidates = client.search(image, CANDIDATE_LIMIT);
         List<UUID> ids = candidates.stream().map(VisualSearchCandidate::productId).distinct().toList();
         Map<UUID, ProductListItemResponse> products = productService
                 .assembleListItemsByIds(ids, ProductStatus.ACTIVE).stream()
@@ -65,11 +68,21 @@ public class VisualSearchService {
                         || entities.get(candidate.productId()).getCategory().getId().equals(categoryId))
                 .filter(candidate -> gender == null || entities.get(candidate.productId()).getGender() == gender)
                 .filter(candidate -> matchesPrice(products.get(candidate.productId()), minPrice, maxPrice))
+                // BR-02: preserve visual similarity inside each group, but surface
+                // purchasable products before products whose active variants are sold out.
+                .sorted(Comparator.comparing((VisualSearchCandidate candidate) ->
+                        !isInStock(entities.get(candidate.productId()))))
                 .limit(limit)
                 .map(candidate -> new VisualSearchResult(
                         products.get(candidate.productId()), candidate.imageId(),
                         candidate.matchedImageUrl(), candidate.similarity()))
                 .toList();
+    }
+
+    private static boolean isInStock(com.dunghaiquyen.ecommerce.modules.product.entity.Product product) {
+        return product.getVariants().stream().anyMatch(variant ->
+                variant.getStatus() == com.dunghaiquyen.ecommerce.modules.product.entity.VariantStatus.ACTIVE
+                        && variant.getStockQuantity() > variant.getReservedQuantity());
     }
 
     private static boolean matchesPrice(ProductListItemResponse product, BigDecimal minPrice, BigDecimal maxPrice) {

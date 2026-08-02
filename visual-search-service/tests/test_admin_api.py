@@ -65,6 +65,9 @@ class FakeRepository:
             raise RepositoryUnavailableError("down")
         return OperationsStats(self._model, 3, 1, 2)
 
+    async def current_month_cost(self) -> float:
+        return 5.0
+
     async def coverage_stats(self) -> CoverageStats:
         if self._raise_unavailable:
             raise RepositoryUnavailableError("down")
@@ -159,6 +162,10 @@ def test_operations_returns_model_and_outbox_counts():
         "main_queue_messages": 4,
         "retry_queue_messages": 3,
         "dlq_messages": 2,
+        "monthly_cost_usd": 5.0,
+        "monthly_budget_usd": 20.0,
+        "budget_usage_pct": 25.0,
+        "budget_exhausted": False,
     }
 
 
@@ -317,6 +324,20 @@ def test_retry_failed_response_schema_with_failures():
     data = resp.model_dump()
     assert data["enqueued_count"] == 5
     assert data["job_id"] == job_id
+
+
+def test_retry_failed_enqueues_only_retryable_failures():
+    candidates = [
+        ReconciliationCandidate(uuid4(), uuid4(), "FAILED_RETRYABLE"),
+        ReconciliationCandidate(uuid4(), uuid4(), "FAILED_PERMANENT"),
+    ]
+    repo = FakeRepository(candidates=candidates)
+
+    resp = _make_client(repo).post("/internal/v1/admin/retry-failed", headers=headers())
+
+    assert resp.status_code == 200
+    assert resp.json()["enqueued_count"] == 1
+    assert repo.created_job[1][0].reason == "FAILED_RETRYABLE"
 
 
 def test_recent_job_response_schema():
