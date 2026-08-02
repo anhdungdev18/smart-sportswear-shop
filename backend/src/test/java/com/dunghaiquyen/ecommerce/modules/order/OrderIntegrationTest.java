@@ -140,6 +140,76 @@ class OrderIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
+    void buyNow_previewsAndCreatesOrderWithoutAddingOrRemovingCartItems() throws Exception {
+        AdminContext ctx = setUpAdmin();
+        String buyNowProductId = createActiveProduct(ctx, "Buy Now Shirt");
+        String buyNowVariantId = createVariant(ctx, buyNowProductId, 125000, 5);
+        String cartProductId = createActiveProduct(ctx, "Existing Cart Shorts");
+        String cartVariantId = createVariant(ctx, cartProductId, 80000, 5);
+
+        String email = uniqueEmail("buy-now");
+        TokenPair buyer = registerUser(email);
+        addToCart(buyer.accessToken(), cartVariantId, 1);
+        String addressId = createAddressForUser(email);
+
+        String buyNowSource = "\"buyNowVariantId\":\"" + buyNowVariantId + "\",\"buyNowQuantity\":2";
+        MvcResult preview = mockMvc.perform(post("/api/v1/checkout/preview")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + buyer.accessToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{" + buyNowSource + "}"))
+                .andExpect(status().isOk())
+                .andReturn();
+        JsonNode previewBody = json(preview.getResponse().getContentAsString());
+        assertThat(previewBody.at("/data/items")).hasSize(1);
+        assertThat(previewBody.at("/data/items/0/variantId").asText()).isEqualTo(buyNowVariantId);
+        assertThat(previewBody.at("/data/subtotal").asInt()).isEqualTo(250000);
+
+        MvcResult order = mockMvc.perform(post("/api/v1/orders")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + buyer.accessToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"addressId\":\"" + addressId + "\",\"paymentMethod\":\"COD\"," + buyNowSource + "}"))
+                .andExpect(status().isCreated())
+                .andReturn();
+        assertThat(json(order.getResponse().getContentAsString()).at("/data/items/0/variantId").asText())
+                .isEqualTo(buyNowVariantId);
+
+        MvcResult cart = mockMvc.perform(get("/api/v1/cart")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + buyer.accessToken()))
+                .andExpect(status().isOk())
+                .andReturn();
+        JsonNode cartBody = json(cart.getResponse().getContentAsString());
+        assertThat(cartBody.at("/data/items")).hasSize(1);
+        assertThat(cartBody.at("/data/items/0/variantId").asText()).isEqualTo(cartVariantId);
+        assertThat(variantRepository.findById(UUID.fromString(buyNowVariantId)).orElseThrow().getReservedQuantity())
+                .isEqualTo(2);
+    }
+
+    @Test
+    void buyNow_outOfStockVariant_isRejectedByPreviewAndOrder() throws Exception {
+        AdminContext ctx = setUpAdmin();
+        String productId = createActiveProduct(ctx, "Sold Out Buy Now");
+        String variantId = createVariant(ctx, productId, 99000, 0);
+        String email = uniqueEmail("buy-now-sold-out");
+        TokenPair buyer = registerUser(email);
+        String addressId = createAddressForUser(email);
+        String source = "\"buyNowVariantId\":\"" + variantId + "\",\"buyNowQuantity\":1";
+
+        MvcResult preview = mockMvc.perform(post("/api/v1/checkout/preview")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + buyer.accessToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{" + source + "}"))
+                .andExpect(status().isOk())
+                .andReturn();
+        assertThat(json(preview.getResponse().getContentAsString()).at("/data/canCheckout").asBoolean()).isFalse();
+
+        mockMvc.perform(post("/api/v1/orders")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + buyer.accessToken())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"addressId\":\"" + addressId + "\",\"paymentMethod\":\"COD\"," + source + "}"))
+                .andExpect(status().isUnprocessableEntity());
+    }
+
+    @Test
     void checkoutPreview_withApplicableCombo_returnsDiscountedTotal() throws Exception {
         AdminContext ctx = setUpAdmin();
         String productId1 = createActiveProduct(ctx, "Combo Shirt");

@@ -3,10 +3,19 @@ import { endpoints } from "@/lib/endpoints";
 import type { OrderResponse } from "@/modules/account/types";
 import type { CheckoutPreviewResponse } from "@/modules/checkout/types";
 
-export async function previewCheckout(addressId?: string, cartItemIds?: string[]) {
+export async function previewCheckout(
+  addressId?: string,
+  cartItemIds?: string[],
+  buyNow?: { variantId: string; quantity: number } | null,
+) {
   const result = await apiFetch<CheckoutPreviewResponse>(endpoints.checkout.preview, {
     method: "POST",
-    body: JSON.stringify({ addressId: addressId || null, cartItemIds: cartItemIds?.length ? cartItemIds : null }),
+    body: JSON.stringify({
+      addressId: addressId || null,
+      cartItemIds: cartItemIds?.length ? cartItemIds : null,
+      buyNowVariantId: buyNow?.variantId ?? null,
+      buyNowQuantity: buyNow?.quantity ?? null,
+    }),
   });
   return result.data;
 }
@@ -16,6 +25,8 @@ export async function createOrder(payload: {
   paymentMethod: "COD" | "VNPAY";
   note?: string;
   cartItemIds?: string[];
+  buyNowVariantId?: string;
+  buyNowQuantity?: number;
 }) {
   const result = await apiFetch<OrderResponse>(endpoints.orders.root, {
     method: "POST",

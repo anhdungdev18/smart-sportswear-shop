@@ -25,7 +25,7 @@ export function ProductCard({ product }: { product: Product }) {
       onMouseLeave={() => setSizePopupOpen(false)}
     >
       <div className="product relative">
-        {product.ribbon ? (
+        {product.ribbon && !product.isOutOfStock ? (
           <span
             className={cn(
               "absolute left-0 top-2 z-10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.04em] text-white",
@@ -40,12 +40,6 @@ export function ProductCard({ product }: { product: Product }) {
             -{product.discountPercent}%
           </span>
         ) : null}
-        {product.isOutOfStock ? (
-          <span className="absolute bottom-2 left-2 z-10 rounded-sm bg-ivy-dark px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-white">
-            Hết hàng
-          </span>
-        ) : null}
-
         <div className="thumb-product group relative mb-4 aspect-[332/498] overflow-hidden bg-[#f7f7f7]">
           <Link href={product.href} className="relative block h-full">
             <Image
@@ -63,6 +57,12 @@ export function ProductCard({ product }: { product: Product }) {
               className="hover-img invisible absolute inset-0 h-full w-full object-cover object-center opacity-0 transition-all duration-300 ease-in-out group-hover:visible group-hover:opacity-100"
             />
           </Link>
+
+          {product.isOutOfStock ? (
+            <span className="pointer-events-none absolute left-3 top-3 z-20 rounded-tl-[10px] rounded-br-[10px] bg-[#221F20]/95 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-white shadow-sm">
+              Hết hàng
+            </span>
+          ) : null}
 
           <div className="add-to-cart absolute bottom-0 right-0">
             <button

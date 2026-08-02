@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { emitSessionChange, getAccessToken } from "@/lib/session";
 import { addWishlistItem } from "@/modules/account/api";
 import { addCartItem } from "@/modules/cart/api";
-import { saveCheckoutSelection } from "@/modules/checkout/selection";
+import { saveBuyNowSelection } from "@/modules/checkout/selection";
 import type { ProductVariant } from "@/modules/product/types";
 
 export interface ProductColor {
@@ -124,8 +124,11 @@ export function ProductPurchasePanel({
     );
   }, [variants, selectedColorLabel, selectedSizeLabel]);
 
+  // A product is sold out only when no offered size in any color has stock.
+  // Individual zero-stock sizes remain visible below, but are disabled and
+  // crossed out so customers can distinguish them from a fully sold-out item.
   const productOutOfStock =
-    variants.length === 0 || variants.every((variant) => variant.availableQuantity <= 0);
+    variants.length === 0 || !variants.some((variant) => variant.availableQuantity > 0);
   const selectionUnavailable =
     productOutOfStock || !selectedVariant || selectedVariant.availableQuantity <= 0;
 
@@ -169,17 +172,14 @@ export function ProductPurchasePanel({
     setMessage(null);
     setError(null);
     try {
-      const updatedCart = await addCartItem(selectedVariant.id, quantity);
-      emitSessionChange();
-      setMessage(
-        mode === "buy"
-          ? "Sản phẩm đã được thêm vào giỏ, đang chuyển sang thanh toán."
-          : "Đã thêm sản phẩm vào giỏ hàng.",
-      );
       if (mode === "buy") {
-        const addedItem = updatedCart.items.find((item) => item.variantId === selectedVariant.id);
-        if (addedItem) saveCheckoutSelection([addedItem.id]);
+        saveBuyNowSelection({ variantId: selectedVariant.id, quantity });
+        setMessage("Đang chuyển sang thanh toán.");
         router.push("/thanh-toan");
+      } else {
+        await addCartItem(selectedVariant.id, quantity);
+        emitSessionChange();
+        setMessage("Đã thêm sản phẩm vào giỏ hàng.");
       }
     } catch (err) {
       setError(getApiErrorMessage(err, "Không thể thêm sản phẩm vào giỏ."));
@@ -278,26 +278,24 @@ export function ProductPurchasePanel({
                 key={label}
                 type="button"
                 disabled={isOutOfStock}
+                aria-disabled={isOutOfStock}
+                aria-label={isOutOfStock ? `Size ${label}, hết hàng` : `Size ${label}`}
+                data-stock-status={isOutOfStock ? "out-of-stock" : "in-stock"}
                 data-selected={isSelected}
                 onClick={() => setSelectedSizeLabel(label)}
                 title={isOutOfStock ? `Size ${label} - Hết hàng` : `Size ${label}`}
                 className={cn(
                   "relative h-10 min-w-[50px] overflow-hidden rounded-tl-[14px] rounded-br-[14px] border border-ivy-hairline px-3 text-[13px] uppercase text-ivy-text transition",
                   isSelected && !isOutOfStock && "border-ivy-dark font-semibold text-ivy-dark",
-                  isOutOfStock && "cursor-not-allowed border-ivy-hairline/60 text-ivy-disabled",
+                  isOutOfStock &&
+                    "cursor-not-allowed border-[#d7d7da] bg-[#f2f2f3] text-[#aaaeb4] opacity-75",
                 )}
               >
-                {label}
+                <span className={cn("relative z-10", isOutOfStock && "font-normal")}>{label}</span>
                 {isOutOfStock ? (
-                  // "X" crossing the box (two corner-to-corner diagonals) so a sold-out size is
-                  // clearly marked, not hidden.
                   <span
                     aria-hidden
-                    className="pointer-events-none absolute inset-0"
-                    style={{
-                      backgroundImage:
-                        "linear-gradient(to top right, transparent calc(50% - 0.75px), #c0242a calc(50% - 0.75px), #c0242a calc(50% + 0.75px), transparent calc(50% + 0.75px)), linear-gradient(to bottom right, transparent calc(50% - 0.75px), #c0242a calc(50% - 0.75px), #c0242a calc(50% + 0.75px), transparent calc(50% + 0.75px))",
-                    }}
+                    className="pointer-events-none absolute left-[-10%] top-1/2 h-px w-[120%] -rotate-[32deg] bg-[#8f9297]"
                   />
                 ) : null}
               </button>

@@ -629,6 +629,80 @@ a {
   font-weight: 700;
 }
 
+.combobox-stock {
+  margin-left: auto;
+  display: flex;
+  min-width: 68px;
+  flex-direction: column;
+  align-items: flex-end;
+  color: #18704a;
+}
+
+.combobox-stock strong {
+  font-size: 16px;
+  line-height: 1.1;
+}
+
+.combobox-stock small {
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.combobox-stock.empty {
+  color: #b72f38;
+}
+
+.inventory-selection-summary {
+  display: grid;
+  grid-template-columns: minmax(220px, 2fr) repeat(3, minmax(110px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.inventory-selection-summary > div {
+  display: flex;
+  min-height: 82px;
+  flex-direction: column;
+  justify-content: center;
+  border: 1px solid var(--admin-line);
+  border-radius: 14px;
+  background: #f8faff;
+  padding: 12px 16px;
+}
+
+.inventory-selection-summary span,
+.inventory-selection-summary small {
+  color: var(--admin-muted);
+  font-size: 12px;
+}
+
+.inventory-selection-summary strong {
+  margin: 3px 0;
+  color: var(--admin-text);
+  font-size: 20px;
+}
+
+.inventory-selection-summary > div:first-child strong {
+  font-size: 15px;
+}
+
+.inventory-selection-summary .is-empty {
+  border-color: #f1c7ca;
+  background: #fff5f5;
+}
+
+.inventory-selection-summary .is-empty strong,
+.inventory-selection-summary .is-empty small {
+  color: #b72f38;
+}
+
+@media (max-width: 900px) {
+  .inventory-selection-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 .combobox-empty {
   padding: 10px;
   color: var(--admin-muted);

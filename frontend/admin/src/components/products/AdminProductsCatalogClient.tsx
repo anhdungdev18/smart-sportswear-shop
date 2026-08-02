@@ -32,6 +32,7 @@ import type {
   ProductVariantResponse
 } from "@/modules/catalog-admin/types";
 import type { AdminProduct } from "@/modules/product-management/products";
+import { adjustStock } from "@/modules/inventory/browser-api";
 
 const PRODUCTS_PER_PAGE = 15;
 const PRODUCT_THUMB_FALLBACK = NO_IMAGE;
@@ -863,7 +864,12 @@ export function AdminProductsCatalogClient({
 
   async function handleUpdateVariant(variantId: string) {
     const draft = variantDrafts[variantId];
+    const persistedVariant = detail?.variants.find((variant) => variant.id === variantId);
     if (!draft) {
+      return;
+    }
+    if (!persistedVariant) {
+      setMessage("Không tìm thấy dữ liệu biến thể hiện tại. Hãy tải lại sản phẩm.");
       return;
     }
 
@@ -878,6 +884,30 @@ export function AdminProductsCatalogClient({
         status: draft.status
       });
 
+      const targetAvailable = Number(draft.stockQuantity);
+      if (!Number.isInteger(targetAvailable) || targetAvailable < 0) {
+        throw new Error("Tồn kho phải là số nguyên không âm.");
+      }
+      // Public/admin product detail intentionally reports an unavailable variant as
+      // zero even when it still has physical stock. Once such a variant is
+      // re-activated, `updated` exposes its real available quantity and becomes the
+      // correct adjustment baseline. For an already-active variant the persisted
+      // value is the baseline, including when this save also deactivates it.
+      const adjustmentBaseline = persistedVariant.status === "ACTIVE"
+        ? persistedVariant.availableQuantity
+        : updated.status === "ACTIVE"
+          ? updated.availableQuantity
+          : targetAvailable;
+      const stockDelta = targetAvailable - adjustmentBaseline;
+      const inventory = stockDelta === 0
+        ? null
+        : await adjustStock({
+            variantId,
+            type: stockDelta > 0 ? "ADJUSTMENT_UP" : "ADJUSTMENT_DOWN",
+            quantity: Math.abs(stockDelta),
+            note: "Điều chỉnh từ màn hình quản lý sản phẩm"
+          });
+
       setVariantDrafts((current) => ({
         ...current,
         [variantId]: {
@@ -887,7 +917,7 @@ export function AdminProductsCatalogClient({
           price: updated.price != null ? String(updated.price) : "",
           compareAtPrice: updated.compareAtPrice != null ? String(updated.compareAtPrice) : "",
           status: updated.status,
-          stockQuantity: String(updated.availableQuantity),
+          stockQuantity: String(inventory?.availableQuantity ?? updated.availableQuantity),
           sku: updated.sku
         }
       }));

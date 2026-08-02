@@ -9,5 +9,7 @@ public record CreateOrderRequest(
         @NotNull(message = "Address is required") UUID addressId,
         @NotNull(message = "Payment method is required") PaymentMethod paymentMethod,
         String note,
-        List<UUID> cartItemIds) {
+        List<UUID> cartItemIds,
+        UUID buyNowVariantId,
+        Integer buyNowQuantity) {
 }

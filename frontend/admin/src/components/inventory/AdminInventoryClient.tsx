@@ -34,7 +34,7 @@ function VariantCombobox({
 }: {
   options: InventoryItemResponse[];
   value: string;
-  onChange: (variantId: string) => void;
+  onChange: (item: InventoryItemResponse) => void;
 }) {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
@@ -81,7 +81,7 @@ function VariantCombobox({
 
   function selectItem(item: InventoryItemResponse) {
     setSelectedItem(item);
-    onChange(item.variantId);
+    onChange(item);
     setQuery("");
     setOpen(false);
   }
@@ -136,6 +136,10 @@ function VariantCombobox({
                     {item.size || item.color ? ` · ${item.size ?? "-"}/${item.color ?? "-"}` : ""}
                   </span>
                 </span>
+                <span className={`combobox-stock${item.availableQuantity <= 0 ? " empty" : ""}`}>
+                  <strong>{item.availableQuantity}</strong>
+                  <small>khả dụng</small>
+                </span>
               </button>
             ))
           )}
@@ -159,6 +163,7 @@ export function AdminInventoryClient({
   const [transactions, setTransactions] = useState(initialTransactionsPage.items);
   const [transactionsMeta, setTransactionsMeta] = useState(initialTransactionsPage.meta);
   const [variantId, setVariantId] = useState(initialItemsPage.items[0]?.variantId ?? "");
+  const [selectedInventoryItem, setSelectedInventoryItem] = useState<InventoryItemResponse | null>(initialItemsPage.items[0] ?? null);
   const [quantity, setQuantity] = useState(1);
   const [actionType, setActionType] = useState<ActionType>("IMPORT");
   const [note, setNote] = useState("");
@@ -173,12 +178,14 @@ export function AdminInventoryClient({
   useEffect(() => {
     if (!importDraft) return;
     setVariantId(importDraft.variantId);
+    const importedItem = initialItemsPage.items.find((item) => item.variantId === importDraft.variantId);
+    if (importedItem) setSelectedInventoryItem(importedItem);
     setQuantity(Math.max(1, importDraft.quantity));
     setActionType("IMPORT");
     setNote(`[AI_REPLENISHMENT:${importDraft.recommendationId}] ${importDraft.sku}`);
     setMessage("Đã điền đề xuất AI vào form. Hãy kiểm tra số lượng rồi nhấn Xác nhận để nhập kho.");
     document.getElementById("inventory-action-form")?.scrollIntoView({ behavior: "smooth", block: "center" });
-  }, [importDraft]);
+  }, [importDraft, initialItemsPage.items]);
 
   async function loadItems(page: number, keyword = deferredSearch.trim()) {
     setItemsLoading(true);
@@ -217,7 +224,27 @@ export function AdminInventoryClient({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deferredSearch]);
 
+  useEffect(() => {
+    function handleStockChanged(event: Event) {
+      const detail = (event as CustomEvent<{
+        variantId: string;
+        stockQuantity: number;
+        reservedQuantity: number;
+        availableQuantity: number;
+      }>).detail;
+      setItems((current) => current.map((item) => item.variantId === detail.variantId ? { ...item, ...detail } : item));
+      setSelectedInventoryItem((current) => current?.variantId === detail.variantId ? { ...current, ...detail } : current);
+    }
+    window.addEventListener("inventory:stock-changed", handleStockChanged);
+    return () => window.removeEventListener("inventory:stock-changed", handleStockChanged);
+  }, []);
+
   async function handleSubmit() {
+    const decreasesStock = actionType === "EXPORT" || actionType === "ADJUSTMENT_DOWN";
+    if (decreasesStock && selectedInventoryItem && quantity > selectedInventoryItem.availableQuantity) {
+      setMessage(`Số lượng tối đa có thể xuất/giảm là ${selectedInventoryItem.availableQuantity}.`);
+      return;
+    }
     try {
       setSaving(true);
       setMessage(null);
@@ -232,6 +259,7 @@ export function AdminInventoryClient({
       }
 
       setItems((current) => current.map((item) => (item.variantId === updated.variantId ? updated : item)));
+      setSelectedInventoryItem(updated);
       try {
         await loadTransactions(1);
       } catch {
@@ -256,7 +284,14 @@ export function AdminInventoryClient({
         {message ? <p className="action-message">{message}</p> : null}
         <div className="admin-inline-form wrap">
           <div style={{ width: 460, maxWidth: "100%" }}>
-            <VariantCombobox options={items} value={variantId} onChange={setVariantId} />
+            <VariantCombobox
+              options={items}
+              value={variantId}
+              onChange={(item) => {
+                setVariantId(item.variantId);
+                setSelectedInventoryItem(item);
+              }}
+            />
           </div>
           <select className="select" value={actionType} onChange={(event) => setActionType(event.target.value as ActionType)}>
             <option value="IMPORT">Nhập kho</option>
@@ -264,17 +299,40 @@ export function AdminInventoryClient({
             <option value="ADJUSTMENT_UP">Điều chỉnh tăng</option>
             <option value="ADJUSTMENT_DOWN">Điều chỉnh giảm</option>
           </select>
-          <input className="admin-input" type="number" min={1} value={quantity} onChange={(event) => setQuantity(Number(event.target.value) || 1)} />
+          <input
+            className="admin-input"
+            type="number"
+            min={1}
+            max={actionType === "EXPORT" || actionType === "ADJUSTMENT_DOWN" ? selectedInventoryItem?.availableQuantity : undefined}
+            value={quantity}
+            onChange={(event) => setQuantity(Number(event.target.value) || 1)}
+          />
           <input className="admin-input" placeholder="Ghi chú" value={note} onChange={(event) => setNote(event.target.value)} />
           <button
             className="admin-btn"
             type="button"
             onClick={() => void handleSubmit()}
-            disabled={saving || !variantId}
+            disabled={saving || !variantId || ((actionType === "EXPORT" || actionType === "ADJUSTMENT_DOWN") && (selectedInventoryItem?.availableQuantity ?? 0) <= 0)}
           >
             {saving ? "Đang lưu..." : "Xác nhận"}
           </button>
         </div>
+        {selectedInventoryItem ? (
+          <div className="inventory-selection-summary" aria-live="polite">
+            <div>
+              <span>Biến thể đã chọn</span>
+              <strong>{selectedInventoryItem.size ?? "Không size"} / {selectedInventoryItem.color ?? "Không màu"}</strong>
+              <small>{selectedInventoryItem.sku}</small>
+            </div>
+            <div><span>Tồn thực</span><strong>{selectedInventoryItem.stockQuantity}</strong></div>
+            <div><span>Đang giữ</span><strong>{selectedInventoryItem.reservedQuantity}</strong></div>
+            <div className={selectedInventoryItem.availableQuantity <= 0 ? "is-empty" : ""}>
+              <span>Khả dụng</span>
+              <strong>{selectedInventoryItem.availableQuantity}</strong>
+              <small>{selectedInventoryItem.availableQuantity <= 0 ? "Đã hết hàng" : "Có thể xuất/giảm"}</small>
+            </div>
+          </div>
+        ) : null}
       </section>
 
       <section className="card panel">

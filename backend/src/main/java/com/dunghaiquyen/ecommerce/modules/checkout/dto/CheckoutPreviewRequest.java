@@ -9,5 +9,9 @@ import java.util.List;
  * a usable subtotal/shipping/total). The combo discount is derived from the cart
  * itself, so no discount input is needed here.
  */
-public record CheckoutPreviewRequest(UUID addressId, List<UUID> cartItemIds) {
+public record CheckoutPreviewRequest(
+        UUID addressId,
+        List<UUID> cartItemIds,
+        UUID buyNowVariantId,
+        Integer buyNowQuantity) {
 }

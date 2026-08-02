@@ -3,6 +3,8 @@ import { Montserrat } from "next/font/google";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { NavigationProgress } from "@/components/shared/NavigationProgress";
+import { InventoryRealtimeRefresh } from "@/components/shared/InventoryRealtimeRefresh";
+import { ScrollToTop } from "@/components/shared/ScrollToTop";
 import "./globals.css";
 
 const montserrat = Montserrat({
@@ -35,6 +37,8 @@ export default function RootLayout({
     <html lang="vi" className={`${montserrat.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
         <NavigationProgress />
+        <ScrollToTop />
+        <InventoryRealtimeRefresh />
         <Header />
         {children}
         <Footer />

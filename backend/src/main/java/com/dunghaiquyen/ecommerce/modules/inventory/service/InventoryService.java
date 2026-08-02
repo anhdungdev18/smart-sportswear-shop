@@ -74,14 +74,17 @@ public class InventoryService {
     private final ProductVariantRepository variantRepository;
     private final InventoryTransactionRepository transactionRepository;
     private final ProductImageRepository imageRepository;
+    private final InventoryRealtimeService realtimeService;
 
     public InventoryService(
             ProductVariantRepository variantRepository,
             InventoryTransactionRepository transactionRepository,
-            ProductImageRepository imageRepository) {
+            ProductImageRepository imageRepository,
+            InventoryRealtimeService realtimeService) {
         this.variantRepository = variantRepository;
         this.transactionRepository = transactionRepository;
         this.imageRepository = imageRepository;
+        this.realtimeService = realtimeService;
     }
 
     public record ListResult<T>(List<T> items, PageMeta meta) {
@@ -454,5 +457,6 @@ public class InventoryService {
         tx.setNote(note);
         tx.setCreatedBy(actor);
         transactionRepository.save(tx);
+        realtimeService.publishAfterCommit(variant);
     }
 }

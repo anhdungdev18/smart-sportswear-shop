@@ -28,7 +28,7 @@ public class CheckoutController {
     public ApiResponse<CheckoutPreviewResponse> preview(
             @AuthenticationPrincipal CustomUserDetails principal,
             @RequestBody(required = false) CheckoutPreviewRequest request) {
-        CheckoutPreviewRequest effective = request != null ? request : new CheckoutPreviewRequest(null, null);
+        CheckoutPreviewRequest effective = request != null ? request : new CheckoutPreviewRequest(null, null, null, null);
         return ApiResponse.ok(checkoutPreviewService.preview(principal.getUserId(), effective));
     }
 }

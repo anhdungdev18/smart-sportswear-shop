@@ -11,7 +11,7 @@ import {
   type AddressResponse,
 } from "@/modules/account/api";
 import { createOrder, createVnpayPayment, previewCheckout } from "@/modules/checkout/api";
-import { clearCheckoutSelection, loadCheckoutSelection } from "@/modules/checkout/selection";
+import { clearCheckoutSelection, loadBuyNowSelection, loadCheckoutSelection } from "@/modules/checkout/selection";
 import type { CheckoutPreviewResponse } from "@/modules/checkout/types";
 
 type PaymentMethod = "COD" | "VNPAY";
@@ -33,6 +33,7 @@ export function CheckoutPageClient() {
   const [note, setNote] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("COD");
   const [cartItemIds] = useState<string[]>(() => loadCheckoutSelection());
+  const [buyNow] = useState(() => loadBuyNowSelection());
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [creatingAddress, setCreatingAddress] = useState(false);
@@ -46,12 +47,12 @@ export function CheckoutPageClient() {
 
   const refreshPreview = useCallback(async (addressId?: string) => {
     try {
-      const response = await previewCheckout(addressId, cartItemIds);
+      const response = await previewCheckout(addressId, cartItemIds, buyNow);
       setPreview(response);
     } catch (err) {
       setError(getApiErrorMessage(err, "Không thể tải dữ liệu thanh toán."));
     }
-  }, [cartItemIds]);
+  }, [buyNow, cartItemIds]);
 
   useEffect(() => {
     const load = async () => {
@@ -123,6 +124,8 @@ export function CheckoutPageClient() {
         paymentMethod,
         note: note || undefined,
         cartItemIds: cartItemIds.length ? cartItemIds : undefined,
+        buyNowVariantId: buyNow?.variantId,
+        buyNowQuantity: buyNow?.quantity,
       });
       clearCheckoutSelection();
       if (paymentMethod === "VNPAY") {
