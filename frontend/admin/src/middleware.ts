@@ -79,5 +79,8 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"]
+  // Authentication applies to application routes only. Public assets must stay
+  // reachable without cookies because Next's image optimizer fetches local
+  // images (for example /logo.png) from the server without the browser session.
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)"]
 };

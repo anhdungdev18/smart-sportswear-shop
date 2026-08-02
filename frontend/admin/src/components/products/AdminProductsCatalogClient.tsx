@@ -439,6 +439,16 @@ export function AdminProductsCatalogClient({
   const productCollectionsCacheRef = useRef<Record<string, CollectionResponse[]>>({});
 
   const selectedProduct = useMemo(() => products.find((item) => item.id === selectedProductId) ?? null, [products, selectedProductId]);
+  const selectedProductImage = useMemo(() => {
+    if (detail?.id === selectedProductId) {
+      const primaryImage = detail.images.find((image) => image.isPrimary) ?? detail.images[0];
+      if (primaryImage?.imageUrl) {
+        return primaryImage.imageUrl;
+      }
+    }
+
+    return selectedProduct?.image ?? PRODUCT_THUMB_FALLBACK;
+  }, [detail, selectedProduct, selectedProductId]);
   const missingCategorySetup = categories.length === 0;
   const missingBrandSetup = brands.length === 0;
   const canSubmitProduct = !missingCategorySetup && !missingBrandSetup && saving !== "product";
@@ -1164,11 +1174,17 @@ export function AdminProductsCatalogClient({
           {selectedProduct ? (
             <Image
               className="editor-thumb"
-              src={selectedProduct.image}
+              src={selectedProductImage}
               alt={selectedProduct.name}
               width={56}
               height={56}
               unoptimized
+              onError={(event) => {
+                const img = event.currentTarget as HTMLImageElement;
+                if (!img.src.includes("data:image/svg+xml")) {
+                  img.src = PRODUCT_THUMB_FALLBACK;
+                }
+              }}
             />
           ) : (
             <span className="editor-thumb placeholder">＋</span>
