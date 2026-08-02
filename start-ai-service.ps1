@@ -13,7 +13,7 @@ Get-Content $envFile | ForEach-Object {
     }
 }
 
-$port = if ($env:SERVER_PORT) { [int]$env:SERVER_PORT } else { 8080 }
+$port = if ($env:SERVER_PORT) { [int]$env:SERVER_PORT } else { 8081 }
 $healthUrl = "http://localhost:$port/actuator/health"
 try {
     $health = Invoke-RestMethod -Uri $healthUrl -TimeoutSec 3

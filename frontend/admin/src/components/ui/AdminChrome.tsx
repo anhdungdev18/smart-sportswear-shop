@@ -31,6 +31,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { adminLogout } from "@/modules/auth/api";
 import { clearAuthSession, getBrowserRefreshToken, getBrowserUserRole } from "@/modules/auth/session";
+import { ADMIN_AI_WORKSPACES_ENABLED } from "@/config/feature-flags";
 
 type NavItem = {
   label: string;
@@ -81,6 +82,12 @@ const navGroups: NavGroup[] = [
     ],
   },
 ];
+
+const disabledAiRoutes = new Set([
+  "/inventory/ai-insights",
+  "/admin-copilot",
+  "/chatbot-config",
+]);
 
 function getPageMeta(pathname: string) {
   const metaByPrefix = [
@@ -141,7 +148,10 @@ export function Sidebar() {
           <div key={group.title} className="side-nav-group">
             <p className="side-nav-title">{group.title}</p>
             <div className="side-nav-list">
-              {group.items.filter((item) => item.href !== "/inventory" || role !== "SALES_STAFF").map((item) => {
+              {group.items.filter((item) => {
+                if (!ADMIN_AI_WORKSPACES_ENABLED && disabledAiRoutes.has(item.href)) return false;
+                return item.href !== "/inventory" || role !== "SALES_STAFF";
+              }).map((item) => {
                 const Icon = item.icon;
                 const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
 

@@ -43,7 +43,7 @@ app:
     generation-parallelism: ${FORECAST_GENERATION_PARALLELISM:4}
     data-source: ${AI_FORECAST_DATA_SOURCE:REAL}
   core:
-    base-url: ${CORE_API_BASE_URL:http://localhost:8080}
+    base-url: ${CORE_API_BASE_URL:http://localhost:8082}
     sync-secret: ${AI_SYNC_SECRET:dev-only-ai-sync-secret-change-me}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3001}
