@@ -1,6 +1,7 @@
 package com.dunghaiquyen.ecommerce.modules.payment.repository;
 
 import com.dunghaiquyen.ecommerce.modules.payment.entity.Payment;
+import com.dunghaiquyen.ecommerce.modules.payment.entity.PaymentStatus;
 import jakarta.persistence.LockModeType;
 import java.util.List;
 import java.util.Optional;
@@ -15,6 +16,8 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID> {
     List<Payment> findAllByOrderIdOrderByCreatedAtDesc(UUID orderId);
 
     Optional<Payment> findFirstByOrderIdOrderByCreatedAtDesc(UUID orderId);
+
+    Optional<Payment> findFirstByOrderIdAndStatusOrderByCreatedAtDesc(UUID orderId, PaymentStatus status);
 
     /** Plain (unlocked) lookup - for read-only callers outside a write transaction. */
     Optional<Payment> findByTransactionRef(String transactionRef);

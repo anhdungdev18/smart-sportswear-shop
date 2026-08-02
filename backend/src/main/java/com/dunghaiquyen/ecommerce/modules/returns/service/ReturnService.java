@@ -11,6 +11,9 @@ import com.dunghaiquyen.ecommerce.modules.order.repository.OrderItemRepository;
 import com.dunghaiquyen.ecommerce.modules.order.repository.OrderRepository;
 import com.dunghaiquyen.ecommerce.modules.payment.entity.Payment;
 import com.dunghaiquyen.ecommerce.modules.payment.entity.PaymentProvider;
+import com.dunghaiquyen.ecommerce.modules.payment.entity.PaymentStatus;
+import com.dunghaiquyen.ecommerce.modules.inventory.service.InventoryService;
+import com.dunghaiquyen.ecommerce.modules.payment.service.VnpayTransactionService;
 import com.dunghaiquyen.ecommerce.modules.payment.repository.PaymentRepository;
 import com.dunghaiquyen.ecommerce.modules.returns.dto.AdminReturnListQuery;
 import com.dunghaiquyen.ecommerce.modules.returns.dto.CreateRefundRequest;
@@ -27,6 +30,7 @@ import com.dunghaiquyen.ecommerce.modules.returns.entity.RefundProvider;
 import com.dunghaiquyen.ecommerce.modules.returns.entity.RefundStatus;
 import com.dunghaiquyen.ecommerce.modules.returns.entity.Return;
 import com.dunghaiquyen.ecommerce.modules.returns.entity.ReturnItem;
+import com.dunghaiquyen.ecommerce.modules.returns.entity.ReturnItemConditionStatus;
 import com.dunghaiquyen.ecommerce.modules.returns.entity.ReturnItemResolution;
 import com.dunghaiquyen.ecommerce.modules.returns.entity.ReturnStatus;
 import com.dunghaiquyen.ecommerce.modules.returns.repository.RefundRepository;
@@ -93,8 +97,8 @@ public class ReturnService {
             Set.of(ReturnStatus.REQUESTED, ReturnStatus.APPROVED, ReturnStatus.RECEIVED);
 
     private static final Map<RefundStatus, Set<RefundStatus>> REFUND_ALLOWED_TRANSITIONS = Map.of(
-            RefundStatus.PENDING, Set.of(RefundStatus.COMPLETED, RefundStatus.FAILED, RefundStatus.CANCELLED),
-            RefundStatus.PROCESSING, Set.of(),
+            RefundStatus.PENDING, Set.of(RefundStatus.PROCESSING, RefundStatus.COMPLETED, RefundStatus.FAILED, RefundStatus.CANCELLED),
+            RefundStatus.PROCESSING, Set.of(RefundStatus.COMPLETED, RefundStatus.FAILED, RefundStatus.CANCELLED),
             RefundStatus.COMPLETED, Set.of(),
             RefundStatus.FAILED, Set.of(),
             RefundStatus.CANCELLED, Set.of());
@@ -106,6 +110,8 @@ public class ReturnService {
     private final OrderItemRepository orderItemRepository;
     private final PaymentRepository paymentRepository;
     private final AuditLogService auditLogService;
+    private final InventoryService inventoryService;
+    private final VnpayTransactionService vnpayTransactionService;
 
     public ReturnService(
             ReturnRepository returnRepository,
@@ -114,7 +120,9 @@ public class ReturnService {
             OrderRepository orderRepository,
             OrderItemRepository orderItemRepository,
             PaymentRepository paymentRepository,
-            AuditLogService auditLogService) {
+            AuditLogService auditLogService,
+            InventoryService inventoryService,
+            VnpayTransactionService vnpayTransactionService) {
         this.returnRepository = returnRepository;
         this.returnItemRepository = returnItemRepository;
         this.refundRepository = refundRepository;
@@ -122,6 +130,8 @@ public class ReturnService {
         this.orderItemRepository = orderItemRepository;
         this.paymentRepository = paymentRepository;
         this.auditLogService = auditLogService;
+        this.inventoryService = inventoryService;
+        this.vnpayTransactionService = vnpayTransactionService;
     }
 
     public record ListResult<T>(List<T> items, PageMeta meta) {
@@ -300,6 +310,14 @@ public class ReturnService {
                 // include a stray value left over from an admin's earlier mind-change.
                 item.setRefundAmount(null);
             }
+            boolean sellableCondition = resolution.conditionStatus() == ReturnItemConditionStatus.UNOPENED
+                    || resolution.conditionStatus() == ReturnItemConditionStatus.LIKE_NEW;
+            boolean acceptedResolution = resolution.resolution() != ReturnItemResolution.REJECT;
+            if (sellableCondition && acceptedResolution && !item.isRestocked()) {
+                inventoryService.restockReturn(item.getOrderItem().getVariant().getId(), item.getQuantity(),
+                        returnRequest.getOrder(), returnRequest.getHandledBy());
+                item.setRestocked(true);
+            }
             returnItemRepository.save(item);
         }
     }
@@ -333,7 +351,16 @@ public class ReturnService {
         }
 
         Order order = returnRequest.getOrder();
-        Payment latestPayment = paymentRepository.findFirstByOrderIdOrderByCreatedAtDesc(order.getId()).orElse(null);
+        Payment latestPayment = paymentRepository
+                .findFirstByOrderIdAndStatusOrderByCreatedAtDesc(order.getId(), PaymentStatus.PAID).orElse(null);
+        if (latestPayment != null) {
+            BigDecimal alreadyCommitted = refundRepository.sumAmountByOrderIdAndStatusIn(order.getId(),
+                    Set.of(RefundStatus.PENDING, RefundStatus.PROCESSING, RefundStatus.COMPLETED));
+            if (alreadyCommitted.add(total).compareTo(latestPayment.getAmount()) > 0) {
+                throw new BusinessRuleException(HttpStatus.UNPROCESSABLE_ENTITY,
+                        "Total refunds would exceed the paid VNPay amount");
+            }
+        }
         RefundProvider provider = latestPayment == null
                 ? RefundProvider.MANUAL
                 : (latestPayment.getProvider() == PaymentProvider.VNPAY ? RefundProvider.VNPAY : RefundProvider.COD);
@@ -374,6 +401,10 @@ public class ReturnService {
         Refund refund = refundRepository.findByIdForUpdate(refundId)
                 .orElseThrow(() -> new ResourceNotFoundException("Refund not found"));
         RefundStatus current = refund.getStatus();
+        if (refund.getProvider() == RefundProvider.VNPAY && request.status() == RefundStatus.COMPLETED) {
+            throw new BusinessRuleException(HttpStatus.CONFLICT,
+                    "VNPay refunds must be completed through the gateway submit endpoint");
+        }
         if (!REFUND_ALLOWED_TRANSITIONS.getOrDefault(current, Set.of()).contains(request.status())) {
             throw new BusinessRuleException(
                     HttpStatus.CONFLICT, "Cannot transition refund from " + current + " to " + request.status());
@@ -387,7 +418,34 @@ public class ReturnService {
                 actor, "REFUND_STATUS_UPDATE", "Refund", refundId.toString(),
                 Map.of("status", current.name()), Map.of("status", refund.getStatus().name()));
 
-        if (request.status() == RefundStatus.COMPLETED && refund.getReturnRequest() != null) {
+        if (request.status() == RefundStatus.COMPLETED) {
+            syncCompletedRefund(refund);
+        }
+
+        return toRefundResponse(refund);
+    }
+
+    @Transactional
+    public RefundResponse submitVnpayRefund(UUID refundId, User actor, String ipAddress) {
+        Refund refund = refundRepository.findByIdForUpdate(refundId)
+                .orElseThrow(() -> new ResourceNotFoundException("Refund not found"));
+        if (refund.getProvider() != RefundProvider.VNPAY) {
+            throw new BusinessRuleException(HttpStatus.UNPROCESSABLE_ENTITY, "Refund is not a VNPay refund");
+        }
+        if (refund.getStatus() != RefundStatus.PENDING) {
+            throw new BusinessRuleException(HttpStatus.CONFLICT, "Refund is not eligible for gateway submission");
+        }
+        vnpayTransactionService.refund(refund, actor != null ? actor.getFullName() : "system", ipAddress);
+        if (refund.getStatus() == RefundStatus.COMPLETED) refund.setRefundedAt(Instant.now());
+        refund = refundRepository.save(refund);
+        if (refund.getStatus() == RefundStatus.COMPLETED) syncCompletedRefund(refund);
+        auditLogService.record(actor, "VNPAY_REFUND_SUBMIT", "Refund", refundId.toString(), null,
+                Map.of("status", refund.getStatus().name(), "requestId", refund.getGatewayRequestId()));
+        return toRefundResponse(refund);
+    }
+
+    private void syncCompletedRefund(Refund refund) {
+        if (refund.getReturnRequest() != null) {
             Return returnRequest = returnRepository.findByIdForUpdate(refund.getReturnRequest().getId())
                     .orElseThrow(() -> new ResourceNotFoundException("Return not found"));
             returnRequest.setStatus(ReturnStatus.REFUNDED);
@@ -395,7 +453,20 @@ public class ReturnService {
             returnRepository.save(returnRequest);
         }
 
-        return toRefundResponse(refund);
+        Order order = orderRepository.findByIdForUpdate(refund.getOrder().getId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+            BigDecimal completed = refundRepository.sumCompletedAmountByOrderId(order.getId());
+            BigDecimal refundableMerchandiseTotal = order.getSubtotalAmount().subtract(order.getDiscountAmount());
+            if (completed.compareTo(refundableMerchandiseTotal) >= 0) {
+                order.setPaymentStatus(PaymentStatus.REFUNDED);
+                paymentRepository.findFirstByOrderIdAndStatusOrderByCreatedAtDesc(order.getId(), PaymentStatus.PAID).ifPresent(payment -> {
+                    if (payment.getStatus() == PaymentStatus.PAID) {
+                        payment.setStatus(PaymentStatus.REFUNDED);
+                        paymentRepository.save(payment);
+                    }
+                });
+                orderRepository.save(order);
+            }
     }
 
     private void applyTransition(Return returnRequest, ReturnStatus target, User actor) {
@@ -514,6 +585,8 @@ public class ReturnService {
                 refund.getAmount(),
                 refund.getProvider(),
                 refund.getStatus(),
+                refund.getGatewayRequestId(),
+                refund.getGatewayTransactionNo(),
                 refund.getReason(),
                 refund.getRefundedAt(),
                 refund.getCreatedAt(),

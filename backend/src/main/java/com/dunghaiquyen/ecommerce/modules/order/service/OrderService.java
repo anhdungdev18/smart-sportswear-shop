@@ -151,7 +151,8 @@ public class OrderService {
         // re-reads cart items fresh below and finds them already gone.
         Cart cart = cartRepository.findByUserIdForUpdate(userId)
                 .orElseThrow(() -> new BusinessRuleException(HttpStatus.UNPROCESSABLE_ENTITY, "Cart is empty"));
-        List<CartItem> cartItems = cartItemRepository.findAllByCartId(cart.getId());
+        List<CartItem> allCartItems = cartItemRepository.findAllByCartId(cart.getId());
+        List<CartItem> cartItems = selectCartItems(allCartItems, request.cartItemIds());
         if (cartItems.isEmpty()) {
             throw new BusinessRuleException(HttpStatus.UNPROCESSABLE_ENTITY, "Cart is empty");
         }
@@ -504,13 +505,31 @@ public class OrderService {
      */
     @Transactional(readOnly = true)
     public CartLinesCheckResult checkCartLines(UUID userId) {
+        return checkCartLines(userId, null);
+    }
+
+    @Transactional(readOnly = true)
+    public CartLinesCheckResult checkCartLines(UUID userId, List<UUID> cartItemIds) {
         var cartOpt = cartRepository.findByUserId(userId);
         if (cartOpt.isEmpty()) {
             return new CartLinesCheckResult(List.of());
         }
-        List<CartItem> items = cartItemRepository.findAllByCartId(cartOpt.get().getId());
+        List<CartItem> items = selectCartItems(
+                cartItemRepository.findAllByCartId(cartOpt.get().getId()), cartItemIds);
         List<CartLineCheck> checks = items.stream().map(ci -> toCartLineCheck(ci, checkLine(ci, false))).toList();
         return new CartLinesCheckResult(checks);
+    }
+
+    private List<CartItem> selectCartItems(List<CartItem> allItems, List<UUID> requestedIds) {
+        if (requestedIds == null || requestedIds.isEmpty()) {
+            return allItems;
+        }
+        java.util.Set<UUID> ids = new java.util.LinkedHashSet<>(requestedIds);
+        List<CartItem> selected = allItems.stream().filter(item -> ids.contains(item.getId())).toList();
+        if (selected.size() != ids.size()) {
+            throw new BusinessRuleException(HttpStatus.UNPROCESSABLE_ENTITY, "Selected cart items are invalid");
+        }
+        return selected;
     }
 
     private CartLineCheck toCartLineCheck(CartItem cartItem, LineCheck check) {

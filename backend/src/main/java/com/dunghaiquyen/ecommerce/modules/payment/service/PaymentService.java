@@ -110,8 +110,12 @@ public class PaymentService {
         Optional<Payment> latest = paymentRepository.findFirstByOrderIdOrderByCreatedAtDesc(order.getId());
         if (latest.isPresent() && latest.get().getStatus() == PaymentStatus.PENDING) {
             Payment existing = latest.get();
-            return new CreatePaymentResponse(
-                    buildPaymentUrl(existing, clientIpAddress), existing.getTransactionRef());
+            if (existing.getExpiresAt() != null && existing.getExpiresAt().isAfter(Instant.now())) {
+                return new CreatePaymentResponse(
+                        buildPaymentUrl(existing, clientIpAddress), existing.getTransactionRef());
+            }
+            existing.setStatus(PaymentStatus.CANCELLED);
+            paymentRepository.save(existing);
         }
 
         Payment payment = new Payment();
@@ -120,6 +124,9 @@ public class PaymentService {
         payment.setTransactionRef(generateTransactionRef());
         payment.setAmount(order.getTotalAmount());
         payment.setStatus(PaymentStatus.PENDING);
+        ZonedDateTime paymentCreatedAt = ZonedDateTime.now(AppTimeZone.ZONE);
+        payment.setTransactionDate(paymentCreatedAt.format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
+        payment.setExpiresAt(paymentCreatedAt.plusMinutes(15).toInstant());
         payment = paymentRepository.save(payment);
 
         if (order.getPaymentStatus() != PaymentStatus.PENDING) {
@@ -199,12 +206,16 @@ public class PaymentService {
             payment.setPaidAt(Instant.now());
         }
         payment.setRawPayloadJson(new LinkedHashMap<>(params));
+        payment.setGatewayTransactionNo(params.get("vnp_TransactionNo"));
+        payment.setBankCode(params.get("vnp_BankCode"));
         paymentRepository.save(payment);
 
-        if (order.getOrderStatus() != OrderStatus.CANCELLED) {
-            order.setPaymentStatus(resolvedStatus);
-            orderRepository.save(order);
+        order.setPaymentStatus(resolvedStatus);
+        if (order.getOrderStatus() == OrderStatus.CANCELLED && resolvedStatus == PaymentStatus.PAID) {
+            order.setInternalNote("VNPay paid after order cancellation - refund required. TxnRef: "
+                    + payment.getTransactionRef());
         }
+        orderRepository.save(order);
         return ipnResponse("00", "Confirm Success");
     }
 
@@ -260,6 +271,8 @@ public class PaymentService {
                 payment.getTransactionRef(),
                 payment.getAmount(),
                 payment.getStatus(),
+                payment.getGatewayTransactionNo(),
+                payment.getBankCode(),
                 payment.getPaidAt(),
                 payment.getCreatedAt());
     }
@@ -287,10 +300,9 @@ public class PaymentService {
         params.put(
                 "vnp_IpAddr",
                 clientIpAddress == null || clientIpAddress.isBlank() ? "127.0.0.1" : clientIpAddress);
-        ZonedDateTime now = ZonedDateTime.now(AppTimeZone.ZONE);
-        DateTimeFormatter timestamp = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
-        params.put("vnp_CreateDate", now.format(timestamp));
-        params.put("vnp_ExpireDate", now.plusMinutes(15).format(timestamp));
+        params.put("vnp_CreateDate", payment.getTransactionDate());
+        params.put("vnp_ExpireDate", ZonedDateTime.ofInstant(payment.getExpiresAt(), AppTimeZone.ZONE)
+                .format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
 
         String hash = signatureService.hash(params);
         String query = signatureService.buildQueryString(params);

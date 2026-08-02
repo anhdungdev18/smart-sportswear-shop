@@ -10,7 +10,15 @@ import org.junit.jupiter.api.Test;
 class VnpaySignatureServiceTest {
 
     private final VnpaySignatureService service = new VnpaySignatureService(
-            new AppVnpayProperties("TESTTMN1", "secret", "https://pay", "https://return", "https://callback"));
+            new AppVnpayProperties("TESTTMN1", "secret", "https://pay", "https://return", "https://callback",
+                    "https://transaction"));
+
+    @Test
+    void rawPipeDelimitedPayloadUsesHmacSha512() {
+        assertThat(service.hashRaw("a|b")).isEqualTo(
+                "7f476b4d603ee778fae82c3226277bfddf1d04f546684fb9ecd74b7b73d49837"
+                        + "f91509b51e55fea856411f851633846ec04bd3b734a63f5a6fc1459423d0cfe0");
+    }
 
     @Test
     void canonicalDataIsSortedAndUrlEncoded() {

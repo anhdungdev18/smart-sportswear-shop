@@ -13,6 +13,8 @@ public record PaymentResponse(
         String transactionRef,
         BigDecimal amount,
         PaymentStatus status,
+        String gatewayTransactionNo,
+        String bankCode,
         Instant paidAt,
         Instant createdAt) {
 }

@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { emitSessionChange, getAccessToken } from "@/lib/session";
 import { addWishlistItem } from "@/modules/account/api";
 import { addCartItem } from "@/modules/cart/api";
+import { saveCheckoutSelection } from "@/modules/checkout/selection";
 import type { ProductVariant } from "@/modules/product/types";
 
 export interface ProductColor {
@@ -168,7 +169,7 @@ export function ProductPurchasePanel({
     setMessage(null);
     setError(null);
     try {
-      await addCartItem(selectedVariant.id, quantity);
+      const updatedCart = await addCartItem(selectedVariant.id, quantity);
       emitSessionChange();
       setMessage(
         mode === "buy"
@@ -176,6 +177,8 @@ export function ProductPurchasePanel({
           : "Đã thêm sản phẩm vào giỏ hàng.",
       );
       if (mode === "buy") {
+        const addedItem = updatedCart.items.find((item) => item.variantId === selectedVariant.id);
+        if (addedItem) saveCheckoutSelection([addedItem.id]);
         router.push("/thanh-toan");
       }
     } catch (err) {

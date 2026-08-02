@@ -6,6 +6,7 @@ import { cancelOrder, getOrderDetail } from "@/modules/account/api";
 import type { OrderResponse } from "@/modules/account/types";
 import { getApiErrorMessage } from "@/lib/api-errors";
 import { getAccessToken } from "@/lib/session";
+import { createVnpayPayment } from "@/modules/checkout/api";
 
 const money = (n: number) => `${n.toLocaleString("vi-VN")}đ`;
 
@@ -14,6 +15,7 @@ export function OrderDetailPageClient({ orderId }: { orderId: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState(false);
+  const [paying, setPaying] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -53,7 +55,23 @@ export function OrderDetailPageClient({ orderId }: { orderId: string }) {
     }
   };
 
-  const canCancel = order?.orderStatus === "PENDING_CONFIRMATION";
+  const handlePay = async () => {
+    if (!order) return;
+    setPaying(true);
+    setError(null);
+    try {
+      const payment = await createVnpayPayment(order.id);
+      sessionStorage.setItem("vnpay-pending-order-id", order.id);
+      window.location.assign(payment.paymentUrl);
+    } catch (err) {
+      setError(getApiErrorMessage(err, "Không thể mở cổng VNPay."));
+      setPaying(false);
+    }
+  };
+
+  const canCancel = order?.orderStatus === "PENDING_CONFIRMATION" && order.paymentStatus !== "PAID";
+  const canPay = order?.orderStatus === "PENDING_CONFIRMATION"
+    && order.paymentMethod === "VNPAY" && order.paymentStatus !== "PAID";
 
   return (
     <section className="mx-auto w-full max-w-4xl px-4 py-10 md:px-6">
@@ -96,6 +114,16 @@ export function OrderDetailPageClient({ orderId }: { orderId: string }) {
                   className="mt-4 h-10 rounded-tl-[18px] rounded-br-[18px] border border-ivy-dark px-5 text-[12px] font-semibold uppercase tracking-[0.05em] text-ivy-dark disabled:opacity-60"
                 >
                   {cancelling ? "Đang hủy..." : "Hủy đơn"}
+                </button>
+              ) : null}
+              {canPay ? (
+                <button
+                  type="button"
+                  onClick={() => void handlePay()}
+                  disabled={paying}
+                  className="mt-4 ml-3 h-10 rounded-tl-[18px] rounded-br-[18px] bg-ivy-dark px-5 text-[12px] font-semibold uppercase tracking-[0.05em] text-white disabled:opacity-60"
+                >
+                  {paying ? "Đang mở VNPay..." : "Thanh toán VNPay"}
                 </button>
               ) : null}
             </div>

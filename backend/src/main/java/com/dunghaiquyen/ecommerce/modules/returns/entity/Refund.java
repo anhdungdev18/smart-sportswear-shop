@@ -14,6 +14,9 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Map;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -64,4 +67,14 @@ public class Refund extends AbstractAuditEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by")
     private User createdBy;
+
+    @Column(name = "gateway_request_id", unique = true, length = 32)
+    private String gatewayRequestId;
+
+    @Column(name = "gateway_transaction_no", length = 30)
+    private String gatewayTransactionNo;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "gateway_response_json", columnDefinition = "jsonb")
+    private Map<String, Object> gatewayResponseJson;
 }

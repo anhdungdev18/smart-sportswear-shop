@@ -45,7 +45,7 @@ public class CheckoutPreviewService {
      */
     @Transactional(readOnly = true)
     public CheckoutPreviewResponse preview(UUID userId, CheckoutPreviewRequest request) {
-        OrderService.CartLinesCheckResult linesResult = orderService.checkCartLines(userId);
+        OrderService.CartLinesCheckResult linesResult = orderService.checkCartLines(userId, request.cartItemIds());
         if (linesResult.lines().isEmpty()) {
             throw new BusinessRuleException(HttpStatus.UNPROCESSABLE_ENTITY, "Cart is empty");
         }

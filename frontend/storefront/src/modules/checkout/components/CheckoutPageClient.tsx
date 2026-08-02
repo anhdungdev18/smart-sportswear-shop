@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { getApiErrorMessage } from "@/lib/api-errors";
 import { getAccessToken } from "@/lib/session";
@@ -10,7 +10,8 @@ import {
   setDefaultAddress,
   type AddressResponse,
 } from "@/modules/account/api";
-import { createOrder, previewCheckout } from "@/modules/checkout/api";
+import { createOrder, createVnpayPayment, previewCheckout } from "@/modules/checkout/api";
+import { clearCheckoutSelection, loadCheckoutSelection } from "@/modules/checkout/selection";
 import type { CheckoutPreviewResponse } from "@/modules/checkout/types";
 
 type PaymentMethod = "COD" | "VNPAY";
@@ -31,6 +32,7 @@ export function CheckoutPageClient() {
   const [preview, setPreview] = useState<CheckoutPreviewResponse | null>(null);
   const [note, setNote] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("COD");
+  const [cartItemIds] = useState<string[]>(() => loadCheckoutSelection());
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [creatingAddress, setCreatingAddress] = useState(false);
@@ -42,14 +44,14 @@ export function CheckoutPageClient() {
     [addresses, selectedAddressId],
   );
 
-  const refreshPreview = async (addressId?: string) => {
+  const refreshPreview = useCallback(async (addressId?: string) => {
     try {
-      const response = await previewCheckout(addressId);
+      const response = await previewCheckout(addressId, cartItemIds);
       setPreview(response);
     } catch (err) {
       setError(getApiErrorMessage(err, "Không thể tải dữ liệu thanh toán."));
     }
-  };
+  }, [cartItemIds]);
 
   useEffect(() => {
     const load = async () => {
@@ -73,7 +75,7 @@ export function CheckoutPageClient() {
     };
 
     void load();
-  }, []);
+  }, [refreshPreview]);
 
   const handleCreateAddress = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -120,7 +122,20 @@ export function CheckoutPageClient() {
         addressId: selectedAddressId,
         paymentMethod,
         note: note || undefined,
+        cartItemIds: cartItemIds.length ? cartItemIds : undefined,
       });
+      clearCheckoutSelection();
+      if (paymentMethod === "VNPAY") {
+        sessionStorage.setItem("vnpay-pending-order-id", order.id);
+        try {
+          const payment = await createVnpayPayment(order.id);
+          window.location.assign(payment.paymentUrl);
+        } catch (paymentError) {
+          setSuccess(`Đơn ${order.orderCode} đã được tạo và đang giữ hàng.`);
+          setError(getApiErrorMessage(paymentError, "Không thể mở cổng VNPay. Hãy thử thanh toán lại từ đơn hàng."));
+        }
+        return;
+      }
       setSuccess(`Đặt hàng thành công. Mã đơn của bạn là ${order.orderCode}.`);
       await refreshPreview(selectedAddressId);
     } catch (err) {

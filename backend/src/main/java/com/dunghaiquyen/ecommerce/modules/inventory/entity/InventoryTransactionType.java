@@ -7,5 +7,6 @@ public enum InventoryTransactionType {
     ADJUSTMENT_DOWN,
     ORDER_RESERVE,
     ORDER_RELEASE,
-    ORDER_CONFIRM_DEDUCT
+    ORDER_CONFIRM_DEDUCT,
+    RETURN_RESTOCK
 }
