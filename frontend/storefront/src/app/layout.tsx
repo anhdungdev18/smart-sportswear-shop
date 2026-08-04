@@ -15,14 +15,14 @@ const montserrat = Montserrat({
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"),
-  title: "IVY moda - Thời Trang Công Sở Hiện Đại | IVY moda",
+  title: "Điểm Đến Thể Thao - Đồ Thể Thao Chính Hãng | Điểm Đến Thể Thao",
   description:
-    "IVY moda - Thời Trang Công Sở Hiện Đại. Khám phá bộ sưu tập thời trang nam nữ mới nhất.",
+    "Điểm Đến Thể Thao - Cửa hàng đồ thể thao chính hãng. Khám phá bộ sưu tập áo đấu, giày, phụ kiện thể thao mới nhất.",
   icons: {
     icon: "/seo/favicon.ico",
   },
   openGraph: {
-    title: "IVY moda - Thời Trang Công Sở Hiện Đại | IVY moda",
+    title: "Điểm Đến Thể Thao - Đồ Thể Thao Chính Hãng | Điểm Đến Thể Thao",
     url: "/",
     images: ["/seo/og-image.webp"],
   },

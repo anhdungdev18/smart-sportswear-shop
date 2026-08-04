@@ -94,7 +94,7 @@
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
 
-  /* IVY moda extracted design tokens */
+  /* Điểm Đến Thể Thao design tokens */
   --ivy-dark: #221f20; /* headings, nav links, dark buttons */
   --ivy-text: #57585a; /* body copy, product titles, footer links */
   --ivy-text-muted: #6c6d70; /* body base color, header icon text */

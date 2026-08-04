@@ -7,9 +7,9 @@ export const BRAND_PROMO_ITEMS: PromoCarouselItem[] = [
     alt: "Điểm đến thể thao - Cá tính, Mạnh mẽ",
   },
   {
-    src: null,
-    href: "/danh-muc/giay-chay-bo",
-    alt: "Khuyến mại 2",
+    src: "/images/slideshow_10.webp",
+    href: "/danh-muc/ao-da-bong",
+    alt: "Trang phục chính hãng - Joma, Hummel",
   },
 ];
 

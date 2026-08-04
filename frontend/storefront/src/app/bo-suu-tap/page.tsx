@@ -54,7 +54,7 @@ export default async function CollectionListPage() {
                 <div className="text-center">
                   {(col.season || col.year) && (
                     <p className="mb-1 text-[11px] font-semibold uppercase tracking-[3px] text-ivy-text-muted">
-                      {[col.season, col.year].filter(Boolean).join(" ")}
+                      {[...new Set([col.season, col.year].filter(Boolean).map(String))].join(" ")}
                     </p>
                   )}
                   <h2 className="mb-2 text-[18px] font-bold uppercase tracking-[1px] text-ivy-dark transition-opacity group-hover:opacity-70">

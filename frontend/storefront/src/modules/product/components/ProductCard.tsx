@@ -29,10 +29,14 @@ export function ProductCard({ product }: { product: Product }) {
           <span
             className={cn(
               "absolute left-0 top-2 z-10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.04em] text-white",
-              product.ribbon === "bestseller" ? "bg-[#AC2F33]" : "bg-[#E7973E]",
+              product.ribbon === "sale"
+                ? "bg-[#E60012]"
+                : product.ribbon === "bestseller"
+                  ? "bg-[#AC2F33]"
+                  : "bg-[#E7973E]",
             )}
           >
-            {product.ribbon === "bestseller" ? "Best Seller" : "NEW"}
+            {product.ribbon === "sale" ? "Flash Sale" : product.ribbon === "bestseller" ? "Best Seller" : "NEW"}
           </span>
         ) : null}
         {product.discountPercent ? (

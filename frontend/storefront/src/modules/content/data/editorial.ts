@@ -39,21 +39,21 @@ export const MAGAZINE_ITEMS: MagazineItem[] = [
   {
     image: "/images/ivymoda/news/47b630796bec23aa195d7a59d1597231.jpg",
     caption:
-      "Tối 21/10, ca sĩ Văn Mai Hương đã có mặt tại Trung tâm Hội nghị Quốc gia Hà Nội để tham dự EXPRESS_FALL/WINTER 2023 FASHION SHOW của IVY moda.",
+      "Tối 21/10, ca sĩ Văn Mai Hương đã có mặt tại Trung tâm Hội nghị Quốc gia Hà Nội để tham dự EXPRESS_FALL/WINTER 2023 FASHION SHOW của Điểm Đến Thể Thao.",
     title: "SÀN RUNWAY EXPRESS BÙNG NỔ VỚI 2 BẢN REMIX MỚI NHẤT CỦA CA SĨ VĂN MAI HƯƠNG",
     date: "23/10/2023",
   },
   {
     image: "/images/ivymoda/news/3ac10c24b55ebbab6e1af7078643fd81.jpg",
     caption:
-      "Vào ngày 21/10/2023 tại Trung tâm Hội nghị Quốc gia - 57 Phạm Hùng, Hà Nội, IVY moda ra mắt thành công show diễn thứ 22 mang tên EXPRESS.",
+      "Vào ngày 21/10/2023 tại Trung tâm Hội nghị Quốc gia - 57 Phạm Hùng, Hà Nội, Điểm Đến Thể Thao ra mắt thành công show diễn thứ 22 mang tên EXPRESS.",
     title: "EXPRESS_FALL/WINTER 2023 FASHION SHOW - LỜI BÀY TỎ TỪ GIÁ TRỊ ĐÍCH THỰC",
     date: "23/10/2023",
   },
   {
     image: "/images/ivymoda/news/f50407a8b2dc3e8dce84e5aabee3b688.jpg",
     caption:
-      "Tối 21/10, Kỳ Duyên - Minh Triệu thu hút nhiều ánh nhìn khi xuất hiện trong show diễn thời trang Express 22 FW2023 của IVY moda.",
+      "Tối 21/10, Kỳ Duyên - Minh Triệu thu hút nhiều ánh nhìn khi xuất hiện trong show diễn thời trang Express 22 FW2023 của Điểm Đến Thể Thao.",
     title: "KỲ DUYÊN - MINH TRIỆU DIỆN VÁY CÚP NGỰC KHOE VÓC DÁNG GỢI CẢM TẠI EXPRESS 22 FW2023",
     date: "23/10/2023",
   },
@@ -119,13 +119,13 @@ export const ARTICLE_DETAIL_BLOCKS: ArticleContentBlock[] = [
   { type: "image", src: `${ARTICLE_IMAGE_ROOT}/ff98885c6855b2cf1f2ca7a088f89119.jpg` },
   {
     type: "text",
-    text: "Dàn model đắt giá và tài năng của IVY moda fashion show chăm chút diện mạo trước khi xuất hiện.",
+    text: "Dàn model đắt giá và tài năng của Điểm Đến Thể Thao fashion show chăm chút diện mạo trước khi xuất hiện.",
   },
   { type: "image", src: `${ARTICLE_IMAGE_ROOT}/e410f84d93796e59d903150b8b47499a.jpg` },
   { type: "image", src: `${ARTICLE_IMAGE_ROOT}/444aded901552aaef95be4b7107e9303.jpg` },
   {
     type: "text",
-    text: "Sự hỗ trợ nhiệt tình đến từ đội ngũ ekip IVY moda.",
+    text: "Sự hỗ trợ nhiệt tình đến từ đội ngũ ekip Điểm Đến Thể Thao.",
   },
   { type: "image", src: `${ARTICLE_IMAGE_ROOT}/5ec995f5f0ddebda5c231225331c8202.jpg` },
   {

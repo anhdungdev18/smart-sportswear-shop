@@ -25,6 +25,14 @@ export async function fetchFeaturedProducts(limit = 12) {
   return fetchProducts({ featured: true, limit, sortBy: "createdAt", sortOrder: "desc" });
 }
 
+export async function fetchBestSellingProducts(limit = 12) {
+  return fetchProducts({ limit, sort: "bestselling" });
+}
+
+export async function fetchSaleProducts(limit = 12) {
+  return fetchProducts({ discount: "any", limit, sortBy: "createdAt", sortOrder: "desc" });
+}
+
 export async function fetchProductDetail(slug: string): Promise<ProductDetail | null> {
   try {
     const result = await apiFetch<ProductDetail>(endpoints.product(slug), {

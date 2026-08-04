@@ -33,7 +33,7 @@ export default async function LifestyleNewsPage() {
           image="/images/ivymoda/news/5aaf578c14a70d76a45c36de9e77a037.jpg"
           eyebrow="STORY"
           title="QUIETLUXURY: KHI SỰ KHIÊM NHƯỜNG ẨN CHỨA NÉT CAO SANG"
-          excerpt="Quietluxury của IVY moda mang đến vẻ đẹp riêng biệt một cách thầm lặng. Giống như người phụ nữ an tĩnh và sâu sắc, họ vẫn luôn dùng trái tim yêu để đối diện với khó khăn, theo đuổi lối sống tinh tế, tao nhã và chẳng cần chưng diện những họa tiết logo để khẳng định mình là ai."
+          excerpt="Quietluxury của Điểm Đến Thể Thao mang đến vẻ đẹp riêng biệt một cách thầm lặng. Giống như người phụ nữ an tĩnh và sâu sắc, họ vẫn luôn dùng trái tim yêu để đối diện với khó khăn, theo đuổi lối sống tinh tế, tao nhã và chẳng cần chưng diện những họa tiết logo để khẳng định mình là ai."
           date="19/10/2023"
           href="#"
           reverse

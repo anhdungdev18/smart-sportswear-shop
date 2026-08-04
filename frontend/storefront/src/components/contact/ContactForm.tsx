@@ -55,7 +55,7 @@ function IconTextarea({ icon: Icon, className, ...props }: IconTextareaProps) {
 export function ContactForm() {
   return (
     <div className="rounded-2xl border border-ivy-hairline p-10">
-      <h2 className="mb-3 text-[28px] font-bold text-ivy-dark">Email to IVYmoda</h2>
+      <h2 className="mb-3 text-[28px] font-bold text-ivy-dark">Email to Điểm Đến Thể Thao</h2>
       <p className="mb-6 text-sm leading-5.5 text-ivy-text">
         We are here to help and answer any question you might have.Tell us about your issue so we
         can help you more quickly. We look forward to hearing from you.

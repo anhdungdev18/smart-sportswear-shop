@@ -33,7 +33,7 @@ export function Footer() {
       <div className="container mx-auto max-w-[1368px] px-4 py-12 md:px-0">
         <div className="grid gap-10 lg:grid-cols-[220px_1fr_360px] lg:gap-8">
           <div className="flex flex-col items-start gap-4">
-            <Image src="/images/ivymoda/common/logo-johns.png" alt="John's Sport Shop" width={141} height={70} className="h-auto" />
+            <Image src="/images/logo-v2.png" alt="Điểm Đến Thể Thao" width={120} height={80} className="h-auto" />
 
             <div className="flex items-center gap-3">
               <a href="https://www.dmca.com/Protection/Status.aspx?ID=0cfdeac4-6e7f-4fca-941f-57a0a0962777" target="_blank" rel="nofollow">
@@ -80,7 +80,7 @@ export function Footer() {
           <div className="flex flex-col gap-6">
             <div>
               <h3 className="mb-4 text-[30px] leading-[1.15] font-semibold text-ivy-dark">
-                Nhận thông tin các chương trình của IVY moda
+                Nhận thông tin các chương trình của Điểm Đến Thể Thao
               </h3>
               <form onSubmit={(e) => e.preventDefault()} className="flex items-center gap-2">
                 <input
@@ -113,7 +113,7 @@ export function Footer() {
       </div>
 
       <div className="border-t border-ivy-hairline py-5">
-        <p className="text-center text-[13px] text-ivy-text">©IVYmoda All rights reserved</p>
+        <p className="text-center text-[13px] text-ivy-text">© Điểm Đến Thể Thao. Bảo lưu mọi quyền.</p>
       </div>
     </footer>
   );

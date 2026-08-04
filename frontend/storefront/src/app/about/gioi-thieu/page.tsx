@@ -11,7 +11,7 @@ export default function AboutPage() {
       <Breadcrumb
         items={[
           { label: "Trang chủ", href: "/" },
-          { label: "Giới thiệu về IVY moda" },
+          { label: "Giới thiệu về Điểm Đến Thể Thao" },
         ]}
       />
       <div className="mx-auto max-w-[1380px]">
@@ -22,7 +22,7 @@ export default function AboutPage() {
           <img
             key={img.src}
             src={img.src}
-            alt="Giới thiệu về IVY moda"
+            alt="Giới thiệu về Điểm Đến Thể Thao"
             width={img.w}
             height={img.h}
             className="block w-full"

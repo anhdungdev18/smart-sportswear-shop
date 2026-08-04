@@ -27,8 +27,8 @@ export const PROVINCES_BY_REGION: Record<RegionKey, Province[]> = {
     {
       name: "Hà Nội",
       stores: [
-        { name: "IVY moda 267 Đ. Quang Trung, P. Quang Trung (Hà Đông), TP. Hà Nội", phone: "0243 834 1002" },
-        { name: "IVY moda 261-263 Cao Lỗ, Uy Nỗ, Đông Anh, Hà Nội", phone: "0243 834 1003" },
+        { name: "Điểm Đến Thể Thao 267 Đ. Quang Trung, P. Quang Trung (Hà Đông), TP. Hà Nội", phone: "0243 834 1002" },
+        { name: "Điểm Đến Thể Thao 261-263 Cao Lỗ, Uy Nỗ, Đông Anh, Hà Nội", phone: "0243 834 1003" },
       ],
     },
     { name: "Hải Phòng", stores: null },

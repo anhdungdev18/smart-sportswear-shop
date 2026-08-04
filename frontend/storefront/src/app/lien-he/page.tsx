@@ -16,7 +16,7 @@ export default function ContactPage() {
           <div className="relative mb-10 aspect-[1380/440] overflow-hidden rounded-tl-[80px] rounded-br-[80px]">
             <Image
               src="/images/ivymoda/pages/banner-lien-he.jpg"
-              alt="Liên hệ IVY moda"
+              alt="Liên hệ Điểm Đến Thể Thao"
               fill
               priority
               sizes="(max-width: 1380px) 100vw, 1380px"
@@ -34,10 +34,10 @@ export default function ContactPage() {
               Find us on Google Maps
             </h2>
             <p className="max-w-2xl text-sm leading-6 text-ivy-text">
-              IVY moda là thương hiệu thời trang Việt Nam với mong muốn đem
+              Điểm Đến Thể Thao là thương hiệu thời trang Việt Nam với mong muốn đem
               lại vẻ đẹp hiện đại và sự tự tin cho khách hàng, thông qua các
               dòng sản phẩm thời trang thể hiện cá tính và xu hướng. Một trong
-              những &ldquo;tôn chỉ&rdquo; về thiết kế của IVY moda chính là sự
+              những &ldquo;tôn chỉ&rdquo; về thiết kế của Điểm Đến Thể Thao chính là sự
               đa dạng, với mong muốn mang đến cho người mặc những sản phẩm phù
               hợp nhất với ngoại hình và quan trọng hơn cả là cá tính của
               chính mình.

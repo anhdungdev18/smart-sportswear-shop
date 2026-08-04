@@ -47,7 +47,7 @@ export function WishlistPageClient() {
     <main className="page-below-header flex-1 border-b border-ivy-hairline">
       <div className="mx-auto max-w-[1368px] px-4 py-12 md:px-0">
         <div className="mb-10">
-          <p className="mb-3 text-[13px] uppercase tracking-[0.24em] text-ivy-text-muted">Storefront</p>
+          <p className="mb-3 text-[13px] uppercase tracking-[0.24em] text-ivy-text-muted">Điểm Đến Thể Thao</p>
           <h1 className="text-[40px] font-semibold uppercase tracking-[0.06em] text-ivy-dark">Danh sách yêu thích</h1>
           <p className="mt-4 max-w-[700px] text-[15px] leading-7 text-ivy-text">
             Lưu lại những sản phẩm bạn quan tâm để xem lại nhanh hơn khi bộ sưu tập mới hoặc ưu đãi được cập nhật.

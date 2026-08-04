@@ -184,7 +184,7 @@ export const HEADER_NAV_ITEMS: HeaderNavItem[] = [
     variant: "about",
     groups: [
       {
-        heading: "John's Sport Shop",
+        heading: "Điểm Đến Thể Thao",
         headingHref: `${SITE_ORIGIN}/about/gioi-thieu`,
         links: [
           { label: "Giới thiệu cửa hàng", href: `${SITE_ORIGIN}/about/gioi-thieu` },
@@ -198,7 +198,7 @@ export const HEADER_NAV_ITEMS: HeaderNavItem[] = [
 ];
 
 export const FOOTER_INTRO_LINKS: FooterLinkItem[] = [
-  { label: "Về IVY moda", href: "/about/gioi-thieu" },
+  { label: "Về Điểm Đến Thể Thao", href: "/about/gioi-thieu" },
   { label: "Tuyển dụng", href: "https://tuyendung.ivy.com.vn", external: true },
   { label: "Hệ thống cửa hàng", href: "/cua-hang" },
 ];

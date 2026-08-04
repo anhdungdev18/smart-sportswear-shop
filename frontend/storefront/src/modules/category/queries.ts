@@ -60,8 +60,8 @@ export async function fetchCategoryTree(): Promise<Category[]> {
   }
 }
 
-export async function fetchSearchResults(query: string, page: number, limit: number) {
-  if (!query) {
+export async function fetchSearchResults(query: string, page: number, limit: number, discount?: string) {
+  if (!query && !discount) {
     return {
       products: [] as ProductListItem[],
       meta: { ...DEFAULT_PAGE_META, page, size: limit },
@@ -70,7 +70,7 @@ export async function fetchSearchResults(query: string, page: number, limit: num
 
   try {
     const result = await apiFetch<ProductListItem[]>(endpoints.products, {
-      query: { q: query, page, limit },
+      query: { q: query || undefined, discount, page, limit },
     });
     return {
       products: result.data,
@@ -95,7 +95,9 @@ export async function fetchCollections() {
 
 export async function fetchCollectionDetail(slug: string): Promise<CollectionDetail | null> {
   try {
-    const result = await apiFetch<CollectionDetail>(endpoints.collection(slug));
+    const result = await apiFetch<CollectionDetail>(endpoints.collection(slug), {
+      cache: "no-store"
+    });
     return result.data;
   } catch {
     return null;

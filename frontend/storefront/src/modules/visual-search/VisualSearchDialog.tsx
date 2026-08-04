@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { Camera, ImagePlus, LoaderCircle, Search, SwitchCamera, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ApiError } from "@/lib/api";
 import { mapProductListItem } from "@/modules/product/mappers";
 import { ProductCard } from "@/modules/product/components/ProductCard";
@@ -51,7 +51,7 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : "Không thể tìm kiếm bằng ảnh.";
 }
 
-export function VisualSearchDialog() {
+export function VisualSearchDialog({ trigger }: { trigger?: (open: () => void) => ReactNode } = {}) {
   const inputRef = useRef<HTMLInputElement>(null);
   const openerRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLElement>(null);
@@ -200,9 +200,13 @@ export function VisualSearchDialog() {
 
   return (
     <>
-      <button ref={openerRef} type="button" onClick={() => setOpen(true)} className="flex size-8 shrink-0 items-center justify-center rounded-md text-ivy-dark hover:bg-[#f3f3f3]" aria-label="Tìm sản phẩm bằng hình ảnh">
-        <Camera className="size-[18px]" />
-      </button>
+      {trigger ? (
+        trigger(() => setOpen(true))
+      ) : (
+        <button ref={openerRef} type="button" onClick={() => setOpen(true)} className="flex size-8 shrink-0 items-center justify-center rounded-md text-ivy-dark hover:bg-[#f3f3f3]" aria-label="Tìm sản phẩm bằng hình ảnh">
+          <Camera className="size-[18px]" />
+        </button>
+      )}
       {open ? (
         <div className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-black/45 px-3 py-6 md:py-12" role="dialog" aria-modal="true" aria-labelledby="visual-search-title" onMouseDown={(event) => { if (event.target === event.currentTarget && !busy) closeDialog(); }}>
           <section ref={dialogRef} className="w-full max-w-6xl rounded-2xl bg-white p-5 shadow-2xl md:p-8">
