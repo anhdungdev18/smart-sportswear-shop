@@ -180,6 +180,7 @@ public final class ProductSpecifications {
             var compare70 = cb.prod(compareAt, BigDecimal.valueOf(70));
             var compare50 = cb.prod(compareAt, BigDecimal.valueOf(50));
             return switch (band.toLowerCase()) {
+                case "any" -> discounted;
                 case "lt30" -> cb.and(discounted, cb.greaterThan(price100, compare70));
                 case "30to50" -> cb.and(discounted, cb.lessThanOrEqualTo(price100, compare70),
                         cb.greaterThanOrEqualTo(price100, compare50));

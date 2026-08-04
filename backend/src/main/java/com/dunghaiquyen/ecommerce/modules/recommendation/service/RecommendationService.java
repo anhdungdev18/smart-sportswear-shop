@@ -470,6 +470,19 @@ public class RecommendationService {
                 .filter(this::isAvailableVariant)
                 .mapToInt(v -> Math.max(0, v.getStockQuantity() - v.getReservedQuantity()))
                 .sum();
+        ProductVariant saleVariant = variants.stream()
+                .filter(this::isAvailableVariant)
+                .filter(v -> v.getCompareAtPrice() != null && v.getCompareAtPrice().compareTo(v.getPrice()) > 0)
+                .min(Comparator.comparing(ProductVariant::getPrice))
+                .orElse(null);
+        BigDecimal salePrice = saleVariant != null ? saleVariant.getPrice() : null;
+        BigDecimal compareAtPrice = saleVariant != null ? saleVariant.getCompareAtPrice() : null;
+        Integer discountPercent = saleVariant != null
+                ? compareAtPrice.subtract(salePrice)
+                        .multiply(BigDecimal.valueOf(100))
+                        .divide(compareAtPrice, 0, java.math.RoundingMode.HALF_UP)
+                        .intValue()
+                : null;
 
         return new ProductListItemResponse(
                 product.getId(),
@@ -481,6 +494,9 @@ public class RecommendationService {
                 ThumbnailResolver.resolve(images),
                 minPrice,
                 maxPrice,
+                salePrice,
+                compareAtPrice,
+                discountPercent,
                 availableQuantity,
                 product.getStatus(),
                 product.getProductType()

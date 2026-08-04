@@ -15,6 +15,9 @@ public record ProductListItemResponse(
         String thumbnail,
         BigDecimal minPrice,
         BigDecimal maxPrice,
+        BigDecimal salePrice,
+        BigDecimal compareAtPrice,
+        Integer discountPercent,
         int availableQuantity,
         ProductStatus status,
         ProductType productType) {

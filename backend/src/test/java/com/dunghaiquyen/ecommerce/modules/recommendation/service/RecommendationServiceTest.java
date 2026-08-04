@@ -105,6 +105,9 @@ class RecommendationServiceTest {
                 null,
                 new BigDecimal("100000"),
                 new BigDecimal("100000"),
+                null,
+                null,
+                null,
                 1,
                 ProductStatus.ACTIVE,
                 null
