@@ -15,12 +15,16 @@ import com.dunghaiquyen.ecommerce.common.response.PageMeta;
 import com.dunghaiquyen.ecommerce.modules.product.dto.ProductListQuery;
 import com.dunghaiquyen.ecommerce.modules.product.service.ProductService;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import java.net.SocketTimeoutException;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.http.HttpStatus;
 
 @ExtendWith(MockitoExtension.class)
 class ProductHybridSearchServiceTest {
@@ -70,6 +74,57 @@ class ProductHybridSearchServiceTest {
 
         assertThat(result.meta().searchMode()).isEqualTo("KEYWORD_FALLBACK");
         assertThat(result.meta().fallbackReason()).isEqualTo("UPSTREAM_UNAVAILABLE");
+        assertThat(result.meta().fallbackReason()).doesNotContain("secret");
+    }
+
+    @Test
+    void upstreamTimeout_returnsSpecificFallbackReason() {
+        ProductSearchProperties properties =
+                new ProductSearchProperties(true, "http://search", "token", 8, 60);
+        ProductHybridSearchService service =
+                new ProductHybridSearchService(properties, client, productService);
+        when(client.search(anyString(), anyInt(), anyInt(), anyMap()))
+                .thenThrow(new ResourceAccessException("Read timed out"));
+        when(productService.listPublic(any()))
+                .thenReturn(new ProductService.ListResult(List.of(), new PageMeta(1, 20, 0, 0)));
+
+        var result = service.search(query("Nike"));
+
+        assertThat(result.meta().fallbackReason()).isEqualTo("UPSTREAM_TIMEOUT");
+    }
+
+    @Test
+    void nestedSocketTimeout_returnsSpecificFallbackReason() {
+        ProductSearchProperties properties =
+                new ProductSearchProperties(true, "http://search", "token", 8, 60);
+        ProductHybridSearchService service =
+                new ProductHybridSearchService(properties, client, productService);
+        when(client.search(anyString(), anyInt(), anyInt(), anyMap()))
+                .thenThrow(new ResourceAccessException(
+                        "I/O error calling product search", new SocketTimeoutException("Read timed out")));
+        when(productService.listPublic(any()))
+                .thenReturn(new ProductService.ListResult(List.of(), new PageMeta(1, 20, 0, 0)));
+
+        var result = service.search(query("Nike"));
+
+        assertThat(result.meta().fallbackReason()).isEqualTo("UPSTREAM_TIMEOUT");
+    }
+
+    @Test
+    void upstreamHttpFailure_exposesOnlyStatusCode() {
+        ProductSearchProperties properties =
+                new ProductSearchProperties(true, "http://search", "token", 8, 60);
+        ProductHybridSearchService service =
+                new ProductHybridSearchService(properties, client, productService);
+        var upstreamFailure = new HttpClientErrorException(
+                HttpStatus.UNAUTHORIZED, "secret upstream detail");
+        when(client.search(anyString(), anyInt(), anyInt(), anyMap())).thenThrow(upstreamFailure);
+        when(productService.listPublic(any()))
+                .thenReturn(new ProductService.ListResult(List.of(), new PageMeta(1, 20, 0, 0)));
+
+        var result = service.search(query("Nike"));
+
+        assertThat(result.meta().fallbackReason()).isEqualTo("UPSTREAM_HTTP_401");
         assertThat(result.meta().fallbackReason()).doesNotContain("secret");
     }
 

@@ -127,3 +127,5 @@ Use the corresponding `.cmd` launchers when starting from Command Prompt.
 `backend/.env` and `chatbot-service/.env`. Keep
 `PRODUCT_HYBRID_SEARCH_ENABLED=false` until migrations, embedding coverage,
 the queue consumer, and the acceptance benchmark have been verified.
+For local development, keep `PRODUCT_SEARCH_TIMEOUT_SECONDS=12` in
+`backend/.env` so a cold semantic-search request has enough time to finish.

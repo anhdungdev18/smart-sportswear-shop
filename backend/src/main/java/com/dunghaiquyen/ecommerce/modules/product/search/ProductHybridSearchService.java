@@ -4,15 +4,22 @@ import com.dunghaiquyen.ecommerce.modules.product.dto.ProductListItemResponse;
 import com.dunghaiquyen.ecommerce.modules.product.dto.ProductListQuery;
 import com.dunghaiquyen.ecommerce.modules.product.service.ProductService;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import java.net.SocketTimeoutException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import com.dunghaiquyen.ecommerce.common.exception.BusinessRuleException;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.RestClientResponseException;
 
 @Service
 public class ProductHybridSearchService {
+
+    private static final Logger log = LoggerFactory.getLogger(ProductHybridSearchService.class);
 
     public record Result(List<ProductListItemResponse> items, HybridSearchMeta meta) {}
 
@@ -55,8 +62,38 @@ public class ProductHybridSearchService {
                     page, limit, total, (int) Math.ceil((double) total / limit),
                     response.searchMode(), response.parsedQuery(), null, elapsed(started)));
         } catch (RuntimeException exception) {
-            return fallback(query, page, limit, "UPSTREAM_UNAVAILABLE", started);
+            String reason = fallbackReason(exception);
+            log.warn(
+                    "Hybrid product search failed; using keyword fallback. reason={}, exceptionType={}, queryLength={}, page={}, limit={}",
+                    reason, exception.getClass().getSimpleName(), text.length(), page, limit);
+            return fallback(query, page, limit, reason, started);
         }
+    }
+
+    private String fallbackReason(RuntimeException exception) {
+        if (exception instanceof RestClientResponseException responseException) {
+            return "UPSTREAM_HTTP_" + responseException.getStatusCode().value();
+        }
+        if (exception instanceof ResourceAccessException) {
+            if (isTimeout(exception)) {
+                return "UPSTREAM_TIMEOUT";
+            }
+            return "UPSTREAM_CONNECTION_ERROR";
+        }
+        return "UPSTREAM_UNAVAILABLE";
+    }
+
+    private boolean isTimeout(Throwable throwable) {
+        for (Throwable current = throwable; current != null; current = current.getCause()) {
+            if (current instanceof SocketTimeoutException) {
+                return true;
+            }
+            String message = current.getMessage();
+            if (message != null && message.toLowerCase().contains("timed out")) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private Result fallback(ProductListQuery query, int page, int limit, String reason, long started) {
