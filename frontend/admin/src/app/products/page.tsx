@@ -8,6 +8,9 @@ type ProductsSearchParams = Promise<{ q?: string | string[] }>;
 export default async function ProductsPage({ searchParams }: { searchParams: ProductsSearchParams }) {
   const params = await searchParams;
   const initialSearchTerm = typeof params.q === "string" ? params.q : "";
+  const productsPromise = listAdminProducts().catch(() => []);
+  const categoriesPromise = listAdminCategories().catch(() => []);
+  const brandsPromise = listAdminBrands().catch(() => []);
 
   return (
     <main className="workspace">
@@ -19,18 +22,23 @@ export default async function ProductsPage({ searchParams }: { searchParams: Pro
       </section>
 
       <Suspense fallback={<ProductStatsSkeleton />}>
-        <ProductCatalogStats />
+        <ProductCatalogStats productsPromise={productsPromise} />
       </Suspense>
 
       <Suspense fallback={<ProductTableSkeleton />}>
-        <ProductCatalog initialSearchTerm={initialSearchTerm} />
+        <ProductCatalog
+          initialSearchTerm={initialSearchTerm}
+          productsPromise={productsPromise}
+          categoriesPromise={categoriesPromise}
+          brandsPromise={brandsPromise}
+        />
       </Suspense>
     </main>
   );
 }
 
-async function ProductCatalogStats() {
-  const adminProducts = await listAdminProducts().catch(() => []);
+async function ProductCatalogStats({ productsPromise }: { productsPromise: ReturnType<typeof listAdminProducts> }) {
+  const adminProducts = await productsPromise;
   const productStats = buildAdminProductStats(adminProducts);
 
   return (
@@ -47,11 +55,21 @@ async function ProductCatalogStats() {
   );
 }
 
-async function ProductCatalog({ initialSearchTerm }: { initialSearchTerm: string }) {
+async function ProductCatalog({
+  initialSearchTerm,
+  productsPromise,
+  categoriesPromise,
+  brandsPromise,
+}: {
+  initialSearchTerm: string;
+  productsPromise: ReturnType<typeof listAdminProducts>;
+  categoriesPromise: ReturnType<typeof listAdminCategories>;
+  brandsPromise: ReturnType<typeof listAdminBrands>;
+}) {
   const [adminProducts, categories, brands] = await Promise.all([
-    listAdminProducts().catch(() => []),
-    listAdminCategories().catch(() => []),
-    listAdminBrands().catch(() => []),
+    productsPromise,
+    categoriesPromise,
+    brandsPromise,
   ]);
 
   return <AdminProductsCatalogClient initialProducts={adminProducts} initialSearchTerm={initialSearchTerm} categories={categories} brands={brands} />;

@@ -24,18 +24,8 @@ type AdminProductListItemResponse = {
   thumbnail: string | null;
   minPrice: number | null;
   maxPrice: number | null;
-};
-
-type InventoryItemResponse = {
-  variantId: string;
-  productId: string;
-  productName: string;
-  sku: string;
-  size: string | null;
-  color: string | null;
-  stockQuantity: number;
-  reservedQuantity: number;
   availableQuantity: number;
+  representativeSku: string;
 };
 
 type ProductReportResponse = {
@@ -74,43 +64,25 @@ function mapAdminStatus(status: AdminProductListItemResponse["status"], stock: n
 // catalog in the admin, we page through every batch instead of stopping at the
 // first 100 — otherwise products beyond the newest page are invisible.
 const ADMIN_PAGE_SIZE = 100;
-const INVENTORY_PAGE_SIZE = 100;
 
 async function fetchAllAdminProducts() {
   const all: AdminProductListItemResponse[] = [];
   for (let page = 1; page <= 100; page += 1) {
-    const batch = await apiRequest<AdminProductListItemResponse[]>(adminEndpoints.products, {
+    const response = await apiRequestEnvelope<AdminProductListItemResponse[]>(adminEndpoints.products, {
       query: { page, limit: ADMIN_PAGE_SIZE },
       next: { revalidate: 30 }
     });
+    const batch = response.data;
     all.push(...batch);
     if (batch.length < ADMIN_PAGE_SIZE) break;
   }
   return all;
 }
 
-async function fetchAllInventoryItems() {
-  const all: InventoryItemResponse[] = [];
-
-  for (let page = 1; ; page += 1) {
-    const response = await apiRequestEnvelope<InventoryItemResponse[]>(adminEndpoints.inventory, {
-      query: { page, limit: INVENTORY_PAGE_SIZE },
-      next: { revalidate: 30 }
-    });
-    all.push(...response.data);
-
-    const totalPages = Number(response.meta?.totalPages);
-    if (Number.isFinite(totalPages) && totalPages > 0) {
-      if (page >= totalPages) break;
-    } else if (response.data.length < INVENTORY_PAGE_SIZE) {
-      break;
-    }
-  }
-
-  return all;
-}
-
 async function loadAdminProductDataset(query: AdminProductListQuery = {}) {
+  const productReportPromise = apiRequest<ProductReportResponse>(adminEndpoints.topProducts, { next: { revalidate: 30 } })
+    .catch(() => ({ bestSelling: [] } as ProductReportResponse));
+
   // No explicit page/limit means "give me the full catalog" (stats + client-side
   // pagination both rely on the complete set); a specific page/limit fetches one batch.
   const productsResponse =
@@ -121,33 +93,18 @@ async function loadAdminProductDataset(query: AdminProductListQuery = {}) {
           next: { revalidate: 30 }
         });
 
-  const [inventoryResponse, productReport] = await Promise.all([
-    fetchAllInventoryItems(),
-    apiRequest<ProductReportResponse>(adminEndpoints.topProducts, { next: { revalidate: 30 } })
-      .catch(() => ({ bestSelling: [] } as ProductReportResponse))
-  ]);
-
-  const stockByProduct = new Map<string, { stock: number; sku: string }>();
-  for (const item of inventoryResponse) {
-    const current = stockByProduct.get(item.productId) ?? { stock: 0, sku: item.sku };
-    current.stock += item.availableQuantity;
-    if (!current.sku) {
-      current.sku = item.sku;
-    }
-    stockByProduct.set(item.productId, current);
-  }
+  const productReport = await productReportPromise;
 
   const soldByProduct = new Map(productReport.bestSelling.map((item) => [item.productId, item.totalQuantitySold]));
 
   return productsResponse.map((item) => {
-    const stockEntry = stockByProduct.get(item.id);
-    const stock = stockEntry?.stock ?? 0;
+    const stock = item.availableQuantity;
     const minPrice = item.minPrice ?? item.maxPrice ?? 0;
     const maxPrice = item.maxPrice && item.maxPrice > minPrice ? item.maxPrice : null;
 
     return {
       id: item.id,
-      sku: stockEntry?.sku ?? item.slug,
+      sku: item.representativeSku ?? item.slug,
       name: item.name,
       category: item.category?.name ?? "Chưa phân loại",
       brand: item.brand?.name ?? "Chưa có brand",

@@ -42,6 +42,7 @@ import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -698,6 +699,14 @@ public class ProductService {
         List<BigDecimal> prices = variants.stream().map(ProductVariant::getPrice).toList();
         BigDecimal minPrice = prices.stream().min(Comparator.naturalOrder()).orElse(null);
         BigDecimal maxPrice = prices.stream().max(Comparator.naturalOrder()).orElse(null);
+        String representativeSku = variants.stream()
+                .map(ProductVariant::getSku)
+                .filter(Objects::nonNull)
+                .min(String.CASE_INSENSITIVE_ORDER)
+                .orElse(product.getSlug());
+        int availableQuantity = variants.stream()
+                .mapToInt(variant -> Math.max(0, variant.getStockQuantity() - variant.getReservedQuantity()))
+                .sum();
 
         return new AdminProductListItemResponse(
                 product.getId(),
@@ -709,7 +718,9 @@ public class ProductService {
                 toRef(product.getCategory()),
                 pickThumbnail(images),
                 minPrice,
-                maxPrice);
+                maxPrice,
+                representativeSku,
+                availableQuantity);
     }
 
     private ProductDetailResponse assembleDetail(Product product, boolean visibleOnly) {
