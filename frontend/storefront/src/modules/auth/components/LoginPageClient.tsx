@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getApiErrorMessage } from "@/lib/api-errors";
-import { emitSessionChange, setSession } from "@/lib/session";
+import { setSession } from "@/lib/session";
 import { forgotPassword, login, register } from "@/modules/auth/api";
 import { GoogleSignInButton } from "@/modules/auth/components/GoogleSignInButton";
 
@@ -37,10 +37,8 @@ export function LoginPageClient() {
     try {
       const response = await login(loginForm);
       setSession(response.tokens);
-      emitSessionChange();
       setLoginMessage(`Chào mừng ${response.user.fullName}, bạn đã đăng nhập thành công.`);
       router.push("/tai-khoan");
-      router.refresh();
     } catch (error) {
       setLoginError(getApiErrorMessage(error, "Đăng nhập không thành công."));
     } finally {
@@ -68,10 +66,8 @@ export function LoginPageClient() {
         password: registerForm.password,
       });
       setSession(response.tokens);
-      emitSessionChange();
       setRegisterMessage("Tài khoản đã được tạo thành công.");
       router.push("/tai-khoan");
-      router.refresh();
     } catch (error) {
       setRegisterError(getApiErrorMessage(error, "Đăng ký không thành công."));
     } finally {

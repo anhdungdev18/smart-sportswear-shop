@@ -111,6 +111,12 @@ management:
       enabled: true
 
 app:
+  product-search:
+    enabled: ${PRODUCT_HYBRID_SEARCH_ENABLED:false}
+    service-url: ${PRODUCT_SEARCH_SERVICE_URL:http://127.0.0.1:8002}
+    internal-token: ${PRODUCT_SEARCH_INTERNAL_TOKEN:change-me}
+    timeout-seconds: ${PRODUCT_SEARCH_TIMEOUT_SECONDS:12}
+    rate-limit-per-minute: ${PRODUCT_SEARCH_RATE_LIMIT_PER_MINUTE:30}
   visual-search:
     enabled: ${VISUAL_SEARCH_ENABLED:false}
     service-url: ${VISUAL_SEARCH_SERVICE_URL:http://127.0.0.1:8090}

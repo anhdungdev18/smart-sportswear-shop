@@ -325,8 +325,9 @@ class PaymentIntegrationTest extends AbstractIntegrationTest {
         Map<String, String> params = buildSignedCallbackParams(txnRef, "00");
         MvcResult callbackResult = sendCallback(params);
         assertThat(callbackResult.getResponse().getStatus()).isEqualTo(200);
-        assertThat(json(callbackResult.getResponse().getContentAsString()).at("/message").asText())
-                .isEqualTo("Callback processed");
+        JsonNode callback = json(callbackResult.getResponse().getContentAsString());
+        assertThat(callback.at("/RspCode").asText()).isEqualTo("00");
+        assertThat(callback.at("/Message").asText()).isEqualTo("Confirm Success");
 
         var payment = paymentRepository.findByTransactionRef(txnRef).orElseThrow();
         assertThat(payment.getStatus().name()).isEqualTo("PAID");

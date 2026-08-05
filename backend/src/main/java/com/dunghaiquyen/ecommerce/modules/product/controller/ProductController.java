@@ -4,8 +4,11 @@ import com.dunghaiquyen.ecommerce.common.response.ApiResponse;
 import com.dunghaiquyen.ecommerce.modules.product.dto.ProductDetailResponse;
 import com.dunghaiquyen.ecommerce.modules.product.dto.ProductListItemResponse;
 import com.dunghaiquyen.ecommerce.modules.product.dto.ProductListQuery;
-import com.dunghaiquyen.ecommerce.modules.product.dto.ProductSuggestionResponse;
 import com.dunghaiquyen.ecommerce.modules.product.service.ProductService;
+import com.dunghaiquyen.ecommerce.modules.product.search.ProductHybridSearchService;
+import com.dunghaiquyen.ecommerce.modules.product.search.ProductSearchRateLimiter;
+import com.dunghaiquyen.ecommerce.modules.product.search.ProductSuggestionService;
+import com.dunghaiquyen.ecommerce.modules.product.search.SearchSuggestionResponse;
 import com.dunghaiquyen.ecommerce.modules.product.entity.Gender;
 import com.dunghaiquyen.ecommerce.visualsearch.api.VisualSearchRateLimiter;
 import com.dunghaiquyen.ecommerce.visualsearch.api.VisualSearchResult;
@@ -41,16 +44,25 @@ public class ProductController {
     private final VisualSearchService visualSearchService;
     private final VisualSearchRateLimiter visualSearchRateLimiter;
     private final CartIdentityResolver cartIdentityResolver;
+    private final ProductHybridSearchService productHybridSearchService;
+    private final ProductSearchRateLimiter productSearchRateLimiter;
+    private final ProductSuggestionService productSuggestionService;
 
     public ProductController(
             ProductService productService,
             VisualSearchService visualSearchService,
             VisualSearchRateLimiter visualSearchRateLimiter,
-            CartIdentityResolver cartIdentityResolver) {
+            CartIdentityResolver cartIdentityResolver,
+            ProductHybridSearchService productHybridSearchService,
+            ProductSearchRateLimiter productSearchRateLimiter,
+            ProductSuggestionService productSuggestionService) {
         this.productService = productService;
         this.visualSearchService = visualSearchService;
         this.visualSearchRateLimiter = visualSearchRateLimiter;
         this.cartIdentityResolver = cartIdentityResolver;
+        this.productHybridSearchService = productHybridSearchService;
+        this.productSearchRateLimiter = productSearchRateLimiter;
+        this.productSuggestionService = productSuggestionService;
     }
 
     @GetMapping
@@ -61,9 +73,24 @@ public class ProductController {
 
     /** Phase N3 autocomplete - GET /api/v1/products/search-suggestions?q=... */
     @GetMapping("/search-suggestions")
-    public ApiResponse<List<ProductSuggestionResponse>> searchSuggestions(
+    public ApiResponse<List<SearchSuggestionResponse>> searchSuggestions(
             @RequestParam(required = false) String q) {
-        return ApiResponse.ok(productService.searchSuggestions(q));
+        return ApiResponse.ok(productSuggestionService.suggest(q));
+    }
+
+    @GetMapping("/hybrid-search")
+    public ApiResponse<List<ProductListItemResponse>> hybridSearch(
+            @ModelAttribute ProductListQuery query,
+            HttpServletRequest request,
+            HttpServletResponse response,
+            @AuthenticationPrincipal CustomUserDetails principal) {
+        var owner = cartIdentityResolver.resolve(request, response, principal);
+        String clientKey = owner.userId() != null
+                ? "user:" + owner.userId()
+                : "session:" + owner.sessionId();
+        productSearchRateLimiter.check(clientKey);
+        ProductHybridSearchService.Result result = productHybridSearchService.search(query);
+        return ApiResponse.ok(result.items(), result.meta());
     }
 
     @PostMapping(value = "/search-by-image", consumes = "multipart/form-data")

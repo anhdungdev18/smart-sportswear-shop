@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef } from "react";
 import Script from "next/script";
 import { useRouter } from "next/navigation";
 import { getApiErrorMessage } from "@/lib/api-errors";
-import { emitSessionChange, setSession } from "@/lib/session";
+import { setSession } from "@/lib/session";
 import { googleLogin } from "@/modules/auth/api";
 
 const CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
@@ -43,10 +43,8 @@ export function GoogleSignInButton({
       try {
         const data = await googleLogin(response.credential);
         setSession(data.tokens);
-        emitSessionChange();
         onSuccess?.(data.user.fullName);
         router.push("/tai-khoan");
-        router.refresh();
       } catch (error) {
         onError?.(getApiErrorMessage(error, "Đăng nhập Google không thành công."));
       }

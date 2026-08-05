@@ -19,6 +19,7 @@ import com.dunghaiquyen.ecommerce.modules.product.dto.ProductUpdateRequest;
 import com.dunghaiquyen.ecommerce.modules.product.dto.ReviewAggregateProjection;
 import com.dunghaiquyen.ecommerce.modules.product.dto.ReviewSummaryResponse;
 import com.dunghaiquyen.ecommerce.modules.product.entity.Product;
+import com.dunghaiquyen.ecommerce.modules.product.entity.Gender;
 import com.dunghaiquyen.ecommerce.modules.product.entity.ProductImage;
 import com.dunghaiquyen.ecommerce.modules.product.entity.ProductStatus;
 import com.dunghaiquyen.ecommerce.modules.product.entity.ProductVariant;
@@ -41,6 +42,7 @@ import java.math.BigDecimal;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -276,6 +278,9 @@ public class ProductService {
         } catch (DataIntegrityViolationException ex) {
             throw new BusinessRuleException("Slug already exists: " + request.slug());
         }
+        if (product.getStatus() == ProductStatus.ACTIVE) {
+            catalogOutboxService.append(CatalogEventType.PRODUCT_ACTIVATED, product.getId(), null);
+        }
         return assembleDetail(product, false);
     }
 
@@ -341,6 +346,8 @@ public class ProductService {
             } else if (previousStatus == ProductStatus.ACTIVE) {
                 catalogOutboxService.append(CatalogEventType.PRODUCT_DEACTIVATED, product.getId(), null);
             }
+        } else if (product.getStatus() == ProductStatus.ACTIVE) {
+            catalogOutboxService.append(CatalogEventType.PRODUCT_REINDEX_REQUESTED, product.getId(), null);
         }
         return assembleDetail(product, false);
     }
@@ -553,6 +560,61 @@ public class ProductService {
         return assembleListItems(products);
     }
 
+    /**
+     * Re-enriches untrusted internal-search IDs from the commerce database,
+     * reapplies hard filters, and preserves the internal rank order.
+     */
+    @Transactional(readOnly = true)
+    public List<ProductListItemResponse> assembleRankedSearchItems(
+            List<UUID> productIds, ProductListQuery query) {
+        if (productIds.isEmpty()) {
+            return List.of();
+        }
+        Map<UUID, Product> products = productRepository
+                .findActiveByIdInWithBrandAndCategory(productIds).stream()
+                .collect(Collectors.toMap(Product::getId, product -> product));
+        Map<UUID, List<ProductVariant>> variants = variantRepository.findAllByProductIdIn(productIds).stream()
+                .filter(variant -> variant.getStatus() == VariantStatus.ACTIVE)
+                .collect(Collectors.groupingBy(variant -> variant.getProduct().getId()));
+        List<UUID> accepted = productIds.stream()
+                .filter(products::containsKey)
+                .filter(id -> matchesCommerceFilters(products.get(id), variants.getOrDefault(id, List.of()), query))
+                .toList();
+        return assembleListItemsByIds(accepted, ProductStatus.ACTIVE);
+    }
+
+    private boolean matchesCommerceFilters(Product product, List<ProductVariant> variants, ProductListQuery query) {
+        if (query.gender() != null && product.getGender() != null
+                && product.getGender() != query.gender() && product.getGender() != Gender.UNISEX) {
+            return false;
+        }
+        if (query.productType() != null && product.getProductType() != query.productType()) {
+            return false;
+        }
+        if (query.categoryId() != null && !product.getCategory().getId().equals(query.categoryId())) {
+            return false;
+        }
+        if (query.brandId() != null && !product.getBrand().getId().equals(query.brandId())) {
+            return false;
+        }
+        if (query.categorySlug() != null
+                && !product.getCategory().getSlug().equalsIgnoreCase(query.categorySlug())) {
+            return false;
+        }
+        if (query.brandSlug() != null && !product.getBrand().getSlug().equalsIgnoreCase(query.brandSlug())) {
+            return false;
+        }
+        return variants.stream().anyMatch(variant -> {
+            int available = Math.max(0, variant.getStockQuantity() - variant.getReservedQuantity());
+            return available > 0
+                    && (query.size() == null || variant.getSize().equalsIgnoreCase(query.size()))
+                    && (query.color() == null || variant.getColor().toLowerCase()
+                            .contains(query.color().toLowerCase()))
+                    && (query.minPrice() == null || variant.getPrice().compareTo(query.minPrice()) >= 0)
+                    && (query.maxPrice() == null || variant.getPrice().compareTo(query.maxPrice()) <= 0);
+        });
+    }
+
     private List<ProductListItemResponse> assembleListItems(List<Product> products) {
         if (products.isEmpty()) {
             return List.of();
@@ -637,6 +699,14 @@ public class ProductService {
         List<BigDecimal> prices = variants.stream().map(ProductVariant::getPrice).toList();
         BigDecimal minPrice = prices.stream().min(Comparator.naturalOrder()).orElse(null);
         BigDecimal maxPrice = prices.stream().max(Comparator.naturalOrder()).orElse(null);
+        String representativeSku = variants.stream()
+                .map(ProductVariant::getSku)
+                .filter(Objects::nonNull)
+                .min(String.CASE_INSENSITIVE_ORDER)
+                .orElse(product.getSlug());
+        int availableQuantity = variants.stream()
+                .mapToInt(variant -> Math.max(0, variant.getStockQuantity() - variant.getReservedQuantity()))
+                .sum();
 
         return new AdminProductListItemResponse(
                 product.getId(),
@@ -648,7 +718,9 @@ public class ProductService {
                 toRef(product.getCategory()),
                 pickThumbnail(images),
                 minPrice,
-                maxPrice);
+                maxPrice,
+                representativeSku,
+                availableQuantity);
     }
 
     private ProductDetailResponse assembleDetail(Product product, boolean visibleOnly) {

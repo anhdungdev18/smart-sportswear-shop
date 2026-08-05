@@ -5,6 +5,10 @@ export interface PageMeta {
   size: number;
   total: number;
   totalPages: number;
+  searchMode?: "HYBRID" | "KEYWORD" | "KEYWORD_FALLBACK";
+  parsedQuery?: Record<string, unknown>;
+  fallbackReason?: string | null;
+  processingTimeMs?: number;
 }
 
 export interface Category {

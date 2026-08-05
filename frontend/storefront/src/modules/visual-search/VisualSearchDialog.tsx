@@ -16,7 +16,8 @@ async function cropImage(source: string, zoom: number, x: number, y: number): Pr
   const image = document.createElement("img");
   image.src = source;
   await image.decode();
-  const output = 1024;
+  // A compact query image keeps upload and multimodal embedding latency low.
+  const output = 768;
   const canvas = document.createElement("canvas");
   canvas.width = output;
   canvas.height = output;
@@ -38,7 +39,7 @@ async function cropImage(source: string, zoom: number, x: number, y: number): Pr
     output,
   );
   return new Promise((resolve, reject) =>
-    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("Không thể tạo ảnh tìm kiếm."))), "image/jpeg", 0.9),
+    canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("Không thể tạo ảnh tìm kiếm."))), "image/jpeg", 0.82),
   );
 }
 

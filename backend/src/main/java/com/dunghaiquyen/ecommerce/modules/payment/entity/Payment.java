@@ -60,7 +60,7 @@ public class Payment extends AbstractAuditEntity {
     @Column(name = "expires_at")
     private Instant expiresAt;
 
-    @Column(name = "gateway_transaction_no", length = 30)
+    @Column(name = "gateway_transaction_no", length = 100)
     private String gatewayTransactionNo;
 
     @Column(name = "bank_code", length = 30)

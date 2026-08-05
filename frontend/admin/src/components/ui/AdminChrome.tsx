@@ -156,7 +156,7 @@ export function Sidebar() {
                 const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
 
                 return (
-                  <Link className={active ? "active" : ""} href={item.href} key={item.label} prefetch>
+                  <Link className={active ? "active" : ""} href={item.href} key={item.label} prefetch={false}>
                     <Icon size={18} weight="duotone" />
                     <span>{item.label}</span>
                   </Link>

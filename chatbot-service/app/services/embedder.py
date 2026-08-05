@@ -9,6 +9,11 @@ Public async API is unchanged (embed / embed_batch) so callers need no edits.
 """
 from __future__ import annotations
 
+import hashlib
+import json
+from collections import OrderedDict
+from typing import Any
+
 from app.config.settings import settings
 from app.observability.trace_logger import get_logger
 
@@ -16,6 +21,43 @@ logger = get_logger(__name__)
 
 MODEL_NAME     = settings.EMBEDDING_MODEL      # "text-embedding-3-small"
 EMBEDDING_DIMS = settings.EMBEDDING_DIMS       # 1536
+_MEMORY_CACHE_MAX = 256
+_memory_cache: OrderedDict[str, list[float]] = OrderedDict()
+_openai_client: Any | None = None
+_redis_client: Any | None = None
+
+
+def _get_openai_client() -> Any:
+    global _openai_client
+    if _openai_client is None:
+        from openai import AsyncOpenAI
+        _openai_client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+    return _openai_client
+
+
+def _get_redis_client() -> Any | None:
+    global _redis_client
+    if not settings.REDIS_URL:
+        return None
+    if _redis_client is None:
+        from redis.asyncio import Redis
+        _redis_client = Redis.from_url(
+            settings.REDIS_URL,
+            socket_connect_timeout=0.15,
+            socket_timeout=0.15,
+            decode_responses=True,
+        )
+    return _redis_client
+
+
+async def close_clients() -> None:
+    global _openai_client, _redis_client
+    if _openai_client is not None:
+        await _openai_client.close()
+        _openai_client = None
+    if _redis_client is not None:
+        await _redis_client.aclose()
+        _redis_client = None
 
 
 def _is_available() -> bool:
@@ -29,10 +71,28 @@ async def embed(text: str) -> list[float] | None:
     if not _is_available():
         logger.info("embedder | skip reason=no_openai_api_key")
         return None
+    cache = None
+    cache_key = (
+        f"search:embedding:{MODEL_NAME}:"
+        f"{hashlib.sha256(' '.join(text.casefold().split()).encode('utf-8')).hexdigest()}"
+    )
+    memory_value = _memory_cache.get(cache_key)
+    if memory_value is not None:
+        _memory_cache.move_to_end(cache_key)
+        return memory_value
+    if settings.REDIS_URL:
+        try:
+            cache = _get_redis_client()
+            cached = await cache.get(cache_key)
+            if cached:
+                vector = json.loads(cached)
+                if len(vector) == EMBEDDING_DIMS:
+                    _remember(cache_key, vector)
+                    return vector
+        except Exception:
+            cache = None
     try:
-        from openai import AsyncOpenAI
-
-        client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+        client = _get_openai_client()
         resp = await client.embeddings.create(
             model=MODEL_NAME,
             input=[text],
@@ -41,10 +101,27 @@ async def embed(text: str) -> list[float] | None:
         vector = resp.data[0].embedding
         if len(vector) != EMBEDDING_DIMS:
             raise ValueError(f"Embedding dimension mismatch: expected {EMBEDDING_DIMS}, got {len(vector)}")
+        _remember(cache_key, vector)
+        if cache is not None:
+            try:
+                await cache.setex(
+                    cache_key,
+                    settings.PRODUCT_SEARCH_QUERY_CACHE_TTL_SECONDS,
+                    json.dumps(vector, separators=(",", ":")),
+                )
+            except Exception:
+                pass
         return vector
     except Exception as exc:
         logger.warning(f"embedder | embed_error={exc!r}")
         return None
+
+
+def _remember(key: str, vector: list[float]) -> None:
+    _memory_cache[key] = vector
+    _memory_cache.move_to_end(key)
+    while len(_memory_cache) > _MEMORY_CACHE_MAX:
+        _memory_cache.popitem(last=False)
 
 
 async def embed_batch(texts: list[str]) -> list[list[float]] | None:
@@ -55,9 +132,7 @@ async def embed_batch(texts: list[str]) -> list[list[float]] | None:
         logger.info("embedder | skip reason=no_openai_api_key")
         return None
     try:
-        from openai import AsyncOpenAI
-
-        client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+        client = _get_openai_client()
         resp = await client.embeddings.create(
             model=MODEL_NAME,
             input=texts,

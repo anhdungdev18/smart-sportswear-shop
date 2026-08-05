@@ -20,7 +20,10 @@ async def vector_search(
     price_min: float | None = None,
     price_max: float | None = None,
     brand: str | None = None,
-    color: str | None = None,
+    category: str | None = None,
+    color_family: str | None = None,
+    surface: str | None = None,
+    size: str | None = None,
 ) -> list[dict]:
     """
     Similarity search against product_embeddings using pgvector.
@@ -41,13 +44,18 @@ async def vector_search(
 
     embedding_str = f"[{','.join(str(v) for v in embedding)}]"
 
-    conditions: list[str] = ["p.status = 'ACTIVE'", "c.status = 'ACTIVE'"]
+    conditions: list[str] = [
+        "p.status = 'ACTIVE'",
+        "c.status = 'ACTIVE'",
+        "pv.status = 'ACTIVE'",
+        "(pv.stock_quantity - pv.reserved_quantity) > 0",
+    ]
     params: list = [embedding_str, limit]
     idx = 3
 
     if product_type:
         params.append(product_type)
-        conditions.append(f"p.product_type = ${idx}")
+        conditions.append(f"(p.product_type = ${idx} OR p.product_type IS NULL)")
         idx += 1
 
     if gender and gender in ("MEN", "WOMEN"):
@@ -84,9 +92,37 @@ async def vector_search(
         conditions.append(f"b.name = ${idx}")
         idx += 1
 
-    if color:
-        params.append(f"%{color}%")
-        conditions.append(f"pv.color ILIKE ${idx}")
+    if category:
+        params.append(category)
+        conditions.append(f"c.name = ${idx}")
+        idx += 1
+
+    if color_family:
+        params.append(color_family)
+        conditions.append(f"pv.color_family = ${idx}")
+        idx += 1
+
+    if size:
+        params.append(size)
+        conditions.append(f"upper(pv.size) = upper(${idx})")
+        idx += 1
+
+    if surface:
+        params.append(surface)
+        conditions.append(
+            f"(upper(coalesce(p.attributes->>'surface','')) = upper(${idx}) "
+            f"OR p.name ILIKE ANY(case ${idx} "
+            f"when 'TF' then array['%cỏ nhân tạo%','%co nhan tao%','%turf%'] "
+            f"when 'AG' then array['% ag%','%ag %'] "
+            f"when 'FG' then array['%cỏ tự nhiên%','%cỏ thật%','%co that%','% fg%'] "
+            f"when 'IC' then array['%futsal%','%trong nhà%'] else array['%' || ${idx} || '%'] end) "
+            f"OR c.name ILIKE ANY(case ${idx} "
+            f"when 'TF' then array['%cỏ nhân tạo%','%co nhan tao%','%turf%'] "
+            f"when 'AG' then array['% ag%','%ag %'] "
+            f"when 'FG' then array['%cỏ tự nhiên%','%cỏ thật%','%co that%','% fg%'] "
+            f"when 'IC' then array['%futsal%','%trong nhà%'] else array['%' || ${idx} || '%'] end) "
+            f"OR upper(pv.sku) LIKE '%' || upper(${idx}) || '%')"
+        )
         idx += 1
 
     where_clause = " AND ".join(conditions)
@@ -116,6 +152,12 @@ async def vector_search(
                           AND (pv.stock_quantity - pv.reserved_quantity) > 0),
                 ARRAY[]::varchar[]
             )                                   AS available_sizes,
+            COALESCE(
+                array_agg(DISTINCT pv.sku)
+                FILTER (WHERE pv.status = 'ACTIVE'
+                          AND (pv.stock_quantity - pv.reserved_quantity) > 0),
+                ARRAY[]::varchar[]
+            )                                   AS available_skus,
             COALESCE(
                 SUM(GREATEST(pv.stock_quantity - pv.reserved_quantity, 0)),
                 0

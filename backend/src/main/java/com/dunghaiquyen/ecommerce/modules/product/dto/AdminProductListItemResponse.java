@@ -14,5 +14,7 @@ public record AdminProductListItemResponse(
         CatalogRefResponse category,
         String thumbnail,
         BigDecimal minPrice,
-        BigDecimal maxPrice) {
+        BigDecimal maxPrice,
+        String representativeSku,
+        int availableQuantity) {
 }

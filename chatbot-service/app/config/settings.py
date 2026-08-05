@@ -5,6 +5,7 @@ class Settings(BaseSettings):
     CHATBOT_ENV: str = "development"
     CHATBOT_HOST: str = "0.0.0.0"
     CHATBOT_PORT: int = 8002
+    CHATBOT_RELOAD: bool = False
 
     MODEL_PROVIDER: str = "anthropic"
     MODEL_NAME: str = "claude-sonnet-4-6"
@@ -26,6 +27,26 @@ class Settings(BaseSettings):
     # Vector search — OpenAI embeddings (independent of MODEL_PROVIDER)
     EMBEDDING_MODEL: str = "text-embedding-3-small"
     EMBEDDING_DIMS: int = 1536
+    PRODUCT_SEARCH_INTERNAL_TOKEN: str = ""
+    PRODUCT_SEARCH_SEMANTIC_ENABLED: bool = True
+    PRODUCT_SEARCH_LLM_REWRITE_ENABLED: bool = False
+    PRODUCT_SEARCH_RRF_K: int = 60
+    PRODUCT_SEARCH_KEYWORD_WEIGHT: float = 1.2
+    PRODUCT_SEARCH_SEMANTIC_WEIGHT: float = 1.0
+    PRODUCT_SEARCH_MIN_SIMILARITY: float = 0.0
+    PRODUCT_SEARCH_QUERY_CACHE_TTL_SECONDS: int = 604800
+    PRODUCT_SEARCH_CANDIDATE_CACHE_TTL_SECONDS: int = 180
+    PRODUCT_SEARCH_INDEXING_ENABLED: bool = False
+    RABBITMQ_URL: str = "amqp://visual_search:change-me@localhost:5672/"
+    PRODUCT_SEARCH_INDEXING_QUEUE: str = "product-search.indexing"
+    PRODUCT_SEARCH_INDEXING_RETRY_QUEUES: str = (
+        "product-search.indexing.retry.30s,product-search.indexing.retry.5m,"
+        "product-search.indexing.retry.1h"
+    )
+    PRODUCT_SEARCH_INDEXING_DLQ: str = "product-search.indexing.dlq"
+    PRODUCT_SEARCH_INDEXING_PREFETCH: int = 5
+    PRODUCT_SEARCH_RECONCILIATION_INTERVAL_SECONDS: int = 3600
+    PRODUCT_SEARCH_RECONCILIATION_BATCH_SIZE: int = 100
 
     model_config = SettingsConfigDict(
         env_file=".env",

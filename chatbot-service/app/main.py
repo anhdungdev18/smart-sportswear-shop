@@ -55,7 +55,9 @@ async def lifespan(app: FastAPI):
     yield
 
     from app.graph.nodes.save_result import drain_pending_saves
+    from app.services.embedder import close_clients
     await drain_pending_saves()
+    await close_clients()
     await db_pool.close_pool()
     logger.info("chatbot-service shutting down")
 

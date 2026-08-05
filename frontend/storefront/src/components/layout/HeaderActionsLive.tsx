@@ -34,59 +34,66 @@ export function HeaderActionsLive() {
   const [wishlistCount, setWishlistCount] = useState(0);
 
   const refresh = useCallback(async () => {
-    try {
-      const cart = await getCart();
-      setCartCount(cart.items.reduce((sum, item) => sum + item.quantity, 0));
-    } catch {
+    if (!getAccessToken()) {
+      try {
+        const cart = await getCart();
+        setCartCount(cart.items.reduce((sum, item) => sum + item.quantity, 0));
+      } catch {
+        setCartCount(0);
+      }
+      setIsAuthenticated(false);
+      setWishlistCount(0);
+      return;
+    }
+
+    const [cartResult, meResult, wishlistResult] = await Promise.allSettled([
+      getCart(),
+      getMe(),
+      getWishlist(),
+    ]);
+
+    if (cartResult.status === "fulfilled") {
+      setCartCount(cartResult.value.items.reduce((sum, item) => sum + item.quantity, 0));
+    } else {
       setCartCount(0);
     }
 
-    if (!getAccessToken()) {
-      setIsAuthenticated(false);
-      setWishlistCount(0);
-      return;
-    }
-
-    try {
-      await getMe();
+    if (meResult.status === "fulfilled") {
       setIsAuthenticated(true);
-    } catch {
+    } else {
       setIsAuthenticated(false);
       setWishlistCount(0);
       clearSession();
       return;
     }
 
-    try {
-      const wishlist = await getWishlist();
-      setWishlistCount(wishlist.items.length);
-    } catch {
-      setWishlistCount(0);
-    }
+    setWishlistCount(wishlistResult.status === "fulfilled" ? wishlistResult.value.items.length : 0);
   }, []);
 
   useEffect(() => {
-    void refresh();
+    const initialRefresh = window.setTimeout(() => {
+      void refresh();
+    }, 0);
     const unsubscribe = onSessionChange(() => {
       void refresh();
     });
-    return unsubscribe;
+    return () => {
+      window.clearTimeout(initialRefresh);
+      unsubscribe();
+    };
   }, [refresh]);
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
     const refreshToken = getRefreshToken();
-    try {
-      if (refreshToken) {
-        await logout(refreshToken);
-      }
-    } catch {
-      // Best effort only.
-    } finally {
-      clearSession();
-      setIsAuthenticated(false);
-      setWishlistCount(0);
-      void refresh();
-    }
+    // Start revocation while the access token is still available, but update
+    // the interface immediately instead of awaiting the network round-trip.
+    const revocation = refreshToken ? logout(refreshToken) : Promise.resolve();
+    clearSession();
+    setIsAuthenticated(false);
+    setWishlistCount(0);
+    void revocation.catch(() => {
+      // Best effort only; the local session is already cleared.
+    });
   };
 
   return (
@@ -139,7 +146,7 @@ export function HeaderActionsLive() {
       </Link>
 
       {isAuthenticated ? (
-        <button type="button" onClick={() => void handleLogout()} className="hidden text-[12px] font-medium uppercase tracking-[0.08em] text-ivy-text lg:block">
+        <button type="button" onClick={handleLogout} className="hidden text-[12px] font-medium uppercase tracking-[0.08em] text-ivy-text lg:block">
           Đăng xuất
         </button>
       ) : null}

@@ -28,10 +28,15 @@ export function CategoryToolbar({
   currentSort?: string;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [isPending, setIsPending] = useState(false);
+  const [pendingUrl, setPendingUrl] = useState<string | null>(null);
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const currentQuery = searchParams.toString();
+  const currentUrl = currentQuery ? `${pathname}?${currentQuery}` : pathname;
+  // The toolbar survives query-string navigations. Deriving pending from the
+  // destination URL lets it finish as soon as the router reaches that URL.
+  const isPending = pendingUrl !== null && pendingUrl !== currentUrl;
 
   const selectedSort = useMemo(
     () => SORT_OPTIONS.find((option) => option.value === currentSort)?.label ?? SORT_OPTIONS[0].label,
@@ -50,11 +55,16 @@ export function CategoryToolbar({
     }
 
     const query = params.toString();
-    setIsPending(true);
-    startTransition(() => {
-      router.push(query ? `${pathname}?${query}` : pathname, { scroll: false });
-    });
+    const nextUrl = query ? `${pathname}?${query}` : pathname;
     setIsOpen(false);
+    if (nextUrl === currentUrl) {
+      return;
+    }
+
+    setPendingUrl(nextUrl);
+    startTransition(() => {
+      router.push(nextUrl, { scroll: false });
+    });
   }
 
   return (
