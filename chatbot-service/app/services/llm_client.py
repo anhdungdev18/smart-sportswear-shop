@@ -87,6 +87,53 @@ async def chat_complete(
     return None
 
 
+async def stream_once(
+    messages: list[dict], *, temperature: float = 0.4, max_tokens: int = 600
+):
+    """Yield answer text deltas from the provider (for SSE streaming).
+
+    No retries: streaming is best-effort. Callers accumulate the deltas and fall
+    back to a template if nothing was produced.
+    """
+    provider = provider_name()
+    if provider == "openai":
+        from openai import AsyncOpenAI
+
+        client = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
+        stream = await client.chat.completions.create(
+            model=settings.MODEL_NAME,
+            messages=messages,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            stream=True,
+        )
+        async for chunk in stream:
+            if chunk.choices:
+                delta = chunk.choices[0].delta.content
+                if delta:
+                    yield delta
+        return
+
+    if provider == "anthropic":
+        from anthropic import AsyncAnthropic
+
+        system, conversation = _anthropic_messages(messages)
+        client = AsyncAnthropic(api_key=settings.ANTHROPIC_API_KEY)
+        async with client.messages.stream(
+            model=settings.MODEL_NAME,
+            system=system,
+            messages=conversation,
+            temperature=temperature,
+            max_tokens=max_tokens,
+        ) as stream:
+            async for text in stream.text_stream:
+                if text:
+                    yield text
+        return
+
+    raise ValueError(f"Unsupported MODEL_PROVIDER: {settings.MODEL_PROVIDER}")
+
+
 async def select_tool(
     system_prompt: str,
     message: str,

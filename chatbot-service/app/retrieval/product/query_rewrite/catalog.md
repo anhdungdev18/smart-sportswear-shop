@@ -1,4 +1,4 @@
-# Catalog Dung Quyền Hải Sport Shop
+# Catalog Điểm Đến Thể Thao
 
 Đây là danh mục sản phẩm THỰC SỰ có trong cửa hàng.
 Chatbot sử dụng file này để chuyển đổi từ ngữ khách hàng sang từ ngữ trong catalog.

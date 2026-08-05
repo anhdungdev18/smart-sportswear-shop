@@ -5,6 +5,8 @@ import { Footer } from "@/components/layout/Footer";
 import { NavigationProgress } from "@/components/shared/NavigationProgress";
 import { InventoryRealtimeRefresh } from "@/components/shared/InventoryRealtimeRefresh";
 import { ScrollToTop } from "@/components/shared/ScrollToTop";
+import { ExtensionAttributeSanitizer } from "@/components/shared/ExtensionAttributeSanitizer";
+import { ChatWidget } from "@/modules/chat/ChatWidget";
 import "./globals.css";
 
 const montserrat = Montserrat({
@@ -35,6 +37,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="vi" className={`${montserrat.variable} h-full antialiased`}>
+      <head>
+        <ExtensionAttributeSanitizer />
+      </head>
       <body className="min-h-full flex flex-col">
         <NavigationProgress />
         <ScrollToTop />
@@ -42,6 +47,7 @@ export default function RootLayout({
         <Header />
         {children}
         <Footer />
+        <ChatWidget />
       </body>
     </html>
   );

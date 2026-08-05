@@ -1,85 +1,71 @@
-## Danh mục sản phẩm của cửa hàng Dung Quyền Hải Sport
+## Danh mục sản phẩm của cửa hàng Điểm Đến Thể Thao
 ### Danh mục:
-- Áo Bóng Rổ (5 sản phẩm)
-- Áo Cầu Lông & Tennis (2 sản phẩm)
-- Áo Chạy Bộ (7 sản phẩm)
-- Áo Đá Bóng (15 sản phẩm)
-- Bóng Thể Thao (4 sản phẩm)
-- Đồ Gym Nam (4 sản phẩm)
-- Đồ Gym Nữ (4 sản phẩm)
-- Football (1 sản phẩm)
-- Găng Tay Thủ Môn (3 sản phẩm)
-- Giày Bóng Rổ (6 sản phẩm)
-- Giày Chạy Bộ (10 sản phẩm)
-- Giày Đá Bóng Cỏ Nhân Tạo (TF) (7 sản phẩm)
-- Giày Đá Bóng Cỏ Thật (FG) (11 sản phẩm)
-- Giày Futsal (IC) (6 sản phẩm)
-- Phụ Kiện Đá Bóng (5 sản phẩm)
-- Quần Chạy Bộ (5 sản phẩm)
-- Quần Đá Bóng (6 sản phẩm)
-- Running (1 sản phẩm)
-- Training (1 sản phẩm)
+- Áo Chạy Bộ (32 sản phẩm)
+- Áo Đá Bóng (30 sản phẩm)
+- Giày Đá Bóng Cỏ Nhân Tạo (TF) (5 sản phẩm)
+- Giày Đá Bóng Cỏ Thật (FG) (15 sản phẩm)
+- Quần Chạy Bộ (20 sản phẩm)
 
-### Thương hiệu: Adidas, Nike, Puma, Under Armour
+### Thương hiệu: Adidas, Mizuno, Nike, Puma, Ronhill, SAYSKY
 
 ### Ví dụ sản phẩm thực tế:
-- Áo Bóng Rổ Adidas Pro Series Reversible Nam – Xanh Dương
-- Áo Bóng Rổ NBA Swingman Jersey Miami Heat – Đỏ
-- Áo Bóng Rổ Nike Dri-FIT Icon Jersey Nam – Đen/Trắng
-- Áo Bóng Rổ Puma PWRCOOL Mesh Jersey Nam – Trắng
-- Áo Cầu Lông Puma TEAMRISE Jersey – Vàng/Đen
-- Áo Chạy Bộ Adidas Own the Run Nam – Trắng
-- Áo Chạy Bộ Adidas Own the Run Nữ – Đen
-- Ao Chay Bo Dry-Fit
-- Áo Chạy Bộ Nike Dri-FIT Miler Nữ – Hồng Pastel
-- Áo Chạy Bộ Nike Dri-FIT Miler Short-Sleeve Nam – Đen
-- Áo Chạy Bộ Nike Dri-FIT Run Division Reflect Nam – Xanh Dương
-- Áo Chạy Bộ Puma Run Cloudspun Crewneck Nam – Navy
-- Áo Chạy Bộ Under Armour Streaker 2.0 Nam – Xám Nhạt
-- Áo Compression Under Armour HeatGear Armour Fitted Nam – Xám
-- Áo Đấu CLB AC Milan 2024/25 Sân Nhà – Puma
-- Áo Đấu CLB Arsenal 2024/25 Sân Nhà – Adidas AEROREADY
-- Áo Đấu CLB Barcelona 2024/25 Sân Nhà – Nike Dri-FIT ADV
-- Áo Đấu CLB Bayern Munich 2024/25 Sân Nhà – Adidas
-- Áo Đấu CLB Chelsea 2024/25 Sân Nhà – Nike Dri-FIT Stadium
-- Áo Đấu CLB Liverpool 2024/25 Sân Nhà – Nike Dri-FIT
-- Áo Đấu CLB Manchester City 2024/25 Sân Nhà – Puma
-- Áo Đấu CLB Manchester United 2024/25 Sân Nhà – Adidas
-- Áo Đấu CLB PSG 2024/25 Sân Nhà – Nike Dri-FIT ADV
-- Áo Đấu CLB Real Madrid 2024/25 Sân Nhà – Adidas Heat.RDY
-- Áo Đấu ĐTQG Brazil 2024 Sân Nhà – Nike Dri-FIT ADV
-- Áo Đấu ĐTQG Pháp Euro 2024 Sân Nhà – Nike Dri-FIT
-- Áo Gym Nike Dri-FIT Fitness T-Shirt Nam – Đen
-- Áo Tập Luyện Adidas Tiro 23 League – Navy/Trắng
-- Áo Tập Luyện Nike Dri-FIT Academy 23 – Đen/Trắng
-- Áo Tennis Adidas FreeLift Match Henley Nam – Đen
-- Áo Thi Đấu Futsal Nike Tiempo Premier II – Trắng/Đen
-- Bảo Vệ Ống Đồng Adidas Tiro League Shin Guards – Đen
-- Bảo Vệ Ống Đồng Nike Charge Shin Guards – Trắng
-- Bóng Đá Adidas Tiro Match – Trắng/Đen
-- Bóng Đá Adidas UCL Pro 2024/25 – Trắng/Vàng Kim
-- Bóng Đá Nike Premier League Flight 2024/25 – Trắng/Đỏ/Xanh
-- Bóng Đá Puma Orbita LaLiga 1 2024/25 – Trắng/Cam
-- Găng Tay Thủ Môn Adidas Predator Match Fingersave – Đỏ/Đen
-- Găng Tay Thủ Môn Nike Goalkeeper Match – Xanh Dương/Cam
-- Găng Tay Thủ Môn Puma Future Match – Xanh Lá/Đen
-- Giày Bóng Rổ Adidas AE 1 Anthony Edwards – Xanh/Trắng
-- Giày Bóng Rổ Adidas Trae Young 3 – Đỏ/Đen
-- Giày Bóng Rổ Nike Air Jordan 38 PF – Đen/Đỏ Gym
-- Giày Bóng Rổ Nike KD17 NRG – Xanh Đại Dương
-- Giày Bóng Rổ Nike LeBron XXI Low – Trắng/Vàng Metallic
-- Giày Bóng Rổ Puma MB.03 LaMelo Ball – Tím/Đen
-- Giày Chạy Bộ Adidas Adizero Boston 12 – Xanh Lá/Đen
-- Giày Chạy Bộ Adidas Response CL Retro – Đen/Trắng
-- Giày Chạy Bộ Adidas Solarboost 5 – Xanh Navy/Trắng
-- Giày Chạy Bộ Adidas Ultraboost 23 – Trắng/Đen Core
-- Giày Chạy Bộ Nike Air Zoom Pegasus 41 – Đen/Trắng
-- Giày Chạy Bộ Nike Air Zoom Winflo 10 – Đỏ/Đen
-- Giày Chạy Bộ Nike React Infinity Run 4 – Xanh Dương/Trắng
-- Giày Chạy Bộ Nike ZoomX Vaporfly Next% 3 – Hồng/Trắng
-- Giày Chạy Bộ Puma Velocity Nitro 3 – Vàng Neon/Đen
-- Giày Chạy Bộ Under Armour HOVR Sonic 6 – Cam/Đen
-- Giày Đá Bóng Adidas Copa Mundial FG Classic – Đen/Trắng
-- Giày Đá Bóng Adidas Copa Pure.1 FG – Trắng Cloud/Lõi Đen
-- Giày Đá Bóng Adidas Copa Pure.4 TF – Navy/Trắng
-- Giày Đá Bóng Adidas Predator Accuracy.1 Low FG – Đen/Trắng
+- Adidas Arsenal Home Jersey 26/27
+- Adidas Italy Away Jersey 2026
+- Adidas Juventus 3rd Jersey 25/26
+- Adidas Juventus Icon Jersey 2025
+- Adidas Liverpool FC Away Jersey 25/26
+- Adidas Liverpool FC Home Jersey 25/26
+- Adidas Manchester United FC Icon Jersey 25/26
+- Adidas Men's Argentina 26 Home Authentic Jersey
+- Adidas Men's Argentina 26 Home Jersey
+- Adidas Men's Colombia 26 Home Authentic Jersey
+- Adidas Men's Colombia 26 Home Jersey
+- Adidas Men's Germany 26 Home Long Sleeve Jersey
+- Adidas Men's Germany Away Jersey 1994
+- Adidas Men's Germany Away Jersey 2014
+- Adidas Men's Japan 26 Away Jersey
+- Adidas Men's Mexico 26 Home Authentic Jersey
+- Adidas Men's Mexico 26 Home Jersey
+- Adidas Men's Spain 26 Home Authentic Jersey
+- Adidas Men's Spain 26 Home Jersey
+- Adidas Predator Elite FG
+- Adidas Predator Elite Laceless FG
+- Adidas Real Madrid Away Jersey 25/26
+- Adidas Real Madrid Icon Jersey
+- Flower Combat Singlet
+- Flower Combat T-Shirt
+- Flower Flow Air Singlet
+- France 2026 Stadium Away Men's Nike Dri-FIT Soccer Replica Jersey
+- High Five Pace T-Shirt
+- Men's Core 5" Short
+- Men's Core 5" Twin Short
+- Men's Core L/S Tee
+- Men's Core Racer Short
+- Men's Core S/S Tee
+- Men's Core Stretch Short
+- Men's Core Vest
+- Men's Tech 5" Short
+- Men's Tech 5" Twin Short
+- Men's Tech 7" Twin Short
+- Men's Tech All-Terrain 5" Short
+- Men's Tech All-Terrain S/S Tee
+- Men's Tech Golden Hour Tank
+- Men's Tech Golden Hour Tee
+- Men's Tech Race 5" Short
+- Men's Tech Race S/S Tee
+- Men's Tech Race Short
+- Men's Tech Race Twin Short
+- Men's Tech Race Vest
+- Men's Tech Reflect L/S Tee
+- Men's Tech Reflect S/S Tee
+- Men's Tech S/S Tee
+- Mizuno Morelia Neo IV Beta Elite
+- Mizuno Morelia Neo IV Pro FG
+- Mizuno Morelia Neo V Beta Japan FG
+- Mizuno Morelia Neo V Japan FG
+- Morelia Neo IV (MIJ)
+- Morelia Neo IV Pro AS
+- Nike Brazil Away Jersey 2026
+- Nike Brazil Home Jersey 2026
+- Nike Chelsea Away Jersey 25/26
+- Nike Chelsea Home Jersey 26/27

@@ -66,8 +66,12 @@ def _build_where(f: ProductFilter) -> tuple[str, list]:
     idx = 1  # asyncpg positional param index
 
     if f.product_type:
+        # NULL product_type means "untyped" in this catalog (half the products,
+        # incl. all footwear, have no product_type set). Excluding them would
+        # zero out any query that infers a type from words like "áo"/"giày",
+        # so treat NULL as a match rather than a mismatch.
         params.append(f.product_type)
-        conditions.append(f"p.product_type = ${idx}")
+        conditions.append(f"(p.product_type = ${idx} OR p.product_type IS NULL)")
         idx += 1
 
     if f.gender:
@@ -110,17 +114,34 @@ def _build_where(f: ProductFilter) -> tuple[str, list]:
         idx += 1
 
     # Gender/sport words handled by structural filters; search verbs never appear in product names.
+    # The tool often passes a whole user sentence as the query ("shop có áo Real Madrid
+    # không?"), so filler/question words must be dropped or one non-name word ("không")
+    # AND-fails the whole keyword branch.
     _KW_STOP = frozenset([
         # gender
         "nam", "nữ", "men", "women", "male", "female", "unisex",
         # Vietnamese search/buy verbs that users prefix to queries
         "tìm", "mua", "cần", "muốn", "có", "bán", "xem", "cho", "shop",
         "tìm kiếm", "mua sắm",
+        # question / filler / connective words common in full-sentence queries
+        "không", "nào", "gì", "vậy", "thế", "ạ", "à", "hả", "nhé", "nha", "ơi",
+        "cửa", "hàng", "sản", "phẩm", "loại", "kiểu", "mẫu", "cái", "chiếc", "đôi",
+        "của", "và", "hay", "hoặc", "với", "mình", "bạn", "em", "anh", "chị",
+        "này", "đó", "kia", "ấy", "được", "còn", "về", "giúp", "ạ", "cho",
+        # request / consult verbs and price fillers
+        "tư", "vấn", "gợi", "giới", "thiệu", "tham", "khảo", "hỏi", "coi", "kiếm",
+        "giá", "bao", "nhiêu", "đang", "hiện", "shop",
+        # descriptor adjectives / quantifiers that never appear in product names
+        "đấu", "đẹp", "xịn", "chất", "ngon", "hot", "đỉnh", "nhất", "tốt",
+        "phù", "hợp", "vài", "mấy", "một", "chút", "ít", "nào", "đó",
     ])
 
     # Keyword search: each word must appear in at least one text field (AND across words)
     if f.keyword:
-        words = [w for w in f.keyword.split() if len(w) > 1 and w not in _KW_STOP]
+        words = [
+            w.strip("?!.,;:\"'()[]…") for w in f.keyword.split()
+        ]
+        words = [w for w in words if len(w) > 1 and w not in _KW_STOP]
         word_clauses: list[str] = []
         for w in words:
             kw = f"%{w}%"

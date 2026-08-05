@@ -12,6 +12,7 @@ from app.retrieval.product.fusion import rrf_fusion
 from app.retrieval.product.rerank import heuristic_reranker
 from app.retrieval.product.query_rewrite import synonym_rewriter
 from app.retrieval.product.query_rewrite import llm_rewriter
+from app.retrieval.product.query_rewrite.ambiguity_detector import needs_pre_retrieval_rewrite
 from app.schemas.product import ProductSearchResult, AppliedFilters
 from app.observability.trace_logger import get_logger
 
@@ -35,7 +36,32 @@ async def search(
     """
     logger.info(f"product_search | query={query!r}")
 
-    result = await _pipeline(query, limit, _coerce_parsed(query, parsed_query))
+    parsed = _coerce_parsed(query, parsed_query)
+    pre_rewrite_attempted = False
+
+    # Need/occasion queries contain useful human context but poor catalog terms.
+    # Rewrite them before retrieval instead of waiting for a predictable miss.
+    if needs_pre_retrieval_rewrite(query, parsed):
+        pre_rewrite_attempted = True
+        rewritten_need = await llm_rewriter.rewrite_ambiguous_need(query)
+        if rewritten_need.strip().casefold() != query.strip().casefold():
+            logger.info(f"product_search | ambiguous_pre_rewrite rewritten={rewritten_need!r}")
+            rewritten_result = await _pipeline(rewritten_need, limit)
+            if rewritten_result.total > 0:
+                return rewritten_result
+
+    # The original query remains the source-of-truth fallback whenever LLM
+    # inference fails or the inferred catalog query has no matching inventory.
+    result = await _pipeline(query, limit, parsed)
+
+    # Colour-drop retry: catalogue colours are often English/descriptive
+    # ("Sân khách", "Red Color", "Icon"), so a Vietnamese colour filter such as
+    # "đỏ" can zero out otherwise-valid results. Retry once without it.
+    if result.total == 0 and parsed.color:
+        import dataclasses
+        result = await _pipeline(query, limit, dataclasses.replace(parsed, color=None))
+        if result.total > 0:
+            logger.info(f"product_search | colour_drop_retry_succeeded total={result.total}")
 
     # Step 2: rule-based synonym rewrite
     if result.total == 0:
@@ -47,7 +73,7 @@ async def search(
                 logger.info(f"product_search | synonym_rewrite_succeeded total={result.total}")
 
     # Step 3: LLM catalog rewrite — only when both step 1 and 2 produced nothing
-    if result.total == 0:
+    if result.total == 0 and not pre_rewrite_attempted:
         rewritten_llm = await llm_rewriter.rewrite(query)
         if rewritten_llm.strip().lower() != query.strip().lower():
             logger.info(f"product_search | llm_retry rewritten={rewritten_llm!r}")

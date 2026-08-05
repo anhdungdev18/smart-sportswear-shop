@@ -29,7 +29,8 @@ _INTENT_RULES: list[tuple[str, list[str]]] = [
         "size nào còn", "màu nào còn", "hết hàng chưa",
     ]),
     ("ADD_TO_CART", [
-        "thêm vào giỏ", "giỏ hàng", "thêm giỏ", "cho vào giỏ",
+        "thêm vào giỏ", "giỏ hàng", "thêm giỏ", "cho vào giỏ", "vào giỏ",
+        "bỏ vào giỏ", "đặt mua", "chốt đơn",
     ]),
     ("ORDER_STATUS", [
         "đơn hàng", "mã đơn", "trạng thái đơn", "tra cứu", "đơn của tôi",
@@ -49,11 +50,16 @@ _INTENT_RULES: list[tuple[str, list[str]]] = [
     ("KNOWLEDGE_QA", [
         "chính sách", "đổi trả", "giao hàng", "ship", "size", "bảo quản",
         "faq", "hướng dẫn", "quy định", "điều khoản", "bao lâu", "phí ship",
+        "bảo hành", "thanh toán", "trả góp", "cod", "vnpay", "chuyển khoản",
+        "hoàn tiền", "hóa đơn", "vận chuyển",
     ]),
     ("PRODUCT_SEARCH", [
         "tìm", "cần", "muốn mua", "mua", "giày", "áo", "quần", "phụ kiện",
         "sản phẩm", "shop có", "bán không", "có không", "có bán", "mẫu nào",
         "giá bao nhiêu", "bao nhiêu tiền", "rẻ", "đồ tập", "bộ thể thao",
+        "có hàng", "còn hàng", "tất", "vớ", "balo", "mũ", "băng",
+        # brands — a bare brand name is a product query ("có hàng Puma không")
+        "nike", "adidas", "puma", "mizuno", "joma", "hummel", "under armour",
     ]),
 ]
 

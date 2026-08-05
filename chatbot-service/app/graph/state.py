@@ -26,6 +26,7 @@ class AgentState(TypedDict):
     execution_blocked: bool
     # --- Session context (Phase 6) ---
     session_context: dict       # short-term memory: last shown products, selected product, variant hints
+    is_new_session: bool        # True on the very first message of a freshly-minted session → skip DB history load
     # --- Confirmation flow (Phase 9) ---
     pending_action_display: str  # human-readable label set by policy_guard when confirmation_required
     # --- Conversation history (Phase 10) ---

@@ -40,6 +40,7 @@ ai-website-cloner-template/
 **/target/
 **/__pycache__/
 **/.pytest_cache/
+**/.venv/
 *.py[cod]
 chatbot-admin-service/data/
 # Database backups

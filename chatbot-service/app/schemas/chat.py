@@ -12,6 +12,7 @@ class ChatRequest(BaseModel):
     accessToken: str | None = Field(default=None, max_length=4096)
     message: str = Field(min_length=1, max_length=4000)
     channel: str = Field(default="web", min_length=1, max_length=32)
+    isNewSession: bool = False  # first message of a freshly-created client session → skip DB history restore
 
 
 class ToolCallRecord(BaseModel):

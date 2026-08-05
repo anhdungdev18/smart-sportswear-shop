@@ -43,6 +43,17 @@ _SKIP_INTENTS = frozenset({"REJECT_ACTION", "EXPIRED_CONFIRMATION"})
 # Amounts >= this are treated as money (prices); smaller numbers are counts/sizes.
 _MONEY_MIN = 1000
 
+_FALSE_NO_RESULT_PHRASES = (
+    "không tìm thấy",
+    "chưa tìm thấy",
+    "không tìm được",
+    "chưa tìm được",
+    "không có sản phẩm",
+    "chưa có sản phẩm",
+    "không có thông tin",
+    "chưa có thông tin",
+)
+
 # "3.500.000đ" / "650,000 đ" → capture the digit run immediately before đ
 _PRICE_RE = re.compile(r"([\d][\d.,]*)\s*đ", re.IGNORECASE)
 
@@ -103,6 +114,18 @@ async def validate_answer_node(state: AgentState) -> dict:
     result = state.get("tool_result") or {}
     if not result:
         return {}
+
+    # Product cards and prose must never contradict one another. If retrieval
+    # returned products but the model claims otherwise, use grounded output.
+    if intent in {"PRODUCT_SEARCH", "RECOMMEND_PRODUCTS", "SKU_LOOKUP"}:
+        items = result.get("items") or []
+        normalized_answer = answer.casefold()
+        if items and any(phrase in normalized_answer for phrase in _FALSE_NO_RESULT_PHRASES):
+            safe = _template_reply(intent, result)
+            logger.warning(
+                f"[{state['session_id']}] validate_answer | false_no_result -> template fallback intent={intent}"
+            )
+            return {"reply": safe}
 
     # Include amounts from any parallel secondary tool results (compound queries)
     valid = _collect_amounts(result)

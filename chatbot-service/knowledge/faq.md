@@ -33,3 +33,9 @@ Shop xác nhận đơn hàng trong vòng **1-2 giờ** trong giờ làm việc (
 
 ## Có hỗ trợ tư vấn sản phẩm không
 Có, đội ngũ tư vấn của shop hỗ trợ qua chat trực tiếp, hotline và chatbot 24/7 để giúp bạn chọn sản phẩm phù hợp.
+
+## Sản phẩm có bảo hành không
+Tất cả sản phẩm tại Điểm Đến Thể Thao đều là **hàng chính hãng 100%**, đúng mô tả và chất lượng. Shop không áp dụng bảo hành dài hạn như đồ điện tử, nhưng cam kết:
+- **Đổi hoặc trả trong 7 ngày** nếu sản phẩm bị lỗi từ nhà sản xuất (đường may, keo, phụ kiện...).
+- Hỗ trợ đổi size trong 7 ngày nếu sản phẩm chưa qua sử dụng, còn nguyên tem nhãn.
+- Với lỗi kỹ thuật phát sinh sau thời gian đổi trả, shop hỗ trợ liên hệ hãng theo chính sách của từng thương hiệu.

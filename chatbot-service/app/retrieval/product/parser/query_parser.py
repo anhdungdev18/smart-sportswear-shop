@@ -91,8 +91,9 @@ _PRICE_UNIT_RE = re.compile(
 )
 
 _PRICE_RANGE_RE = re.compile(
-    r"(từ|khoảng)\s+(?P<lo>[\d,.]+\s*(?:triệu|tr\b|nghìn|ngàn|k\b))"
-    r"\s+(đến|tới|-)\s+(?P<hi>[\d,.]+\s*(?:triệu|tr\b|nghìn|ngàn|k\b))",
+    # "từ 6 đến 8 triệu" — the low number may omit the unit and borrow it from the high one.
+    r"(từ|khoảng)\s+(?P<lo>[\d,.]+\s*(?:triệu|tr\b|nghìn|ngàn|k\b)?)"
+    r"\s*(đến|tới|-)\s+(?P<hi>[\d,.]+\s*(?:triệu|tr\b|nghìn|ngàn|k\b))",
     re.IGNORECASE | re.UNICODE,
 )
 
@@ -172,22 +173,40 @@ def parse_query(query: str) -> ParsedQuery:
 
     # Brand/color become hard filters → strip them (and "màu") from the keyword AND-split
     # so a non-name word like "đỏ"/"nike" can't zero out the keyword branch.
+    # Category words ("áo"/"giày"/"đá bóng") are deliberately KEPT in the keyword: they
+    # match the Vietnamese category names ("Áo Đá Bóng" vs "Giày Đá Bóng") and are what
+    # discriminates a jersey query from a footwear query in this catalog.
     keyword = _strip_terms(normalized, [brand_term, color_term, "màu", "màu sắc"])
 
     price_min: float | None = None
     price_max: float | None = None
+    price_spans: list[str] = []
 
     range_m = _PRICE_RANGE_RE.search(normalized)
     if range_m:
-        price_min = _parse_price_value(range_m.group("lo"))
-        price_max = _parse_price_value(range_m.group("hi"))
+        lo_txt, hi_txt = range_m.group("lo"), range_m.group("hi")
+        # "từ 6 đến 8 triệu": lo omits the unit → borrow it from hi.
+        if not _PRICE_UNIT_RE.search(lo_txt):
+            unit_m = _PRICE_UNIT_RE.search(hi_txt)
+            if unit_m:
+                lo_txt = f"{lo_txt.strip()} {unit_m.group('unit')}"
+        price_min = _parse_price_value(lo_txt)
+        price_max = _parse_price_value(hi_txt)
+        price_spans.append(range_m.group(0))
     else:
         max_m = _PRICE_MAX_RE.search(normalized)
         if max_m:
             price_max = _parse_price_value(max_m.group("val"))
+            price_spans.append(max_m.group(0))
         min_m = _PRICE_MIN_RE.search(normalized)
         if min_m:
             price_min = _parse_price_value(min_m.group("val"))
+            price_spans.append(min_m.group(0))
+
+    # Strip the matched price phrases from the keyword so filler words like
+    # "dưới"/"triệu"/"đến" don't AND-fail the keyword branch — price is a numeric filter.
+    if price_spans:
+        keyword = _strip_terms(keyword, price_spans)
 
     return ParsedQuery(
         raw=query,

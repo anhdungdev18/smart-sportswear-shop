@@ -23,10 +23,13 @@ def apply_guards(items: list[dict], f: ProductFilter) -> list[dict]:
     if len(result) < before:
         logger.info(f"result_guard | stock_guard removed {before - len(result)} items")
 
-    # 2. Product type guard
+    # 2. Product type guard — keep exact matches AND untyped (NULL) products.
+    # Half this catalog (incl. all footwear) has no product_type set; a strict
+    # equality guard would drop every untyped item the SQL deliberately kept
+    # (see product_repository._build_where), zeroing out valid results.
     if f.product_type:
         before = len(result)
-        result = [i for i in result if i.get("product_type") == f.product_type]
+        result = [i for i in result if i.get("product_type") in (f.product_type, None)]
         removed = before - len(result)
         if removed:
             logger.info(f"result_guard | type_guard removed {removed} non-{f.product_type} items")

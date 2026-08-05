@@ -67,6 +67,60 @@ async def _update_normal_session(session_id: str, intent: str, result: dict) -> 
     await session_store.update_context(session_id, **ctx_update)
 
 
+async def apply_turn_session_updates(
+    storage_session_id: str,
+    intent: str,
+    state: dict,
+    session_context: dict,
+) -> str:
+    """Persist per-turn session context (pending action, product context).
+
+    Shared by the blocking /chat and the streaming /chat/stream endpoints so
+    multi-turn follow-ups ("cái đầu tiên", confirmations) work the same way.
+    Returns the pending_event string for logging.
+    """
+    result = state.get("tool_result") or {}
+    blocked = state.get("execution_blocked", False)
+    tool_name = state.get("selected_tool", "none")
+    pending_event = ""
+    try:
+        if intent in ("CONFIRM_ACTION", "REJECT_ACTION", "EXPIRED_CONFIRMATION"):
+            pending_event = "confirmed" if intent == "CONFIRM_ACTION" else (
+                "rejected" if intent == "REJECT_ACTION" else "expired"
+            )
+            log_pending_event(logger, storage_session_id, event=pending_event,
+                              tool=session_context.get("pending_action") or "")
+            await session_store.clear_pending(storage_session_id)
+            await session_store.update_context(storage_session_id, last_intent=intent)
+
+        elif blocked and state.get("requires_confirmation"):
+            pending_payload = {
+                "tool": tool_name,
+                "args": {
+                    k: v for k, v in state.get("tool_args", {}).items()
+                    if k != "access_token"
+                },
+                "display": state.get("pending_action_display") or "thao tác này",
+            }
+            pending_event = "created"
+            log_pending_event(logger, storage_session_id, event="created",
+                              tool=tool_name, display=pending_payload["display"])
+            await session_store.update_context(
+                storage_session_id,
+                last_intent=intent,
+                pending_action=tool_name,
+                pending_action_payload=pending_payload,
+                pending_action_created_at=session_store.now_iso(),
+            )
+
+        elif not blocked:
+            await _update_normal_session(storage_session_id, intent, result)
+
+    except Exception as _sess_err:
+        logger.warning(f"[{storage_session_id}] session_update failed — {_sess_err!r}")
+    return pending_event
+
+
 @router.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest) -> ChatResponse:
     t_start = time.monotonic()
@@ -102,6 +156,7 @@ async def chat(request: ChatRequest) -> ChatResponse:
         user_role=user_role,
         access_token=verified_token,
         session_context=session_context,
+        is_new_session=request.isNewSession,
     )
 
     intent      = state["intent"]
@@ -111,46 +166,9 @@ async def chat(request: ChatRequest) -> ChatResponse:
     latency_ms  = (time.monotonic() - t_start) * 1000
 
     # ── Phase 9: session update based on turn outcome ──────────────────────
-
-    pending_event = ""
-
-    try:
-        if intent in ("CONFIRM_ACTION", "REJECT_ACTION", "EXPIRED_CONFIRMATION"):
-            # Always clear pending action after the user responded (success or not)
-            pending_event = "confirmed" if intent == "CONFIRM_ACTION" else (
-                "rejected" if intent == "REJECT_ACTION" else "expired"
-            )
-            log_pending_event(logger, storage_session_id, event=pending_event,
-                              tool=session_context.get("pending_action") or "")
-            await session_store.clear_pending(storage_session_id)
-            await session_store.update_context(storage_session_id, last_intent=intent)
-
-        elif blocked and state.get("requires_confirmation"):
-            # Save pending action so the next turn can confirm or reject
-            pending_payload = {
-                "tool": tool_name,
-                "args": {
-                    k: v for k, v in state.get("tool_args", {}).items()
-                    if k != "access_token"   # never store token in session
-                },
-                "display": state.get("pending_action_display") or "thao tác này",
-            }
-            pending_event = "created"
-            log_pending_event(logger, storage_session_id, event="created",
-                              tool=tool_name, display=pending_payload["display"])
-            await session_store.update_context(
-                storage_session_id,
-                last_intent=intent,
-                pending_action=tool_name,
-                pending_action_payload=pending_payload,
-                pending_action_created_at=session_store.now_iso(),
-            )
-
-        elif not blocked:
-            await _update_normal_session(storage_session_id, intent, result)
-
-    except Exception as _sess_err:
-        logger.warning(f"[{storage_session_id}] session_update failed — {_sess_err!r}")
+    pending_event = await apply_turn_session_updates(
+        storage_session_id, intent, state, session_context
+    )
 
     # chat_history is now saved inside the graph by save_result_node
 

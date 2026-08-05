@@ -109,6 +109,7 @@ async def run_chat_graph(
     user_role: str | None = None,
     access_token: str | None = None,
     session_context: dict | None = None,
+    is_new_session: bool = False,
 ) -> AgentState:
     initial_state: AgentState = {
         "session_id":            session_id,
@@ -131,6 +132,7 @@ async def run_chat_graph(
         "requires_confirmation": False,
         "execution_blocked":     False,
         "session_context":       session_context or {},
+        "is_new_session":        is_new_session,
         "pending_action_display": "",
         "chat_history":          (session_context or {}).get("chat_history", []),
         "execution_mode":        "",

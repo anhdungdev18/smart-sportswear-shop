@@ -61,7 +61,7 @@ async def _query_catalog() -> str:
         logger.warning(f"catalog_context | DB query failed: {exc!r}")
         return ""
 
-    lines: list[str] = ["## Danh mục sản phẩm của cửa hàng Dung Quyền Hải Sport"]
+    lines: list[str] = ["## Danh mục sản phẩm của cửa hàng Điểm Đến Thể Thao"]
     if categories:
         lines.append("### Danh mục:")
         for row in categories:

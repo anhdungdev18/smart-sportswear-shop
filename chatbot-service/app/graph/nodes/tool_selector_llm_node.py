@@ -12,6 +12,15 @@ from app.observability.trace_logger import get_logger
 
 logger = get_logger(__name__)
 
+_TOOL_TO_INTENT = {
+    "search_products": "PRODUCT_SEARCH",
+    "get_product_detail": "PRODUCT_DETAIL",
+    "recommend_products": "RECOMMEND_PRODUCTS",
+    "size_advisor": "SIZE_ADVISOR",
+    "answer_knowledge": "KNOWLEDGE_QA",
+    "get_order_status": "ORDER_STATUS",
+}
+
 
 async def tool_selector_llm_node(state: AgentState) -> dict:
     from app.services.tool_selector_llm import select_tool_for_unknown
@@ -25,4 +34,9 @@ async def tool_selector_llm_node(state: AgentState) -> dict:
         f"[{state['session_id']}] tool_selector_llm_node | "
         f"tool={llm_tool} args={list(llm_args.keys())}"
     )
-    return {"selected_tool": llm_tool, "tool_args": llm_args}
+    out = {"selected_tool": llm_tool, "tool_args": llm_args}
+    resolved_intent = _TOOL_TO_INTENT.get(llm_tool)
+    if resolved_intent:
+        # Downstream formatting, validation, and memory all dispatch by intent.
+        out.update({"intent": resolved_intent, "intent_confidence": 0.90})
+    return out

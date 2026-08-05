@@ -19,6 +19,12 @@ async def load_context_node(state: AgentState) -> dict:
     if state.get("chat_history"):
         return {}
 
+    # Brand-new client session (first message after minting the id) → the DB has
+    # nothing to restore, so skip the ~2s remote round-trip entirely. Safe because
+    # a just-created session id cannot have prior turns saved anywhere.
+    if state.get("is_new_session"):
+        return {}
+
     session_id = state.get("session_id")
     if not session_id:
         return {}

@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from app.graph.state import AgentState
+from app.graph.stream_context import stream_sink
 from app.observability.trace_logger import get_logger
 from app.services import llm_client
 
@@ -363,7 +364,14 @@ async def _llm_reply(state: AgentState, intent: str, result: dict) -> str:
     if context_block:
         user_content = f"[DỮ LIỆU]\n{context_block}\n\n[CÂU HỎI]\n{state['message']}"
     else:
-        user_content = state["message"]
+        # No tool data for this turn (e.g. UNKNOWN intent). Tell the model explicitly
+        # so it greets / asks a clarifying question instead of inventing products.
+        user_content = (
+            "[DỮ LIỆU]\n(Không có dữ liệu sản phẩm hay chính sách cho câu hỏi này.)\n\n"
+            "[HƯỚNG DẪN]\nTUYỆT ĐỐI không liệt kê hay bịa tên sản phẩm, giá, tồn kho. "
+            "Hãy trả lời ngắn gọn và hỏi khách cần tìm sản phẩm gì cụ thể.\n\n"
+            f"[CÂU HỎI]\n{state['message']}"
+        )
 
     # Assemble messages: system + trimmed history + current turn
     history = (state.get("chat_history") or [])[-_MAX_HISTORY:]
@@ -373,10 +381,24 @@ async def _llm_reply(state: AgentState, intent: str, result: dict) -> str:
         {"role": "user", "content": user_content},
     ]
 
-    llm_reply = await llm_client.chat_complete(messages)
-
-    if llm_reply:
-        return llm_reply.strip()
+    # Streaming path: when a sink is set (SSE request), stream deltas into it and
+    # accumulate the full text so validate/save downstream still see a real reply.
+    sink = stream_sink.get()
+    if sink is not None:
+        parts: list[str] = []
+        try:
+            async for delta in llm_client.stream_once(messages):
+                parts.append(delta)
+                await sink.put(delta)
+        except Exception as exc:
+            logger.warning(f"[{state['session_id']}] response_generator | stream_error={exc!r}")
+        llm_reply = "".join(parts).strip()
+        if llm_reply:
+            return llm_reply
+    else:
+        llm_reply = await llm_client.chat_complete(messages)
+        if llm_reply:
+            return llm_reply.strip()
 
     # Fallback to legacy template
     logger.info(f"[{state['session_id']}] response_generator | llm_failed intent={intent} using fallback")
