@@ -6,5 +6,6 @@ public enum CollectionType {
     SPORT,
     CAMPAIGN,
     CAPSULE,
-    NEW_ARRIVAL
+    NEW_ARRIVAL,
+    BRAND
 }

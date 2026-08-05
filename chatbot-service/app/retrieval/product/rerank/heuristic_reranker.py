@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from app.retrieval.product.parser.query_parser import ParsedQuery
+from app.retrieval.product.parser.query_parser import normalize_text
 from app.observability.trace_logger import get_logger
 
 logger = get_logger(__name__)
@@ -23,10 +24,16 @@ def rerank(
 
     Designed to be swapped for a cross-encoder model in a later phase.
     """
-    query_tokens = [t for t in (parsed.keyword or "").lower().split() if len(t) > 2]
+    normalized_query = normalize_text(parsed.raw)
+    query_tokens = [t for t in normalize_text(parsed.keyword or "").split() if len(t) > 2]
 
     def _score(item: dict) -> float:
         s = item.get("_rrf_score", 0.0)
+
+        name_normalized = normalize_text(item.get("name") or "")
+        skus = [normalize_text(value) for value in item.get("available_skus") or []]
+        if normalized_query == name_normalized or normalized_query in skus:
+            s += 2.0
 
         # Sport-type exact match
         if parsed.sport_type_hint and item.get("sport_type"):
@@ -35,9 +42,9 @@ def rerank(
 
         # Keyword token overlap in product name
         if query_tokens and item.get("name"):
-            name_lower = item["name"].lower()
-            overlaps = sum(1 for t in query_tokens if t in name_lower)
+            overlaps = sum(1 for t in query_tokens if t in name_normalized)
             s += 0.10 * overlaps
+            s += 0.20 * overlaps / len(query_tokens)
 
         # Vector score bonus (cosine similarity, 0-1 range)
         vec_score = item.get("vector_score")

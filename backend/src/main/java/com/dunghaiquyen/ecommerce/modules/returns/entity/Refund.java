@@ -71,7 +71,7 @@ public class Refund extends AbstractAuditEntity {
     @Column(name = "gateway_request_id", unique = true, length = 32)
     private String gatewayRequestId;
 
-    @Column(name = "gateway_transaction_no", length = 30)
+    @Column(name = "gateway_transaction_no", length = 100)
     private String gatewayTransactionNo;
 
     @JdbcTypeCode(SqlTypes.JSON)

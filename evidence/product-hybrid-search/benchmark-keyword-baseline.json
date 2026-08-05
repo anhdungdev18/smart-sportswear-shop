@@ -1,0 +1,3321 @@
+{
+  "summary": {
+    "datasetVersion": 1,
+    "caseCount": 60,
+    "structuredFilterPrecisionPercent": 100.0,
+    "exactRecallAt5Percent": 100.0,
+    "semanticRecallAt5Percent": 60.0,
+    "zeroResultPrecisionPercent": 100.0,
+    "coldLatencyP50Ms": 1528,
+    "coldLatencyP95Ms": 1722,
+    "warmLatencyP50Ms": 1528,
+    "warmLatencyP95Ms": 1722,
+    "passed": false
+  },
+  "results": [
+    {
+      "id": "exact-01",
+      "type": "exact",
+      "query": "Adidas Arsenal Home Jersey 26/27",
+      "returnedIds": [
+        "b3ba7f5c-4bc7-4abe-af64-a00193962ae4",
+        "1a08f249-6f02-43dd-8b38-adc41ea694c0",
+        "88e7df5b-2c12-4dac-9f2a-ab27d53b7bf4",
+        "8f729f41-a3a0-44fa-88e7-282e660007d5",
+        "002509c0-7ed5-4f78-bf49-b59f3738fa4b"
+      ],
+      "returnedItems": [
+        {
+          "productId": "b3ba7f5c-4bc7-4abe-af64-a00193962ae4",
+          "keywordRank": 1,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019672131147540982,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        },
+        {
+          "productId": "1a08f249-6f02-43dd-8b38-adc41ea694c0",
+          "keywordRank": 6,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01818181818181818,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        },
+        {
+          "productId": "88e7df5b-2c12-4dac-9f2a-ab27d53b7bf4",
+          "keywordRank": 8,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01764705882352941,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        },
+        {
+          "productId": "8f729f41-a3a0-44fa-88e7-282e660007d5",
+          "keywordRank": 9,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.017391304347826087,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        },
+        {
+          "productId": "002509c0-7ed5-4f78-bf49-b59f3738fa4b",
+          "keywordRank": 10,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.017142857142857144,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        }
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 3580,
+      "latencySamplesMs": [
+        3580
+      ]
+    },
+    {
+      "id": "exact-02",
+      "type": "exact",
+      "query": "Adidas Predator Elite FG",
+      "returnedIds": [
+        "78a0e26f-ca7e-497d-a66c-eec26c4c61c2",
+        "b98330db-4c1a-44ea-b596-4b01e2d54b70"
+      ],
+      "returnedItems": [
+        {
+          "productId": "78a0e26f-ca7e-497d-a66c-eec26c4c61c2",
+          "keywordRank": 1,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019672131147540982,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        },
+        {
+          "productId": "b98330db-4c1a-44ea-b596-4b01e2d54b70",
+          "keywordRank": 2,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01935483870967742,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        }
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1559,
+      "latencySamplesMs": [
+        1559
+      ]
+    },
+    {
+      "id": "exact-03",
+      "type": "exact",
+      "query": "Mizuno Morelia Neo IV Pro FG",
+      "returnedIds": [
+        "ab90b889-e398-48b5-afdc-61442e1aec80",
+        "f12743fa-69c3-4d60-bcce-6ed3790b6832",
+        "4bd80b15-d729-4042-aafe-a68fcb2989d5",
+        "26dec191-01f5-4886-a64d-b2807079db58",
+        "eb08d9cb-83e1-4afa-bc0c-3c677dcfacf3"
+      ],
+      "returnedItems": [
+        {
+          "productId": "ab90b889-e398-48b5-afdc-61442e1aec80",
+          "keywordRank": 2,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01935483870967742,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        },
+        {
+          "productId": "f12743fa-69c3-4d60-bcce-6ed3790b6832",
+          "keywordRank": 1,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019672131147540982,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        },
+        {
+          "productId": "4bd80b15-d729-4042-aafe-a68fcb2989d5",
+          "keywordRank": 3,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019047619047619046,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        },
+        {
+          "productId": "26dec191-01f5-4886-a64d-b2807079db58",
+          "keywordRank": 4,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01875,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        },
+        {
+          "productId": "eb08d9cb-83e1-4afa-bc0c-3c677dcfacf3",
+          "keywordRank": 5,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01846153846153846,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        }
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1549,
+      "latencySamplesMs": [
+        1549
+      ]
+    },
+    {
+      "id": "exact-04",
+      "type": "exact",
+      "query": "Nike Mercurial Vapor 16 Academy Turf",
+      "returnedIds": [
+        "3f58c864-b0bd-45b6-b246-eac0eb987c81",
+        "4c56a2a2-dedc-47d3-915a-72aad53fb2ab",
+        "47a4c9f4-90f6-4374-bd7d-546023b0d665",
+        "76cbdce1-5e10-45d8-9f24-92fb605ba0cd"
+      ],
+      "returnedItems": [
+        {
+          "productId": "3f58c864-b0bd-45b6-b246-eac0eb987c81",
+          "keywordRank": 4,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01875,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        },
+        {
+          "productId": "4c56a2a2-dedc-47d3-915a-72aad53fb2ab",
+          "keywordRank": 3,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019047619047619046,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        },
+        {
+          "productId": "47a4c9f4-90f6-4374-bd7d-546023b0d665",
+          "keywordRank": 1,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019672131147540982,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        },
+        {
+          "productId": "76cbdce1-5e10-45d8-9f24-92fb605ba0cd",
+          "keywordRank": 2,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01935483870967742,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        }
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1285,
+      "latencySamplesMs": [
+        1285
+      ]
+    },
+    {
+      "id": "exact-05",
+      "type": "exact",
+      "query": "Nike Brazil Home Jersey 2026",
+      "returnedIds": [
+        "ddf64bb3-7422-46c7-8179-f98de5dfff47",
+        "12579258-c3b3-4e0b-9a14-3f33da568167",
+        "a47ebb19-5938-401a-92fd-5b8b4ce6b157",
+        "6d727caf-4a5d-42eb-bc74-be8097c2efd2",
+        "093b5464-33e6-4482-8d22-bcc1b206f8f8"
+      ],
+      "returnedItems": [
+        {
+          "productId": "ddf64bb3-7422-46c7-8179-f98de5dfff47",
+          "keywordRank": 3,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019047619047619046,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        },
+        {
+          "productId": "12579258-c3b3-4e0b-9a14-3f33da568167",
+          "keywordRank": 2,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01935483870967742,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        },
+        {
+          "productId": "a47ebb19-5938-401a-92fd-5b8b4ce6b157",
+          "keywordRank": 7,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01791044776119403,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        },
+        {
+          "productId": "6d727caf-4a5d-42eb-bc74-be8097c2efd2",
+          "keywordRank": 1,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019672131147540982,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        },
+        {
+          "productId": "093b5464-33e6-4482-8d22-bcc1b206f8f8",
+          "keywordRank": 5,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01846153846153846,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        }
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1355,
+      "latencySamplesMs": [
+        1355
+      ]
+    },
+    {
+      "id": "exact-06",
+      "type": "exact",
+      "query": "Men's Core S/S Tee",
+      "returnedIds": [
+        "64ad1470-fb76-442e-ae1f-029c32f28672",
+        "595b9f95-0d5a-45dc-9f47-88379cf02226",
+        "7c31255c-1e95-4a87-b752-246a369670b5",
+        "b4824adc-74cd-482b-b7b3-ca5cfac4ce25",
+        "b7857956-7979-4c7d-944d-60787734d72f"
+      ],
+      "returnedItems": [
+        {
+          "productId": "64ad1470-fb76-442e-ae1f-029c32f28672",
+          "keywordRank": 5,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01846153846153846,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "595b9f95-0d5a-45dc-9f47-88379cf02226",
+          "keywordRank": 3,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019047619047619046,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "7c31255c-1e95-4a87-b752-246a369670b5",
+          "keywordRank": 8,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01764705882352941,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "b4824adc-74cd-482b-b7b3-ca5cfac4ce25",
+          "keywordRank": 11,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.016901408450704224,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "b7857956-7979-4c7d-944d-60787734d72f",
+          "keywordRank": 13,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01643835616438356,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        }
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1571,
+      "latencySamplesMs": [
+        1571
+      ]
+    },
+    {
+      "id": "exact-07",
+      "type": "exact",
+      "query": "Women's Core S/S Tee",
+      "returnedIds": [
+        "f731014b-e05f-4def-8d07-9029e44d313c",
+        "6170d7b7-dde7-4f17-a1c0-757a6e9f056f",
+        "fbedc850-dbe0-4d36-aa22-60d12909be36",
+        "b3cf6b79-7ccd-40ea-b3ca-31406364077b",
+        "c71597cf-b444-4ce4-9c05-6210fc3cebb5"
+      ],
+      "returnedItems": [
+        {
+          "productId": "f731014b-e05f-4def-8d07-9029e44d313c",
+          "keywordRank": 6,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01818181818181818,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "6170d7b7-dde7-4f17-a1c0-757a6e9f056f",
+          "keywordRank": 5,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01846153846153846,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "fbedc850-dbe0-4d36-aa22-60d12909be36",
+          "keywordRank": 9,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.017391304347826087,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "b3cf6b79-7ccd-40ea-b3ca-31406364077b",
+          "keywordRank": 10,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.017142857142857144,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "c71597cf-b444-4ce4-9c05-6210fc3cebb5",
+          "keywordRank": 11,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.016901408450704224,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        }
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1289,
+      "latencySamplesMs": [
+        1289
+      ]
+    },
+    {
+      "id": "exact-08",
+      "type": "exact",
+      "query": "Flower Combat Singlet",
+      "returnedIds": [
+        "c96104a4-3511-4feb-b96d-5a8e7d58232d",
+        "067ff97f-f0fc-449d-b39b-f9bffec54bbf",
+        "04ae4c5f-d30b-46fa-b959-c6dd695a75a8",
+        "0935a269-25b5-4e0c-a5fe-5c52ddd8f4cf",
+        "14c0492e-8364-40a5-986f-186dfa86ddae"
+      ],
+      "returnedItems": [
+        {
+          "productId": "c96104a4-3511-4feb-b96d-5a8e7d58232d",
+          "keywordRank": 1,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019672131147540982,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "067ff97f-f0fc-449d-b39b-f9bffec54bbf",
+          "keywordRank": 2,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01935483870967742,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "04ae4c5f-d30b-46fa-b959-c6dd695a75a8",
+          "keywordRank": 3,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019047619047619046,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "0935a269-25b5-4e0c-a5fe-5c52ddd8f4cf",
+          "keywordRank": 4,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01875,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "14c0492e-8364-40a5-986f-186dfa86ddae",
+          "keywordRank": 5,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01846153846153846,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        }
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1571,
+      "latencySamplesMs": [
+        1571
+      ]
+    },
+    {
+      "id": "exact-09",
+      "type": "exact",
+      "query": "Reactive Flow T-shirt",
+      "returnedIds": [
+        "81362022-dd99-4e23-806b-e62e161c04bb",
+        "067ff97f-f0fc-449d-b39b-f9bffec54bbf",
+        "d2d101ee-c431-419a-8e81-21a8281671d3",
+        "c96104a4-3511-4feb-b96d-5a8e7d58232d",
+        "04ae4c5f-d30b-46fa-b959-c6dd695a75a8"
+      ],
+      "returnedItems": [
+        {
+          "productId": "81362022-dd99-4e23-806b-e62e161c04bb",
+          "keywordRank": 5,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01846153846153846,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "067ff97f-f0fc-449d-b39b-f9bffec54bbf",
+          "keywordRank": 2,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01935483870967742,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "d2d101ee-c431-419a-8e81-21a8281671d3",
+          "keywordRank": 7,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01791044776119403,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "c96104a4-3511-4feb-b96d-5a8e7d58232d",
+          "keywordRank": 1,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019672131147540982,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "04ae4c5f-d30b-46fa-b959-c6dd695a75a8",
+          "keywordRank": 3,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019047619047619046,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        }
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1311,
+      "latencySamplesMs": [
+        1311
+      ]
+    },
+    {
+      "id": "exact-10",
+      "type": "exact",
+      "query": "Statement Motion T-shirt",
+      "returnedIds": [
+        "699e059b-1e0c-438d-b48d-e34ca26edf6e",
+        "0935a269-25b5-4e0c-a5fe-5c52ddd8f4cf",
+        "d2d101ee-c431-419a-8e81-21a8281671d3",
+        "3dc3415d-23b0-4e26-bf41-7fa1ec5b0602",
+        "067ff97f-f0fc-449d-b39b-f9bffec54bbf"
+      ],
+      "returnedItems": [
+        {
+          "productId": "699e059b-1e0c-438d-b48d-e34ca26edf6e",
+          "keywordRank": 7,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01791044776119403,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "0935a269-25b5-4e0c-a5fe-5c52ddd8f4cf",
+          "keywordRank": 5,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01846153846153846,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "d2d101ee-c431-419a-8e81-21a8281671d3",
+          "keywordRank": 6,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01818181818181818,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "3dc3415d-23b0-4e26-bf41-7fa1ec5b0602",
+          "keywordRank": 8,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01764705882352941,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "067ff97f-f0fc-449d-b39b-f9bffec54bbf",
+          "keywordRank": 2,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01935483870967742,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        }
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1269,
+      "latencySamplesMs": [
+        1269
+      ]
+    },
+    {
+      "id": "exact-11",
+      "type": "exact",
+      "query": "ADIDAS-ARSENAL-HOME-JERSEY-26-27-73778-M",
+      "returnedIds": [
+        "b3ba7f5c-4bc7-4abe-af64-a00193962ae4"
+      ],
+      "returnedItems": [
+        {
+          "productId": "b3ba7f5c-4bc7-4abe-af64-a00193962ae4",
+          "keywordRank": 1,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019672131147540982,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        }
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1528,
+      "latencySamplesMs": [
+        1528
+      ]
+    },
+    {
+      "id": "exact-12",
+      "type": "exact",
+      "query": "NIKE-MERCURIAL-VAPOR-16-ACADEMY-TURF-360-EU42",
+      "returnedIds": [
+        "3f58c864-b0bd-45b6-b246-eac0eb987c81",
+        "4c56a2a2-dedc-47d3-915a-72aad53fb2ab"
+      ],
+      "returnedItems": [
+        {
+          "productId": "3f58c864-b0bd-45b6-b246-eac0eb987c81",
+          "keywordRank": 2,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01935483870967742,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        },
+        {
+          "productId": "4c56a2a2-dedc-47d3-915a-72aad53fb2ab",
+          "keywordRank": 1,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019672131147540982,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        }
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1641,
+      "latencySamplesMs": [
+        1641
+      ]
+    },
+    {
+      "id": "exact-13",
+      "type": "exact",
+      "query": "RR-00825C8D40-M-2",
+      "returnedIds": [
+        "64ad1470-fb76-442e-ae1f-029c32f28672"
+      ],
+      "returnedItems": [
+        {
+          "productId": "64ad1470-fb76-442e-ae1f-029c32f28672",
+          "keywordRank": 1,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019672131147540982,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        }
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1722,
+      "latencySamplesMs": [
+        1722
+      ]
+    },
+    {
+      "id": "exact-14",
+      "type": "exact",
+      "query": "Adidas Liverpool FC Home Jersey 25/26",
+      "returnedIds": [
+        "1a08f249-6f02-43dd-8b38-adc41ea694c0",
+        "c1d70946-e9f0-42f4-976e-335f84efa5c0",
+        "b3ba7f5c-4bc7-4abe-af64-a00193962ae4",
+        "26a0edca-8871-4482-994c-17a83355fa33",
+        "9b06f6b0-7037-4ec1-9a09-b994f7bc9b8e"
+      ],
+      "returnedItems": [
+        {
+          "productId": "1a08f249-6f02-43dd-8b38-adc41ea694c0",
+          "keywordRank": 6,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01818181818181818,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        },
+        {
+          "productId": "c1d70946-e9f0-42f4-976e-335f84efa5c0",
+          "keywordRank": 5,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01846153846153846,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        },
+        {
+          "productId": "b3ba7f5c-4bc7-4abe-af64-a00193962ae4",
+          "keywordRank": 1,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019672131147540982,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        },
+        {
+          "productId": "26a0edca-8871-4482-994c-17a83355fa33",
+          "keywordRank": 3,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019047619047619046,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        },
+        {
+          "productId": "9b06f6b0-7037-4ec1-9a09-b994f7bc9b8e",
+          "keywordRank": 7,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01791044776119403,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        }
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1519,
+      "latencySamplesMs": [
+        1519
+      ]
+    },
+    {
+      "id": "exact-15",
+      "type": "exact",
+      "query": "Nike Mercurial Vapor 16 Elite Mbappe FG",
+      "returnedIds": [
+        "921c53f7-495d-43d5-9c03-aacfc5fd95e3",
+        "d3d129ad-8cc9-4918-8ee4-4aad4e4adf6e",
+        "98b67df5-a7ba-4c9a-8ebc-7ffcd07d41e8",
+        "433def68-0266-4445-8924-334e3c37b142",
+        "53d310ac-efd8-4f40-81b3-56a93c011328"
+      ],
+      "returnedItems": [
+        {
+          "productId": "921c53f7-495d-43d5-9c03-aacfc5fd95e3",
+          "keywordRank": 6,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01818181818181818,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        },
+        {
+          "productId": "d3d129ad-8cc9-4918-8ee4-4aad4e4adf6e",
+          "keywordRank": 4,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01875,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        },
+        {
+          "productId": "98b67df5-a7ba-4c9a-8ebc-7ffcd07d41e8",
+          "keywordRank": 5,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01846153846153846,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        },
+        {
+          "productId": "433def68-0266-4445-8924-334e3c37b142",
+          "keywordRank": 2,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01935483870967742,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        },
+        {
+          "productId": "53d310ac-efd8-4f40-81b3-56a93c011328",
+          "keywordRank": 3,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019047619047619046,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        }
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1501,
+      "latencySamplesMs": [
+        1501
+      ]
+    },
+    {
+      "id": "structured-01",
+      "type": "structured",
+      "query": "áo chạy bộ nam màu đen dưới 500k size M",
+      "returnedIds": [
+        "20d31b73-a6fd-4caa-8ad9-9d8320a8d9f9"
+      ],
+      "returnedItems": [
+        {
+          "productId": "20d31b73-a6fd-4caa-8ad9-9d8320a8d9f9",
+          "keywordRank": 1,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019672131147540982,
+          "matchedReasons": [
+            "KEYWORD",
+            "CATEGORY"
+          ]
+        }
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1547,
+      "latencySamplesMs": [
+        1547
+      ]
+    },
+    {
+      "id": "structured-02",
+      "type": "structured",
+      "query": "áo chạy bộ nữ màu hồng dưới 1 triệu size M",
+      "returnedIds": [],
+      "returnedItems": [],
+      "filtersOk": true,
+      "recallHit": false,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1272,
+      "latencySamplesMs": [
+        1272
+      ]
+    },
+    {
+      "id": "structured-03",
+      "type": "structured",
+      "query": "giày Nike sân cỏ thật size 42",
+      "returnedIds": [
+        "3ce96ab3-649a-415f-9a09-d30572cf454e",
+        "433def68-0266-4445-8924-334e3c37b142",
+        "53d310ac-efd8-4f40-81b3-56a93c011328",
+        "d3d129ad-8cc9-4918-8ee4-4aad4e4adf6e",
+        "98b67df5-a7ba-4c9a-8ebc-7ffcd07d41e8"
+      ],
+      "returnedItems": [
+        {
+          "productId": "3ce96ab3-649a-415f-9a09-d30572cf454e",
+          "keywordRank": 1,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019672131147540982,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        },
+        {
+          "productId": "433def68-0266-4445-8924-334e3c37b142",
+          "keywordRank": 2,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01935483870967742,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        },
+        {
+          "productId": "53d310ac-efd8-4f40-81b3-56a93c011328",
+          "keywordRank": 3,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019047619047619046,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        },
+        {
+          "productId": "d3d129ad-8cc9-4918-8ee4-4aad4e4adf6e",
+          "keywordRank": 4,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01875,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        },
+        {
+          "productId": "98b67df5-a7ba-4c9a-8ebc-7ffcd07d41e8",
+          "keywordRank": 5,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01846153846153846,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        }
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1580,
+      "latencySamplesMs": [
+        1580
+      ]
+    },
+    {
+      "id": "structured-04",
+      "type": "structured",
+      "query": "giày Nike sân cỏ nhân tạo size 42 dưới 3 triệu",
+      "returnedIds": [
+        "47a4c9f4-90f6-4374-bd7d-546023b0d665",
+        "4c56a2a2-dedc-47d3-915a-72aad53fb2ab",
+        "3f58c864-b0bd-45b6-b246-eac0eb987c81"
+      ],
+      "returnedItems": [
+        {
+          "productId": "47a4c9f4-90f6-4374-bd7d-546023b0d665",
+          "keywordRank": 1,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019672131147540982,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        },
+        {
+          "productId": "4c56a2a2-dedc-47d3-915a-72aad53fb2ab",
+          "keywordRank": 2,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01935483870967742,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        },
+        {
+          "productId": "3f58c864-b0bd-45b6-b246-eac0eb987c81",
+          "keywordRank": 3,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019047619047619046,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        }
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1577,
+      "latencySamplesMs": [
+        1577
+      ]
+    },
+    {
+      "id": "structured-05",
+      "type": "structured",
+      "query": "giày Mizuno cỏ thật trên 5 triệu size 41",
+      "returnedIds": [
+        "f12743fa-69c3-4d60-bcce-6ed3790b6832",
+        "4bd80b15-d729-4042-aafe-a68fcb2989d5",
+        "26dec191-01f5-4886-a64d-b2807079db58",
+        "eb08d9cb-83e1-4afa-bc0c-3c677dcfacf3"
+      ],
+      "returnedItems": [
+        {
+          "productId": "f12743fa-69c3-4d60-bcce-6ed3790b6832",
+          "keywordRank": 1,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019672131147540982,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        },
+        {
+          "productId": "4bd80b15-d729-4042-aafe-a68fcb2989d5",
+          "keywordRank": 2,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01935483870967742,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        },
+        {
+          "productId": "26dec191-01f5-4886-a64d-b2807079db58",
+          "keywordRank": 3,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019047619047619046,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        },
+        {
+          "productId": "eb08d9cb-83e1-4afa-bc0c-3c677dcfacf3",
+          "keywordRank": 4,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01875,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        }
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1502,
+      "latencySamplesMs": [
+        1502
+      ]
+    },
+    {
+      "id": "structured-06",
+      "type": "structured",
+      "query": "áo nữ màu trắng size S dưới 700k",
+      "returnedIds": [],
+      "returnedItems": [],
+      "filtersOk": true,
+      "recallHit": false,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1510,
+      "latencySamplesMs": [
+        1510
+      ]
+    },
+    {
+      "id": "structured-07",
+      "type": "structured",
+      "query": "áo nam màu xanh dương từ 400k đến 600k size L",
+      "returnedIds": [],
+      "returnedItems": [],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1550,
+      "latencySamplesMs": [
+        1550
+      ]
+    },
+    {
+      "id": "structured-08",
+      "type": "structured",
+      "query": "quần chạy bộ nam màu đen không quá 500k size M",
+      "returnedIds": [
+        "663f5170-9c34-41d6-ab80-a55246765672"
+      ],
+      "returnedItems": [
+        {
+          "productId": "663f5170-9c34-41d6-ab80-a55246765672",
+          "keywordRank": 1,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019672131147540982,
+          "matchedReasons": [
+            "KEYWORD",
+            "CATEGORY"
+          ]
+        }
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1239,
+      "latencySamplesMs": [
+        1239
+      ]
+    },
+    {
+      "id": "structured-09",
+      "type": "structured",
+      "query": "giày Adidas cỏ thật size 44",
+      "returnedIds": [
+        "78a0e26f-ca7e-497d-a66c-eec26c4c61c2",
+        "b98330db-4c1a-44ea-b596-4b01e2d54b70"
+      ],
+      "returnedItems": [
+        {
+          "productId": "78a0e26f-ca7e-497d-a66c-eec26c4c61c2",
+          "keywordRank": 1,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019672131147540982,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        },
+        {
+          "productId": "b98330db-4c1a-44ea-b596-4b01e2d54b70",
+          "keywordRank": 2,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01935483870967742,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        }
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1527,
+      "latencySamplesMs": [
+        1527
+      ]
+    },
+    {
+      "id": "structured-10",
+      "type": "structured",
+      "query": "áo bóng đá Adidas dưới 2 triệu size XL",
+      "returnedIds": [
+        "b3ba7f5c-4bc7-4abe-af64-a00193962ae4",
+        "0e7f523a-c114-4a4f-aa2e-7fc28802e8f9",
+        "26a0edca-8871-4482-994c-17a83355fa33",
+        "0a03a06d-9986-4102-b5e7-49173c0bfa33",
+        "c1d70946-e9f0-42f4-976e-335f84efa5c0"
+      ],
+      "returnedItems": [
+        {
+          "productId": "b3ba7f5c-4bc7-4abe-af64-a00193962ae4",
+          "keywordRank": 1,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019672131147540982,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        },
+        {
+          "productId": "0e7f523a-c114-4a4f-aa2e-7fc28802e8f9",
+          "keywordRank": 2,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01935483870967742,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        },
+        {
+          "productId": "26a0edca-8871-4482-994c-17a83355fa33",
+          "keywordRank": 3,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019047619047619046,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        },
+        {
+          "productId": "0a03a06d-9986-4102-b5e7-49173c0bfa33",
+          "keywordRank": 4,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01875,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        },
+        {
+          "productId": "c1d70946-e9f0-42f4-976e-335f84efa5c0",
+          "keywordRank": 5,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01846153846153846,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        }
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1666,
+      "latencySamplesMs": [
+        1666
+      ]
+    },
+    {
+      "id": "structured-11",
+      "type": "structured",
+      "query": "đồ chạy bộ nữ dưới 600k",
+      "returnedIds": [
+        "c96104a4-3511-4feb-b96d-5a8e7d58232d",
+        "067ff97f-f0fc-449d-b39b-f9bffec54bbf",
+        "e20e7eb3-a414-4707-8968-67893ff5de1e",
+        "fb28cfcf-f88c-4934-856b-7e397103df0f",
+        "5c647dc5-15cf-4b8c-8d03-bb46f719d28b"
+      ],
+      "returnedItems": [
+        {
+          "productId": "c96104a4-3511-4feb-b96d-5a8e7d58232d",
+          "keywordRank": 1,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019672131147540982,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "067ff97f-f0fc-449d-b39b-f9bffec54bbf",
+          "keywordRank": 2,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01935483870967742,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "e20e7eb3-a414-4707-8968-67893ff5de1e",
+          "keywordRank": 3,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019047619047619046,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "fb28cfcf-f88c-4934-856b-7e397103df0f",
+          "keywordRank": 4,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01875,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "5c647dc5-15cf-4b8c-8d03-bb46f719d28b",
+          "keywordRank": 5,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01846153846153846,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        }
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1569,
+      "latencySamplesMs": [
+        1569
+      ]
+    },
+    {
+      "id": "structured-12",
+      "type": "structured",
+      "query": "giay nike co nhan tao size 40 duoi 3tr",
+      "returnedIds": [
+        "47a4c9f4-90f6-4374-bd7d-546023b0d665",
+        "4c56a2a2-dedc-47d3-915a-72aad53fb2ab",
+        "3f58c864-b0bd-45b6-b246-eac0eb987c81"
+      ],
+      "returnedItems": [
+        {
+          "productId": "47a4c9f4-90f6-4374-bd7d-546023b0d665",
+          "keywordRank": 1,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019672131147540982,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        },
+        {
+          "productId": "4c56a2a2-dedc-47d3-915a-72aad53fb2ab",
+          "keywordRank": 2,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01935483870967742,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        },
+        {
+          "productId": "3f58c864-b0bd-45b6-b246-eac0eb987c81",
+          "keywordRank": 3,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019047619047619046,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        }
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1530,
+      "latencySamplesMs": [
+        1530
+      ]
+    },
+    {
+      "id": "structured-13",
+      "type": "structured",
+      "query": "ao chay bo nam mau do size M",
+      "returnedIds": [],
+      "returnedItems": [],
+      "filtersOk": true,
+      "recallHit": false,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1521,
+      "latencySamplesMs": [
+        1521
+      ]
+    },
+    {
+      "id": "structured-14",
+      "type": "structured",
+      "query": "áo nữ màu vàng size S",
+      "returnedIds": [],
+      "returnedItems": [],
+      "filtersOk": true,
+      "recallHit": false,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1510,
+      "latencySamplesMs": [
+        1510
+      ]
+    },
+    {
+      "id": "structured-15",
+      "type": "structured",
+      "query": "giày cỏ thật giá từ 4 triệu đến 5 triệu size 43",
+      "returnedIds": [],
+      "returnedItems": [],
+      "filtersOk": true,
+      "recallHit": false,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1508,
+      "latencySamplesMs": [
+        1508
+      ]
+    },
+    {
+      "id": "semantic-01",
+      "type": "semantic",
+      "query": "giày tốc độ cho tiền đạo bứt tốc",
+      "returnedIds": [
+        "3ce96ab3-649a-415f-9a09-d30572cf454e",
+        "47a4c9f4-90f6-4374-bd7d-546023b0d665",
+        "433def68-0266-4445-8924-334e3c37b142",
+        "76cbdce1-5e10-45d8-9f24-92fb605ba0cd",
+        "53d310ac-efd8-4f40-81b3-56a93c011328"
+      ],
+      "returnedItems": [
+        {
+          "productId": "3ce96ab3-649a-415f-9a09-d30572cf454e",
+          "keywordRank": 9,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.017391304347826087,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "47a4c9f4-90f6-4374-bd7d-546023b0d665",
+          "keywordRank": 10,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.017142857142857144,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "433def68-0266-4445-8924-334e3c37b142",
+          "keywordRank": 11,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.016901408450704224,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "76cbdce1-5e10-45d8-9f24-92fb605ba0cd",
+          "keywordRank": 12,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.016666666666666666,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "53d310ac-efd8-4f40-81b3-56a93c011328",
+          "keywordRank": 13,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01643835616438356,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        }
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1594,
+      "latencySamplesMs": [
+        1594
+      ]
+    },
+    {
+      "id": "semantic-02",
+      "type": "semantic",
+      "query": "áo nhẹ thoáng khí chạy trời nóng",
+      "returnedIds": [
+        "b3ba7f5c-4bc7-4abe-af64-a00193962ae4",
+        "0e7f523a-c114-4a4f-aa2e-7fc28802e8f9",
+        "26a0edca-8871-4482-994c-17a83355fa33",
+        "0a03a06d-9986-4102-b5e7-49173c0bfa33",
+        "c1d70946-e9f0-42f4-976e-335f84efa5c0"
+      ],
+      "returnedItems": [
+        {
+          "productId": "b3ba7f5c-4bc7-4abe-af64-a00193962ae4",
+          "keywordRank": 1,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019672131147540982,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "0e7f523a-c114-4a4f-aa2e-7fc28802e8f9",
+          "keywordRank": 2,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01935483870967742,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "26a0edca-8871-4482-994c-17a83355fa33",
+          "keywordRank": 3,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019047619047619046,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "0a03a06d-9986-4102-b5e7-49173c0bfa33",
+          "keywordRank": 4,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01875,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "c1d70946-e9f0-42f4-976e-335f84efa5c0",
+          "keywordRank": 5,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01846153846153846,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        }
+      ],
+      "filtersOk": true,
+      "recallHit": false,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1556,
+      "latencySamplesMs": [
+        1556
+      ]
+    },
+    {
+      "id": "semantic-03",
+      "type": "semantic",
+      "query": "trang phục chạy bộ buổi tối dễ nhìn thấy",
+      "returnedIds": [
+        "c96104a4-3511-4feb-b96d-5a8e7d58232d",
+        "067ff97f-f0fc-449d-b39b-f9bffec54bbf",
+        "64ad1470-fb76-442e-ae1f-029c32f28672",
+        "14c0492e-8364-40a5-986f-186dfa86ddae"
+      ],
+      "returnedItems": [
+        {
+          "productId": "c96104a4-3511-4feb-b96d-5a8e7d58232d",
+          "keywordRank": 1,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019672131147540982,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "067ff97f-f0fc-449d-b39b-f9bffec54bbf",
+          "keywordRank": 2,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01935483870967742,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "64ad1470-fb76-442e-ae1f-029c32f28672",
+          "keywordRank": 3,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019047619047619046,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "14c0492e-8364-40a5-986f-186dfa86ddae",
+          "keywordRank": 4,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01875,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        }
+      ],
+      "filtersOk": true,
+      "recallHit": false,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1539,
+      "latencySamplesMs": [
+        1539
+      ]
+    },
+    {
+      "id": "semantic-04",
+      "type": "semantic",
+      "query": "quần chạy trail có lớp co giãn",
+      "returnedIds": [
+        "0a03a06d-9986-4102-b5e7-49173c0bfa33",
+        "9b06f6b0-7037-4ec1-9a09-b994f7bc9b8e",
+        "002509c0-7ed5-4f78-bf49-b59f3738fa4b",
+        "eb6d44b9-9b6b-485c-bfb4-c641dac6fa9d",
+        "4a9a0036-53ee-4b5d-99f3-4340996ebb3f"
+      ],
+      "returnedItems": [
+        {
+          "productId": "0a03a06d-9986-4102-b5e7-49173c0bfa33",
+          "keywordRank": 1,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019672131147540982,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "9b06f6b0-7037-4ec1-9a09-b994f7bc9b8e",
+          "keywordRank": 2,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01935483870967742,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "002509c0-7ed5-4f78-bf49-b59f3738fa4b",
+          "keywordRank": 3,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019047619047619046,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "eb6d44b9-9b6b-485c-bfb4-c641dac6fa9d",
+          "keywordRank": 4,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01875,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "4a9a0036-53ee-4b5d-99f3-4340996ebb3f",
+          "keywordRank": 5,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01846153846153846,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        }
+      ],
+      "filtersOk": true,
+      "recallHit": false,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1303,
+      "latencySamplesMs": [
+        1303
+      ]
+    },
+    {
+      "id": "semantic-05",
+      "type": "semantic",
+      "query": "áo thi đấu câu lạc bộ sân nhà",
+      "returnedIds": [
+        "b3ba7f5c-4bc7-4abe-af64-a00193962ae4",
+        "0e7f523a-c114-4a4f-aa2e-7fc28802e8f9",
+        "26a0edca-8871-4482-994c-17a83355fa33",
+        "0a03a06d-9986-4102-b5e7-49173c0bfa33",
+        "c1d70946-e9f0-42f4-976e-335f84efa5c0"
+      ],
+      "returnedItems": [
+        {
+          "productId": "b3ba7f5c-4bc7-4abe-af64-a00193962ae4",
+          "keywordRank": 1,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019672131147540982,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "0e7f523a-c114-4a4f-aa2e-7fc28802e8f9",
+          "keywordRank": 2,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01935483870967742,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "26a0edca-8871-4482-994c-17a83355fa33",
+          "keywordRank": 3,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019047619047619046,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "0a03a06d-9986-4102-b5e7-49173c0bfa33",
+          "keywordRank": 4,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01875,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "c1d70946-e9f0-42f4-976e-335f84efa5c0",
+          "keywordRank": 5,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01846153846153846,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        }
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1309,
+      "latencySamplesMs": [
+        1309
+      ]
+    },
+    {
+      "id": "semantic-06",
+      "type": "semantic",
+      "query": "áo đội tuyển quốc gia bản sân khách",
+      "returnedIds": [
+        "0e7f523a-c114-4a4f-aa2e-7fc28802e8f9",
+        "c1d70946-e9f0-42f4-976e-335f84efa5c0",
+        "12f1875f-a908-4cb2-8bdf-45b98a04558d",
+        "b83e4541-8188-4d48-ba53-103e69b5e1f2",
+        "76ad31de-cafd-40e2-8cc9-1553b9e7eb3a"
+      ],
+      "returnedItems": [
+        {
+          "productId": "0e7f523a-c114-4a4f-aa2e-7fc28802e8f9",
+          "keywordRank": 2,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01935483870967742,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "c1d70946-e9f0-42f4-976e-335f84efa5c0",
+          "keywordRank": 5,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01846153846153846,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "12f1875f-a908-4cb2-8bdf-45b98a04558d",
+          "keywordRank": 13,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01643835616438356,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "b83e4541-8188-4d48-ba53-103e69b5e1f2",
+          "keywordRank": 14,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.016216216216216217,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "76ad31de-cafd-40e2-8cc9-1553b9e7eb3a",
+          "keywordRank": 15,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.016,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        }
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1331,
+      "latencySamplesMs": [
+        1331
+      ]
+    },
+    {
+      "id": "semantic-07",
+      "type": "semantic",
+      "query": "giày đá bóng cao cấp không dây",
+      "returnedIds": [
+        "b98330db-4c1a-44ea-b596-4b01e2d54b70",
+        "78a0e26f-ca7e-497d-a66c-eec26c4c61c2",
+        "f12743fa-69c3-4d60-bcce-6ed3790b6832",
+        "ab90b889-e398-48b5-afdc-61442e1aec80",
+        "4bd80b15-d729-4042-aafe-a68fcb2989d5"
+      ],
+      "returnedItems": [
+        {
+          "productId": "b98330db-4c1a-44ea-b596-4b01e2d54b70",
+          "keywordRank": 2,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01935483870967742,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "78a0e26f-ca7e-497d-a66c-eec26c4c61c2",
+          "keywordRank": 1,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019672131147540982,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "f12743fa-69c3-4d60-bcce-6ed3790b6832",
+          "keywordRank": 3,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019047619047619046,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "ab90b889-e398-48b5-afdc-61442e1aec80",
+          "keywordRank": 4,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01875,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "4bd80b15-d729-4042-aafe-a68fcb2989d5",
+          "keywordRank": 5,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01846153846153846,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        }
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1530,
+      "latencySamplesMs": [
+        1530
+      ]
+    },
+    {
+      "id": "semantic-08",
+      "type": "semantic",
+      "query": "giày Nhật Bản da mềm cao cấp",
+      "returnedIds": [
+        "4bd80b15-d729-4042-aafe-a68fcb2989d5",
+        "26dec191-01f5-4886-a64d-b2807079db58",
+        "f12743fa-69c3-4d60-bcce-6ed3790b6832",
+        "ab90b889-e398-48b5-afdc-61442e1aec80",
+        "eb08d9cb-83e1-4afa-bc0c-3c677dcfacf3"
+      ],
+      "returnedItems": [
+        {
+          "productId": "4bd80b15-d729-4042-aafe-a68fcb2989d5",
+          "keywordRank": 5,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01846153846153846,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "26dec191-01f5-4886-a64d-b2807079db58",
+          "keywordRank": 6,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01818181818181818,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "f12743fa-69c3-4d60-bcce-6ed3790b6832",
+          "keywordRank": 3,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019047619047619046,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "ab90b889-e398-48b5-afdc-61442e1aec80",
+          "keywordRank": 4,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01875,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "eb08d9cb-83e1-4afa-bc0c-3c677dcfacf3",
+          "keywordRank": 7,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01791044776119403,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        }
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1583,
+      "latencySamplesMs": [
+        1583
+      ]
+    },
+    {
+      "id": "semantic-09",
+      "type": "semantic",
+      "query": "áo chạy đua nhẹ cho ngày thi đấu",
+      "returnedIds": [
+        "b3ba7f5c-4bc7-4abe-af64-a00193962ae4",
+        "0e7f523a-c114-4a4f-aa2e-7fc28802e8f9",
+        "26a0edca-8871-4482-994c-17a83355fa33",
+        "0a03a06d-9986-4102-b5e7-49173c0bfa33",
+        "c1d70946-e9f0-42f4-976e-335f84efa5c0"
+      ],
+      "returnedItems": [
+        {
+          "productId": "b3ba7f5c-4bc7-4abe-af64-a00193962ae4",
+          "keywordRank": 1,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019672131147540982,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "0e7f523a-c114-4a4f-aa2e-7fc28802e8f9",
+          "keywordRank": 2,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01935483870967742,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "26a0edca-8871-4482-994c-17a83355fa33",
+          "keywordRank": 3,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019047619047619046,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "0a03a06d-9986-4102-b5e7-49173c0bfa33",
+          "keywordRank": 4,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01875,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "c1d70946-e9f0-42f4-976e-335f84efa5c0",
+          "keywordRank": 5,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01846153846153846,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        }
+      ],
+      "filtersOk": true,
+      "recallHit": false,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1389,
+      "latencySamplesMs": [
+        1389
+      ]
+    },
+    {
+      "id": "semantic-10",
+      "type": "semantic",
+      "query": "quần short hai lớp chạy đường dài",
+      "returnedIds": [
+        "e20e7eb3-a414-4707-8968-67893ff5de1e",
+        "fb28cfcf-f88c-4934-856b-7e397103df0f",
+        "3fbc8be1-fc0a-4f96-a0e2-9ab1580daa0b",
+        "c93fe810-cafc-4e63-b13b-ea97a0349448",
+        "132c2fa0-a142-43d6-bf8d-9d18feaa0ba7"
+      ],
+      "returnedItems": [
+        {
+          "productId": "e20e7eb3-a414-4707-8968-67893ff5de1e",
+          "keywordRank": 3,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019047619047619046,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "fb28cfcf-f88c-4934-856b-7e397103df0f",
+          "keywordRank": 8,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01764705882352941,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "3fbc8be1-fc0a-4f96-a0e2-9ab1580daa0b",
+          "keywordRank": 9,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.017391304347826087,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "c93fe810-cafc-4e63-b13b-ea97a0349448",
+          "keywordRank": 14,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.016216216216216217,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "132c2fa0-a142-43d6-bf8d-9d18feaa0ba7",
+          "keywordRank": 19,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.015189873417721518,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        }
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1581,
+      "latencySamplesMs": [
+        1581
+      ]
+    },
+    {
+      "id": "semantic-11",
+      "type": "semantic",
+      "query": "áo ba lỗ chạy marathon nữ",
+      "returnedIds": [
+        "b3ba7f5c-4bc7-4abe-af64-a00193962ae4",
+        "0e7f523a-c114-4a4f-aa2e-7fc28802e8f9",
+        "26a0edca-8871-4482-994c-17a83355fa33",
+        "0a03a06d-9986-4102-b5e7-49173c0bfa33",
+        "c1d70946-e9f0-42f4-976e-335f84efa5c0"
+      ],
+      "returnedItems": [
+        {
+          "productId": "b3ba7f5c-4bc7-4abe-af64-a00193962ae4",
+          "keywordRank": 1,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019672131147540982,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "0e7f523a-c114-4a4f-aa2e-7fc28802e8f9",
+          "keywordRank": 2,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01935483870967742,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "26a0edca-8871-4482-994c-17a83355fa33",
+          "keywordRank": 3,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019047619047619046,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "0a03a06d-9986-4102-b5e7-49173c0bfa33",
+          "keywordRank": 4,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01875,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "c1d70946-e9f0-42f4-976e-335f84efa5c0",
+          "keywordRank": 5,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01846153846153846,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        }
+      ],
+      "filtersOk": true,
+      "recallHit": false,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1787,
+      "latencySamplesMs": [
+        1787
+      ]
+    },
+    {
+      "id": "semantic-12",
+      "type": "semantic",
+      "query": "áo dài tay chạy trời lạnh",
+      "returnedIds": [
+        "c2ea4a67-180b-48c8-a66e-4ba615951301",
+        "b3ba7f5c-4bc7-4abe-af64-a00193962ae4",
+        "0e7f523a-c114-4a4f-aa2e-7fc28802e8f9",
+        "26a0edca-8871-4482-994c-17a83355fa33",
+        "0a03a06d-9986-4102-b5e7-49173c0bfa33"
+      ],
+      "returnedItems": [
+        {
+          "productId": "c2ea4a67-180b-48c8-a66e-4ba615951301",
+          "keywordRank": 12,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.016666666666666666,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "b3ba7f5c-4bc7-4abe-af64-a00193962ae4",
+          "keywordRank": 1,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019672131147540982,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "0e7f523a-c114-4a4f-aa2e-7fc28802e8f9",
+          "keywordRank": 2,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01935483870967742,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "26a0edca-8871-4482-994c-17a83355fa33",
+          "keywordRank": 3,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019047619047619046,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "0a03a06d-9986-4102-b5e7-49173c0bfa33",
+          "keywordRank": 4,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01875,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        }
+      ],
+      "filtersOk": true,
+      "recallHit": false,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1374,
+      "latencySamplesMs": [
+        1374
+      ]
+    },
+    {
+      "id": "semantic-13",
+      "type": "semantic",
+      "query": "áo hoa nữ chạy bộ",
+      "returnedIds": [
+        "c96104a4-3511-4feb-b96d-5a8e7d58232d",
+        "067ff97f-f0fc-449d-b39b-f9bffec54bbf",
+        "04ae4c5f-d30b-46fa-b959-c6dd695a75a8",
+        "5c647dc5-15cf-4b8c-8d03-bb46f719d28b",
+        "663f5170-9c34-41d6-ab80-a55246765672"
+      ],
+      "returnedItems": [
+        {
+          "productId": "c96104a4-3511-4feb-b96d-5a8e7d58232d",
+          "keywordRank": 1,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019672131147540982,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "067ff97f-f0fc-449d-b39b-f9bffec54bbf",
+          "keywordRank": 2,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01935483870967742,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "04ae4c5f-d30b-46fa-b959-c6dd695a75a8",
+          "keywordRank": 3,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019047619047619046,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "5c647dc5-15cf-4b8c-8d03-bb46f719d28b",
+          "keywordRank": 4,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01875,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "663f5170-9c34-41d6-ab80-a55246765672",
+          "keywordRank": 5,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01846153846153846,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        }
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1854,
+      "latencySamplesMs": [
+        1854
+      ]
+    },
+    {
+      "id": "semantic-14",
+      "type": "semantic",
+      "query": "giày kiểm soát bóng cho tiền vệ",
+      "returnedIds": [
+        "78a0e26f-ca7e-497d-a66c-eec26c4c61c2",
+        "b98330db-4c1a-44ea-b596-4b01e2d54b70",
+        "f12743fa-69c3-4d60-bcce-6ed3790b6832",
+        "ab90b889-e398-48b5-afdc-61442e1aec80",
+        "4bd80b15-d729-4042-aafe-a68fcb2989d5"
+      ],
+      "returnedItems": [
+        {
+          "productId": "78a0e26f-ca7e-497d-a66c-eec26c4c61c2",
+          "keywordRank": 1,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019672131147540982,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "b98330db-4c1a-44ea-b596-4b01e2d54b70",
+          "keywordRank": 2,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01935483870967742,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "f12743fa-69c3-4d60-bcce-6ed3790b6832",
+          "keywordRank": 3,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019047619047619046,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "ab90b889-e398-48b5-afdc-61442e1aec80",
+          "keywordRank": 4,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01875,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "4bd80b15-d729-4042-aafe-a68fcb2989d5",
+          "keywordRank": 5,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01846153846153846,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        }
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1620,
+      "latencySamplesMs": [
+        1620
+      ]
+    },
+    {
+      "id": "semantic-15",
+      "type": "semantic",
+      "query": "áo bóng đá cổ điển biểu tượng câu lạc bộ",
+      "returnedIds": [
+        "0a03a06d-9986-4102-b5e7-49173c0bfa33",
+        "9b06f6b0-7037-4ec1-9a09-b994f7bc9b8e",
+        "b3ba7f5c-4bc7-4abe-af64-a00193962ae4",
+        "0e7f523a-c114-4a4f-aa2e-7fc28802e8f9",
+        "26a0edca-8871-4482-994c-17a83355fa33"
+      ],
+      "returnedItems": [
+        {
+          "productId": "0a03a06d-9986-4102-b5e7-49173c0bfa33",
+          "keywordRank": 4,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01875,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "9b06f6b0-7037-4ec1-9a09-b994f7bc9b8e",
+          "keywordRank": 7,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01791044776119403,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "b3ba7f5c-4bc7-4abe-af64-a00193962ae4",
+          "keywordRank": 1,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019672131147540982,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "0e7f523a-c114-4a4f-aa2e-7fc28802e8f9",
+          "keywordRank": 2,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01935483870967742,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "26a0edca-8871-4482-994c-17a83355fa33",
+          "keywordRank": 3,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019047619047619046,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        }
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1604,
+      "latencySamplesMs": [
+        1604
+      ]
+    },
+    {
+      "id": "typo-01",
+      "type": "typo",
+      "query": "nik mercurial vapr 16",
+      "returnedIds": [
+        "3ce96ab3-649a-415f-9a09-d30572cf454e",
+        "47a4c9f4-90f6-4374-bd7d-546023b0d665",
+        "433def68-0266-4445-8924-334e3c37b142",
+        "76cbdce1-5e10-45d8-9f24-92fb605ba0cd",
+        "53d310ac-efd8-4f40-81b3-56a93c011328"
+      ],
+      "returnedItems": [
+        {
+          "productId": "3ce96ab3-649a-415f-9a09-d30572cf454e",
+          "keywordRank": 12,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.016666666666666666,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "47a4c9f4-90f6-4374-bd7d-546023b0d665",
+          "keywordRank": 13,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01643835616438356,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "433def68-0266-4445-8924-334e3c37b142",
+          "keywordRank": 14,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.016216216216216217,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "76cbdce1-5e10-45d8-9f24-92fb605ba0cd",
+          "keywordRank": 15,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.016,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "53d310ac-efd8-4f40-81b3-56a93c011328",
+          "keywordRank": 16,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.015789473684210527,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        }
+      ],
+      "filtersOk": true,
+      "recallHit": false,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1519,
+      "latencySamplesMs": [
+        1519
+      ]
+    },
+    {
+      "id": "typo-02",
+      "type": "typo",
+      "query": "adiddas predtor elite",
+      "returnedIds": [
+        "78a0e26f-ca7e-497d-a66c-eec26c4c61c2",
+        "b98330db-4c1a-44ea-b596-4b01e2d54b70",
+        "f12743fa-69c3-4d60-bcce-6ed3790b6832",
+        "433def68-0266-4445-8924-334e3c37b142",
+        "76cbdce1-5e10-45d8-9f24-92fb605ba0cd"
+      ],
+      "returnedItems": [
+        {
+          "productId": "78a0e26f-ca7e-497d-a66c-eec26c4c61c2",
+          "keywordRank": 1,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019672131147540982,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "b98330db-4c1a-44ea-b596-4b01e2d54b70",
+          "keywordRank": 2,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01935483870967742,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "f12743fa-69c3-4d60-bcce-6ed3790b6832",
+          "keywordRank": 3,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019047619047619046,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "433def68-0266-4445-8924-334e3c37b142",
+          "keywordRank": 4,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01875,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "76cbdce1-5e10-45d8-9f24-92fb605ba0cd",
+          "keywordRank": 5,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01846153846153846,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        }
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1303,
+      "latencySamplesMs": [
+        1303
+      ]
+    },
+    {
+      "id": "typo-03",
+      "type": "typo",
+      "query": "giay co nhan tao nike",
+      "returnedIds": [
+        "47a4c9f4-90f6-4374-bd7d-546023b0d665",
+        "76cbdce1-5e10-45d8-9f24-92fb605ba0cd",
+        "4c56a2a2-dedc-47d3-915a-72aad53fb2ab",
+        "3f58c864-b0bd-45b6-b246-eac0eb987c81"
+      ],
+      "returnedItems": [
+        {
+          "productId": "47a4c9f4-90f6-4374-bd7d-546023b0d665",
+          "keywordRank": 1,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019672131147540982,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        },
+        {
+          "productId": "76cbdce1-5e10-45d8-9f24-92fb605ba0cd",
+          "keywordRank": 2,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01935483870967742,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        },
+        {
+          "productId": "4c56a2a2-dedc-47d3-915a-72aad53fb2ab",
+          "keywordRank": 3,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019047619047619046,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        },
+        {
+          "productId": "3f58c864-b0bd-45b6-b246-eac0eb987c81",
+          "keywordRank": 4,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01875,
+          "matchedReasons": [
+            "KEYWORD",
+            "BRAND"
+          ]
+        }
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1697,
+      "latencySamplesMs": [
+        1697
+      ]
+    },
+    {
+      "id": "typo-04",
+      "type": "typo",
+      "query": "ao chay bo nu mau hong",
+      "returnedIds": [],
+      "returnedItems": [],
+      "filtersOk": true,
+      "recallHit": false,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1499,
+      "latencySamplesMs": [
+        1499
+      ]
+    },
+    {
+      "id": "typo-05",
+      "type": "typo",
+      "query": "mizno morelia neo",
+      "returnedIds": [
+        "f12743fa-69c3-4d60-bcce-6ed3790b6832",
+        "ab90b889-e398-48b5-afdc-61442e1aec80",
+        "4bd80b15-d729-4042-aafe-a68fcb2989d5",
+        "26dec191-01f5-4886-a64d-b2807079db58",
+        "eb08d9cb-83e1-4afa-bc0c-3c677dcfacf3"
+      ],
+      "returnedItems": [
+        {
+          "productId": "f12743fa-69c3-4d60-bcce-6ed3790b6832",
+          "keywordRank": 1,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019672131147540982,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "ab90b889-e398-48b5-afdc-61442e1aec80",
+          "keywordRank": 2,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01935483870967742,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "4bd80b15-d729-4042-aafe-a68fcb2989d5",
+          "keywordRank": 3,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019047619047619046,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "26dec191-01f5-4886-a64d-b2807079db58",
+          "keywordRank": 4,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01875,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "eb08d9cb-83e1-4afa-bc0c-3c677dcfacf3",
+          "keywordRank": 5,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01846153846153846,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        }
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1312,
+      "latencySamplesMs": [
+        1312
+      ]
+    },
+    {
+      "id": "typo-06",
+      "type": "typo",
+      "query": "ao MU san nha",
+      "returnedIds": [
+        "b3ba7f5c-4bc7-4abe-af64-a00193962ae4",
+        "0e7f523a-c114-4a4f-aa2e-7fc28802e8f9",
+        "26a0edca-8871-4482-994c-17a83355fa33",
+        "0a03a06d-9986-4102-b5e7-49173c0bfa33",
+        "c1d70946-e9f0-42f4-976e-335f84efa5c0"
+      ],
+      "returnedItems": [
+        {
+          "productId": "b3ba7f5c-4bc7-4abe-af64-a00193962ae4",
+          "keywordRank": 1,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019672131147540982,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "0e7f523a-c114-4a4f-aa2e-7fc28802e8f9",
+          "keywordRank": 2,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01935483870967742,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "26a0edca-8871-4482-994c-17a83355fa33",
+          "keywordRank": 3,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019047619047619046,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "0a03a06d-9986-4102-b5e7-49173c0bfa33",
+          "keywordRank": 4,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01875,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "c1d70946-e9f0-42f4-976e-335f84efa5c0",
+          "keywordRank": 5,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01846153846153846,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        }
+      ],
+      "filtersOk": true,
+      "recallHit": false,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1498,
+      "latencySamplesMs": [
+        1498
+      ]
+    },
+    {
+      "id": "typo-07",
+      "type": "typo",
+      "query": "arsnal home jersy",
+      "returnedIds": [
+        "b3ba7f5c-4bc7-4abe-af64-a00193962ae4",
+        "1a08f249-6f02-43dd-8b38-adc41ea694c0",
+        "88e7df5b-2c12-4dac-9f2a-ab27d53b7bf4",
+        "8f729f41-a3a0-44fa-88e7-282e660007d5",
+        "002509c0-7ed5-4f78-bf49-b59f3738fa4b"
+      ],
+      "returnedItems": [
+        {
+          "productId": "b3ba7f5c-4bc7-4abe-af64-a00193962ae4",
+          "keywordRank": 1,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019672131147540982,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "1a08f249-6f02-43dd-8b38-adc41ea694c0",
+          "keywordRank": 2,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01935483870967742,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "88e7df5b-2c12-4dac-9f2a-ab27d53b7bf4",
+          "keywordRank": 3,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019047619047619046,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "8f729f41-a3a0-44fa-88e7-282e660007d5",
+          "keywordRank": 4,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01875,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "002509c0-7ed5-4f78-bf49-b59f3738fa4b",
+          "keywordRank": 5,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01846153846153846,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        }
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1309,
+      "latencySamplesMs": [
+        1309
+      ]
+    },
+    {
+      "id": "typo-08",
+      "type": "typo",
+      "query": "womens tech race tshrt",
+      "returnedIds": [
+        "5c647dc5-15cf-4b8c-8d03-bb46f719d28b",
+        "663f5170-9c34-41d6-ab80-a55246765672",
+        "c93fe810-cafc-4e63-b13b-ea97a0349448",
+        "47896feb-ea05-4f7d-a5bf-176aa3a35bd7",
+        "ae8189e6-833d-4983-984f-270a59934f5c"
+      ],
+      "returnedItems": [
+        {
+          "productId": "5c647dc5-15cf-4b8c-8d03-bb46f719d28b",
+          "keywordRank": 8,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01764705882352941,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "663f5170-9c34-41d6-ab80-a55246765672",
+          "keywordRank": 9,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.017391304347826087,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "c93fe810-cafc-4e63-b13b-ea97a0349448",
+          "keywordRank": 10,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.017142857142857144,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "47896feb-ea05-4f7d-a5bf-176aa3a35bd7",
+          "keywordRank": 19,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.015189873417721518,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "ae8189e6-833d-4983-984f-270a59934f5c",
+          "keywordRank": 20,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.015,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        }
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1312,
+      "latencySamplesMs": [
+        1312
+      ]
+    },
+    {
+      "id": "typo-09",
+      "type": "typo",
+      "query": "quan chay bo den duoi 500k",
+      "returnedIds": [
+        "663f5170-9c34-41d6-ab80-a55246765672",
+        "ae8189e6-833d-4983-984f-270a59934f5c"
+      ],
+      "returnedItems": [
+        {
+          "productId": "663f5170-9c34-41d6-ab80-a55246765672",
+          "keywordRank": 1,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.019672131147540982,
+          "matchedReasons": [
+            "KEYWORD",
+            "CATEGORY"
+          ]
+        },
+        {
+          "productId": "ae8189e6-833d-4983-984f-270a59934f5c",
+          "keywordRank": 2,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01935483870967742,
+          "matchedReasons": [
+            "KEYWORD",
+            "CATEGORY"
+          ]
+        }
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1578,
+      "latencySamplesMs": [
+        1578
+      ]
+    },
+    {
+      "id": "typo-10",
+      "type": "typo",
+      "query": "giay da banh toc do tien dao",
+      "returnedIds": [
+        "3ce96ab3-649a-415f-9a09-d30572cf454e",
+        "47a4c9f4-90f6-4374-bd7d-546023b0d665",
+        "433def68-0266-4445-8924-334e3c37b142",
+        "76cbdce1-5e10-45d8-9f24-92fb605ba0cd",
+        "53d310ac-efd8-4f40-81b3-56a93c011328"
+      ],
+      "returnedItems": [
+        {
+          "productId": "3ce96ab3-649a-415f-9a09-d30572cf454e",
+          "keywordRank": 9,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.017391304347826087,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "47a4c9f4-90f6-4374-bd7d-546023b0d665",
+          "keywordRank": 10,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.017142857142857144,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "433def68-0266-4445-8924-334e3c37b142",
+          "keywordRank": 11,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.016901408450704224,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "76cbdce1-5e10-45d8-9f24-92fb605ba0cd",
+          "keywordRank": 12,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.016666666666666666,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        },
+        {
+          "productId": "53d310ac-efd8-4f40-81b3-56a93c011328",
+          "keywordRank": 13,
+          "semanticRank": null,
+          "semanticScore": null,
+          "fusionScore": 0.01643835616438356,
+          "matchedReasons": [
+            "KEYWORD"
+          ]
+        }
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1563,
+      "latencySamplesMs": [
+        1563
+      ]
+    },
+    {
+      "id": "zero-01",
+      "type": "zero",
+      "query": "",
+      "returnedIds": [],
+      "returnedItems": [],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "VALIDATION",
+      "latencyMs": 0,
+      "latencySamplesMs": [
+        0
+      ]
+    },
+    {
+      "id": "zero-02",
+      "type": "zero",
+      "query": "điện thoại iphone 99 siêu cấp",
+      "returnedIds": [],
+      "returnedItems": [],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1549,
+      "latencySamplesMs": [
+        1549
+      ]
+    },
+    {
+      "id": "zero-03",
+      "type": "zero",
+      "query": "giày Nike dưới 100 nghìn",
+      "returnedIds": [],
+      "returnedItems": [],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1511,
+      "latencySamplesMs": [
+        1511
+      ]
+    },
+    {
+      "id": "zero-04",
+      "type": "zero",
+      "query": "áo nữ size 999 màu cam",
+      "returnedIds": [],
+      "returnedItems": [],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1340,
+      "latencySamplesMs": [
+        1340
+      ]
+    },
+    {
+      "id": "zero-05",
+      "type": "zero",
+      "query": "zzzz-no-catalog-match-93847",
+      "returnedIds": [],
+      "returnedItems": [],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1548,
+      "latencySamplesMs": [
+        1548
+      ]
+    }
+  ]
+}

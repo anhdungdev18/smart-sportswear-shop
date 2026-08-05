@@ -33,6 +33,12 @@ _BASE_SELECT = """
             ARRAY[]::varchar[]
         )                                   AS available_sizes,
         COALESCE(
+            array_agg(DISTINCT pv.sku)
+            FILTER (WHERE pv.status = 'ACTIVE'
+                      AND (pv.stock_quantity - pv.reserved_quantity) > 0),
+            ARRAY[]::varchar[]
+        )                                   AS available_skus,
+        COALESCE(
             SUM(GREATEST(pv.stock_quantity - pv.reserved_quantity, 0)),
             0
         )::int                              AS total_available,
@@ -59,9 +65,26 @@ _GROUP_BY = """
 """
 
 
+async def get_search_dictionaries() -> tuple[list[str], list[str]]:
+    pool = get_pool()
+    if pool is None:
+        return [], []
+    async with pool.acquire() as conn:
+        brands = await conn.fetch("select name from brands where status = 'ACTIVE' order by length(name) desc")
+        categories = await conn.fetch(
+            "select name from categories where status = 'ACTIVE' order by length(name) desc"
+        )
+    return [row["name"] for row in brands], [row["name"] for row in categories]
+
+
 def _build_where(f: ProductFilter) -> tuple[str, list]:
     """Return (where_clause, params_list). Params are positional ($1, $2, ...)."""
-    conditions: list[str] = ["p.status = 'ACTIVE'", "c.status = 'ACTIVE'"]
+    conditions: list[str] = [
+        "p.status = 'ACTIVE'",
+        "c.status = 'ACTIVE'",
+        "pv.status = 'ACTIVE'",
+        "(pv.stock_quantity - pv.reserved_quantity) > 0",
+    ]
     params: list = []
     idx = 1  # asyncpg positional param index
 
@@ -108,9 +131,47 @@ def _build_where(f: ProductFilter) -> tuple[str, list]:
         conditions.append(f"b.name = ${idx}")
         idx += 1
 
-    if f.color:
+    if f.category:
+        params.append(f.category)
+        conditions.append(f"c.name = ${idx}")
+        idx += 1
+
+    if f.color_family:
+        params.append(f.color_family)
+        conditions.append(
+            f"(pv.color_family = ${idx} OR "
+            f"(pv.color_family IS NULL AND pv.color ILIKE ANY("
+            f"case ${idx} when 'BLACK' then array['%black%','%đen%'] "
+            f"when 'WHITE' then array['%white%','%trắng%'] "
+            f"when 'BLUE' then array['%blue%','%navy%','%xanh%'] "
+            f"when 'RED' then array['%red%','%đỏ%'] "
+            f"when 'PINK' then array['%pink%','%hồng%'] else array['%' || ${idx} || '%'] end)))"
+        )
+        idx += 1
+    elif f.color:
         params.append(f"%{f.color}%")
         conditions.append(f"pv.color ILIKE ${idx}")
+        idx += 1
+
+    if f.size:
+        params.append(f.size)
+        conditions.append(f"upper(pv.size) = upper(${idx})")
+        idx += 1
+
+    if f.surface:
+        params.append(f.surface)
+        conditions.append(
+            f"(upper(coalesce(p.attributes->>'surface','')) = upper(${idx}) "
+            f"OR p.name ILIKE ANY(case ${idx} "
+            f"when 'TF' then array['%cỏ nhân tạo%','%co nhan tao%'] "
+            f"when 'FG' then array['%cỏ tự nhiên%','%cỏ thật%','%co that%'] "
+            f"when 'IC' then array['%futsal%','%trong nhà%'] else array['%' || ${idx} || '%'] end) "
+            f"OR c.name ILIKE ANY(case ${idx} "
+            f"when 'TF' then array['%cỏ nhân tạo%','%co nhan tao%'] "
+            f"when 'FG' then array['%cỏ tự nhiên%','%cỏ thật%','%co that%'] "
+            f"when 'IC' then array['%futsal%','%trong nhà%'] else array['%' || ${idx} || '%'] end) "
+            f"OR upper(pv.sku) LIKE '%' || upper(${idx}) || '%')"
+        )
         idx += 1
 
     # Gender/sport words handled by structural filters; search verbs never appear in product names.
@@ -149,17 +210,18 @@ def _build_where(f: ProductFilter) -> tuple[str, list]:
             p = f"${idx}"
             word_clauses.append(
                 f"(p.name ILIKE {p} OR p.short_description ILIKE {p} "
-                f"OR c.name ILIKE {p} OR b.name ILIKE {p})"
+                f"OR c.name ILIKE {p} OR b.name ILIKE {p} OR pv.sku ILIKE {p})"
             )
             idx += 1
         if word_clauses:
-            conditions.append(f"({' AND '.join(word_clauses)})")
+            # OR recall pool; exact/token coverage is handled by deterministic
+            # ranking and RRF. Requiring every conversational token made valid
+            # need queries ("tốc độ cho tiền đạo") return zero.
+            conditions.append(f"({' OR '.join(word_clauses)})")
 
-    for feat in f.feature_hints:
-        params.append(f"%{feat}%")
-        p = f"${idx}"
-        conditions.append(f"(p.name ILIKE {p} OR p.short_description ILIKE {p})")
-        idx += 1
+    # Feature/need hints are soft semantic/rerank signals, never hard SQL
+    # filters. Catalog descriptions often omit words such as "tiền đạo" even
+    # when the product is a valid speed boot.
 
     where_clause = " AND ".join(conditions)
     return where_clause, params

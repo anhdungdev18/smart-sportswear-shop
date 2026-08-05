@@ -22,7 +22,10 @@ async def retrieve(query_text: str, f: ProductFilter) -> list[dict]:
         price_min=f.price_min,
         price_max=f.price_max,
         brand=f.brand,
-        color=f.color,
+        category=f.category,
+        color_family=f.color_family,
+        surface=f.surface,
+        size=f.size,
     )
     logger.info(f"vector_retriever | hits={len(rows)} query={query_text[:40]!r}")
     return rows

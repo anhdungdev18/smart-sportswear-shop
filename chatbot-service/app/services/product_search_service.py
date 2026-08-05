@@ -1,8 +1,13 @@
 from __future__ import annotations
 
 import asyncio
+import dataclasses
+import hashlib
+import json
+import time
+from collections import OrderedDict
 
-from app.retrieval.product.parser.query_parser import ParsedQuery, parse_query
+from app.retrieval.product.parser.query_parser import ParsedQuery, parse_query, normalize_text
 from app.retrieval.product.filters.product_filter import ProductFilter
 from app.retrieval.product.keyword.keyword_retriever import retrieve as keyword_retrieve
 from app.retrieval.product.enrich.variant_enricher import enrich
@@ -12,14 +17,202 @@ from app.retrieval.product.fusion import rrf_fusion
 from app.retrieval.product.rerank import heuristic_reranker
 from app.retrieval.product.query_rewrite import synonym_rewriter
 from app.retrieval.product.query_rewrite import llm_rewriter
+from app.retrieval.product.query_rewrite.semantic_expander import expand as expand_semantic_query
 from app.retrieval.product.query_rewrite.ambiguity_detector import needs_pre_retrieval_rewrite
 from app.schemas.product import ProductSearchResult, AppliedFilters
 from app.observability.trace_logger import get_logger
+from app.config.settings import settings
+from app.repositories.product_repository import get_search_dictionaries
 
 logger = get_logger(__name__)
 
 _LIMIT = 5
 _CANDIDATE_MULTIPLIER = 2   # fetch wider candidates for fusion, cut to limit at rerank
+_candidate_cache: OrderedDict[str, tuple[float, dict]] = OrderedDict()
+_CANDIDATE_MEMORY_MAX = 256
+
+
+async def search_internal(request) -> dict:
+    started = time.perf_counter()
+    cache_key = _candidate_cache_key(request)
+    cached = await _candidate_cache_get(cache_key)
+    if cached is not None:
+        cached["processingTimeMs"] = round((time.perf_counter() - started) * 1000)
+        cached["cacheHit"] = True
+        return cached
+    brands, categories = await get_search_dictionaries()
+    parsed = parse_query(
+        request.query,
+        brands=brands,
+        categories=categories,
+        explicit_filters=request.filters.model_dump(),
+    )
+    candidate_limit = min(400, max(request.limit * 4, (request.page * request.limit) * 2))
+    expanded_semantic = expand_semantic_query(parsed.semantic_text or request.query)
+    ranking_parsed = dataclasses.replace(parsed, keyword=expanded_semantic)
+    product_filter = ProductFilter.from_parsed(ranking_parsed, limit=candidate_limit)
+
+    async def safe_keyword() -> list[dict]:
+        try:
+            return await keyword_retrieve(product_filter)
+        except Exception:
+            logger.warning("product_search | keyword_branch_failed")
+            return []
+
+    keyword_rows, semantic_rows = await asyncio.gather(
+        safe_keyword(),
+        _try_vector_retrieve(
+            expanded_semantic,
+            product_filter,
+        )
+        if settings.PRODUCT_SEARCH_SEMANTIC_ENABLED else asyncio.sleep(0, result=[]),
+    )
+    minimum = settings.PRODUCT_SEARCH_MIN_SIMILARITY
+    semantic_rows = [row for row in semantic_rows if float(row.get("vector_score", 0)) >= minimum]
+    # Do not let embeddings turn an ungrounded, out-of-domain sentence into
+    # arbitrary catalog matches. Structured constraints and recognized product
+    # needs remain eligible for semantic-only retrieval.
+    if (
+        not ProductFilter.from_parsed(parsed).has_any_structural_filter()
+        and not product_filter.feature_hints
+        and not _is_catalog_grounded(parsed, keyword_rows)
+    ):
+        keyword_rows = []
+        semantic_rows = []
+    keyword_ranks = {row["product_id"]: rank for rank, row in enumerate(keyword_rows, 1)}
+    semantic_ranks = {row["product_id"]: rank for rank, row in enumerate(semantic_rows, 1)}
+    semantic_scores = {row["product_id"]: float(row.get("vector_score", 0)) for row in semantic_rows}
+    fused = rrf_fusion.fuse(
+        keyword_rows,
+        semantic_rows,
+        k=settings.PRODUCT_SEARCH_RRF_K,
+        keyword_weight=settings.PRODUCT_SEARCH_KEYWORD_WEIGHT,
+        vector_weight=settings.PRODUCT_SEARCH_SEMANTIC_WEIGHT,
+    )
+    ranked = heuristic_reranker.rerank(fused, ranking_parsed, len(fused))
+    start, end = (request.page - 1) * request.limit, request.page * request.limit
+    items = []
+    for row in ranked[start:end]:
+        product_id = row["product_id"]
+        reasons = []
+        if product_id in keyword_ranks:
+            reasons.append("KEYWORD")
+        if product_id in semantic_ranks:
+            reasons.append("SEMANTIC")
+        if parsed.brand:
+            reasons.append("BRAND")
+        if parsed.category:
+            reasons.append("CATEGORY")
+        items.append({
+            "productId": product_id,
+            "keywordRank": keyword_ranks.get(product_id),
+            "semanticRank": semantic_ranks.get(product_id),
+            "semanticScore": semantic_scores.get(product_id),
+            "fusionScore": float(row.get("_rrf_score", 0)),
+            "matchedReasons": reasons,
+        })
+    response = {
+        "items": items,
+        "total": len(ranked),
+        "parsedQuery": {
+            "normalized": normalize_text(parsed.normalized),
+            "semanticText": parsed.semantic_text,
+            "category": parsed.category,
+            "brand": parsed.brand,
+            "gender": parsed.gender,
+            "sportType": parsed.sport_type_hint,
+            "productType": parsed.product_type,
+            "surface": parsed.surface,
+            "colorFamily": parsed.color_family,
+            "size": parsed.size,
+            "minPrice": parsed.price_min,
+            "maxPrice": parsed.price_max,
+            "featureHints": parsed.feature_hints,
+        },
+        "searchMode": "HYBRID" if semantic_rows else "KEYWORD",
+        "processingTimeMs": round((time.perf_counter() - started) * 1000),
+        "cacheHit": False,
+    }
+    await _candidate_cache_set(cache_key, response)
+    return response
+
+
+def _candidate_cache_key(request) -> str:
+    payload = json.dumps(
+        {
+            "request": request.model_dump(),
+            "semanticEnabled": settings.PRODUCT_SEARCH_SEMANTIC_ENABLED,
+            "minSimilarity": settings.PRODUCT_SEARCH_MIN_SIMILARITY,
+            "rrfK": settings.PRODUCT_SEARCH_RRF_K,
+            "keywordWeight": settings.PRODUCT_SEARCH_KEYWORD_WEIGHT,
+            "semanticWeight": settings.PRODUCT_SEARCH_SEMANTIC_WEIGHT,
+        },
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    digest = hashlib.sha256(payload.encode("utf-8")).hexdigest()
+    return f"search:hybrid:v1:{digest}"
+
+
+async def _candidate_cache_get(key: str) -> dict | None:
+    now = time.monotonic()
+    memory = _candidate_cache.get(key)
+    if memory and memory[0] > now:
+        _candidate_cache.move_to_end(key)
+        return json.loads(json.dumps(memory[1]))
+    if memory:
+        _candidate_cache.pop(key, None)
+    if not settings.REDIS_URL:
+        return None
+    try:
+        from redis.asyncio import Redis
+        client = Redis.from_url(settings.REDIS_URL, socket_connect_timeout=.15, socket_timeout=.15)
+        raw = await client.get(key)
+        await client.aclose()
+        if raw:
+            value = json.loads(raw)
+            _candidate_cache[key] = (now + settings.PRODUCT_SEARCH_CANDIDATE_CACHE_TTL_SECONDS, value)
+            return value
+    except Exception:
+        pass
+    return None
+
+
+async def _candidate_cache_set(key: str, value: dict) -> None:
+    ttl = settings.PRODUCT_SEARCH_CANDIDATE_CACHE_TTL_SECONDS
+    _candidate_cache[key] = (time.monotonic() + ttl, json.loads(json.dumps(value)))
+    _candidate_cache.move_to_end(key)
+    while len(_candidate_cache) > _CANDIDATE_MEMORY_MAX:
+        _candidate_cache.popitem(last=False)
+    if not settings.REDIS_URL:
+        return
+    try:
+        from redis.asyncio import Redis
+        client = Redis.from_url(settings.REDIS_URL, socket_connect_timeout=.15, socket_timeout=.15)
+        await client.setex(key, ttl, json.dumps(value, separators=(",", ":")))
+        await client.aclose()
+    except Exception:
+        pass
+
+
+def _is_catalog_grounded(parsed: ParsedQuery, rows: list[dict]) -> bool:
+    ignored = {"sieu", "cap", "san", "pham", "hang", "shop"}
+    tokens = {
+        token for token in normalize_text(parsed.keyword or parsed.raw).split()
+        if len(token) >= 3 and token not in ignored
+    }
+    if not tokens:
+        return False
+    for row in rows:
+        catalog_text = normalize_text(" ".join([
+            row.get("name") or "",
+            row.get("brand_name") or "",
+            row.get("category_name") or "",
+        ]))
+        if any(token in catalog_text for token in tokens):
+            return True
+    return False
 
 
 async def search(
@@ -34,7 +227,7 @@ async def search(
       3. If still empty → try LLM catalog rewrite (reads catalog.md)
     All attempts: keyword → vector (fail-safe) → RRF fusion → heuristic rerank.
     """
-    logger.info(f"product_search | query={query!r}")
+    logger.info("product_search | query_received=true")
 
     parsed = _coerce_parsed(query, parsed_query)
     pre_rewrite_attempted = False

@@ -40,6 +40,11 @@ def fuse(
         scores[pid] = scores.get(pid, 0.0) + vector_weight / (k + rank)
         if pid not in rows_by_id:
             rows_by_id[pid] = {**row, "_source": "vector"}
+        else:
+            # Preserve semantic evidence when the keyword row was inserted
+            # first; downstream reranking otherwise cannot use vector_score.
+            rows_by_id[pid]["vector_score"] = row.get("vector_score")
+            rows_by_id[pid]["_source"] = "both"
 
     ordered = sorted(scores.keys(), key=lambda pid: scores[pid], reverse=True)
 

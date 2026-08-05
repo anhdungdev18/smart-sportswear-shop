@@ -60,26 +60,35 @@ export async function fetchCategoryTree(): Promise<Category[]> {
   }
 }
 
-export async function fetchSearchResults(query: string, page: number, limit: number, discount?: string) {
-  if (!query && !discount) {
+export async function fetchSearchResults(
+  query: string,
+  page: number,
+  limit: number,
+  filters: Record<string, string | undefined> = {},
+) {
+  if (!query && !Object.values(filters).some(Boolean)) {
     return {
       products: [] as ProductListItem[],
       meta: { ...DEFAULT_PAGE_META, page, size: limit },
+      error: false,
     };
   }
 
   try {
-    const result = await apiFetch<ProductListItem[]>(endpoints.products, {
-      query: { q: query || undefined, discount, page, limit },
+    const result = await apiFetch<ProductListItem[]>(endpoints.hybridProducts, {
+      query: { q: query || undefined, ...filters, page, limit },
+      cache: "no-store",
     });
     return {
       products: result.data,
       meta: (result.meta as PageMeta | undefined) ?? { ...DEFAULT_PAGE_META, page, size: limit },
+      error: false,
     };
   } catch {
     return {
       products: [] as ProductListItem[],
       meta: { ...DEFAULT_PAGE_META, page, size: limit },
+      error: true,
     };
   }
 }

@@ -25,6 +25,11 @@ spring:
 # PaymentIntegrationTest), so only a deterministic, non-blank secret matters
 # here, not a real merchant credential.
 app:
+  # Never let a developer's backend/.env route automated tests to real SMTP.
+  # Notification integration tests verify persisted delivery state using the
+  # deterministic logging provider.
+  mail:
+    provider: logging
   vnpay:
     tmn-code: TESTTMN1
     hash-secret: test-only-vnpay-hash-secret-do-not-use-in-prod

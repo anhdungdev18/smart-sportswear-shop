@@ -1,0 +1,1214 @@
+{
+  "summary": {
+    "datasetVersion": 1,
+    "caseCount": 60,
+    "structuredFilterPrecisionPercent": 100.0,
+    "exactRecallAt5Percent": 100.0,
+    "semanticRecallAt5Percent": 46.67,
+    "zeroResultPrecisionPercent": 60.0,
+    "latencyP50Ms": 1530,
+    "latencyP95Ms": 1788,
+    "passed": false
+  },
+  "results": [
+    {
+      "id": "exact-01",
+      "type": "exact",
+      "query": "Adidas Arsenal Home Jersey 26/27",
+      "returnedIds": [
+        "b3ba7f5c-4bc7-4abe-af64-a00193962ae4",
+        "1a08f249-6f02-43dd-8b38-adc41ea694c0",
+        "8f729f41-a3a0-44fa-88e7-282e660007d5",
+        "62a2c180-462d-40da-8989-08a4f1173406",
+        "88e7df5b-2c12-4dac-9f2a-ab27d53b7bf4"
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 3059,
+      "latencySamplesMs": [
+        5231,
+        3059
+      ]
+    },
+    {
+      "id": "exact-02",
+      "type": "exact",
+      "query": "Adidas Predator Elite FG",
+      "returnedIds": [
+        "78a0e26f-ca7e-497d-a66c-eec26c4c61c2",
+        "b98330db-4c1a-44ea-b596-4b01e2d54b70"
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1490,
+      "latencySamplesMs": [
+        4530,
+        1490
+      ]
+    },
+    {
+      "id": "exact-03",
+      "type": "exact",
+      "query": "Mizuno Morelia Neo IV Pro FG",
+      "returnedIds": [
+        "ab90b889-e398-48b5-afdc-61442e1aec80",
+        "26dec191-01f5-4886-a64d-b2807079db58",
+        "f12743fa-69c3-4d60-bcce-6ed3790b6832",
+        "4bd80b15-d729-4042-aafe-a68fcb2989d5",
+        "eb08d9cb-83e1-4afa-bc0c-3c677dcfacf3"
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1548,
+      "latencySamplesMs": [
+        1901,
+        1548
+      ]
+    },
+    {
+      "id": "exact-04",
+      "type": "exact",
+      "query": "Nike Mercurial Vapor 16 Academy Turf",
+      "returnedIds": [
+        "3f58c864-b0bd-45b6-b246-eac0eb987c81",
+        "4c56a2a2-dedc-47d3-915a-72aad53fb2ab",
+        "47a4c9f4-90f6-4374-bd7d-546023b0d665",
+        "76cbdce1-5e10-45d8-9f24-92fb605ba0cd"
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1270,
+      "latencySamplesMs": [
+        1750,
+        1270
+      ]
+    },
+    {
+      "id": "exact-05",
+      "type": "exact",
+      "query": "Nike Brazil Home Jersey 2026",
+      "returnedIds": [
+        "ddf64bb3-7422-46c7-8179-f98de5dfff47",
+        "12579258-c3b3-4e0b-9a14-3f33da568167",
+        "a47ebb19-5938-401a-92fd-5b8b4ce6b157",
+        "034a7087-a6a6-4ae5-9b84-5f711681c09e",
+        "6d727caf-4a5d-42eb-bc74-be8097c2efd2"
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1295,
+      "latencySamplesMs": [
+        1260,
+        1295
+      ]
+    },
+    {
+      "id": "exact-06",
+      "type": "exact",
+      "query": "Men's Core S/S Tee",
+      "returnedIds": [
+        "64ad1470-fb76-442e-ae1f-029c32f28672",
+        "595b9f95-0d5a-45dc-9f47-88379cf02226",
+        "29275735-f169-45f4-9f93-3848d0a065a6",
+        "b7857956-7979-4c7d-944d-60787734d72f",
+        "b4824adc-74cd-482b-b7b3-ca5cfac4ce25"
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1740,
+      "latencySamplesMs": [
+        1956,
+        1740
+      ]
+    },
+    {
+      "id": "exact-07",
+      "type": "exact",
+      "query": "Women's Core S/S Tee",
+      "returnedIds": [
+        "f731014b-e05f-4def-8d07-9029e44d313c",
+        "6170d7b7-dde7-4f17-a1c0-757a6e9f056f",
+        "bf771f36-7075-420a-81dd-9bfbbc3158ae",
+        "fbedc850-dbe0-4d36-aa22-60d12909be36",
+        "47896feb-ea05-4f7d-a5bf-176aa3a35bd7"
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1521,
+      "latencySamplesMs": [
+        1509,
+        1521
+      ]
+    },
+    {
+      "id": "exact-08",
+      "type": "exact",
+      "query": "Flower Combat Singlet",
+      "returnedIds": [
+        "c96104a4-3511-4feb-b96d-5a8e7d58232d",
+        "04ae4c5f-d30b-46fa-b959-c6dd695a75a8",
+        "067ff97f-f0fc-449d-b39b-f9bffec54bbf",
+        "14c0492e-8364-40a5-986f-186dfa86ddae",
+        "0935a269-25b5-4e0c-a5fe-5c52ddd8f4cf"
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1771,
+      "latencySamplesMs": [
+        1929,
+        1771
+      ]
+    },
+    {
+      "id": "exact-09",
+      "type": "exact",
+      "query": "Reactive Flow T-shirt",
+      "returnedIds": [
+        "81362022-dd99-4e23-806b-e62e161c04bb",
+        "d2d101ee-c431-419a-8e81-21a8281671d3",
+        "067ff97f-f0fc-449d-b39b-f9bffec54bbf",
+        "04ae4c5f-d30b-46fa-b959-c6dd695a75a8",
+        "699e059b-1e0c-438d-b48d-e34ca26edf6e"
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1540,
+      "latencySamplesMs": [
+        1540,
+        1540
+      ]
+    },
+    {
+      "id": "exact-10",
+      "type": "exact",
+      "query": "Statement Motion T-shirt",
+      "returnedIds": [
+        "699e059b-1e0c-438d-b48d-e34ca26edf6e",
+        "d2d101ee-c431-419a-8e81-21a8281671d3",
+        "0935a269-25b5-4e0c-a5fe-5c52ddd8f4cf",
+        "3dc3415d-23b0-4e26-bf41-7fa1ec5b0602",
+        "14c0492e-8364-40a5-986f-186dfa86ddae"
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1700,
+      "latencySamplesMs": [
+        1560,
+        1700
+      ]
+    },
+    {
+      "id": "exact-11",
+      "type": "exact",
+      "query": "ADIDAS-ARSENAL-HOME-JERSEY-26-27-73778-M",
+      "returnedIds": [
+        "b3ba7f5c-4bc7-4abe-af64-a00193962ae4",
+        "1a08f249-6f02-43dd-8b38-adc41ea694c0",
+        "8f729f41-a3a0-44fa-88e7-282e660007d5",
+        "62a2c180-462d-40da-8989-08a4f1173406",
+        "88e7df5b-2c12-4dac-9f2a-ab27d53b7bf4"
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1260,
+      "latencySamplesMs": [
+        1490,
+        1260
+      ]
+    },
+    {
+      "id": "exact-12",
+      "type": "exact",
+      "query": "NIKE-MERCURIAL-VAPOR-16-ACADEMY-TURF-360-EU42",
+      "returnedIds": [
+        "3f58c864-b0bd-45b6-b246-eac0eb987c81",
+        "4c56a2a2-dedc-47d3-915a-72aad53fb2ab",
+        "47a4c9f4-90f6-4374-bd7d-546023b0d665",
+        "76cbdce1-5e10-45d8-9f24-92fb605ba0cd"
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1510,
+      "latencySamplesMs": [
+        1970,
+        1510
+      ]
+    },
+    {
+      "id": "exact-13",
+      "type": "exact",
+      "query": "RR-00825C8D40-M-2",
+      "returnedIds": [
+        "64ad1470-fb76-442e-ae1f-029c32f28672",
+        "6e4fec73-0bbe-4e6e-bdc6-1570f0380115",
+        "29275735-f169-45f4-9f93-3848d0a065a6",
+        "3fbc8be1-fc0a-4f96-a0e2-9ab1580daa0b",
+        "b7857956-7979-4c7d-944d-60787734d72f"
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1720,
+      "latencySamplesMs": [
+        1940,
+        1720
+      ]
+    },
+    {
+      "id": "exact-14",
+      "type": "exact",
+      "query": "Adidas Liverpool FC Home Jersey 25/26",
+      "returnedIds": [
+        "1a08f249-6f02-43dd-8b38-adc41ea694c0",
+        "c1d70946-e9f0-42f4-976e-335f84efa5c0",
+        "b3ba7f5c-4bc7-4abe-af64-a00193962ae4",
+        "8f729f41-a3a0-44fa-88e7-282e660007d5",
+        "62a2c180-462d-40da-8989-08a4f1173406"
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1520,
+      "latencySamplesMs": [
+        1551,
+        1520
+      ]
+    },
+    {
+      "id": "exact-15",
+      "type": "exact",
+      "query": "Nike Mercurial Vapor 16 Elite Mbappe FG",
+      "returnedIds": [
+        "921c53f7-495d-43d5-9c03-aacfc5fd95e3",
+        "d3d129ad-8cc9-4918-8ee4-4aad4e4adf6e",
+        "98b67df5-a7ba-4c9a-8ebc-7ffcd07d41e8",
+        "54e753ed-1eb9-4c49-b4fe-ffee3cc4811c",
+        "fbccb321-cffb-46b4-8388-046577d6ba8c"
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1480,
+      "latencySamplesMs": [
+        1950,
+        1480
+      ]
+    },
+    {
+      "id": "structured-01",
+      "type": "structured",
+      "query": "áo chạy bộ nam màu đen dưới 500k size M",
+      "returnedIds": [
+        "20d31b73-a6fd-4caa-8ad9-9d8320a8d9f9",
+        "ffb83692-2001-400e-90ff-7eeb8f510373",
+        "c3b179ac-b273-4710-aacb-f920c65cf731"
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1230,
+      "latencySamplesMs": [
+        1510,
+        1230
+      ]
+    },
+    {
+      "id": "structured-02",
+      "type": "structured",
+      "query": "áo chạy bộ nữ màu hồng dưới 1 triệu size M",
+      "returnedIds": [
+        "81362022-dd99-4e23-806b-e62e161c04bb"
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1249,
+      "latencySamplesMs": [
+        1251,
+        1249
+      ]
+    },
+    {
+      "id": "structured-03",
+      "type": "structured",
+      "query": "giày Nike sân cỏ thật size 42",
+      "returnedIds": [
+        "98b67df5-a7ba-4c9a-8ebc-7ffcd07d41e8",
+        "54e753ed-1eb9-4c49-b4fe-ffee3cc4811c",
+        "53d310ac-efd8-4f40-81b3-56a93c011328",
+        "fbccb321-cffb-46b4-8388-046577d6ba8c",
+        "d3d129ad-8cc9-4918-8ee4-4aad4e4adf6e"
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1519,
+      "latencySamplesMs": [
+        1683,
+        1519
+      ]
+    },
+    {
+      "id": "structured-04",
+      "type": "structured",
+      "query": "giày Nike sân cỏ nhân tạo size 42 dưới 3 triệu",
+      "returnedIds": [
+        "4c56a2a2-dedc-47d3-915a-72aad53fb2ab",
+        "47a4c9f4-90f6-4374-bd7d-546023b0d665",
+        "3f58c864-b0bd-45b6-b246-eac0eb987c81"
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1510,
+      "latencySamplesMs": [
+        1498,
+        1510
+      ]
+    },
+    {
+      "id": "structured-05",
+      "type": "structured",
+      "query": "giày Mizuno cỏ thật trên 5 triệu size 41",
+      "returnedIds": [
+        "26dec191-01f5-4886-a64d-b2807079db58",
+        "4bd80b15-d729-4042-aafe-a68fcb2989d5",
+        "f12743fa-69c3-4d60-bcce-6ed3790b6832",
+        "eb08d9cb-83e1-4afa-bc0c-3c677dcfacf3"
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1690,
+      "latencySamplesMs": [
+        1530,
+        1690
+      ]
+    },
+    {
+      "id": "structured-06",
+      "type": "structured",
+      "query": "áo nữ màu trắng size S dưới 700k",
+      "returnedIds": [
+        "14c0492e-8364-40a5-986f-186dfa86ddae",
+        "067ff97f-f0fc-449d-b39b-f9bffec54bbf",
+        "c96104a4-3511-4feb-b96d-5a8e7d58232d"
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1561,
+      "latencySamplesMs": [
+        1520,
+        1561
+      ]
+    },
+    {
+      "id": "structured-07",
+      "type": "structured",
+      "query": "áo nam màu xanh dương từ 400k đến 600k size L",
+      "returnedIds": [
+        "d2d101ee-c431-419a-8e81-21a8281671d3",
+        "29275735-f169-45f4-9f93-3848d0a065a6",
+        "23d8e9bc-58e3-48a3-8a69-73698dbe4f95"
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1541,
+      "latencySamplesMs": [
+        1529,
+        1541
+      ]
+    },
+    {
+      "id": "structured-08",
+      "type": "structured",
+      "query": "quần chạy bộ nam màu đen không quá 500k size M",
+      "returnedIds": [
+        "663f5170-9c34-41d6-ab80-a55246765672",
+        "5c1cc97a-1bbd-4aef-a20e-0cf2e94fd666",
+        "e20e7eb3-a414-4707-8968-67893ff5de1e",
+        "8c7e365e-15c9-4308-b706-16a0a4889d90",
+        "864ba6c0-61ff-4594-a08c-7df190afd80e"
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1300,
+      "latencySamplesMs": [
+        1730,
+        1300
+      ]
+    },
+    {
+      "id": "structured-09",
+      "type": "structured",
+      "query": "giày Adidas cỏ thật size 44",
+      "returnedIds": [
+        "78a0e26f-ca7e-497d-a66c-eec26c4c61c2",
+        "b98330db-4c1a-44ea-b596-4b01e2d54b70"
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1289,
+      "latencySamplesMs": [
+        1511,
+        1289
+      ]
+    },
+    {
+      "id": "structured-10",
+      "type": "structured",
+      "query": "áo bóng đá Adidas dưới 2 triệu size XL",
+      "returnedIds": [
+        "26a0edca-8871-4482-994c-17a83355fa33",
+        "b3ba7f5c-4bc7-4abe-af64-a00193962ae4",
+        "0a03a06d-9986-4102-b5e7-49173c0bfa33",
+        "1a08f249-6f02-43dd-8b38-adc41ea694c0",
+        "8f729f41-a3a0-44fa-88e7-282e660007d5"
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1741,
+      "latencySamplesMs": [
+        1520,
+        1741
+      ]
+    },
+    {
+      "id": "structured-11",
+      "type": "structured",
+      "query": "đồ chạy bộ nữ dưới 600k",
+      "returnedIds": [
+        "067ff97f-f0fc-449d-b39b-f9bffec54bbf",
+        "c96104a4-3511-4feb-b96d-5a8e7d58232d",
+        "14c0492e-8364-40a5-986f-186dfa86ddae",
+        "e20e7eb3-a414-4707-8968-67893ff5de1e",
+        "fb28cfcf-f88c-4934-856b-7e397103df0f"
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1770,
+      "latencySamplesMs": [
+        1850,
+        1770
+      ]
+    },
+    {
+      "id": "structured-12",
+      "type": "structured",
+      "query": "giay nike co nhan tao size 40 duoi 3tr",
+      "returnedIds": [
+        "4c56a2a2-dedc-47d3-915a-72aad53fb2ab",
+        "3f58c864-b0bd-45b6-b246-eac0eb987c81",
+        "47a4c9f4-90f6-4374-bd7d-546023b0d665"
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1301,
+      "latencySamplesMs": [
+        1500,
+        1301
+      ]
+    },
+    {
+      "id": "structured-13",
+      "type": "structured",
+      "query": "ao chay bo nam mau do size M",
+      "returnedIds": [
+        "7c31255c-1e95-4a87-b752-246a369670b5"
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1530,
+      "latencySamplesMs": [
+        1760,
+        1530
+      ]
+    },
+    {
+      "id": "structured-14",
+      "type": "structured",
+      "query": "áo nữ màu vàng size S",
+      "returnedIds": [
+        "04ae4c5f-d30b-46fa-b959-c6dd695a75a8"
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1339,
+      "latencySamplesMs": [
+        1460,
+        1339
+      ]
+    },
+    {
+      "id": "structured-15",
+      "type": "structured",
+      "query": "giày cỏ thật giá từ 4 triệu đến 5 triệu size 43",
+      "returnedIds": [],
+      "filtersOk": true,
+      "recallHit": false,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1617,
+      "latencySamplesMs": [
+        1543,
+        1617
+      ]
+    },
+    {
+      "id": "semantic-01",
+      "type": "semantic",
+      "query": "giày tốc độ cho tiền đạo bứt tốc",
+      "returnedIds": [
+        "1a814912-dffc-4811-bbd6-02090b010c1c",
+        "ab90b889-e398-48b5-afdc-61442e1aec80",
+        "26dec191-01f5-4886-a64d-b2807079db58",
+        "3f58c864-b0bd-45b6-b246-eac0eb987c81",
+        "4c56a2a2-dedc-47d3-915a-72aad53fb2ab"
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1828,
+      "latencySamplesMs": [
+        1762,
+        1828
+      ]
+    },
+    {
+      "id": "semantic-02",
+      "type": "semantic",
+      "query": "áo nhẹ thoáng khí chạy trời nóng",
+      "returnedIds": [
+        "26a0edca-8871-4482-994c-17a83355fa33",
+        "ffb83692-2001-400e-90ff-7eeb8f510373",
+        "e112023e-aa09-4a4e-b0fd-d7e1d496f06b",
+        "c71597cf-b444-4ce4-9c05-6210fc3cebb5",
+        "71831629-35bd-4a8d-8473-752e9de01609"
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1798,
+      "latencySamplesMs": [
+        1483,
+        1798
+      ]
+    },
+    {
+      "id": "semantic-03",
+      "type": "semantic",
+      "query": "trang phục chạy bộ buổi tối dễ nhìn thấy",
+      "returnedIds": [
+        "067ff97f-f0fc-449d-b39b-f9bffec54bbf",
+        "14c0492e-8364-40a5-986f-186dfa86ddae",
+        "c96104a4-3511-4feb-b96d-5a8e7d58232d",
+        "64ad1470-fb76-442e-ae1f-029c32f28672"
+      ],
+      "filtersOk": true,
+      "recallHit": false,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1510,
+      "latencySamplesMs": [
+        1558,
+        1510
+      ]
+    },
+    {
+      "id": "semantic-04",
+      "type": "semantic",
+      "query": "quần chạy trail có lớp co giãn",
+      "returnedIds": [
+        "5c1cc97a-1bbd-4aef-a20e-0cf2e94fd666",
+        "25dedef8-d3a1-4b9f-88b5-7cc730ad03ea",
+        "864ba6c0-61ff-4594-a08c-7df190afd80e",
+        "e20e7eb3-a414-4707-8968-67893ff5de1e",
+        "3fbc8be1-fc0a-4f96-a0e2-9ab1580daa0b"
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1550,
+      "latencySamplesMs": [
+        1500,
+        1550
+      ]
+    },
+    {
+      "id": "semantic-05",
+      "type": "semantic",
+      "query": "áo thi đấu câu lạc bộ sân nhà",
+      "returnedIds": [
+        "b3ba7f5c-4bc7-4abe-af64-a00193962ae4",
+        "c1d70946-e9f0-42f4-976e-335f84efa5c0",
+        "1a08f249-6f02-43dd-8b38-adc41ea694c0",
+        "26a0edca-8871-4482-994c-17a83355fa33",
+        "0e7f523a-c114-4a4f-aa2e-7fc28802e8f9"
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1571,
+      "latencySamplesMs": [
+        1610,
+        1571
+      ]
+    },
+    {
+      "id": "semantic-06",
+      "type": "semantic",
+      "query": "áo đội tuyển quốc gia bản sân khách",
+      "returnedIds": [
+        "76ad31de-cafd-40e2-8cc9-1553b9e7eb3a",
+        "4a9a0036-53ee-4b5d-99f3-4340996ebb3f",
+        "103c5964-659c-4a3b-85bd-517497ef37ba",
+        "b83e4541-8188-4d48-ba53-103e69b5e1f2",
+        "b3ba7f5c-4bc7-4abe-af64-a00193962ae4"
+      ],
+      "filtersOk": true,
+      "recallHit": false,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1530,
+      "latencySamplesMs": [
+        1520,
+        1530
+      ]
+    },
+    {
+      "id": "semantic-07",
+      "type": "semantic",
+      "query": "giày đá bóng cao cấp không dây",
+      "returnedIds": [
+        "921c53f7-495d-43d5-9c03-aacfc5fd95e3",
+        "78a0e26f-ca7e-497d-a66c-eec26c4c61c2",
+        "4bd80b15-d729-4042-aafe-a68fcb2989d5",
+        "b98330db-4c1a-44ea-b596-4b01e2d54b70",
+        "1a814912-dffc-4811-bbd6-02090b010c1c"
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1661,
+      "latencySamplesMs": [
+        1510,
+        1661
+      ]
+    },
+    {
+      "id": "semantic-08",
+      "type": "semantic",
+      "query": "giày Nhật Bản da mềm cao cấp",
+      "returnedIds": [
+        "76cbdce1-5e10-45d8-9f24-92fb605ba0cd",
+        "921c53f7-495d-43d5-9c03-aacfc5fd95e3",
+        "98b67df5-a7ba-4c9a-8ebc-7ffcd07d41e8",
+        "53d310ac-efd8-4f40-81b3-56a93c011328",
+        "1a814912-dffc-4811-bbd6-02090b010c1c"
+      ],
+      "filtersOk": true,
+      "recallHit": false,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1551,
+      "latencySamplesMs": [
+        1589,
+        1551
+      ]
+    },
+    {
+      "id": "semantic-09",
+      "type": "semantic",
+      "query": "áo chạy đua nhẹ cho ngày thi đấu",
+      "returnedIds": [
+        "e112023e-aa09-4a4e-b0fd-d7e1d496f06b",
+        "ffb83692-2001-400e-90ff-7eeb8f510373",
+        "132c2fa0-a142-43d6-bf8d-9d18feaa0ba7",
+        "0935a269-25b5-4e0c-a5fe-5c52ddd8f4cf",
+        "c71597cf-b444-4ce4-9c05-6210fc3cebb5"
+      ],
+      "filtersOk": true,
+      "recallHit": false,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1481,
+      "latencySamplesMs": [
+        1539,
+        1481
+      ]
+    },
+    {
+      "id": "semantic-10",
+      "type": "semantic",
+      "query": "quần short hai lớp chạy đường dài",
+      "returnedIds": [
+        "5c1cc97a-1bbd-4aef-a20e-0cf2e94fd666",
+        "3fbc8be1-fc0a-4f96-a0e2-9ab1580daa0b",
+        "fb28cfcf-f88c-4934-856b-7e397103df0f",
+        "e20e7eb3-a414-4707-8968-67893ff5de1e",
+        "5c647dc5-15cf-4b8c-8d03-bb46f719d28b"
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1505,
+      "latencySamplesMs": [
+        1744,
+        1505
+      ]
+    },
+    {
+      "id": "semantic-11",
+      "type": "semantic",
+      "query": "áo ba lỗ chạy marathon nữ",
+      "returnedIds": [
+        "b3ba7f5c-4bc7-4abe-af64-a00193962ae4",
+        "eb6d44b9-9b6b-485c-bfb4-c641dac6fa9d",
+        "c2ea4a67-180b-48c8-a66e-4ba615951301",
+        "fbdb05b3-d190-482e-843d-99a2c08d5c35",
+        "14c0492e-8364-40a5-986f-186dfa86ddae"
+      ],
+      "filtersOk": true,
+      "recallHit": false,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1738,
+      "latencySamplesMs": [
+        1772,
+        1738
+      ]
+    },
+    {
+      "id": "semantic-12",
+      "type": "semantic",
+      "query": "áo dài tay chạy trời lạnh",
+      "returnedIds": [
+        "b3ba7f5c-4bc7-4abe-af64-a00193962ae4",
+        "26a0edca-8871-4482-994c-17a83355fa33",
+        "c1d70946-e9f0-42f4-976e-335f84efa5c0",
+        "1a08f249-6f02-43dd-8b38-adc41ea694c0",
+        "103c5964-659c-4a3b-85bd-517497ef37ba"
+      ],
+      "filtersOk": true,
+      "recallHit": false,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1691,
+      "latencySamplesMs": [
+        1510,
+        1691
+      ]
+    },
+    {
+      "id": "semantic-13",
+      "type": "semantic",
+      "query": "áo hoa nữ chạy bộ",
+      "returnedIds": [
+        "04ae4c5f-d30b-46fa-b959-c6dd695a75a8",
+        "067ff97f-f0fc-449d-b39b-f9bffec54bbf",
+        "c96104a4-3511-4feb-b96d-5a8e7d58232d",
+        "f731014b-e05f-4def-8d07-9029e44d313c",
+        "6170d7b7-dde7-4f17-a1c0-757a6e9f056f"
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1788,
+      "latencySamplesMs": [
+        1800,
+        1788
+      ]
+    },
+    {
+      "id": "semantic-14",
+      "type": "semantic",
+      "query": "giày kiểm soát bóng cho tiền vệ",
+      "returnedIds": [
+        "1a814912-dffc-4811-bbd6-02090b010c1c",
+        "76cbdce1-5e10-45d8-9f24-92fb605ba0cd",
+        "53d310ac-efd8-4f40-81b3-56a93c011328",
+        "d3d129ad-8cc9-4918-8ee4-4aad4e4adf6e",
+        "921c53f7-495d-43d5-9c03-aacfc5fd95e3"
+      ],
+      "filtersOk": true,
+      "recallHit": false,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1510,
+      "latencySamplesMs": [
+        1502,
+        1510
+      ]
+    },
+    {
+      "id": "semantic-15",
+      "type": "semantic",
+      "query": "áo bóng đá cổ điển biểu tượng câu lạc bộ",
+      "returnedIds": [
+        "1a08f249-6f02-43dd-8b38-adc41ea694c0",
+        "26a0edca-8871-4482-994c-17a83355fa33",
+        "b3ba7f5c-4bc7-4abe-af64-a00193962ae4",
+        "c1d70946-e9f0-42f4-976e-335f84efa5c0",
+        "eb6d44b9-9b6b-485c-bfb4-c641dac6fa9d"
+      ],
+      "filtersOk": true,
+      "recallHit": false,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1781,
+      "latencySamplesMs": [
+        1768,
+        1781
+      ]
+    },
+    {
+      "id": "typo-01",
+      "type": "typo",
+      "query": "nik mercurial vapr 16",
+      "returnedIds": [
+        "3f58c864-b0bd-45b6-b246-eac0eb987c81",
+        "98b67df5-a7ba-4c9a-8ebc-7ffcd07d41e8",
+        "d3d129ad-8cc9-4918-8ee4-4aad4e4adf6e",
+        "4c56a2a2-dedc-47d3-915a-72aad53fb2ab",
+        "fbccb321-cffb-46b4-8388-046577d6ba8c"
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1539,
+      "latencySamplesMs": [
+        1511,
+        1539
+      ]
+    },
+    {
+      "id": "typo-02",
+      "type": "typo",
+      "query": "adiddas predtor elite",
+      "returnedIds": [
+        "78a0e26f-ca7e-497d-a66c-eec26c4c61c2",
+        "b98330db-4c1a-44ea-b596-4b01e2d54b70",
+        "76cbdce1-5e10-45d8-9f24-92fb605ba0cd",
+        "f12743fa-69c3-4d60-bcce-6ed3790b6832",
+        "53d310ac-efd8-4f40-81b3-56a93c011328"
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1521,
+      "latencySamplesMs": [
+        1740,
+        1521
+      ]
+    },
+    {
+      "id": "typo-03",
+      "type": "typo",
+      "query": "giay co nhan tao nike",
+      "returnedIds": [
+        "4c56a2a2-dedc-47d3-915a-72aad53fb2ab",
+        "76cbdce1-5e10-45d8-9f24-92fb605ba0cd",
+        "3f58c864-b0bd-45b6-b246-eac0eb987c81",
+        "47a4c9f4-90f6-4374-bd7d-546023b0d665"
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1250,
+      "latencySamplesMs": [
+        1518,
+        1250
+      ]
+    },
+    {
+      "id": "typo-04",
+      "type": "typo",
+      "query": "ao chay bo nu mau hong",
+      "returnedIds": [
+        "81362022-dd99-4e23-806b-e62e161c04bb"
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1333,
+      "latencySamplesMs": [
+        1520,
+        1333
+      ]
+    },
+    {
+      "id": "typo-05",
+      "type": "typo",
+      "query": "mizno morelia neo",
+      "returnedIds": [
+        "eb08d9cb-83e1-4afa-bc0c-3c677dcfacf3",
+        "ab90b889-e398-48b5-afdc-61442e1aec80",
+        "1a814912-dffc-4811-bbd6-02090b010c1c",
+        "26dec191-01f5-4886-a64d-b2807079db58",
+        "4bd80b15-d729-4042-aafe-a68fcb2989d5"
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1519,
+      "latencySamplesMs": [
+        1589,
+        1519
+      ]
+    },
+    {
+      "id": "typo-06",
+      "type": "typo",
+      "query": "ao MU san nha",
+      "returnedIds": [
+        "9b06f6b0-7037-4ec1-9a09-b994f7bc9b8e",
+        "71831629-35bd-4a8d-8473-752e9de01609",
+        "26a0edca-8871-4482-994c-17a83355fa33",
+        "b3ba7f5c-4bc7-4abe-af64-a00193962ae4",
+        "0a03a06d-9986-4102-b5e7-49173c0bfa33"
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1518,
+      "latencySamplesMs": [
+        1531,
+        1518
+      ]
+    },
+    {
+      "id": "typo-07",
+      "type": "typo",
+      "query": "arsnal home jersy",
+      "returnedIds": [
+        "b3ba7f5c-4bc7-4abe-af64-a00193962ae4",
+        "1a08f249-6f02-43dd-8b38-adc41ea694c0",
+        "8f729f41-a3a0-44fa-88e7-282e660007d5",
+        "c2ea4a67-180b-48c8-a66e-4ba615951301",
+        "093b5464-33e6-4482-8d22-bcc1b206f8f8"
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1539,
+      "latencySamplesMs": [
+        1601,
+        1539
+      ]
+    },
+    {
+      "id": "typo-08",
+      "type": "typo",
+      "query": "womens tech race tshrt",
+      "returnedIds": [
+        "5c647dc5-15cf-4b8c-8d03-bb46f719d28b",
+        "c93fe810-cafc-4e63-b13b-ea97a0349448",
+        "663f5170-9c34-41d6-ab80-a55246765672",
+        "ae8189e6-833d-4983-984f-270a59934f5c",
+        "47896feb-ea05-4f7d-a5bf-176aa3a35bd7"
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1520,
+      "latencySamplesMs": [
+        2220,
+        1520
+      ]
+    },
+    {
+      "id": "typo-09",
+      "type": "typo",
+      "query": "quan chay bo den duoi 500k",
+      "returnedIds": [
+        "663f5170-9c34-41d6-ab80-a55246765672",
+        "ae8189e6-833d-4983-984f-270a59934f5c",
+        "e20e7eb3-a414-4707-8968-67893ff5de1e",
+        "8c7e365e-15c9-4308-b706-16a0a4889d90",
+        "5c1cc97a-1bbd-4aef-a20e-0cf2e94fd666"
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1546,
+      "latencySamplesMs": [
+        1684,
+        1546
+      ]
+    },
+    {
+      "id": "typo-10",
+      "type": "typo",
+      "query": "giay da banh toc do tien dao",
+      "returnedIds": [
+        "1a814912-dffc-4811-bbd6-02090b010c1c",
+        "26dec191-01f5-4886-a64d-b2807079db58",
+        "47a4c9f4-90f6-4374-bd7d-546023b0d665",
+        "4bd80b15-d729-4042-aafe-a68fcb2989d5",
+        "921c53f7-495d-43d5-9c03-aacfc5fd95e3"
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "HYBRID",
+      "latencyMs": 1561,
+      "latencySamplesMs": [
+        1751,
+        1561
+      ]
+    },
+    {
+      "id": "zero-01",
+      "type": "zero",
+      "query": "",
+      "returnedIds": [],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "VALIDATION",
+      "latencyMs": 0,
+      "latencySamplesMs": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": "zero-02",
+      "type": "zero",
+      "query": "điện thoại iphone 99 siêu cấp",
+      "returnedIds": [
+        "e112023e-aa09-4a4e-b0fd-d7e1d496f06b",
+        "12f1875f-a908-4cb2-8bdf-45b98a04558d",
+        "093b5464-33e6-4482-8d22-bcc1b206f8f8",
+        "76cbdce1-5e10-45d8-9f24-92fb605ba0cd",
+        "53d310ac-efd8-4f40-81b3-56a93c011328"
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": false,
+      "mode": "HYBRID",
+      "latencyMs": 1491,
+      "latencySamplesMs": [
+        1507,
+        1491
+      ]
+    },
+    {
+      "id": "zero-03",
+      "type": "zero",
+      "query": "giày Nike dưới 100 nghìn",
+      "returnedIds": [],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1277,
+      "latencySamplesMs": [
+        1488,
+        1277
+      ]
+    },
+    {
+      "id": "zero-04",
+      "type": "zero",
+      "query": "áo nữ size 999 màu cam",
+      "returnedIds": [],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": true,
+      "mode": "KEYWORD",
+      "latencyMs": 1270,
+      "latencySamplesMs": [
+        1503,
+        1270
+      ]
+    },
+    {
+      "id": "zero-05",
+      "type": "zero",
+      "query": "zzzz-no-catalog-match-93847",
+      "returnedIds": [
+        "1a814912-dffc-4811-bbd6-02090b010c1c",
+        "eb08d9cb-83e1-4afa-bc0c-3c677dcfacf3",
+        "26dec191-01f5-4886-a64d-b2807079db58",
+        "78a0e26f-ca7e-497d-a66c-eec26c4c61c2",
+        "4bd80b15-d729-4042-aafe-a68fcb2989d5"
+      ],
+      "filtersOk": true,
+      "recallHit": true,
+      "zeroOk": false,
+      "mode": "HYBRID",
+      "latencyMs": 1531,
+      "latencySamplesMs": [
+        1531,
+        1531
+      ]
+    }
+  ]
+}

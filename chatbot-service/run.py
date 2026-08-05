@@ -6,5 +6,5 @@ if __name__ == "__main__":
         "app.main:app",
         host=settings.CHATBOT_HOST,
         port=settings.CHATBOT_PORT,
-        reload=True,
+        reload=settings.CHATBOT_RELOAD,
     )

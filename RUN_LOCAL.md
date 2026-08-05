@@ -110,3 +110,20 @@ Dừng backend, admin, storefront hoặc AI service bằng `Ctrl+C` trong đúng
 - Visual search: <http://localhost:8090/health/ready>
 
 Dữ liệu chính nằm trên Supabase. Docker Compose không chạy PostgreSQL, backend, frontend hoặc visual-search service.
+# Product hybrid search
+
+Product hybrid search requires Redis and RabbitMQ from Docker, the customer
+chatbot service, its indexing worker, and the Spring backend.
+
+```powershell
+docker compose up -d redis rabbitmq
+.\start-chatbot-service.ps1
+.\start-product-search-indexer.ps1
+.\start-backend.ps1
+```
+
+Use the corresponding `.cmd` launchers when starting from Command Prompt.
+`PRODUCT_SEARCH_INTERNAL_TOKEN` must be present and identical in
+`backend/.env` and `chatbot-service/.env`. Keep
+`PRODUCT_HYBRID_SEARCH_ENABLED=false` until migrations, embedding coverage,
+the queue consumer, and the acceptance benchmark have been verified.

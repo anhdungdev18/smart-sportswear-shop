@@ -84,7 +84,9 @@ class SeedDataIntegrationTest extends AbstractIntegrationTest {
         int expectedOrderDelta = seedOrdersAlreadyExisted ? 0 : 4;
         int expectedPendingDelta = seedOrdersAlreadyExisted ? 0 : 1;
         int expectedLowStockDelta = seedOrdersAlreadyExisted ? 0 : 2;
-        BigDecimal expectedGrossDelta = seedOrdersAlreadyExisted ? BigDecimal.ZERO : new BigDecimal("780000");
+        // Gross includes both the paid VNPay order (780,000) and delivered COD
+        // order (3 x 129,000), whose payment status becomes PAID on delivery.
+        BigDecimal expectedGrossDelta = seedOrdersAlreadyExisted ? BigDecimal.ZERO : new BigDecimal("1167000");
         BigDecimal expectedRealizedDelta = seedOrdersAlreadyExisted ? BigDecimal.ZERO : new BigDecimal("387000");
 
         assertThat(seededOverview.totalOrders() - baselineOverview.totalOrders()).isEqualTo(expectedOrderDelta);

@@ -210,8 +210,9 @@ public class PaymentService {
         payment.setBankCode(params.get("vnp_BankCode"));
         paymentRepository.save(payment);
 
-        order.setPaymentStatus(resolvedStatus);
-        if (order.getOrderStatus() == OrderStatus.CANCELLED && resolvedStatus == PaymentStatus.PAID) {
+        if (order.getOrderStatus() != OrderStatus.CANCELLED) {
+            order.setPaymentStatus(resolvedStatus);
+        } else if (resolvedStatus == PaymentStatus.PAID) {
             order.setInternalNote("VNPay paid after order cancellation - refund required. TxnRef: "
                     + payment.getTransactionRef());
         }

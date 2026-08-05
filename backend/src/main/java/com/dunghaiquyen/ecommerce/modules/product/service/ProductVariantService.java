@@ -12,6 +12,8 @@ import com.dunghaiquyen.ecommerce.modules.product.entity.VariantStatus;
 import com.dunghaiquyen.ecommerce.modules.product.mapper.ProductMapper;
 import com.dunghaiquyen.ecommerce.modules.product.repository.ProductRepository;
 import com.dunghaiquyen.ecommerce.modules.product.repository.ProductVariantRepository;
+import com.dunghaiquyen.ecommerce.visualsearch.outbox.CatalogEventType;
+import com.dunghaiquyen.ecommerce.visualsearch.outbox.CatalogOutboxService;
 import java.util.UUID;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.cache.annotation.CacheEvict;
@@ -31,14 +33,17 @@ public class ProductVariantService {
     private final ProductRepository productRepository;
     private final ProductVariantRepository variantRepository;
     private final ProductMapper productMapper;
+    private final CatalogOutboxService catalogOutboxService;
 
     public ProductVariantService(
             ProductRepository productRepository,
             ProductVariantRepository variantRepository,
-            ProductMapper productMapper) {
+            ProductMapper productMapper,
+            CatalogOutboxService catalogOutboxService) {
         this.productRepository = productRepository;
         this.variantRepository = variantRepository;
         this.productMapper = productMapper;
+        this.catalogOutboxService = catalogOutboxService;
     }
 
     @Transactional
@@ -69,6 +74,7 @@ public class ProductVariantService {
         } catch (DataIntegrityViolationException ex) {
             throw new BusinessRuleException("SKU already exists: " + request.sku());
         }
+        catalogOutboxService.append(CatalogEventType.PRODUCT_REINDEX_REQUESTED, productId, null);
         return productMapper.toVariantResponse(variant);
     }
 
@@ -98,6 +104,8 @@ public class ProductVariantService {
         }
 
         variant = variantRepository.save(variant);
+        catalogOutboxService.append(
+                CatalogEventType.PRODUCT_REINDEX_REQUESTED, variant.getProduct().getId(), null);
         return productMapper.toVariantResponse(variant);
     }
 }

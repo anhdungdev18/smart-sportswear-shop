@@ -11,7 +11,11 @@ class ProductFilter:
     sport_type_hint: str | None = None  # ILIKE on p.sport_type
     gender: str | None = None           # MEN | WOMEN | UNISEX
     brand: str | None = None            # exact brands.name
-    color: str | None = None            # ILIKE token on pv.color
+    category: str | None = None
+    color: str | None = None
+    color_family: str | None = None
+    surface: str | None = None
+    size: str | None = None
     price_min: float | None = None
     price_max: float | None = None
     feature_hints: list[str] = field(default_factory=list)
@@ -26,6 +30,10 @@ class ProductFilter:
             gender=parsed.gender,
             brand=parsed.brand,
             color=parsed.color,
+            category=parsed.category,
+            color_family=parsed.color_family,
+            surface=parsed.surface,
+            size=parsed.size,
             price_min=parsed.price_min,
             price_max=parsed.price_max,
             feature_hints=parsed.feature_hints,
@@ -38,7 +46,10 @@ class ProductFilter:
             self.sport_type_hint,
             self.gender,
             self.brand,
+            self.category,
             self.color,
+            self.surface,
+            self.size,
             self.price_min,
             self.price_max,
         ])
