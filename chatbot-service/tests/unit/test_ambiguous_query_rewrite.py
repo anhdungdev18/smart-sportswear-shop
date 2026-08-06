@@ -47,3 +47,36 @@ def test_product_search_uses_ambiguous_rewrite_before_original(monkeypatch):
 
     assert result.total == 1
     assert calls == ["áo khoác giữ ấm"]
+
+
+def test_ambiguous_rewrite_with_no_match_does_not_retry_broad_original(monkeypatch):
+    from app.schemas.product import AppliedFilters, ProductSearchResult
+    from app.services import product_search_service as service
+
+    calls: list[str] = []
+
+    async def fake_rewrite(_query: str) -> str:
+        return "áo khoác giữ ấm"
+
+    async def fake_pipeline(query: str, limit: int, parsed=None) -> ProductSearchResult:
+        calls.append(query)
+        return ProductSearchResult(items=[], total=0, appliedFilters=AppliedFilters())
+
+    monkeypatch.setattr(service.llm_rewriter, "rewrite_ambiguous_need", fake_rewrite)
+    monkeypatch.setattr(service, "_pipeline", fake_pipeline)
+
+    result = asyncio.run(service.search("tìm áo đi Đà Lạt"))
+
+    assert result.total == 0
+    assert calls == ["áo khoác giữ ấm"]
+
+
+def test_ambiguous_rewrite_falls_back_to_controlled_synonym_when_llm_unavailable(monkeypatch):
+    from app.retrieval.product.query_rewrite import llm_rewriter
+    from app.services import llm_client
+
+    monkeypatch.setattr(llm_client, "is_available", lambda: False)
+
+    result = asyncio.run(llm_rewriter.rewrite_ambiguous_need("tìm áo đi Đà Lạt"))
+
+    assert "áo khoác giữ ấm" in result

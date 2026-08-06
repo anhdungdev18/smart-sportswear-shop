@@ -1,5 +1,5 @@
 import asyncio
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from uuid import uuid4
 
 import pytest
@@ -22,7 +22,7 @@ def make_event(event_type="PRODUCT_IMAGE_CREATED"):
             "eventVersion": 1,
             "productId": str(product_id),
             "imageId": str(uuid4()) if "IMAGE" in event_type else None,
-            "occurredAt": datetime.now(UTC).isoformat(),
+            "occurredAt": datetime.now(timezone.utc).isoformat(),
             "traceId": "test",
         }
     )

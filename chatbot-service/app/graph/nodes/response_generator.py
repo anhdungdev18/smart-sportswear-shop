@@ -327,6 +327,13 @@ async def response_generator_node(state: AgentState) -> dict:
     if intent == "EXPIRED_CONFIRMATION":
         return {"reply": "Thao tác đã hết hạn xác nhận. Bạn hãy gửi lại yêu cầu nếu muốn tiếp tục."}
 
+    # Empty retrieval results are deterministic. Letting the LLM elaborate here
+    # can suggest product types that are not present in the current catalog.
+    if intent in {"PRODUCT_SEARCH", "RECOMMEND_PRODUCTS", "SKU_LOOKUP"}:
+        if result and not (result.get("items") or []):
+            fallback = _FALLBACK_BUILDERS.get(intent, _FALLBACK_BUILDERS["UNKNOWN"])
+            return {"reply": fallback(result)}
+
     # 3. LLM-generated reply
     reply = await _llm_reply(state, intent, result)
     logger.info(f"[{sid}] response_generated | intent={intent} len={len(reply)}")

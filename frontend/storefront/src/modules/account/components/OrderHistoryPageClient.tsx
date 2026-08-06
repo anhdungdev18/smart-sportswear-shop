@@ -3,11 +3,12 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getApiErrorMessage } from "@/lib/api-errors";
-import { getAccessToken } from "@/lib/session";
+import { useAuthenticated } from "@/lib/use-authenticated";
 import { cancelOrder, listMyOrders } from "@/modules/account/api";
 import type { OrderResponse } from "@/modules/account/types";
 
 export function OrderHistoryPageClient() {
+  const authenticated = useAuthenticated();
   const [orders, setOrders] = useState<OrderResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -28,12 +29,12 @@ export function OrderHistoryPageClient() {
   };
 
   useEffect(() => {
-    if (!getAccessToken()) {
+    if (!authenticated) {
       setLoading(false);
       return;
     }
     void loadOrders();
-  }, []);
+  }, [authenticated]);
 
   const handleCancel = async (id: string) => {
     setCancellingId(id);
@@ -52,7 +53,7 @@ export function OrderHistoryPageClient() {
 
   const canCancel = (order: OrderResponse) => order.orderStatus === "PENDING_CONFIRMATION";
 
-  if (!getAccessToken()) {
+  if (!authenticated) {
     return (
       <main className="site-main page-below-header-spacious flex-1 border-b border-ivy-hairline">
         <div className="mx-auto max-w-[1380px] px-4 pb-24">

@@ -1,11 +1,11 @@
 from datetime import datetime
-from enum import StrEnum
+from enum import Enum
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
-class CatalogEventType(StrEnum):
+class CatalogEventType(str, Enum):
     PRODUCT_IMAGE_CREATED = "PRODUCT_IMAGE_CREATED"
     PRODUCT_IMAGE_DELETED = "PRODUCT_IMAGE_DELETED"
     PRODUCT_ACTIVATED = "PRODUCT_ACTIVATED"

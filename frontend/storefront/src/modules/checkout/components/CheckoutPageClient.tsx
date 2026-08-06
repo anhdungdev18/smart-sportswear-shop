@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { getApiErrorMessage } from "@/lib/api-errors";
-import { getAccessToken } from "@/lib/session";
+import { useAuthenticated } from "@/lib/use-authenticated";
 import {
   createAddress,
   listAddresses,
@@ -26,6 +26,7 @@ const EMPTY_ADDRESS_FORM = {
 };
 
 export function CheckoutPageClient() {
+  const authenticated = useAuthenticated();
   const [addresses, setAddresses] = useState<AddressResponse[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState("");
   const [addressForm, setAddressForm] = useState(EMPTY_ADDRESS_FORM);
@@ -56,7 +57,7 @@ export function CheckoutPageClient() {
 
   useEffect(() => {
     const load = async () => {
-      if (!getAccessToken()) {
+      if (!authenticated) {
         setLoading(false);
         return;
       }
@@ -76,7 +77,7 @@ export function CheckoutPageClient() {
     };
 
     void load();
-  }, [refreshPreview]);
+  }, [authenticated, refreshPreview]);
 
   const handleCreateAddress = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -156,7 +157,7 @@ export function CheckoutPageClient() {
           <h1 className="text-[40px] font-semibold uppercase tracking-[0.06em] text-ivy-dark">Thanh toán</h1>
         </div>
 
-        {!getAccessToken() ? (
+        {!authenticated ? (
           <div className="border border-ivy-hairline px-6 py-10 text-[15px] text-ivy-text">
             Bạn cần đăng nhập tài khoản khách hàng để thanh toán.
           </div>

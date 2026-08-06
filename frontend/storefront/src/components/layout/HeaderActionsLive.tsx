@@ -14,6 +14,7 @@ import {
   ShoppingBagIcon,
 } from "@/components/shared/icons";
 import { clearSession, getAccessToken, getRefreshToken, onSessionChange } from "@/lib/session";
+import { ApiError } from "@/lib/api";
 import { getMe, logout } from "@/modules/auth/api";
 import { getWishlist } from "@/modules/account/api";
 import { getCart } from "@/modules/cart/api";
@@ -34,7 +35,8 @@ export function HeaderActionsLive() {
   const [wishlistCount, setWishlistCount] = useState(0);
 
   const refresh = useCallback(async () => {
-    if (!getAccessToken()) {
+    const accessToken = getAccessToken();
+    if (!accessToken) {
       try {
         const cart = await getCart();
         setCartCount(cart.items.reduce((sum, item) => sum + item.quantity, 0));
@@ -45,6 +47,11 @@ export function HeaderActionsLive() {
       setWishlistCount(0);
       return;
     }
+
+    // Keep the authenticated shell stable while parallel header requests run.
+    // Navigation can abort in-flight fetches; an abort/network failure is not
+    // evidence that the token is invalid and must not log the customer out.
+    setIsAuthenticated(true);
 
     const [cartResult, meResult, wishlistResult] = await Promise.allSettled([
       getCart(),
@@ -61,9 +68,11 @@ export function HeaderActionsLive() {
     if (meResult.status === "fulfilled") {
       setIsAuthenticated(true);
     } else {
-      setIsAuthenticated(false);
-      setWishlistCount(0);
-      clearSession();
+      if (meResult.reason instanceof ApiError && meResult.reason.status === 401) {
+        setIsAuthenticated(false);
+        setWishlistCount(0);
+        clearSession();
+      }
       return;
     }
 
@@ -97,7 +106,7 @@ export function HeaderActionsLive() {
   };
 
   return (
-    <div className="right-header flex h-10 items-center gap-6">
+    <div className="right-header flex h-10 items-center gap-4 sm:gap-5 md:gap-6">
       <div className="icon group relative hidden md:block">
         <button type="button" className="flex h-10 w-5 items-center justify-center text-ivy-dark" aria-label="Hỗ trợ khách hàng">
           <HeadphonesIcon className="size-4.5" />

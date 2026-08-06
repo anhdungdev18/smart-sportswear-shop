@@ -114,13 +114,16 @@ async def rewrite(query: str) -> str:
 async def rewrite_ambiguous_need(query: str) -> str:
     """Rewrite an occasion-based query before retrieval, with constraint guards."""
     from app.services import llm_client
+    from app.retrieval.product.query_rewrite import synonym_rewriter
+
+    fallback = synonym_rewriter.rewrite(query)
 
     if not llm_client.is_available():
-        return query
+        return fallback
 
     catalog = _load_catalog()
     if not catalog:
-        return query
+        return fallback
 
     try:
         response = await llm_client.chat_complete(
@@ -130,15 +133,15 @@ async def rewrite_ambiguous_need(query: str) -> str:
         )
         rewritten = " ".join((response or "").strip().strip('"').split())
         if not rewritten or len(rewritten) > 180:
-            return query
+            return fallback
         if not _preserves_explicit_constraints(query, rewritten):
             logger.warning("llm_rewriter | ambiguous_rewrite_rejected reason=constraint_changed")
-            return query
+            return fallback
         logger.info(f"llm_rewriter | ambiguous original={query!r} rewritten={rewritten!r}")
         return rewritten
     except Exception as exc:
         logger.warning(f"llm_rewriter | ambiguous_error={exc!r} returning_original")
-        return query
+        return fallback
 
 
 def _preserves_explicit_constraints(original: str, rewritten: str) -> bool:

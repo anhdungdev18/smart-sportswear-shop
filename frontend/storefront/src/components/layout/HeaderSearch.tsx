@@ -89,7 +89,7 @@ export function HeaderSearch() {
           event.preventDefault();
           submit();
         }}
-        className="flex h-9.5 w-120 items-center gap-2 rounded-lg border border-ivy-hairline bg-white px-4 text-[12px] text-ivy-text lg:w-150"
+        className="flex h-9.5 w-full items-center gap-2 rounded-lg border border-ivy-hairline bg-white px-4 text-[12px] text-ivy-text md:w-120 lg:w-150"
       >
         <input
           name="q"

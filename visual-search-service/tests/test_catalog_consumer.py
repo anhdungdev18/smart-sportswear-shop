@@ -1,6 +1,6 @@
 import asyncio
 import json
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from types import SimpleNamespace
 from uuid import uuid4
 
@@ -21,7 +21,7 @@ def event_payload(**overrides):
         "eventVersion": 1,
         "productId": str(uuid4()),
         "imageId": str(uuid4()),
-        "occurredAt": datetime.now(UTC).isoformat(),
+        "occurredAt": datetime.now(timezone.utc).isoformat(),
         "traceId": "test-trace",
     }
     payload.update(overrides)

@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { getApiErrorMessage } from "@/lib/api-errors";
-import { emitSessionChange, getAccessToken } from "@/lib/session";
+import { emitSessionChange } from "@/lib/session";
+import { useAuthenticated } from "@/lib/use-authenticated";
 import {
   createAddress,
   deleteAddress,
@@ -27,6 +28,7 @@ const EMPTY_ADDRESS = {
 };
 
 export function AccountPageClient() {
+  const authenticated = useAuthenticated();
   const [user, setUser] = useState<AuthUser | null>(null);
   const [addresses, setAddresses] = useState<AddressResponse[]>([]);
   const [orders, setOrders] = useState<OrderResponse[]>([]);
@@ -58,12 +60,12 @@ export function AccountPageClient() {
   };
 
   useEffect(() => {
-    if (!getAccessToken()) {
+    if (!authenticated) {
       setLoading(false);
       return;
     }
     void loadData();
-  }, []);
+  }, [authenticated]);
 
   const resetAddressEditor = () => {
     setEditingAddressId(null);
@@ -152,7 +154,7 @@ export function AccountPageClient() {
     }
   };
 
-  if (!getAccessToken()) {
+  if (!authenticated) {
     return (
       <main className="page-below-header flex-1 border-b border-ivy-hairline">
         <div className="mx-auto max-w-[1180px] px-4 py-16 md:px-0">

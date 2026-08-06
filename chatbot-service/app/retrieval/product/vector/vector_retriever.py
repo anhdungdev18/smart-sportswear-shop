@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from app.config.settings import settings
 from app.retrieval.product.filters.product_filter import ProductFilter
 from app.observability.trace_logger import get_logger
 
@@ -27,5 +28,13 @@ async def retrieve(query_text: str, f: ProductFilter) -> list[dict]:
         surface=f.surface,
         size=f.size,
     )
-    logger.info(f"vector_retriever | hits={len(rows)} query={query_text[:40]!r}")
-    return rows
+    min_similarity = settings.PRODUCT_SEARCH_MIN_SIMILARITY
+    filtered = [
+        row for row in rows
+        if float(row.get("vector_score") or 0.0) >= min_similarity
+    ]
+    logger.info(
+        f"vector_retriever | hits={len(filtered)}/{len(rows)} "
+        f"min_similarity={min_similarity:.2f} query={query_text[:40]!r}"
+    )
+    return filtered

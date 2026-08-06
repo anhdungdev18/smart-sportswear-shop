@@ -240,8 +240,10 @@ async def search(
         if rewritten_need.strip().casefold() != query.strip().casefold():
             logger.info(f"product_search | ambiguous_pre_rewrite rewritten={rewritten_need!r}")
             rewritten_result = await _pipeline(rewritten_need, limit)
-            if rewritten_result.total > 0:
-                return rewritten_result
+            # Once an occasion query has been converted into a concrete catalog
+            # need, falling back to the broad original query reintroduces the
+            # exact false positives the rewrite is meant to prevent.
+            return rewritten_result
 
     # The original query remains the source-of-truth fallback whenever LLM
     # inference fails or the inferred catalog query has no matching inventory.

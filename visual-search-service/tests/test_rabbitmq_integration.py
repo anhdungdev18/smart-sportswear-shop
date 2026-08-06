@@ -1,7 +1,7 @@
 import asyncio
 import json
 import os
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from uuid import uuid4
 
 import aio_pika
@@ -50,7 +50,7 @@ async def _scenario():
         "eventVersion": 1,
         "productId": str(uuid4()),
         "imageId": str(uuid4()),
-        "occurredAt": datetime.now(UTC).isoformat(),
+        "occurredAt": datetime.now(timezone.utc).isoformat(),
         "traceId": "rabbit-integration",
     }
     await channel.default_exchange.publish(

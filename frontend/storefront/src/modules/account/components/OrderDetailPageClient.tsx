@@ -74,7 +74,8 @@ export function OrderDetailPageClient({ orderId }: { orderId: string }) {
     && order.paymentMethod === "VNPAY" && order.paymentStatus !== "PAID";
 
   return (
-    <section className="mx-auto w-full max-w-4xl px-4 py-10 md:px-6">
+    <main className="page-below-header">
+      <section className="mx-auto w-full max-w-4xl px-4 py-10 md:px-6">
       <Link
         href="/tai-khoan"
         className="text-[13px] uppercase tracking-[0.08em] text-ivy-text hover:text-ivy-accent"
@@ -178,6 +179,7 @@ export function OrderDetailPageClient({ orderId }: { orderId: string }) {
           ) : null}
         </article>
       ) : null}
-    </section>
+      </section>
+    </main>
   );
 }

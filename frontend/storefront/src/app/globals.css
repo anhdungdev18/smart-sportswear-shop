@@ -57,8 +57,8 @@
 }
 
 :root {
-  --site-header-main-height: 5rem;
-  --site-header-nav-height: 2.75rem;
+  --site-header-main-height: 6.75rem;
+  --site-header-nav-height: 0rem;
   --site-header-height: calc(var(--site-header-main-height) + var(--site-header-nav-height));
   --site-content-top-gap: clamp(1.5rem, 2.5vw, 2.5rem);
   --background: oklch(1 0 0);
@@ -104,6 +104,13 @@
   --ivy-sale: #ff0000; /* sale labels/badges */
   --ivy-hairline: #e7e8e9; /* borders, dividers */
   --ivy-disabled: #d1d2d4; /* out-of-stock / disabled state */
+}
+
+@media (min-width: 48rem) {
+  :root {
+    --site-header-main-height: 5rem;
+    --site-header-nav-height: 2.75rem;
+  }
 }
 
 @keyframes fade_in_show {

@@ -4,19 +4,21 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { getApiErrorMessage } from "@/lib/api-errors";
-import { emitSessionChange, getAccessToken } from "@/lib/session";
+import { emitSessionChange } from "@/lib/session";
+import { useAuthenticated } from "@/lib/use-authenticated";
 import { getWishlist, removeWishlistItem } from "@/modules/account/api";
 import { NO_IMAGE } from "@/modules/ui/placeholder";
 import type { WishlistResponse } from "@/modules/account/types";
 
 export function WishlistPageClient() {
+  const authenticated = useAuthenticated();
   const [wishlist, setWishlist] = useState<WishlistResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const load = async () => {
-      if (!getAccessToken()) {
+      if (!authenticated) {
         setLoading(false);
         return;
       }
@@ -31,7 +33,7 @@ export function WishlistPageClient() {
     };
 
     void load();
-  }, []);
+  }, [authenticated]);
 
   const handleRemove = async (productId: string) => {
     try {
@@ -56,7 +58,7 @@ export function WishlistPageClient() {
 
         {error ? <p className="mb-6 text-[14px] text-[#C62127]">{error}</p> : null}
 
-        {!getAccessToken() ? (
+        {!authenticated ? (
           <div className="border border-ivy-hairline px-6 py-10 text-[15px] text-ivy-text">
             Bạn cần đăng nhập để đồng bộ danh sách yêu thích.
           </div>
