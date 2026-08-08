@@ -41,9 +41,11 @@ spring:
     out-of-order: false
     # Shared Supabase DB carries migrations owned by other branches/services
     # (forecast-demo, orders-data-source, etc.) that this app doesn't ship.
-    # Ignore those "applied-but-missing-locally" entries so validate doesn't fail;
-    # this app still validates and applies its own migrations normally.
-    ignore-migration-patterns: "*:missing"
+    # Ignore both "applied-but-missing-locally" (other branches deleted/renamed a
+    # migration) and "applied-beyond-local-max" (*:future — another branch/service
+    # shipped a higher version to this shared DB) so validate doesn't fail on drift
+    # this app doesn't own. It still validates and applies its own migrations.
+    ignore-migration-patterns: "*:missing,*:future"
     validate-on-migrate: true
 
   data:
