@@ -177,3 +177,10 @@
     padding-top: calc(var(--site-header-height) + var(--site-content-top-gap));
   }
 }
+
+/* Toast slide-in (see components/ui/Toaster.tsx) */
+@keyframes toast-slide-in {
+  from { opacity: 0; transform: translateX(0.75rem); }
+  to   { opacity: 1; transform: none; }
+}
+.toast-enter { animation: toast-slide-in 0.22s ease-out; }
