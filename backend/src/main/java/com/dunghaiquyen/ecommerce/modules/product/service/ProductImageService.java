@@ -14,8 +14,15 @@ import com.dunghaiquyen.ecommerce.modules.product.repository.ProductImageReposit
 import com.dunghaiquyen.ecommerce.modules.product.repository.ProductRepository;
 import com.dunghaiquyen.ecommerce.visualsearch.outbox.CatalogEventType;
 import com.dunghaiquyen.ecommerce.visualsearch.outbox.CatalogOutboxService;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import org.springframework.beans.factory.annotation.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -31,29 +38,40 @@ public class ProductImageService {
 
     private static final Logger log = LoggerFactory.getLogger(ProductImageService.class);
     private static final long MAX_IMAGE_BYTES = 5L * 1024 * 1024;
+    private static final Set<String> SUPPORTED_IMAGE_CONTENT_TYPES =
+            Set.of("image/jpeg", "image/png", "image/webp");
 
     private final ProductRepository productRepository;
     private final ProductImageRepository imageRepository;
     private final ProductMapper productMapper;
     private final ImageStorageService imageStorageService;
     private final CatalogOutboxService catalogOutboxService;
+    private final Set<String> catalogImageAllowedHosts;
 
     public ProductImageService(
             ProductRepository productRepository,
             ProductImageRepository imageRepository,
             ProductMapper productMapper,
             ImageStorageService imageStorageService,
-            CatalogOutboxService catalogOutboxService) {
+            CatalogOutboxService catalogOutboxService,
+            @Value("${app.visual-search.catalog-image-allowed-hosts:res.cloudinary.com,cdn.shopify.com}")
+                    String catalogImageAllowedHosts) {
         this.productRepository = productRepository;
         this.imageRepository = imageRepository;
         this.productMapper = productMapper;
         this.imageStorageService = imageStorageService;
         this.catalogOutboxService = catalogOutboxService;
+        this.catalogImageAllowedHosts = Arrays.stream(catalogImageAllowedHosts.split(","))
+                .map(String::trim)
+                .filter(value -> !value.isEmpty())
+                .map(value -> value.toLowerCase(Locale.ROOT))
+                .collect(Collectors.toUnmodifiableSet());
     }
 
     /** Legacy flow: admin pastes an already-hosted image URL directly (no upload). Kept side by side with uploadImage - see class javadoc on uploadImage for the tradeoff. */
     @Transactional
     public ProductImageResponse addImage(UUID productId, ImageCreateRequest request) {
+        validateCatalogImageUrl(request.imageUrl());
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found"));
 
@@ -219,11 +237,41 @@ public class ProductImageService {
             throw new BusinessRuleException(HttpStatus.UNPROCESSABLE_ENTITY, "Image file is required");
         }
         String contentType = file.getContentType();
-        if (contentType == null || !contentType.startsWith("image/")) {
-            throw new BusinessRuleException(HttpStatus.UNPROCESSABLE_ENTITY, "Only image files are allowed");
+        if (contentType == null || !SUPPORTED_IMAGE_CONTENT_TYPES.contains(contentType.toLowerCase(Locale.ROOT))) {
+            throw new BusinessRuleException(
+                    HttpStatus.UNPROCESSABLE_ENTITY,
+                    "Only JPEG, PNG and WebP product images are allowed");
         }
         if (file.getSize() > MAX_IMAGE_BYTES) {
             throw new BusinessRuleException(HttpStatus.UNPROCESSABLE_ENTITY, "Image file must be at most 5MB");
+        }
+    }
+
+    /**
+     * Reject a legacy URL import before persisting it when the visual worker
+     * would reject the same source. Redirect targets and resolved IPs are still
+     * revalidated by the worker at download time.
+     */
+    private void validateCatalogImageUrl(String imageUrl) {
+        if (imageUrl == null || imageUrl.isBlank()) {
+            throw new BusinessRuleException(HttpStatus.UNPROCESSABLE_ENTITY, "Image URL is required");
+        }
+        final URI uri;
+        try {
+            uri = new URI(imageUrl);
+        } catch (URISyntaxException ex) {
+            throw new BusinessRuleException(HttpStatus.UNPROCESSABLE_ENTITY, "Image URL is invalid");
+        }
+        String host = uri.getHost();
+        boolean safe = "https".equalsIgnoreCase(uri.getScheme())
+                && host != null
+                && uri.getUserInfo() == null
+                && uri.getPort() == -1
+                && catalogImageAllowedHosts.contains(host.toLowerCase(Locale.ROOT));
+        if (!safe) {
+            throw new BusinessRuleException(
+                    HttpStatus.UNPROCESSABLE_ENTITY,
+                    "Image URL must use HTTPS and an approved catalog image host");
         }
     }
 
