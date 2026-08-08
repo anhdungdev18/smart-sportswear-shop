@@ -234,7 +234,7 @@ function createEmptyVariantForm() {
     color: "",
     price: "",
     compareAtPrice: "",
-    stockQuantity: "0",
+    stockQuantity: "",
     status: "ACTIVE"
   };
 }
@@ -242,11 +242,10 @@ function createEmptyVariantForm() {
 function createEmptyImageForm() {
   return {
     imageUrl: "",
-    publicId: "",
     altText: "",
     color: "",
     isPrimary: false,
-    sortOrder: "0"
+    sortOrder: ""
   };
 }
 
@@ -265,7 +264,7 @@ function createEmptyUploadForm() {
     altText: "",
     color: "",
     isPrimary: false,
-    sortOrder: "0"
+    sortOrder: ""
   };
 }
 
@@ -999,7 +998,9 @@ export function AdminProductsCatalogClient({
       setMessage(null);
       await addProductImage(selectedProductId, {
         imageUrl: imageForm.imageUrl,
-        publicId: imageForm.publicId || null,
+        // A pasted URL is not necessarily managed by our Cloudinary account.
+        // Only the upload endpoint should persist a storage-provider publicId.
+        publicId: null,
         altText: imageForm.altText || null,
         color: imageForm.color.trim() || null,
         sortOrder: Number(imageForm.sortOrder || 0),
@@ -1524,7 +1525,7 @@ export function AdminProductsCatalogClient({
                   }} />
                   <input className="admin-input" type="number" min={0} placeholder="Giá bán" value={variantForm.price} onChange={(event) => setVariantForm((current) => ({ ...current, price: event.target.value }))} />
                   <input className="admin-input" type="number" min={0} placeholder="Giá so sánh" value={variantForm.compareAtPrice} onChange={(event) => setVariantForm((current) => ({ ...current, compareAtPrice: event.target.value }))} />
-                  <input className="admin-input" type="number" min={0} placeholder="Tồn ban đầu" value={variantForm.stockQuantity} onChange={(event) => setVariantForm((current) => ({ ...current, stockQuantity: event.target.value }))} />
+                  <input className="admin-input" type="number" min={0} placeholder="Tồn kho" value={variantForm.stockQuantity} onChange={(event) => setVariantForm((current) => ({ ...current, stockQuantity: event.target.value }))} />
                   <select className="select" value={variantForm.status} onChange={(event) => setVariantForm((current) => ({ ...current, status: event.target.value }))}>
                     {variantStatusOptions.map((item) => <option value={item} key={item}>{item}</option>)}
                   </select>
@@ -1592,21 +1593,20 @@ export function AdminProductsCatalogClient({
               <div className="empty-state">Hãy lưu sản phẩm ở tab Thông tin trước khi thêm hình ảnh.</div>
             ) : (
               <>
-                <datalist id="admin-product-colors">
-                  {Array.from(new Set((detail?.variants ?? []).map((v) => v.color).filter((c): c is string => Boolean(c)))).map((c) => (
-                    <option value={c} key={c} />
-                  ))}
-                </datalist>
                 <div className="admin-subcard">
                   <div className="editor-subcard-title">Thêm bằng URL</div>
                   <div className="admin-form-grid">
                     <div className="admin-form-full">
                       <input className="admin-input" placeholder="Image URL" value={imageForm.imageUrl} onChange={(event) => setImageForm((current) => ({ ...current, imageUrl: event.target.value }))} />
                     </div>
-                    <input className="admin-input" placeholder="Cloudinary publicId (nếu có)" value={imageForm.publicId} onChange={(event) => setImageForm((current) => ({ ...current, publicId: event.target.value }))} />
-                    <input className="admin-input" placeholder="Alt text" value={imageForm.altText} onChange={(event) => setImageForm((current) => ({ ...current, altText: event.target.value }))} />
-                    <input className="admin-input" list="admin-product-colors" placeholder="Màu (để trống = dùng chung)" value={imageForm.color} onChange={(event) => setImageForm((current) => ({ ...current, color: event.target.value }))} />
-                    <input className="admin-input" type="number" min={0} placeholder="Sort order" value={imageForm.sortOrder} onChange={(event) => setImageForm((current) => ({ ...current, sortOrder: event.target.value }))} />
+                    <input className="admin-input" placeholder="Mô tả ảnh (alt text)" value={imageForm.altText} onChange={(event) => setImageForm((current) => ({ ...current, altText: event.target.value }))} />
+                    <select className="admin-input" aria-label="Màu áp dụng cho ảnh" value={imageForm.color} onChange={(event) => setImageForm((current) => ({ ...current, color: event.target.value }))}>
+                      <option value="">Dùng chung cho mọi màu</option>
+                      {Array.from(new Set((detail?.variants ?? []).map((v) => v.color).filter((c): c is string => Boolean(c)))).map((c) => (
+                        <option value={c} key={c}>{c}</option>
+                      ))}
+                    </select>
+                    <input className="admin-input" type="number" min={0} aria-label="Thứ tự hiển thị" placeholder="Thứ tự hiển thị" value={imageForm.sortOrder} onChange={(event) => setImageForm((current) => ({ ...current, sortOrder: event.target.value }))} />
                     <label className="admin-check">
                       <input type="checkbox" checked={imageForm.isPrimary} onChange={(event) => setImageForm((current) => ({ ...current, isPrimary: event.target.checked }))} />
                       Đặt làm ảnh chính
@@ -1641,12 +1641,17 @@ export function AdminProductsCatalogClient({
                         ))}
                       </div>
                     ) : null}
-                    <input className="admin-input" placeholder="Alt text upload" value={uploadForm.altText} onChange={(event) => setUploadForm((current) => ({ ...current, altText: event.target.value }))} />
-                    <input className="admin-input" list="admin-product-colors" placeholder="Màu (để trống = dùng chung)" value={uploadForm.color} onChange={(event) => setUploadForm((current) => ({ ...current, color: event.target.value }))} />
-                    <input className="admin-input" type="number" min={0} placeholder="Sort order" value={uploadForm.sortOrder} onChange={(event) => setUploadForm((current) => ({ ...current, sortOrder: event.target.value }))} />
+                    <input className="admin-input" placeholder="Mô tả chung cho các ảnh (alt text)" value={uploadForm.altText} onChange={(event) => setUploadForm((current) => ({ ...current, altText: event.target.value }))} />
+                    <select className="admin-input" aria-label="Màu áp dụng cho ảnh upload" value={uploadForm.color} onChange={(event) => setUploadForm((current) => ({ ...current, color: event.target.value }))}>
+                      <option value="">Dùng chung cho mọi màu</option>
+                      {Array.from(new Set((detail?.variants ?? []).map((v) => v.color).filter((c): c is string => Boolean(c)))).map((c) => (
+                        <option value={c} key={c}>{c}</option>
+                      ))}
+                    </select>
+                    <input className="admin-input" type="number" min={0} aria-label="Thứ tự hiển thị bắt đầu" placeholder="Thứ tự hiển thị bắt đầu" value={uploadForm.sortOrder} onChange={(event) => setUploadForm((current) => ({ ...current, sortOrder: event.target.value }))} />
                     <label className="admin-check">
                       <input type="checkbox" checked={uploadForm.isPrimary} onChange={(event) => setUploadForm((current) => ({ ...current, isPrimary: event.target.checked }))} />
-                      Ảnh chính khi upload
+                      Đặt ảnh đầu tiên làm ảnh chính
                     </label>
                   </div>
                   <div className="page-actions">
