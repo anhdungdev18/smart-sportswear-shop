@@ -36,6 +36,13 @@ import { adjustStock } from "@/modules/inventory/browser-api";
 
 const PRODUCTS_PER_PAGE = 15;
 const PRODUCT_THUMB_FALLBACK = NO_IMAGE;
+const PRODUCT_IMAGE_IDEAL_WIDTH = 1200;
+const PRODUCT_IMAGE_IDEAL_HEIGHT = 1800;
+const PRODUCT_IMAGE_MIN_WIDTH = 800;
+const PRODUCT_IMAGE_MIN_HEIGHT = 1200;
+const PRODUCT_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
+const PRODUCT_IMAGE_MAX_BATCH = 10;
+const PRODUCT_IMAGE_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 const productStatusOptions = ["DRAFT", "ACTIVE", "INACTIVE"] as const;
 const genderOptions = ["MEN", "WOMEN", "UNISEX", "KIDS"] as const;
 const variantStatusOptions = ["ACTIVE", "OUT_OF_STOCK", "INACTIVE"] as const;
@@ -72,6 +79,22 @@ function parseCsvList(input: string) {
 // Turn a human label into an uppercase SKU token: "All Black" -> "ALLBLACK".
 function skuToken(value: string) {
   return toSlug(value).replace(/-/g, "").toUpperCase();
+}
+
+function buildUniqueVariantSku(baseValue: string, color: string, size: string, existingSkus: string[]) {
+  const base = skuToken(baseValue) || "SP";
+  const root = [base, skuToken(color), skuToken(size)].filter(Boolean).join("-").slice(0, 100);
+  const occupied = new Set(existingSkus.map((sku) => sku.trim().toUpperCase()));
+  if (!occupied.has(root)) return root;
+
+  // Preserve the readable base/color/size structure and add a deterministic
+  // sequence only when that SKU is already occupied on the current product.
+  for (let sequence = 2; sequence <= 999; sequence += 1) {
+    const suffix = `-${String(sequence).padStart(2, "0")}`;
+    const candidate = `${root.slice(0, 100 - suffix.length)}${suffix}`;
+    if (!occupied.has(candidate)) return candidate;
+  }
+  return root;
 }
 
 const ADMIN_SIZE_ORDER = ["XXS", "XS", "S", "M", "L", "XL", "XXL", "XXXL", "2XL", "3XL", "4XL"];
@@ -229,7 +252,16 @@ function createEmptyImageForm() {
 
 function createEmptyUploadForm() {
   return {
-    file: null as File | null,
+    files: [] as Array<{
+      id: string;
+      file: File;
+      width: number;
+      height: number;
+      orderOffset: number;
+      warning: string | null;
+      status: "pending" | "uploading" | "failed";
+      error: string | null;
+    }>,
     altText: "",
     color: "",
     isPrimary: false,
@@ -406,6 +438,7 @@ export function AdminProductsCatalogClient({
   const [productForm, setProductForm] = useState(createEmptyProductForm(categories[0]?.id ?? "", brands[0]?.id ?? ""));
   const [slugDirty, setSlugDirty] = useState(false);
   const [variantForm, setVariantForm] = useState(createEmptyVariantForm());
+  const [variantSkuDirty, setVariantSkuDirty] = useState(false);
   const [variantDrafts, setVariantDrafts] = useState<Record<string, VariantDraft>>({});
   // "Create many variants" matrix state.
   const [genColors, setGenColors] = useState("");
@@ -590,6 +623,11 @@ export function AdminProductsCatalogClient({
       active = false;
     };
   }, [brands, categories, selectedProductId]);
+
+  useEffect(() => {
+    setVariantForm(createEmptyVariantForm());
+    setVariantSkuDirty(false);
+  }, [selectedProductId]);
 
   const filteredAvailableCollections = useMemo(() => {
     const assignedIds = new Set(productCollections.map((c) => c.id));
@@ -853,8 +891,14 @@ export function AdminProductsCatalogClient({
     try {
       setSaving("variant-create");
       setMessage(null);
+      const generatedSku = buildUniqueVariantSku(
+        detail?.slug ?? productForm.slug ?? productForm.name,
+        variantForm.color,
+        variantForm.size,
+        detail?.variants.map((variant) => variant.sku) ?? []
+      );
       await createVariant(selectedProductId, {
-        sku: variantForm.sku,
+        sku: variantForm.sku.trim() || generatedSku,
         size: variantForm.size,
         color: variantForm.color,
         price: Number(variantForm.price),
@@ -864,6 +908,7 @@ export function AdminProductsCatalogClient({
       });
       await refreshDetail(selectedProductId);
       setVariantForm(createEmptyVariantForm());
+      setVariantSkuDirty(false);
       setMessage("Đã thêm biến thể mới.");
     } catch (error) {
       setMessage(extractError(error, "Không thêm được biến thể"));
@@ -976,33 +1021,107 @@ export function AdminProductsCatalogClient({
       return;
     }
 
-    if (!uploadForm.file) {
+    if (!uploadForm.files.length) {
       setMessage("Bạn chưa chọn tệp ảnh.");
       return;
     }
 
+    setSaving("image-upload");
+    setMessage(null);
+    const queue = [...uploadForm.files];
+    const failedIds = new Set<string>();
+    let uploadedCount = 0;
+
+    // Deliberately sequential: Cloudinary uploads stay bounded and each successful
+    // DB insert independently emits its PRODUCT_IMAGE_CREATED outbox event.
+    for (let index = 0; index < queue.length; index += 1) {
+      const item = queue[index];
+      setUploadForm((current) => ({
+        ...current,
+        files: current.files.map((candidate) =>
+          candidate.id === item.id ? { ...candidate, status: "uploading", error: null } : candidate
+        )
+      }));
+      try {
+        const formData = new FormData();
+        formData.append("file", item.file);
+        if (uploadForm.altText.trim()) formData.append("altText", uploadForm.altText.trim());
+        if (uploadForm.color.trim()) formData.append("color", uploadForm.color.trim());
+        formData.append("isPrimary", String(uploadForm.isPrimary && item.orderOffset === 0));
+        formData.append("sortOrder", String(Number(uploadForm.sortOrder || 0) + item.orderOffset));
+        await uploadProductImage(selectedProductId, formData);
+        uploadedCount += 1;
+        setUploadForm((current) => ({
+          ...current,
+          isPrimary: current.isPrimary && item.orderOffset === 0 ? false : current.isPrimary,
+          files: current.files.filter((candidate) => candidate.id !== item.id)
+        }));
+      } catch (error) {
+        failedIds.add(item.id);
+        const errorMessage = extractError(error, "Không upload được ảnh");
+        setUploadForm((current) => ({
+          ...current,
+          files: current.files.map((candidate) =>
+            candidate.id === item.id ? { ...candidate, status: "failed", error: errorMessage } : candidate
+          )
+        }));
+      }
+    }
+
     try {
-      setSaving("image-upload");
-      setMessage(null);
-      const formData = new FormData();
-      formData.append("file", uploadForm.file);
-      if (uploadForm.altText.trim()) {
-        formData.append("altText", uploadForm.altText.trim());
-      }
-      if (uploadForm.color.trim()) {
-        formData.append("color", uploadForm.color.trim());
-      }
-      formData.append("isPrimary", String(uploadForm.isPrimary));
-      formData.append("sortOrder", String(Number(uploadForm.sortOrder || 0)));
-      await uploadProductImage(selectedProductId, formData);
-      await refreshDetail(selectedProductId);
-      setUploadForm(createEmptyUploadForm());
-      setMessage("Đã upload ảnh lên Cloudinary.");
+      if (uploadedCount > 0) await refreshDetail(selectedProductId);
+      setMessage(
+        failedIds.size
+          ? `Đã upload ${uploadedCount}/${queue.length} ảnh. ${failedIds.size} ảnh lỗi được giữ lại để thử lại.`
+          : `Đã upload tuần tự ${uploadedCount} ảnh. Embedding đang được xử lý trong hàng đợi.`
+      );
     } catch (error) {
-      setMessage(extractError(error, "Không upload được ảnh"));
+      setMessage(`Đã upload ${uploadedCount} ảnh nhưng chưa tải lại được thư viện ảnh. ${extractError(error, "Hãy tải lại trang.")}`);
     } finally {
       setSaving(null);
     }
+  }
+
+  async function handleUploadFilesSelected(fileList: FileList | null) {
+    if (!fileList?.length) {
+      setUploadForm((current) => ({ ...current, files: [] }));
+      return;
+    }
+    const selected = Array.from(fileList).slice(0, PRODUCT_IMAGE_MAX_BATCH);
+    const rejected: string[] = [];
+    const inspected = await Promise.all(selected.map(async (file, index) => {
+      if (!PRODUCT_IMAGE_MIME_TYPES.has(file.type)) {
+        rejected.push(`${file.name}: sai định dạng`);
+        return null;
+      }
+      if (file.size > PRODUCT_IMAGE_MAX_BYTES) {
+        rejected.push(`${file.name}: vượt quá 5 MB`);
+        return null;
+      }
+      try {
+        const bitmap = await createImageBitmap(file);
+        const { width, height } = bitmap;
+        bitmap.close();
+        const ratio = width / height;
+        const idealRatio = PRODUCT_IMAGE_IDEAL_WIDTH / PRODUCT_IMAGE_IDEAL_HEIGHT;
+        let warning: string | null = null;
+        if (width < PRODUCT_IMAGE_MIN_WIDTH || height < PRODUCT_IMAGE_MIN_HEIGHT) {
+          warning = `Ảnh hơi nhỏ; nên dùng ít nhất ${PRODUCT_IMAGE_MIN_WIDTH}×${PRODUCT_IMAGE_MIN_HEIGHT} px.`;
+        } else if (Math.abs(ratio - idealRatio) > 0.05) {
+          warning = "Ảnh không theo tỷ lệ 2:3 nên phần rìa có thể bị cắt.";
+        }
+        return { id: `${file.name}-${file.size}-${file.lastModified}-${index}`, file, width, height, orderOffset: index, warning, status: "pending" as const, error: null };
+      } catch {
+        rejected.push(`${file.name}: không đọc được ảnh`);
+        return null;
+      }
+    }));
+    const accepted = inspected
+      .filter((item): item is NonNullable<typeof item> => item !== null)
+      .map((item, orderOffset) => ({ ...item, orderOffset }));
+    setUploadForm((current) => ({ ...current, files: accepted }));
+    const excess = fileList.length > PRODUCT_IMAGE_MAX_BATCH ? ` Chỉ nhận ${PRODUCT_IMAGE_MAX_BATCH} ảnh đầu tiên.` : "";
+    setMessage(rejected.length ? `${rejected.join(" | ")}.${excess}` : excess.trim() || null);
   }
 
   async function handleDeleteImage(image: ProductImageResponse) {
@@ -1047,6 +1166,7 @@ export function AdminProductsCatalogClient({
     setSlugDirty(false);
     setProductForm(createEmptyProductForm(categories[0]?.id ?? "", brands[0]?.id ?? ""));
     setVariantForm(createEmptyVariantForm());
+    setVariantSkuDirty(false);
     setVariantDrafts({});
     setImageForm(createEmptyImageForm());
     setUploadForm(createEmptyUploadForm());
@@ -1380,10 +1500,28 @@ export function AdminProductsCatalogClient({
 
                 <hr className="editor-divider" />
                 <div className="editor-subcard-title">Thêm một biến thể</div>
+                <p className="table-subtle">SKU được tự sinh theo mã sản phẩm–màu–size. Bạn vẫn có thể sửa thủ công.</p>
                 <div className="admin-form-grid">
-                  <input className="admin-input" placeholder="SKU" value={variantForm.sku} onChange={(event) => setVariantForm((current) => ({ ...current, sku: event.target.value }))} />
-                  <input className="admin-input" placeholder="Size" value={variantForm.size} onChange={(event) => setVariantForm((current) => ({ ...current, size: event.target.value }))} />
-                  <input className="admin-input" placeholder="Màu sắc" value={variantForm.color} onChange={(event) => setVariantForm((current) => ({ ...current, color: event.target.value }))} />
+                  <input className="admin-input" placeholder="SKU (tự sinh)" value={variantForm.sku} onChange={(event) => {
+                    setVariantSkuDirty(event.target.value.trim().length > 0);
+                    setVariantForm((current) => ({ ...current, sku: event.target.value }));
+                  }} />
+                  <input className="admin-input" placeholder="Size" value={variantForm.size} onChange={(event) => {
+                    const size = event.target.value;
+                    setVariantForm((current) => ({
+                      ...current,
+                      size,
+                      sku: variantSkuDirty ? current.sku : buildUniqueVariantSku(detail?.slug ?? productForm.slug ?? productForm.name, current.color, size, detail?.variants.map((variant) => variant.sku) ?? [])
+                    }));
+                  }} />
+                  <input className="admin-input" placeholder="Màu sắc" value={variantForm.color} onChange={(event) => {
+                    const color = event.target.value;
+                    setVariantForm((current) => ({
+                      ...current,
+                      color,
+                      sku: variantSkuDirty ? current.sku : buildUniqueVariantSku(detail?.slug ?? productForm.slug ?? productForm.name, color, current.size, detail?.variants.map((variant) => variant.sku) ?? [])
+                    }));
+                  }} />
                   <input className="admin-input" type="number" min={0} placeholder="Giá bán" value={variantForm.price} onChange={(event) => setVariantForm((current) => ({ ...current, price: event.target.value }))} />
                   <input className="admin-input" type="number" min={0} placeholder="Giá so sánh" value={variantForm.compareAtPrice} onChange={(event) => setVariantForm((current) => ({ ...current, compareAtPrice: event.target.value }))} />
                   <input className="admin-input" type="number" min={0} placeholder="Tồn ban đầu" value={variantForm.stockQuantity} onChange={(event) => setVariantForm((current) => ({ ...current, stockQuantity: event.target.value }))} />
@@ -1482,8 +1620,27 @@ export function AdminProductsCatalogClient({
                 </div>
                 <div className="admin-subcard">
                   <div className="editor-subcard-title">Upload ảnh thật</div>
+                  <p className="table-subtle">
+                    Chọn tối đa {PRODUCT_IMAGE_MAX_BATCH} ảnh. Khuyến nghị {PRODUCT_IMAGE_IDEAL_WIDTH}×{PRODUCT_IMAGE_IDEAL_HEIGHT} px (tỷ lệ 2:3), tối thiểu {PRODUCT_IMAGE_MIN_WIDTH}×{PRODUCT_IMAGE_MIN_HEIGHT} px, JPEG/PNG/WebP và không quá 5 MB mỗi ảnh.
+                  </p>
                   <div className="admin-form-grid">
-                    <input className="admin-input admin-form-full" type="file" accept="image/*" onChange={(event) => setUploadForm((current) => ({ ...current, file: event.target.files?.[0] ?? null }))} />
+                    <input className="admin-input admin-form-full" type="file" multiple accept="image/jpeg,image/png,image/webp" disabled={saving === "image-upload"} onChange={(event) => {
+                      void handleUploadFilesSelected(event.currentTarget.files);
+                      event.currentTarget.value = "";
+                    }} />
+                    {uploadForm.files.length ? (
+                      <div className="admin-form-full table-subtle">
+                        <strong>Đã chọn {uploadForm.files.length} ảnh (upload tuần tự)</strong>
+                        {uploadForm.files.map((item, index) => (
+                          <div key={item.id} style={{ marginTop: 6 }}>
+                            {index + 1}. {item.file.name} · {item.width}×{item.height} px · {(item.file.size / 1024 / 1024).toFixed(2)} MB
+                            {item.status === "uploading" ? " · Đang upload..." : item.status === "failed" ? " · Upload lỗi" : ""}
+                            {item.warning ? <div style={{ color: "var(--admin-warning, #b45309)" }}>{item.warning}</div> : null}
+                            {item.error ? <div style={{ color: "var(--admin-danger, #b91c1c)" }}>{item.error}</div> : null}
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
                     <input className="admin-input" placeholder="Alt text upload" value={uploadForm.altText} onChange={(event) => setUploadForm((current) => ({ ...current, altText: event.target.value }))} />
                     <input className="admin-input" list="admin-product-colors" placeholder="Màu (để trống = dùng chung)" value={uploadForm.color} onChange={(event) => setUploadForm((current) => ({ ...current, color: event.target.value }))} />
                     <input className="admin-input" type="number" min={0} placeholder="Sort order" value={uploadForm.sortOrder} onChange={(event) => setUploadForm((current) => ({ ...current, sortOrder: event.target.value }))} />
@@ -1493,8 +1650,8 @@ export function AdminProductsCatalogClient({
                     </label>
                   </div>
                   <div className="page-actions">
-                    <button className="admin-btn" type="button" onClick={() => void handleUploadImage()} disabled={saving === "image-upload"}>
-                      {saving === "image-upload" ? "Đang upload..." : "Upload ảnh"}
+                    <button className="admin-btn" type="button" onClick={() => void handleUploadImage()} disabled={saving === "image-upload" || uploadForm.files.length === 0}>
+                      {saving === "image-upload" ? "Đang upload tuần tự..." : `Upload ${uploadForm.files.length || "các"} ảnh`}
                     </button>
                   </div>
                 </div>

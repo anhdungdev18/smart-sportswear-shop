@@ -11,12 +11,14 @@ import com.dunghaiquyen.ecommerce.common.exception.BusinessRuleException;
 import com.dunghaiquyen.ecommerce.common.exception.ResourceNotFoundException;
 import com.dunghaiquyen.ecommerce.common.storage.ImageStorageService;
 import com.dunghaiquyen.ecommerce.common.storage.UploadedImage;
+import com.dunghaiquyen.ecommerce.modules.product.dto.ImageCreateRequest;
 import com.dunghaiquyen.ecommerce.modules.product.dto.ProductImageUploadResponse;
 import com.dunghaiquyen.ecommerce.modules.product.entity.Product;
 import com.dunghaiquyen.ecommerce.modules.product.entity.ProductImage;
 import com.dunghaiquyen.ecommerce.modules.product.mapper.ProductMapper;
 import com.dunghaiquyen.ecommerce.modules.product.repository.ProductImageRepository;
 import com.dunghaiquyen.ecommerce.modules.product.repository.ProductRepository;
+import com.dunghaiquyen.ecommerce.visualsearch.outbox.CatalogEventType;
 import com.dunghaiquyen.ecommerce.visualsearch.outbox.CatalogOutboxService;
 import java.util.List;
 import java.util.Optional;
@@ -64,7 +66,12 @@ class ProductImageServiceTest {
     @BeforeEach
     void setUp() {
         service = new ProductImageService(
-                productRepository, imageRepository, productMapper, imageStorageService, catalogOutboxService);
+                productRepository,
+                imageRepository,
+                productMapper,
+                imageStorageService,
+                catalogOutboxService,
+                "res.cloudinary.com,cdn.shopify.com");
         productId = UUID.randomUUID();
         product = new Product();
         product.setId(productId);
@@ -94,6 +101,16 @@ class ProductImageServiceTest {
         MultipartFile textFile = new MockMultipartFile("file", "notes.txt", "text/plain", new byte[] {1, 2, 3});
 
         assertThatThrownBy(() -> service.uploadImage(productId, textFile, null, null, null, null))
+                .isInstanceOf(BusinessRuleException.class);
+        verify(imageStorageService, never()).upload(any());
+    }
+
+    @Test
+    void uploadImage_unsupportedImageMimeRejectedBeforeUpload() {
+        MultipartFile svg = new MockMultipartFile(
+                "file", "unsafe.svg", "image/svg+xml", "<svg/>".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+
+        assertThatThrownBy(() -> service.uploadImage(productId, svg, null, null, null, null))
                 .isInstanceOf(BusinessRuleException.class);
         verify(imageStorageService, never()).upload(any());
     }
@@ -170,6 +187,46 @@ class ProductImageServiceTest {
         assertThat(response.imageUrl()).isEqualTo("https://cdn.test/xyz.jpg");
         assertThat(response.width()).isEqualTo(1024);
         assertThat(response.height()).isEqualTo(768);
+        verify(catalogOutboxService)
+                .append(CatalogEventType.PRODUCT_IMAGE_CREATED, productId, saved.getId());
+    }
+
+    @Test
+    void addImage_approvedHttpsUrl_savesAndEnqueuesVisualIndexing() {
+        UUID imageId = UUID.randomUUID();
+        when(productRepository.findById(productId)).thenReturn(Optional.of(product));
+        ProductImage saved = new ProductImage();
+        saved.setId(imageId);
+        saved.setProduct(product);
+        saved.setImageUrl("https://res.cloudinary.com/demo/image/upload/products/shirt.jpg");
+        saved.setSortOrder(0);
+        when(imageRepository.saveAndFlush(any(ProductImage.class))).thenReturn(saved);
+
+        service.addImage(
+                productId,
+                new ImageCreateRequest(saved.getImageUrl(), "products/shirt", "shirt", null, 0, false));
+
+        verify(catalogOutboxService).append(CatalogEventType.PRODUCT_IMAGE_CREATED, productId, imageId);
+    }
+
+    @Test
+    void addImage_unapprovedOrUnsafeUrl_rejectedBeforeDbWrite() {
+        List<String> unsafeUrls = List.of(
+                "https://placehold.co/700x700/test.jpg",
+                "http://res.cloudinary.com/demo/image/upload/test.jpg",
+                "https://user:password@res.cloudinary.com/demo/image/upload/test.jpg",
+                "https://res.cloudinary.com:8443/demo/image/upload/test.jpg");
+
+        for (String unsafeUrl : unsafeUrls) {
+            assertThatThrownBy(() -> service.addImage(
+                            productId,
+                            new ImageCreateRequest(unsafeUrl, null, null, null, 0, false)))
+                    .isInstanceOf(BusinessRuleException.class);
+        }
+
+        verify(productRepository, never()).findById(any());
+        verify(imageRepository, never()).saveAndFlush(any());
+        verify(catalogOutboxService, never()).append(any(), any(), any());
     }
 
     // ===== delete tolerates a failing remote cleanup =====
