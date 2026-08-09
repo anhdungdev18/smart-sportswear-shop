@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   AvatarIcon,
@@ -20,6 +20,7 @@ import { getWishlist } from "@/modules/account/api";
 import { getCart } from "@/modules/cart/api";
 import { NotificationBell } from "@/modules/notifications/NotificationBell";
 import { CUSTOMER_SERVICE_LINKS } from "@/modules/content/data/layout";
+import { ChevronDown, KeyRound, MapPin, Package, UserRound } from "lucide-react";
 
 const CS_ICON_MAP: Record<string, React.ElementType> = {
   Hotline: PhoneCallIcon,
@@ -33,6 +34,8 @@ export function HeaderActionsLive() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const [wishlistCount, setWishlistCount] = useState(0);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
+  const accountMenuRef = useRef<HTMLDivElement>(null);
 
   const refresh = useCallback(async () => {
     const accessToken = getAccessToken();
@@ -92,6 +95,14 @@ export function HeaderActionsLive() {
     };
   }, [refresh]);
 
+  useEffect(() => {
+    const closeMenu = (event: MouseEvent) => {
+      if (!accountMenuRef.current?.contains(event.target as Node)) setAccountMenuOpen(false);
+    };
+    document.addEventListener("mousedown", closeMenu);
+    return () => document.removeEventListener("mousedown", closeMenu);
+  }, []);
+
   const handleLogout = () => {
     const refreshToken = getRefreshToken();
     // Start revocation while the access token is still available, but update
@@ -143,9 +154,29 @@ export function HeaderActionsLive() {
 
       <NotificationBell />
 
-      <Link href={isAuthenticated ? "/tai-khoan" : "/dang-nhap"} className="icon flex h-10 w-5 items-center justify-center text-ivy-dark" aria-label="Tài khoản">
-        <AvatarIcon className="size-4.5" />
-      </Link>
+      <div ref={accountMenuRef} className="relative">
+        {isAuthenticated ? (
+          <button type="button" onClick={() => setAccountMenuOpen((open) => !open)} className="icon flex h-10 items-center justify-center gap-1 text-ivy-dark" aria-label="Tài khoản" aria-expanded={accountMenuOpen}>
+            <AvatarIcon className="size-4.5" />
+            <ChevronDown className={`size-3 transition-transform ${accountMenuOpen ? "rotate-180" : ""}`} />
+          </button>
+        ) : (
+          <Link href="/dang-nhap" className="icon flex h-10 w-5 items-center justify-center text-ivy-dark" aria-label="Tài khoản"><AvatarIcon className="size-4.5" /></Link>
+        )}
+        {isAuthenticated && accountMenuOpen ? (
+          <div className="absolute right-0 top-[calc(100%+10px)] z-[70] w-64 overflow-hidden rounded-2xl border border-[#e8e4df] bg-white p-2 shadow-[0_18px_50px_rgba(34,31,32,0.16)]">
+            <p className="px-3 pb-2 pt-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-ivy-text-muted">Tài khoản của tôi</p>
+            {[
+              ["Thông tin", "profile", UserRound], ["Địa chỉ", "addresses", MapPin],
+              ["Đơn hàng", "orders", Package], ["Đặt lại mật khẩu", "password", KeyRound],
+            ].map(([label, tab, Icon]) => (
+              <Link key={tab as string} href={`/tai-khoan?tab=${tab}`} onClick={() => setAccountMenuOpen(false)} className="flex items-center gap-3 rounded-xl px-3 py-3 text-[14px] text-ivy-dark transition hover:bg-[#f6f3ef]">
+                <Icon className="size-4 text-[#9b6b45]" /><span>{label as string}</span>
+              </Link>
+            ))}
+          </div>
+        ) : null}
+      </div>
 
       <Link href="/gio-hang" className="icon relative flex h-10 w-5 items-center justify-center text-ivy-dark" aria-label="Giỏ hàng">
         <ShoppingBagIcon className="size-4.5" />
