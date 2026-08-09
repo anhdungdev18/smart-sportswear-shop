@@ -84,6 +84,15 @@ public class NotificationTemplates {
                     Vui lòng giữ điện thoại liên lạc để đơn vị vận chuyển có thể liên hệ khi cần.
 
                     Trân trọng."""),
+            NotificationType.ADMIN_ORDER_CREATED, new EmailContent(
+                    "Có đơn hàng mới {orderCode}",
+                    "Khách hàng {customerName} vừa tạo đơn {orderCode}, tổng tiền {totalAmount}, thanh toán {paymentMethod}."),
+            NotificationType.ADMIN_ORDER_CANCELLED, new EmailContent(
+                    "Đơn hàng {orderCode} có yêu cầu hủy",
+                    "Khách hàng {customerName} vừa hủy hoặc yêu cầu hủy đơn {orderCode}, tổng tiền {totalAmount}."),
+            NotificationType.CANCELLATION_APPROVED, new EmailContent(
+                    "Yêu cầu hủy đơn {orderCode} đã được xác nhận",
+                    "Xin chào {customerName}, cửa hàng đã xác nhận yêu cầu hủy đơn {orderCode}. Tổng tiền đơn hàng: {totalAmount}."),
             NotificationType.PASSWORD_RESET, new EmailContent(
                     "Yêu cầu đặt lại mật khẩu",
                     """
@@ -124,6 +133,28 @@ public class NotificationTemplates {
         params.put("orderCode", order.getOrderCode());
         params.put("totalAmount", order.getTotalAmount().toString());
         return render(NotificationType.ORDER_CANCELLED, params);
+    }
+
+    public EmailContent adminOrderCreated(Order order) {
+        Map<String, String> params = orderParams(order);
+        params.put("paymentMethod", order.getPaymentMethod().toString());
+        return render(NotificationType.ADMIN_ORDER_CREATED, params);
+    }
+
+    public EmailContent adminOrderCancelled(Order order) {
+        return render(NotificationType.ADMIN_ORDER_CANCELLED, orderParams(order));
+    }
+
+    public EmailContent cancellationApproved(Order order) {
+        return render(NotificationType.CANCELLATION_APPROVED, orderParams(order));
+    }
+
+    private Map<String, String> orderParams(Order order) {
+        Map<String, String> params = new HashMap<>();
+        params.put("customerName", order.getUser().getFullName());
+        params.put("orderCode", order.getOrderCode());
+        params.put("totalAmount", order.getTotalAmount().toString());
+        return params;
     }
 
     public EmailContent orderDelivered(Order order) {

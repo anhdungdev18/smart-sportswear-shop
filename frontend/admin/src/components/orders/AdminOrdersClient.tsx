@@ -259,13 +259,15 @@ export function AdminOrdersClient({
   shippingMethods,
   pageMeta,
   initialKeyword,
-  initialStatus
+  initialStatus,
+  loadError
 }: {
   initialOrders: AdminOrderResponse[];
   shippingMethods: ShippingMethodResponse[];
   pageMeta: PageMeta;
   initialKeyword: string;
   initialStatus: string;
+  loadError: string | null;
 }) {
   const router = useRouter();
   const [orders, setOrders] = useState(initialOrders);
@@ -531,6 +533,7 @@ export function AdminOrdersClient({
         </div>
       </div>
       {message ? <p className="action-message">{message}</p> : null}
+      {loadError ? <p className="action-message" role="alert">{loadError}</p> : null}
       <div className="admin-form-grid" style={{ marginBottom: 16 }}>
         <input className="admin-input" placeholder="Tìm theo mã đơn, tên khách, số điện thoại hoặc thanh toán" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} />
         <select className="select" value={statusFilter} onChange={(event) => {
@@ -542,9 +545,9 @@ export function AdminOrdersClient({
           {orderStatuses.map((status) => <option value={status} key={status}>{orderStatusLabels[status] ?? status}</option>)}
         </select>
       </div>
-      {orders.length === 0 ? (
+      {!loadError && orders.length === 0 ? (
         <div className="empty-state">Không có đơn hàng nào khớp bộ lọc hiện tại.</div>
-      ) : (
+      ) : orders.length > 0 ? (
         <table className="data-table">
           <thead>
             <tr>
@@ -584,7 +587,7 @@ export function AdminOrdersClient({
             ))}
           </tbody>
         </table>
-      )}
+      ) : null}
       {pageMeta.totalPages > 0 ? (
         <div className="admin-pager">
           <div className="admin-pager-info">

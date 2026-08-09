@@ -393,6 +393,9 @@ public class OrderService {
             order.setInternalNote(prefix + reason.trim());
             order = orderRepository.save(order);
         }
+        if (target == OrderStatus.CANCELLATION_REQUESTED) {
+            notificationService.notifyAdminsOrderCancelled(order);
+        }
         return assembleResponse(order);
     }
 
@@ -465,6 +468,7 @@ public class OrderService {
         // own customer should hear about a cancellation either way.
         if (target == OrderStatus.CANCELLED) {
             notificationService.notifyOrderCancelled(order);
+            notificationService.notifyAdminsOrderCancelled(order);
         } else if (target == OrderStatus.DELIVERED) {
             notificationService.notifyOrderDelivered(order);
         }
@@ -523,7 +527,9 @@ public class OrderService {
         }
         order = applyStatusTransition(order, OrderStatus.CANCELLATION_APPROVED, actor);
         order.setInternalNote("Cancellation approved by staff; refund processing started");
-        return assembleAdminResponse(orderRepository.save(order));
+        order = orderRepository.save(order);
+        notificationService.notifyCancellationApproved(order);
+        return assembleAdminResponse(order);
     }
 
     private record VariantCheck(
