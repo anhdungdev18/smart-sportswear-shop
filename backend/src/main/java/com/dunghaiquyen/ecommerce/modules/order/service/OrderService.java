@@ -34,6 +34,8 @@ import com.dunghaiquyen.ecommerce.modules.product.entity.ProductStatus;
 import com.dunghaiquyen.ecommerce.modules.product.entity.ProductVariant;
 import com.dunghaiquyen.ecommerce.modules.product.entity.VariantStatus;
 import com.dunghaiquyen.ecommerce.modules.product.repository.ProductVariantRepository;
+import com.dunghaiquyen.ecommerce.modules.product.repository.ProductImageRepository;
+import com.dunghaiquyen.ecommerce.modules.product.util.ThumbnailResolver;
 import com.dunghaiquyen.ecommerce.modules.payment.entity.PaymentStatus;
 import com.dunghaiquyen.ecommerce.modules.user.entity.User;
 import com.dunghaiquyen.ecommerce.modules.user.entity.UserRole;
@@ -96,6 +98,7 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final ProductVariantRepository variantRepository;
+    private final ProductImageRepository productImageRepository;
     private final UserRepository userRepository;
     private final InventoryService inventoryService;
     private final OrderMapper orderMapper;
@@ -110,6 +113,7 @@ public class OrderService {
             OrderRepository orderRepository,
             OrderItemRepository orderItemRepository,
             ProductVariantRepository variantRepository,
+            ProductImageRepository productImageRepository,
             UserRepository userRepository,
             InventoryService inventoryService,
             OrderMapper orderMapper,
@@ -122,6 +126,7 @@ public class OrderService {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.variantRepository = variantRepository;
+        this.productImageRepository = productImageRepository;
         this.userRepository = userRepository;
         this.inventoryService = inventoryService;
         this.orderMapper = orderMapper;
@@ -702,8 +707,10 @@ public class OrderService {
     }
 
     private OrderResponse assembleResponse(Order order) {
-        List<OrderItemResponse> items = orderItemRepository.findAllByOrderIdOrderByIdAsc(order.getId()).stream()
-                .map(orderMapper::toItemResponse)
+        List<OrderItem> orderItems = orderItemRepository.findAllByOrderIdOrderByIdAsc(order.getId());
+        Map<UUID, String> thumbnails = resolveThumbnails(orderItems);
+        List<OrderItemResponse> items = orderItems.stream()
+                .map(item -> orderMapper.toItemResponse(item, thumbnails.get(item.getProduct().getId())))
                 .toList();
         return toResponse(order, items);
     }
@@ -719,8 +726,10 @@ public class OrderService {
     }
 
     private AdminOrderResponse assembleAdminResponse(Order order) {
-        List<OrderItemResponse> items = orderItemRepository.findAllByOrderIdOrderByIdAsc(order.getId()).stream()
-                .map(orderMapper::toItemResponse)
+        List<OrderItem> orderItems = orderItemRepository.findAllByOrderIdOrderByIdAsc(order.getId());
+        Map<UUID, String> thumbnails = resolveThumbnails(orderItems);
+        List<OrderItemResponse> items = orderItems.stream()
+                .map(item -> orderMapper.toItemResponse(item, thumbnails.get(item.getProduct().getId())))
                 .toList();
         return toAdminResponse(order, items);
     }
@@ -737,10 +746,28 @@ public class OrderService {
 
     private Map<UUID, List<OrderItemResponse>> itemsByOrderId(List<Order> orders) {
         List<UUID> orderIds = orders.stream().map(Order::getId).toList();
-        return orderItemRepository.findAllByOrderIdIn(orderIds).stream()
+        List<OrderItem> orderItems = orderItemRepository.findAllByOrderIdIn(orderIds);
+        Map<UUID, String> thumbnails = resolveThumbnails(orderItems);
+        return orderItems.stream()
                 .collect(Collectors.groupingBy(
                         i -> i.getOrder().getId(),
-                        Collectors.mapping(orderMapper::toItemResponse, Collectors.toList())));
+                        Collectors.mapping(
+                                item -> orderMapper.toItemResponse(item, thumbnails.get(item.getProduct().getId())),
+                                Collectors.toList())));
+    }
+
+    private Map<UUID, String> resolveThumbnails(List<OrderItem> items) {
+        List<UUID> productIds = items.stream()
+                .map(item -> item.getProduct().getId())
+                .distinct()
+                .toList();
+        if (productIds.isEmpty()) {
+            return Map.of();
+        }
+        return productImageRepository.findAllByProductIdIn(productIds).stream()
+                .collect(Collectors.groupingBy(image -> image.getProduct().getId()))
+                .entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, entry -> ThumbnailResolver.resolve(entry.getValue())));
     }
 
     private OrderResponse toResponse(Order order, List<OrderItemResponse> items) {

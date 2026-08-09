@@ -2,11 +2,13 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { cancelOrder, getOrderDetail } from "@/modules/account/api";
 import type { OrderResponse } from "@/modules/account/types";
 import { getApiErrorMessage } from "@/lib/api-errors";
 import { getAccessToken } from "@/lib/session";
 import { createVnpayPayment } from "@/modules/checkout/api";
+import { getOrderStatusLabel } from "@/modules/account/order-labels";
 
 const money = (n: number) => `${n.toLocaleString("vi-VN")}đ`;
 
@@ -103,7 +105,7 @@ export function OrderDetailPageClient({ orderId }: { orderId: string }) {
               <p className="mt-2 text-[14px] text-ivy-text">
                 Ngày tạo: {new Date(order.createdAt).toLocaleString("vi-VN")}
               </p>
-              <p className="mt-1 text-[14px] text-ivy-text">Trạng thái đơn: {order.orderStatus}</p>
+              <p className="mt-1 text-[14px] text-ivy-text">Trạng thái đơn: {getOrderStatusLabel(order.orderStatus)}</p>
               <p className="mt-1 text-[14px] text-ivy-text">
                 Thanh toán: {order.paymentMethod} / {order.paymentStatus}
               </p>
@@ -148,9 +150,12 @@ export function OrderDetailPageClient({ orderId }: { orderId: string }) {
             {order.items.map((item) => (
               <div
                 key={item.id}
-                className="flex flex-col gap-2 border-b border-dashed border-ivy-hairline pb-4 last:border-none last:pb-0 md:flex-row md:items-center md:justify-between"
+                className="flex gap-4 border-b border-dashed border-ivy-hairline pb-4 last:border-none last:pb-0 md:items-center"
               >
-                <div>
+                <Link href={`/sanpham/${item.productId}`} aria-label={`Xem chi tiết ${item.productName}`} className="relative h-28 w-24 shrink-0 overflow-hidden bg-[#f5f5f5]">
+                  {item.thumbnail ? <Image src={item.thumbnail} alt={item.productName} fill sizes="96px" className="object-cover" /> : null}
+                </Link>
+                <Link href={`/sanpham/${item.productId}`} className="min-w-0 flex-1 hover:text-ivy-accent">
                   <p className="text-[16px] font-medium text-ivy-dark">{item.productName}</p>
                   <p className="mt-1 text-[14px] text-ivy-text">SKU: {item.sku}</p>
                   <p className="mt-1 text-[14px] text-ivy-text">
@@ -159,7 +164,7 @@ export function OrderDetailPageClient({ orderId }: { orderId: string }) {
                   <p className="mt-1 text-[14px] text-ivy-text">
                     {money(item.unitPrice)} × {item.quantity}
                   </p>
-                </div>
+                </Link>
                 <div className="text-[18px] font-semibold text-ivy-dark">{money(item.lineTotal)}</div>
               </div>
             ))}

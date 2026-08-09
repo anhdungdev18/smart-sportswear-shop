@@ -31,6 +31,7 @@ export interface OrderItem {
   sku: string;
   size?: string | null;
   color?: string | null;
+  thumbnail?: string | null;
   unitPrice: number;
   quantity: number;
   lineTotal: number;
@@ -54,7 +55,14 @@ export interface OrderResponse {
   createdAt: string;
 }
 
+export interface PageMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
 export interface PagedResult<T> {
   data: T;
-  meta?: Record<string, unknown>;
+  meta?: PageMeta;
 }

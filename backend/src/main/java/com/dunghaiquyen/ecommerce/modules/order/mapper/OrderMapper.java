@@ -8,12 +8,12 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface OrderMapper {
 
-    @Mapping(target = "productId", source = "product.id")
-    @Mapping(target = "variantId", source = "variant.id")
-    @Mapping(target = "productName", source = "productNameSnapshot")
-    @Mapping(target = "sku", source = "skuSnapshot")
-    @Mapping(target = "size", source = "sizeSnapshot")
-    @Mapping(target = "color", source = "colorSnapshot")
-    @Mapping(target = "unitPrice", source = "unitPriceSnapshot")
-    OrderItemResponse toItemResponse(OrderItem item);
+    @Mapping(target = "productId", source = "item.product.id")
+    @Mapping(target = "variantId", source = "item.variant.id")
+    @Mapping(target = "productName", source = "item.productNameSnapshot")
+    @Mapping(target = "sku", source = "item.skuSnapshot")
+    @Mapping(target = "size", source = "item.sizeSnapshot")
+    @Mapping(target = "color", source = "item.colorSnapshot")
+    @Mapping(target = "unitPrice", source = "item.unitPriceSnapshot")
+    OrderItemResponse toItemResponse(OrderItem item, String thumbnail);
 }

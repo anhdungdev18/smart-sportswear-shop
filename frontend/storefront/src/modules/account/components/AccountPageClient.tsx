@@ -17,6 +17,7 @@ import {
 } from "@/modules/account/api";
 import { getMe, updateMe } from "@/modules/auth/api";
 import type { AuthUser } from "@/modules/auth/types";
+import { getOrderStatusLabel } from "@/modules/account/order-labels";
 
 const EMPTY_ADDRESS = {
   receiverName: "",
@@ -374,7 +375,7 @@ export function AccountPageClient() {
                         <div>
                           <p className="text-[16px] font-medium text-ivy-dark">{order.orderCode}</p>
                           <p className="mt-1 text-[14px] text-ivy-text">{new Date(order.createdAt).toLocaleString("vi-VN")}</p>
-                          <p className="mt-1 text-[14px] text-ivy-text">Trạng thái: {order.orderStatus}</p>
+                          <p className="mt-1 text-[14px] text-ivy-text">Trạng thái: {getOrderStatusLabel(order.orderStatus)}</p>
                         </div>
                         <span className="text-[16px] font-semibold text-ivy-dark">{order.totalAmount.toLocaleString("vi-VN")}đ</span>
                       </div>
