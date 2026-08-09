@@ -203,7 +203,7 @@ app:
   password-reset:
     # PHASE1_SPEC.md 6.1 suggests 15 minutes explicitly.
     token-ttl-minutes: ${PASSWORD_RESET_TOKEN_TTL_MINUTES:15}
-    reset-url: ${PASSWORD_RESET_URL:http://localhost:3000/reset-password}
+    reset-url: ${PASSWORD_RESET_URL:http://localhost:3000/dat-lai-mat-khau}
   seed:
     # Deliberately opt-in: demo data must not be auto-created on every normal
     # app start. Run with --app.seed.enabled=true when you explicitly want it.

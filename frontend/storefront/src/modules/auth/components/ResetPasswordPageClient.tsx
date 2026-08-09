@@ -46,6 +46,19 @@ export function ResetPasswordPageClient({ token }: { token: string }) {
             Nhập mật khẩu mới cho tài khoản của bạn. Mật khẩu cần có ít nhất 8 ký tự, gồm chữ và số.
           </p>
 
+          {!token ? (
+            <div className="mt-8 space-y-5">
+              <p role="alert" className="text-[14px] leading-6 text-[#C62127]">
+                Liên kết đặt lại mật khẩu không hợp lệ hoặc bị thiếu token. Vui lòng yêu cầu một liên kết mới.
+              </p>
+              <Link
+                href="/dang-nhap#quen-mat-khau"
+                className="inline-flex h-12 items-center rounded-tl-[20px] rounded-br-[20px] bg-ivy-dark px-8 text-[14px] font-semibold uppercase tracking-[0.05em] text-white"
+              >
+                Yêu cầu liên kết mới
+              </Link>
+            </div>
+          ) : (
           <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
             <div>
               <label className="mb-2 block text-[13px] font-semibold uppercase tracking-[0.04em] text-ivy-dark">
@@ -53,6 +66,10 @@ export function ResetPasswordPageClient({ token }: { token: string }) {
               </label>
               <input
                 type="password"
+                required
+                minLength={8}
+                maxLength={72}
+                pattern="(?=.*[A-Za-z])(?=.*\d).{8,72}"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="h-12 w-full border border-ivy-hairline px-4 text-[15px] text-ivy-dark outline-none"
@@ -64,6 +81,9 @@ export function ResetPasswordPageClient({ token }: { token: string }) {
               </label>
               <input
                 type="password"
+                required
+                minLength={8}
+                maxLength={72}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 className="h-12 w-full border border-ivy-hairline px-4 text-[15px] text-ivy-dark outline-none"
@@ -84,6 +104,7 @@ export function ResetPasswordPageClient({ token }: { token: string }) {
               </Link>
             </div>
           </form>
+          )}
         </div>
       </div>
     </main>
