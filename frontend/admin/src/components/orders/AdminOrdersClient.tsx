@@ -8,6 +8,7 @@ import type { OrderRefundResponse } from "@/modules/orders/browser-api";
 import type { AdminOrderResponse, PageMeta } from "@/modules/orders/types";
 import { fetchOrderShipment, updateOrderShipment } from "@/modules/shipping/browser-api";
 import type { ShipmentResponse, ShippingMethodResponse } from "@/modules/shipping/types";
+import { ADMIN_ORDER_CHANGED_EVENT } from "@/modules/notifications/inbox-api";
 
 const orderStatuses = [
   "PENDING_CONFIRMATION",
@@ -309,6 +310,12 @@ export function AdminOrdersClient({
       setRefundsByOrder((current) => ({ ...current, [order.id]: refunds }));
     })).catch(() => undefined);
   }, [initialOrders]);
+
+  useEffect(() => {
+    const refreshOrders = () => router.refresh();
+    window.addEventListener(ADMIN_ORDER_CHANGED_EVENT, refreshOrders);
+    return () => window.removeEventListener(ADMIN_ORDER_CHANGED_EVENT, refreshOrders);
+  }, [router]);
 
   async function handleUpdate(id: string) {
     const currentOrder = orders.find((item) => item.id === id);

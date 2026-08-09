@@ -39,7 +39,7 @@ async function OrdersContent({ page, keyword, status }: { page: number; keyword:
 
   return (
     <AdminOrdersClient
-      key={`${page}:${keyword}:${status}`}
+      key={`${page}:${keyword}:${status}:${orderPage.items.map((item) => item.id).join(",")}`}
       initialOrders={orderPage.items}
       pageMeta={orderPage.meta}
       initialKeyword={keyword}

@@ -107,6 +107,12 @@ public class NotificationService {
                 notificationTemplates.cancellationApproved(order));
     }
 
+    @Transactional
+    public void notifyCancellationRejected(Order order, String reason) {
+        queueAfterCommit(order.getUser(), order, NotificationType.CANCELLATION_REJECTED,
+                notificationTemplates.cancellationRejected(order, reason));
+    }
+
     private void notifyActiveAdmins(Order order, NotificationType type, EmailContent content) {
         userRepository.findAllByRoleAndStatus(UserRole.ADMIN, UserStatus.ACTIVE)
                 .forEach(admin -> queueAfterCommit(admin, order, type, content));

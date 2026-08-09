@@ -8,6 +8,8 @@ import {
   listMyNotifications,
   markAllMyNotificationsRead,
   markMyNotificationRead,
+  myNotificationStreamUrl,
+  ADMIN_ORDER_CHANGED_EVENT,
 } from "@/modules/notifications/inbox-api";
 import type { NotificationResponse } from "@/modules/notifications/types";
 
@@ -31,6 +33,27 @@ export function AdminNotificationBell() {
     void load();
     const timer = window.setInterval(() => void load(), 15000);
     return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (typeof EventSource === "undefined") return;
+    const url = myNotificationStreamUrl();
+    if (!url) return;
+    const stream = new EventSource(url);
+    const onNotification = (event: MessageEvent) => {
+      try {
+        const item = JSON.parse(event.data) as NotificationResponse;
+        setItems((current) => [item, ...current.filter((entry) => entry.id !== item.id)].slice(0, 20));
+        setUnread((current) => current + 1);
+        if (["ADMIN_ORDER_CREATED", "ADMIN_ORDER_CANCELLED"].includes(item.type)) {
+          window.dispatchEvent(new CustomEvent(ADMIN_ORDER_CHANGED_EVENT, { detail: item }));
+        }
+      } catch {
+        // Ignore malformed stream events and keep the polling fallback active.
+      }
+    };
+    stream.addEventListener("notification", onNotification as EventListener);
+    return () => stream.close();
   }, []);
 
   useEffect(() => {

@@ -27,6 +27,7 @@ export const adminEndpoints = {
   myNotificationUnreadCount: "/api/v1/notifications/me/unread-count",
   myNotificationRead: (id: string) => `/api/v1/notifications/me/${id}/read`,
   myNotificationsReadAll: "/api/v1/notifications/me/read-all",
+  myNotificationsStream: "/api/v1/notifications/me/stream",
   notificationResend: (id: string) => `/api/v1/admin/notifications/${id}/resend`,
   notificationTemplates: "/api/v1/admin/notification-templates",
   notificationTemplate: (id: string) => `/api/v1/admin/notification-templates/${id}`,

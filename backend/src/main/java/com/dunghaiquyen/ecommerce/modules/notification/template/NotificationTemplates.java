@@ -93,6 +93,9 @@ public class NotificationTemplates {
             NotificationType.CANCELLATION_APPROVED, new EmailContent(
                     "Yêu cầu hủy đơn {orderCode} đã được xác nhận",
                     "Xin chào {customerName}, cửa hàng đã xác nhận yêu cầu hủy đơn {orderCode}. Tổng tiền đơn hàng: {totalAmount}."),
+            NotificationType.CANCELLATION_REJECTED, new EmailContent(
+                    "Yêu cầu hủy đơn {orderCode} đã bị từ chối",
+                    "Xin chào {customerName}, cửa hàng chưa thể chấp nhận yêu cầu hủy đơn {orderCode}. Lý do: {rejectionReason}."),
             NotificationType.PASSWORD_RESET, new EmailContent(
                     "Yêu cầu đặt lại mật khẩu",
                     """
@@ -147,6 +150,13 @@ public class NotificationTemplates {
 
     public EmailContent cancellationApproved(Order order) {
         return render(NotificationType.CANCELLATION_APPROVED, orderParams(order));
+    }
+
+    public EmailContent cancellationRejected(Order order, String reason) {
+        Map<String, String> params = orderParams(order);
+        params.put("rejectionReason", reason == null || reason.isBlank()
+                ? "Yêu cầu chưa đáp ứng điều kiện hủy đơn" : reason.trim());
+        return render(NotificationType.CANCELLATION_REJECTED, params);
     }
 
     private Map<String, String> orderParams(Order order) {

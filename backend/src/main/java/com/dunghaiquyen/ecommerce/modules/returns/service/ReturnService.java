@@ -14,6 +14,7 @@ import com.dunghaiquyen.ecommerce.modules.payment.entity.Payment;
 import com.dunghaiquyen.ecommerce.modules.payment.entity.PaymentProvider;
 import com.dunghaiquyen.ecommerce.modules.payment.entity.PaymentStatus;
 import com.dunghaiquyen.ecommerce.modules.inventory.service.InventoryService;
+import com.dunghaiquyen.ecommerce.modules.notification.service.NotificationService;
 import com.dunghaiquyen.ecommerce.modules.payment.service.VnpayTransactionService;
 import com.dunghaiquyen.ecommerce.modules.payment.repository.PaymentRepository;
 import com.dunghaiquyen.ecommerce.modules.returns.dto.AdminReturnListQuery;
@@ -115,6 +116,7 @@ public class ReturnService {
     private final InventoryService inventoryService;
     private final VnpayTransactionService vnpayTransactionService;
     private final OrderService orderService;
+    private final NotificationService notificationService;
 
     public ReturnService(
             ReturnRepository returnRepository,
@@ -126,7 +128,8 @@ public class ReturnService {
             AuditLogService auditLogService,
             InventoryService inventoryService,
             VnpayTransactionService vnpayTransactionService,
-            OrderService orderService) {
+            OrderService orderService,
+            NotificationService notificationService) {
         this.returnRepository = returnRepository;
         this.returnItemRepository = returnItemRepository;
         this.refundRepository = refundRepository;
@@ -137,6 +140,7 @@ public class ReturnService {
         this.inventoryService = inventoryService;
         this.vnpayTransactionService = vnpayTransactionService;
         this.orderService = orderService;
+        this.notificationService = notificationService;
     }
 
     public record ListResult<T>(List<T> items, PageMeta meta) {
@@ -531,6 +535,7 @@ public class ReturnService {
         order.setInternalNote(reason == null || reason.isBlank()
                 ? "Cancellation request rejected by staff" : "Cancellation request rejected: " + reason.trim());
         orderRepository.save(order);
+        notificationService.notifyCancellationRejected(order, reason);
         auditLogService.record(actor, "CANCELLATION_REQUEST_REJECT", "Order", orderId.toString(),
                 Map.of("status", OrderStatus.CANCELLATION_REQUESTED.name()),
                 Map.of("status", OrderStatus.PENDING_CONFIRMATION.name()));
