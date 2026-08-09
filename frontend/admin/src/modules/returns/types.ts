@@ -37,6 +37,10 @@ export type RefundResponse = {
   amount: number;
   provider: string;
   status: string;
+  gatewayRequestId: string | null;
+  gatewayTransactionNo: string | null;
+  manualReference: string | null;
+  manualNote: string | null;
   reason: string | null;
   refundedAt: string | null;
   createdAt: string;

@@ -77,4 +77,10 @@ public class Refund extends AbstractAuditEntity {
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "gateway_response_json", columnDefinition = "jsonb")
     private Map<String, Object> gatewayResponseJson;
+
+    @Column(name = "manual_reference", length = 100)
+    private String manualReference;
+
+    @Column(name = "manual_note", columnDefinition = "text")
+    private String manualNote;
 }

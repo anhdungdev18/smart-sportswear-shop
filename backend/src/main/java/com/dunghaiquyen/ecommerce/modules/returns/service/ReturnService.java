@@ -19,6 +19,7 @@ import com.dunghaiquyen.ecommerce.modules.payment.repository.PaymentRepository;
 import com.dunghaiquyen.ecommerce.modules.returns.dto.AdminReturnListQuery;
 import com.dunghaiquyen.ecommerce.modules.returns.dto.CreateRefundRequest;
 import com.dunghaiquyen.ecommerce.modules.returns.dto.CreateReturnRequest;
+import com.dunghaiquyen.ecommerce.modules.returns.dto.ConfirmManualRefundRequest;
 import com.dunghaiquyen.ecommerce.modules.returns.dto.RefundResponse;
 import com.dunghaiquyen.ecommerce.modules.returns.dto.ReturnItemRequest;
 import com.dunghaiquyen.ecommerce.modules.returns.dto.ReturnItemResolutionRequest;
@@ -577,6 +578,28 @@ public class ReturnService {
         return toRefundResponse(refund);
     }
 
+    /** Records an out-of-band bank/cash refund after staff has actually paid it. */
+    @Transactional
+    public RefundResponse confirmManualRefund(UUID refundId, ConfirmManualRefundRequest request, User actor) {
+        Refund refund = refundRepository.findByIdForUpdate(refundId)
+                .orElseThrow(() -> new ResourceNotFoundException("Refund not found"));
+        if (refund.getStatus() == RefundStatus.COMPLETED) {
+            return toRefundResponse(refund);
+        }
+        if (refund.getStatus() == RefundStatus.CANCELLED) {
+            throw new BusinessRuleException(HttpStatus.CONFLICT, "Refund has been cancelled");
+        }
+        refund.setManualReference(request.reference().trim());
+        refund.setManualNote(request.note() == null || request.note().isBlank() ? null : request.note().trim());
+        refund.setStatus(RefundStatus.COMPLETED);
+        refund.setRefundedAt(Instant.now());
+        refund = refundRepository.save(refund);
+        auditLogService.record(actor, "MANUAL_REFUND_CONFIRM", "Refund", refundId.toString(), null,
+                Map.of("reference", refund.getManualReference(), "amount", refund.getAmount().toString()));
+        syncCompletedRefund(refund);
+        return toRefundResponse(refund);
+    }
+
     private void syncCompletedRefund(Refund refund) {
         if (refund.getReturnRequest() != null) {
             Return returnRequest = returnRepository.findByIdForUpdate(refund.getReturnRequest().getId())
@@ -723,6 +746,8 @@ public class ReturnService {
                 refund.getStatus(),
                 refund.getGatewayRequestId(),
                 refund.getGatewayTransactionNo(),
+                refund.getManualReference(),
+                refund.getManualNote(),
                 refund.getReason(),
                 refund.getRefundedAt(),
                 refund.getCreatedAt(),

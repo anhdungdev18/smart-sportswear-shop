@@ -17,6 +17,8 @@ public record RefundResponse(
         RefundStatus status,
         String gatewayRequestId,
         String gatewayTransactionNo,
+        String manualReference,
+        String manualNote,
         String reason,
         Instant refundedAt,
         Instant createdAt,

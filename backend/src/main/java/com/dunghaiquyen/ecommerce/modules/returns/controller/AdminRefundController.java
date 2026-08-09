@@ -4,6 +4,7 @@ import com.dunghaiquyen.ecommerce.common.response.ApiResponse;
 import com.dunghaiquyen.ecommerce.common.security.CustomUserDetails;
 import com.dunghaiquyen.ecommerce.modules.returns.dto.RefundResponse;
 import com.dunghaiquyen.ecommerce.modules.returns.dto.UpdateRefundStatusRequest;
+import com.dunghaiquyen.ecommerce.modules.returns.dto.ConfirmManualRefundRequest;
 import com.dunghaiquyen.ecommerce.modules.returns.service.ReturnService;
 import jakarta.validation.Valid;
 import java.util.UUID;
@@ -54,5 +55,14 @@ public class AdminRefundController {
             HttpServletRequest request) {
         return ApiResponse.ok("VNPay refund status refreshed",
                 returnService.refreshVnpayRefund(id, principal.getUser(), request.getRemoteAddr()));
+    }
+
+    @PostMapping("/{id}/manual-confirmation")
+    public ApiResponse<RefundResponse> confirmManual(
+            @AuthenticationPrincipal CustomUserDetails principal,
+            @PathVariable UUID id,
+            @Valid @RequestBody ConfirmManualRefundRequest request) {
+        return ApiResponse.ok("Manual refund confirmed",
+                returnService.confirmManualRefund(id, request, principal.getUser()));
     }
 }

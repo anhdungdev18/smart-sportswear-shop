@@ -3,7 +3,7 @@
 import { memo, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ApiRequestError } from "@/modules/api/common";
-import { cancelOrderByStaff, fetchOrderDetail, fetchOrderRefunds, processCancellationRefund, refreshVnpayRefund, rejectCancellationRequest, updateOrderStatus } from "@/modules/orders/browser-api";
+import { cancelOrderByStaff, confirmManualRefund, fetchOrderDetail, fetchOrderRefunds, processCancellationRefund, refreshVnpayRefund, rejectCancellationRequest, updateOrderStatus } from "@/modules/orders/browser-api";
 import type { OrderRefundResponse } from "@/modules/orders/browser-api";
 import type { AdminOrderResponse, PageMeta } from "@/modules/orders/types";
 import { fetchOrderShipment, updateOrderShipment } from "@/modules/shipping/browser-api";
@@ -84,6 +84,7 @@ const OrderRow = memo(function OrderRow({
   onRejectCancellation,
   onStaffCancel,
   onRefreshRefund,
+  onManualConfirmRefund,
   onShipmentDraftChange,
   onSaveShipment
 }: {
@@ -105,6 +106,7 @@ const OrderRow = memo(function OrderRow({
   onRejectCancellation: () => void;
   onStaffCancel: () => void;
   onRefreshRefund: (refundId: string) => void;
+  onManualConfirmRefund: (refund: OrderRefundResponse) => void;
   onShipmentDraftChange: (patch: Partial<ReturnType<typeof createShipmentDraft>>) => void;
   onSaveShipment: () => void;
 }) {
@@ -232,6 +234,11 @@ const OrderRow = memo(function OrderRow({
                     {savingId === `refresh-refund:${refund.id}` ? "Đang kiểm tra..." : "Kiểm tra VNPay"}
                   </button>
                 ) : null}
+                {!['COMPLETED', 'CANCELLED'].includes(refund.status) ? (
+                  <button className="admin-btn secondary" type="button" onClick={() => onManualConfirmRefund(refund)} disabled={savingId === `manual-refund:${refund.id}`}>
+                    {savingId === `manual-refund:${refund.id}` ? "Đang xác nhận..." : "Xác nhận đã hoàn thủ công"}
+                  </button>
+                ) : refund.manualReference ? <span className="table-subtle">Biên nhận: {refund.manualReference}</span> : null}
               </div>
             )) : <div className="table-subtle">Chưa có giao dịch hoàn tiền.</div>}
           </div>
@@ -443,6 +450,27 @@ export function AdminOrdersClient({
     }
   }
 
+  async function handleManualConfirmRefund(orderId: string, refund: OrderRefundResponse) {
+    const reference = window.prompt("Nhập mã giao dịch chuyển khoản/biên nhận hoàn tiền:")?.trim();
+    if (!reference) { setMessage("Cần nhập mã giao dịch hoặc biên nhận để xác nhận hoàn tiền."); return; }
+    const note = window.prompt("Ghi chú hoàn tiền (không bắt buộc):")?.trim();
+    if (!window.confirm(`Xác nhận đã thực sự hoàn ${Math.round(refund.amount).toLocaleString("vi-VN")}₫ cho khách?`)) return;
+    try {
+      setSavingId(`manual-refund:${refund.id}`); setMessage(null);
+      const updatedRefund = await confirmManualRefund(refund.id, reference, note);
+      const updatedOrder = await fetchOrderDetail(orderId);
+      setRefundsByOrder((current) => ({
+        ...current,
+        [orderId]: [updatedRefund, ...(current[orderId] ?? []).filter((item) => item.id !== updatedRefund.id)]
+      }));
+      setOrders((current) => current.map((item) => item.id === orderId ? updatedOrder : item));
+      setOrderDetails((current) => ({ ...current, [orderId]: updatedOrder }));
+      setStatusDrafts((current) => ({ ...current, [orderId]: updatedOrder.orderStatus }));
+      setMessage(`Đã xác nhận hoàn tiền thủ công ${updatedRefund.refundCode}; đơn đã được hủy.`);
+    } catch (error) { setMessage(extractError(error, "Không xác nhận được hoàn tiền thủ công")); }
+    finally { setSavingId(null); }
+  }
+
   async function handleLoadDetail(id: string) {
     const cached = orderDetailCacheRef.current[id];
     if (cached) {
@@ -549,6 +577,7 @@ export function AdminOrdersClient({
                 onRejectCancellation={() => void handleRejectCancellation(order.id)}
                 onStaffCancel={() => void handleStaffCancel(order.id)}
                 onRefreshRefund={(refundId) => void handleRefreshRefund(order.id, refundId)}
+                onManualConfirmRefund={(refund) => void handleManualConfirmRefund(order.id, refund)}
                 onShipmentDraftChange={(patch) => setShipmentDrafts((current) => ({ ...current, [order.id]: { ...current[order.id], ...patch } }))}
                 onSaveShipment={() => void handleSaveShipment(order.id)}
               />

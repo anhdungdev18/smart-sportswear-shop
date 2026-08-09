@@ -37,6 +37,8 @@ export type OrderRefundResponse = {
   reason: string | null;
   gatewayRequestId: string | null;
   gatewayTransactionNo: string | null;
+  manualReference: string | null;
+  manualNote: string | null;
   refundedAt: string | null;
   createdAt: string;
 };
@@ -61,4 +63,11 @@ export async function rejectCancellationRequest(id: string, reason: string) {
 
 export async function refreshVnpayRefund(id: string) {
   return browserApiRequest<OrderRefundResponse>(adminEndpoints.adminRefundRefresh(id), { method: "POST" });
+}
+
+export async function confirmManualRefund(id: string, reference: string, note?: string) {
+  return browserApiRequest<OrderRefundResponse>(adminEndpoints.adminRefundManualConfirmation(id), {
+    method: "POST",
+    body: JSON.stringify({ reference, note: note || null })
+  });
 }

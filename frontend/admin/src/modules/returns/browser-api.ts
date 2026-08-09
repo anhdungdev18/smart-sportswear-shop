@@ -39,3 +39,18 @@ export async function updateRefundStatus(id: string, input: Record<string, unkno
     body: JSON.stringify(input)
   });
 }
+
+export async function submitVnpayRefund(id: string) {
+  return browserApiRequest<RefundResponse>(adminEndpoints.adminRefundSubmit(id), { method: "POST" });
+}
+
+export async function refreshVnpayRefund(id: string) {
+  return browserApiRequest<RefundResponse>(adminEndpoints.adminRefundRefresh(id), { method: "POST" });
+}
+
+export async function confirmManualRefund(id: string, reference: string, note?: string) {
+  return browserApiRequest<RefundResponse>(adminEndpoints.adminRefundManualConfirmation(id), {
+    method: "POST",
+    body: JSON.stringify({ reference, note: note || null })
+  });
+}
