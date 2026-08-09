@@ -39,12 +39,14 @@ spring:
     locations: classpath:db/migration
     baseline-on-migrate: true
     out-of-order: false
-    # This shared Supabase DB contains migrations published by other branches.
-    # V43__recreate_promotions.sql is already applied there but is not available
-    # in this repository. Flyway 11 still rejects that missing migration during
-    # migrate(), even with an ignore pattern, so skip Flyway history validation.
-    # Pending local migrations are still applied and Hibernate validates schema.
-    validate-on-migrate: false
+    # Shared Supabase DB carries migrations owned by other branches/services
+    # (forecast-demo, orders-data-source, etc.) that this app doesn't ship.
+    # Ignore both "applied-but-missing-locally" (other branches deleted/renamed a
+    # migration) and "applied-beyond-local-max" (*:future — another branch/service
+    # shipped a higher version to this shared DB) so validate doesn't fail on drift
+    # this app doesn't own. It still validates and applies its own migrations.
+    ignore-migration-patterns: "*:missing,*:future"
+    validate-on-migrate: true
 
   data:
     redis:

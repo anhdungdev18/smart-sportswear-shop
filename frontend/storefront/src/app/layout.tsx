@@ -7,6 +7,7 @@ import { InventoryRealtimeRefresh } from "@/components/shared/InventoryRealtimeR
 import { ScrollToTop } from "@/components/shared/ScrollToTop";
 import { ExtensionAttributeSanitizer } from "@/components/shared/ExtensionAttributeSanitizer";
 import { ChatWidget } from "@/modules/chat/ChatWidget";
+import { Toaster } from "@/components/ui/Toaster";
 import "./globals.css";
 
 const montserrat = Montserrat({
@@ -48,6 +49,7 @@ export default function RootLayout({
         {children}
         <Footer />
         <ChatWidget />
+        <Toaster />
       </body>
     </html>
   );

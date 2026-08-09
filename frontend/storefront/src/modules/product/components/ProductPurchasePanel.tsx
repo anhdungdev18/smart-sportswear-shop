@@ -8,6 +8,7 @@ import { HeartIcon } from "@/components/shared/icons";
 import { getApiErrorMessage } from "@/lib/api-errors";
 import { cn } from "@/lib/utils";
 import { emitSessionChange, getAccessToken } from "@/lib/session";
+import { toast } from "@/lib/toast";
 import { addWishlistItem } from "@/modules/account/api";
 import { addCartItem } from "@/modules/cart/api";
 import { saveBuyNowSelection } from "@/modules/checkout/selection";
@@ -159,12 +160,16 @@ export function ProductPurchasePanel({
 
   const handleCart = async (mode: "cart" | "buy") => {
     if (!selectedVariant) {
-      setError("Sản phẩm này hiện chưa có biến thể khả dụng.");
+      const msg = "Sản phẩm này hiện chưa có biến thể khả dụng.";
+      setError(msg);
+      toast.error(msg);
       return;
     }
 
     if (selectedVariant.availableQuantity < quantity) {
-      setError("Số lượng bạn chọn đang vượt quá tồn kho khả dụng.");
+      const msg = "Số lượng bạn chọn đang vượt quá tồn kho khả dụng.";
+      setError(msg);
+      toast.error(msg);
       return;
     }
 
@@ -180,9 +185,12 @@ export function ProductPurchasePanel({
         await addCartItem(selectedVariant.id, quantity);
         emitSessionChange();
         setMessage("Đã thêm sản phẩm vào giỏ hàng.");
+        toast.success("Đã thêm sản phẩm vào giỏ hàng.");
       }
     } catch (err) {
-      setError(getApiErrorMessage(err, "Không thể thêm sản phẩm vào giỏ."));
+      const msg = getApiErrorMessage(err, "Không thể thêm sản phẩm vào giỏ.");
+      setError(msg);
+      toast.error(msg);
     } finally {
       setPending(null);
     }
@@ -201,8 +209,11 @@ export function ProductPurchasePanel({
       await addWishlistItem(productId);
       emitSessionChange();
       setMessage("Đã thêm sản phẩm vào danh sách yêu thích.");
+      toast.success("Đã thêm vào danh sách yêu thích.");
     } catch (err) {
-      setError(getApiErrorMessage(err, "Không thể thêm vào yêu thích."));
+      const msg = getApiErrorMessage(err, "Không thể thêm vào yêu thích.");
+      setError(msg);
+      toast.error(msg);
     } finally {
       setPending(null);
     }
