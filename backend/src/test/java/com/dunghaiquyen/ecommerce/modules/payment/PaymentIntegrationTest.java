@@ -13,6 +13,8 @@ import com.dunghaiquyen.ecommerce.modules.order.repository.OrderRepository;
 import com.dunghaiquyen.ecommerce.modules.payment.repository.PaymentRepository;
 import com.dunghaiquyen.ecommerce.modules.payment.service.VnpaySignatureService;
 import com.fasterxml.jackson.databind.JsonNode;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +27,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
@@ -41,6 +44,9 @@ class PaymentIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
     private VnpaySignatureService signatureService;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     private record AdminContext(String token, String categoryId, String brandId) {
     }
@@ -304,6 +310,53 @@ class PaymentIntegrationTest extends AbstractIntegrationTest {
 
         var order = orderRepository.findById(UUID.fromString(orderId)).orElseThrow();
         assertThat(paymentRepository.findAllByOrderIdOrderByCreatedAtDesc(order.getId())).hasSize(2);
+    }
+
+    @Test
+    void createPaymentSession_nearOrderDeadline_capsSessionAtOrderDeadline() throws Exception {
+        AdminContext ctx = setUpAdmin();
+        String productId = createActiveProduct(ctx, "Deadline Shoes");
+        String variantId = createVariant(ctx, productId, 250000, 10);
+        String email = uniqueEmail("pay-near-deadline");
+        TokenPair buyer = registerUser(email);
+        addToCart(buyer.accessToken(), variantId, 1);
+        String orderId = createOrder(buyer.accessToken(), createAddressForUser(email), "VNPAY");
+
+        Instant createdAt = Instant.now().minusSeconds(29 * 60L);
+        jdbcTemplate.update(
+                "update orders set created_at = ? where id = ?", Timestamp.from(createdAt), UUID.fromString(orderId));
+
+        createPaymentSession(buyer.accessToken(), orderId).getResponse();
+
+        var payment = paymentRepository.findAllByOrderIdOrderByCreatedAtDesc(UUID.fromString(orderId)).get(0);
+        Instant hardDeadline = createdAt.plusSeconds(30 * 60L);
+        assertThat(payment.getExpiresAt()).isAfter(Instant.now());
+        assertThat(payment.getExpiresAt())
+                .as("a retry URL must not outlive the order's auto-cancellation deadline")
+                .isBeforeOrEqualTo(hardDeadline.plusMillis(1));
+    }
+
+    @Test
+    void createPaymentSession_afterOrderDeadline_isRejectedWithoutCreatingPayment() throws Exception {
+        AdminContext ctx = setUpAdmin();
+        String productId = createActiveProduct(ctx, "Expired Payment Shoes");
+        String variantId = createVariant(ctx, productId, 260000, 10);
+        String email = uniqueEmail("pay-after-deadline");
+        TokenPair buyer = registerUser(email);
+        addToCart(buyer.accessToken(), variantId, 1);
+        String orderId = createOrder(buyer.accessToken(), createAddressForUser(email), "VNPAY");
+        UUID orderUuid = UUID.fromString(orderId);
+
+        jdbcTemplate.update(
+                "update orders set created_at = ? where id = ?",
+                Timestamp.from(Instant.now().minusSeconds(31 * 60L)),
+                orderUuid);
+
+        MvcResult result = createPaymentSession(buyer.accessToken(), orderId);
+        assertThat(result.getResponse().getStatus()).isEqualTo(422);
+        assertThat(json(result.getResponse().getContentAsString()).at("/message").asText())
+                .isEqualTo("Order payment window has expired");
+        assertThat(paymentRepository.findAllByOrderIdOrderByCreatedAtDesc(orderUuid)).isEmpty();
     }
 
     // ===== callback success =====
@@ -623,7 +676,7 @@ class PaymentIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    void paidOrder_cannotBeCancelledWithoutRefund() throws Exception {
+    void paidOrder_cancelBecomesRefundRequest_withoutCancellingOrLosingPaidState() throws Exception {
         AdminContext ctx = setUpAdmin();
         String productId = createActiveProduct(ctx, "Paid Cancel Guard");
         String variantId = createVariant(ctx, productId, 125000, 10);
@@ -637,10 +690,10 @@ class PaymentIntegrationTest extends AbstractIntegrationTest {
 
         mockMvc.perform(post("/api/v1/orders/" + orderId + "/cancel")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + buyer.accessToken()))
-                .andExpect(status().isConflict());
+                .andExpect(status().isOk());
 
         var order = orderRepository.findById(UUID.fromString(orderId)).orElseThrow();
-        assertThat(order.getOrderStatus().name()).isEqualTo("PENDING_CONFIRMATION");
+        assertThat(order.getOrderStatus().name()).isEqualTo("CANCELLATION_REQUESTED");
         assertThat(order.getPaymentStatus().name()).isEqualTo("PAID");
     }
 

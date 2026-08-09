@@ -2,6 +2,7 @@ package com.dunghaiquyen.ecommerce.modules.payment.service;
 
 import com.dunghaiquyen.ecommerce.common.exception.BusinessRuleException;
 import com.dunghaiquyen.ecommerce.common.exception.ResourceNotFoundException;
+import com.dunghaiquyen.ecommerce.config.AppOrderProperties;
 import com.dunghaiquyen.ecommerce.config.AppVnpayProperties;
 import com.dunghaiquyen.ecommerce.config.CacheConfig;
 import com.dunghaiquyen.ecommerce.common.time.AppTimeZone;
@@ -47,16 +48,19 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final VnpaySignatureService signatureService;
     private final AppVnpayProperties vnpayProperties;
+    private final AppOrderProperties orderProperties;
 
     public PaymentService(
             OrderRepository orderRepository,
             PaymentRepository paymentRepository,
             VnpaySignatureService signatureService,
-            AppVnpayProperties vnpayProperties) {
+            AppVnpayProperties vnpayProperties,
+            AppOrderProperties orderProperties) {
         this.orderRepository = orderRepository;
         this.paymentRepository = paymentRepository;
         this.signatureService = signatureService;
         this.vnpayProperties = vnpayProperties;
+        this.orderProperties = orderProperties;
     }
 
     /**
@@ -107,10 +111,17 @@ public class PaymentService {
             throw new BusinessRuleException(HttpStatus.UNPROCESSABLE_ENTITY, "Order is already paid");
         }
 
+        Instant now = Instant.now();
+        Instant orderPaymentDeadline = order.getCreatedAt()
+                .plusSeconds(orderProperties.effectivePendingPaymentExpiryMinutes() * 60L);
+        if (!orderPaymentDeadline.isAfter(now)) {
+            throw new BusinessRuleException(HttpStatus.UNPROCESSABLE_ENTITY, "Order payment window has expired");
+        }
+
         Optional<Payment> latest = paymentRepository.findFirstByOrderIdOrderByCreatedAtDesc(order.getId());
         if (latest.isPresent() && latest.get().getStatus() == PaymentStatus.PENDING) {
             Payment existing = latest.get();
-            if (existing.getExpiresAt() != null && existing.getExpiresAt().isAfter(Instant.now())) {
+            if (existing.getExpiresAt() != null && existing.getExpiresAt().isAfter(now)) {
                 return new CreatePaymentResponse(
                         buildPaymentUrl(existing, clientIpAddress), existing.getTransactionRef());
             }
@@ -126,7 +137,11 @@ public class PaymentService {
         payment.setStatus(PaymentStatus.PENDING);
         ZonedDateTime paymentCreatedAt = ZonedDateTime.now(AppTimeZone.ZONE);
         payment.setTransactionDate(paymentCreatedAt.format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss")));
-        payment.setExpiresAt(paymentCreatedAt.plusMinutes(15).toInstant());
+        // A retry created near the order's hard expiry must never produce a URL
+        // that remains payable after the order is eligible for auto-cancellation.
+        Instant normalSessionDeadline = paymentCreatedAt.plusMinutes(15).toInstant();
+        payment.setExpiresAt(normalSessionDeadline.isBefore(orderPaymentDeadline)
+                ? normalSessionDeadline : orderPaymentDeadline);
         payment = paymentRepository.save(payment);
 
         if (order.getPaymentStatus() != PaymentStatus.PENDING) {
@@ -177,11 +192,18 @@ public class PaymentService {
             return ipnResponse("99", "Missing transaction reference");
         }
 
-        Optional<Payment> paymentResult = paymentRepository.findByTransactionRefForUpdate(transactionRef);
-        if (paymentResult.isEmpty()) {
+        // Resolve the immutable owning order first without taking a payment lock,
+        // then acquire locks in the same order used by createPaymentSession:
+        // order -> payment. The previous payment -> order order could deadlock
+        // with a concurrent retry that held the order and updated that payment.
+        Optional<Payment> paymentLookup = paymentRepository.findByTransactionRef(transactionRef);
+        if (paymentLookup.isEmpty()) {
             return ipnResponse("01", "Payment not found");
         }
-        Payment payment = paymentResult.get();
+        Order order = orderRepository.findByIdForUpdate(paymentLookup.get().getOrder().getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+        Payment payment = paymentRepository.findByTransactionRefForUpdate(transactionRef)
+                .orElseThrow(() -> new ResourceNotFoundException("Payment not found"));
 
         String validationCode = validateCallbackPayload(params, payment);
         if (validationCode != null) {
@@ -197,9 +219,6 @@ public class PaymentService {
 
         String responseCode = params.get("vnp_ResponseCode");
         String transactionStatus = params.get("vnp_TransactionStatus");
-        // Serialize payment completion against customer/admin status changes.
-        Order order = orderRepository.findByIdForUpdate(payment.getOrder().getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
         PaymentStatus resolvedStatus = resolveStatus(responseCode, transactionStatus);
         payment.setStatus(resolvedStatus);
         if (resolvedStatus == PaymentStatus.PAID) {
