@@ -37,13 +37,21 @@ export function OrderHistoryPageClient() {
   }, [authenticated]);
 
   const handleCancel = async (id: string) => {
+    const target = orders.find((order) => order.id === id);
+    if (!target) return;
+    const paid = target.paymentStatus === "PAID";
+    if (!window.confirm(paid
+      ? "Gửi yêu cầu hủy đơn và hoàn lại toàn bộ tiền qua VNPay? Đơn chỉ được hủy sau khi hoàn tiền thành công."
+      : "Bạn chắc chắn muốn hủy đơn này?")) return;
     setCancellingId(id);
     setError(null);
     setSuccess(null);
     try {
-      await cancelOrder(id, "Khách hàng yêu cầu hủy");
+      const updated = await cancelOrder(id, paid ? "Khách hàng yêu cầu hủy và hoàn tiền" : "Khách hàng yêu cầu hủy");
       await loadOrders();
-      setSuccess("Đơn hàng đã được hủy.");
+      setSuccess(updated.orderStatus === "CANCELLATION_REQUESTED"
+        ? "Đã gửi yêu cầu hủy và hoàn tiền. Cửa hàng sẽ hoàn tiền VNPay trước khi hủy đơn."
+        : "Đơn hàng đã được hủy.");
     } catch (err) {
       setError(getApiErrorMessage(err, "Không thể hủy đơn hàng."));
     } finally {
@@ -106,8 +114,20 @@ export function OrderHistoryPageClient() {
                         disabled={cancellingId === order.id}
                         className="mt-4 h-10 rounded-tl-[18px] rounded-br-[18px] border border-ivy-dark px-5 text-[12px] font-semibold uppercase tracking-[0.05em] text-ivy-dark disabled:opacity-60"
                       >
-                        {cancellingId === order.id ? "Đang hủy..." : "Hủy đơn"}
+                        {cancellingId === order.id
+                          ? "Đang xử lý..."
+                          : order.paymentStatus === "PAID" ? "Yêu cầu hủy & hoàn tiền" : "Hủy đơn"}
                       </button>
+                    ) : null}
+                    {order.orderStatus === "CANCELLATION_REQUESTED" ? (
+                      <p className="mt-4 max-w-[260px] text-[13px] leading-5 text-[#A86516]">
+                        Đang chờ cửa hàng hoàn tiền VNPay. Đơn sẽ tự động hủy sau khi hoàn tiền thành công.
+                      </p>
+                    ) : null}
+                    {order.orderStatus === "CANCELLATION_APPROVED" ? (
+                      <p className="mt-4 max-w-[260px] text-[13px] leading-5 text-[#A86516]">
+                        Cửa hàng đã duyệt yêu cầu hủy và đang xử lý hoàn tiền VNPay.
+                      </p>
                     ) : null}
                   </div>
                 </div>

@@ -9,6 +9,7 @@ import com.dunghaiquyen.ecommerce.modules.order.entity.OrderItem;
 import com.dunghaiquyen.ecommerce.modules.order.entity.OrderStatus;
 import com.dunghaiquyen.ecommerce.modules.order.repository.OrderItemRepository;
 import com.dunghaiquyen.ecommerce.modules.order.repository.OrderRepository;
+import com.dunghaiquyen.ecommerce.modules.order.service.OrderService;
 import com.dunghaiquyen.ecommerce.modules.payment.entity.Payment;
 import com.dunghaiquyen.ecommerce.modules.payment.entity.PaymentProvider;
 import com.dunghaiquyen.ecommerce.modules.payment.entity.PaymentStatus;
@@ -112,6 +113,7 @@ public class ReturnService {
     private final AuditLogService auditLogService;
     private final InventoryService inventoryService;
     private final VnpayTransactionService vnpayTransactionService;
+    private final OrderService orderService;
 
     public ReturnService(
             ReturnRepository returnRepository,
@@ -122,7 +124,8 @@ public class ReturnService {
             PaymentRepository paymentRepository,
             AuditLogService auditLogService,
             InventoryService inventoryService,
-            VnpayTransactionService vnpayTransactionService) {
+            VnpayTransactionService vnpayTransactionService,
+            OrderService orderService) {
         this.returnRepository = returnRepository;
         this.returnItemRepository = returnItemRepository;
         this.refundRepository = refundRepository;
@@ -132,6 +135,7 @@ public class ReturnService {
         this.auditLogService = auditLogService;
         this.inventoryService = inventoryService;
         this.vnpayTransactionService = vnpayTransactionService;
+        this.orderService = orderService;
     }
 
     public record ListResult<T>(List<T> items, PageMeta meta) {
@@ -425,6 +429,112 @@ public class ReturnService {
         return toRefundResponse(refund);
     }
 
+    /**
+     * Creates the full VNPay refund for a pre-confirmation cancellation request
+     * and submits it to the gateway. A failed gateway response leaves the order
+     * in CANCELLATION_REQUESTED so staff can safely retry without losing the request.
+     */
+    @Transactional
+    public RefundResponse refundCancellation(UUID orderId, String reason, User actor, String ipAddress) {
+        Order order = orderRepository.findByIdForUpdate(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+        if (order.getOrderStatus() != OrderStatus.CANCELLATION_APPROVED) {
+            throw new BusinessRuleException(HttpStatus.CONFLICT, "Cancellation must be approved before refund");
+        }
+        if (order.getPaymentStatus() != PaymentStatus.PAID) {
+            throw new BusinessRuleException(HttpStatus.CONFLICT, "A paid order is required for cancellation refund");
+        }
+        var activeRefund = refundRepository.findFirstByOrderIdAndStatusInOrderByCreatedAtDesc(orderId,
+                Set.of(RefundStatus.PENDING, RefundStatus.PROCESSING, RefundStatus.COMPLETED));
+        if (activeRefund.isPresent()) {
+            // Idempotent admin action: a double-click/page refresh must show the
+            // existing money movement, never attempt a second refund.
+            if (activeRefund.get().getStatus() == RefundStatus.COMPLETED) {
+                syncCompletedRefund(activeRefund.get());
+            }
+            return toRefundResponse(activeRefund.get());
+        }
+
+        Payment payment = paymentRepository
+                .findFirstByOrderIdAndStatusOrderByCreatedAtDesc(orderId, PaymentStatus.PAID)
+                .orElseThrow(() -> new BusinessRuleException(HttpStatus.CONFLICT,
+                        "Paid VNPay transaction not found"));
+        if (payment.getProvider() != PaymentProvider.VNPAY) {
+            throw new BusinessRuleException(HttpStatus.UNPROCESSABLE_ENTITY,
+                    "Only VNPay cancellation refunds are supported by this action");
+        }
+
+        Refund refund = new Refund();
+        refund.setOrder(order);
+        refund.setPayment(payment);
+        refund.setRefundCode(generateCode("RFD"));
+        refund.setAmount(payment.getAmount());
+        refund.setProvider(RefundProvider.VNPAY);
+        refund.setStatus(RefundStatus.PENDING);
+        refund.setReason(reason == null || reason.isBlank() ? "Customer cancellation request" : reason.trim());
+        refund.setCreatedBy(actor);
+        refund = saveRefundWithCodeRetry(refund);
+
+        vnpayTransactionService.refund(refund, actor != null ? actor.getFullName() : "system", ipAddress);
+        if (refund.getStatus() == RefundStatus.COMPLETED) {
+            refund.setRefundedAt(Instant.now());
+        }
+        refund = refundRepository.save(refund);
+        auditLogService.record(actor, "CANCELLATION_REFUND_SUBMIT", "Refund", refund.getId().toString(), null,
+                Map.of("orderId", orderId.toString(), "status", refund.getStatus().name()));
+        if (refund.getStatus() == RefundStatus.COMPLETED) {
+            syncCompletedRefund(refund);
+        }
+        return toRefundResponse(refund);
+    }
+
+    @Transactional(readOnly = true)
+    public List<RefundResponse> listOrderRefunds(UUID orderId, UUID customerId) {
+        orderRepository.findById(orderId)
+                .filter(order -> order.getUser().getId().equals(customerId))
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+        return refundRepository.findAllByOrderIdOrderByCreatedAtDesc(orderId).stream()
+                .map(this::toRefundResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<RefundResponse> listOrderRefundsForAdmin(UUID orderId) {
+        if (!orderRepository.existsById(orderId)) {
+            throw new ResourceNotFoundException("Order not found");
+        }
+        return refundRepository.findAllByOrderIdOrderByCreatedAtDesc(orderId).stream()
+                .map(this::toRefundResponse)
+                .toList();
+    }
+
+    @Transactional
+    public void rejectCancellationRequest(UUID orderId, String reason, User actor) {
+        Order order = orderRepository.findByIdForUpdate(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+        if (order.getOrderStatus() != OrderStatus.CANCELLATION_REQUESTED
+                || order.getCancellationRequestedBy()
+                != com.dunghaiquyen.ecommerce.modules.order.entity.CancellationRequestedBy.CUSTOMER) {
+            throw new BusinessRuleException(HttpStatus.CONFLICT,
+                    "Only a customer cancellation request can be rejected");
+        }
+        if (refundRepository.existsByOrderIdAndStatusIn(orderId,
+                Set.of(RefundStatus.PENDING, RefundStatus.PROCESSING, RefundStatus.COMPLETED))) {
+            throw new BusinessRuleException(HttpStatus.CONFLICT,
+                    "Không thể từ chối vì giao dịch hoàn tiền đã bắt đầu xử lý");
+        }
+        order.setOrderStatus(OrderStatus.PENDING_CONFIRMATION);
+        order.setCancellationRequestedBy(null);
+        order.setCancellationReason(null);
+        order.setCancellationRequestedAt(null);
+        order.setInternalNote(reason == null || reason.isBlank()
+                ? "Cancellation request rejected by staff" : "Cancellation request rejected: " + reason.trim());
+        orderRepository.save(order);
+        auditLogService.record(actor, "CANCELLATION_REQUEST_REJECT", "Order", orderId.toString(),
+                Map.of("status", OrderStatus.CANCELLATION_REQUESTED.name()),
+                Map.of("status", OrderStatus.PENDING_CONFIRMATION.name()));
+    }
+
     @Transactional
     public RefundResponse submitVnpayRefund(UUID refundId, User actor, String ipAddress) {
         Refund refund = refundRepository.findByIdForUpdate(refundId)
@@ -441,6 +551,29 @@ public class ReturnService {
         if (refund.getStatus() == RefundStatus.COMPLETED) syncCompletedRefund(refund);
         auditLogService.record(actor, "VNPAY_REFUND_SUBMIT", "Refund", refundId.toString(), null,
                 Map.of("status", refund.getStatus().name(), "requestId", refund.getGatewayRequestId()));
+        return toRefundResponse(refund);
+    }
+
+    @Transactional
+    public RefundResponse refreshVnpayRefund(UUID refundId, User actor, String ipAddress) {
+        Refund refund = refundRepository.findByIdForUpdate(refundId)
+                .orElseThrow(() -> new ResourceNotFoundException("Refund not found"));
+        if (refund.getProvider() != RefundProvider.VNPAY) {
+            throw new BusinessRuleException(HttpStatus.UNPROCESSABLE_ENTITY, "Refund is not a VNPay refund");
+        }
+        if (!Set.of(RefundStatus.PENDING, RefundStatus.PROCESSING).contains(refund.getStatus())) {
+            return toRefundResponse(refund);
+        }
+        vnpayTransactionService.queryRefund(refund, ipAddress);
+        if (refund.getStatus() == RefundStatus.COMPLETED) {
+            refund.setRefundedAt(Instant.now());
+        }
+        refund = refundRepository.save(refund);
+        auditLogService.record(actor, "VNPAY_REFUND_QUERY", "Refund", refundId.toString(), null,
+                Map.of("status", refund.getStatus().name()));
+        if (refund.getStatus() == RefundStatus.COMPLETED) {
+            syncCompletedRefund(refund);
+        }
         return toRefundResponse(refund);
     }
 
@@ -466,6 +599,9 @@ public class ReturnService {
                     }
                 });
                 orderRepository.save(order);
+                if (order.getOrderStatus() == OrderStatus.CANCELLATION_APPROVED) {
+                    orderService.completeCancellationAfterRefund(order.getId(), refund.getCreatedBy());
+                }
             }
     }
 

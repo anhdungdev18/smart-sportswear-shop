@@ -3,13 +3,16 @@
 import { memo, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ApiRequestError } from "@/modules/api/common";
-import { fetchOrderDetail, updateOrderStatus } from "@/modules/orders/browser-api";
+import { cancelOrderByStaff, fetchOrderDetail, fetchOrderRefunds, processCancellationRefund, refreshVnpayRefund, rejectCancellationRequest, updateOrderStatus } from "@/modules/orders/browser-api";
+import type { OrderRefundResponse } from "@/modules/orders/browser-api";
 import type { AdminOrderResponse, PageMeta } from "@/modules/orders/types";
 import { fetchOrderShipment, updateOrderShipment } from "@/modules/shipping/browser-api";
 import type { ShipmentResponse, ShippingMethodResponse } from "@/modules/shipping/types";
 
 const orderStatuses = [
   "PENDING_CONFIRMATION",
+  "CANCELLATION_REQUESTED",
+  "CANCELLATION_APPROVED",
   "CONFIRMED",
   "PACKING",
   "SHIPPING",
@@ -18,8 +21,19 @@ const orderStatuses = [
 ] as const;
 
 const nextOrderStatuses: Record<string, readonly string[]> = {
-  PENDING_CONFIRMATION: ["CONFIRMED", "CANCELLED"], CONFIRMED: ["PACKING"],
+  PENDING_CONFIRMATION: ["CONFIRMED"], CANCELLATION_REQUESTED: [], CANCELLATION_APPROVED: [], CONFIRMED: ["PACKING"],
   PACKING: ["SHIPPING"], SHIPPING: ["DELIVERED"], DELIVERED: [], CANCELLED: []
+};
+
+const orderStatusLabels: Record<string, string> = {
+  PENDING_CONFIRMATION: "Chờ xác nhận",
+  CANCELLATION_REQUESTED: "Chờ xử lý hủy",
+  CANCELLATION_APPROVED: "Đã duyệt hủy – đang hoàn tiền",
+  CONFIRMED: "Đã xác nhận",
+  PACKING: "Đang đóng gói",
+  SHIPPING: "Đang giao",
+  DELIVERED: "Đã giao",
+  CANCELLED: "Đã hủy"
 };
 
 const shipmentStatuses = [
@@ -56,6 +70,7 @@ const OrderRow = memo(function OrderRow({
   shipment,
   shipmentDraft,
   detail,
+  refunds,
   shippingMethods,
   statusDraft,
   noteDraft,
@@ -65,6 +80,10 @@ const OrderRow = memo(function OrderRow({
   onLoadDetail,
   onLoadShipment,
   onSaveStatus,
+  onRefundCancellation,
+  onRejectCancellation,
+  onStaffCancel,
+  onRefreshRefund,
   onShipmentDraftChange,
   onSaveShipment
 }: {
@@ -72,6 +91,7 @@ const OrderRow = memo(function OrderRow({
   shipment: ShipmentResponse | null | undefined;
   shipmentDraft: ReturnType<typeof createShipmentDraft> | undefined;
   detail: AdminOrderResponse | undefined;
+  refunds: OrderRefundResponse[] | undefined;
   shippingMethods: ShippingMethodResponse[];
   statusDraft: string;
   noteDraft: string;
@@ -81,9 +101,14 @@ const OrderRow = memo(function OrderRow({
   onLoadDetail: () => void;
   onLoadShipment: () => void;
   onSaveStatus: () => void;
+  onRefundCancellation: () => void;
+  onRejectCancellation: () => void;
+  onStaffCancel: () => void;
+  onRefreshRefund: (refundId: string) => void;
   onShipmentDraftChange: (patch: Partial<ReturnType<typeof createShipmentDraft>>) => void;
   onSaveShipment: () => void;
 }) {
+  const activeRefund = refunds?.find((refund) => ["PENDING", "PROCESSING", "COMPLETED"].includes(refund.status));
   return (
     <tr>
       <td>
@@ -100,19 +125,50 @@ const OrderRow = memo(function OrderRow({
       </td>
       <td>{Math.round(order.totalAmount).toLocaleString("vi-VN")}₫</td>
       <td>
+        {["CANCELLATION_REQUESTED", "CANCELLATION_APPROVED"].includes(order.orderStatus) ? (
+          <div className="admin-subcard admin-subcard-tight" style={{ borderColor: "#f0a32f", background: "#fff8e8", marginTop: 0 }}>
+            <strong>{order.orderStatus === "CANCELLATION_APPROVED"
+              ? "ĐÃ DUYỆT HỦY — ĐANG HOÀN TIỀN"
+              : order.cancellationRequestedBy === "CUSTOMER" ? "KHÁCH HÀNG YÊU CẦU HỦY ĐƠN"
+                : order.cancellationRequestedBy === "STAFF" ? "CỬA HÀNG CHỦ ĐỘNG HỦY ĐƠN" : "YÊU CẦU HỦY ĐƠN"}</strong>
+            <div className="table-subtle">Lý do: {order.cancellationReason ?? "Không ghi lý do"}</div>
+            {order.cancellationRequestedAt ? <div className="table-subtle">Gửi lúc: {new Date(order.cancellationRequestedAt).toLocaleString("vi-VN")}</div> : null}
+            <div className="table-subtle">{order.paymentStatus === "PAID" ? "Đơn đã thanh toán — cần hoàn tiền trước khi hủy." : "Đơn chưa thanh toán — có thể hủy ngay."}</div>
+          </div>
+        ) : null}
         <div className="admin-inline-form wrap">
-          <select className="select" value={statusDraft} onChange={(event) => onStatusChange(event.target.value)}>
+          {!['CANCELLATION_REQUESTED', 'CANCELLATION_APPROVED'].includes(order.orderStatus) ? <select className="select" value={statusDraft} onChange={(event) => onStatusChange(event.target.value)}>
             {[order.orderStatus, ...(nextOrderStatuses[order.orderStatus] ?? [])].map((status) => (
-              <option value={status} key={status}>{status}</option>
+              <option value={status} key={status}>{orderStatusLabels[status] ?? status}</option>
             ))}
-          </select>
+          </select> : null}
           <input className="admin-input" placeholder="Ghi chú nội bộ" value={noteDraft} onChange={(event) => onNoteChange(event.target.value)} />
-          <button className="admin-btn" type="button" onClick={onSaveStatus} disabled={savingId === order.id || statusDraft === order.orderStatus}>
+          {!['CANCELLATION_REQUESTED', 'CANCELLATION_APPROVED'].includes(order.orderStatus) ? <button className="admin-btn" type="button" onClick={onSaveStatus} disabled={savingId === order.id || statusDraft === order.orderStatus}>
             {savingId === order.id ? "Đang lưu..." : "Lưu trạng thái"}
-          </button>
+          </button> : null}
+          {order.orderStatus === "PENDING_CONFIRMATION" ? (
+            <button className="admin-btn secondary" type="button" onClick={onStaffCancel} disabled={savingId === `staff-cancel:${order.id}`}>
+              {savingId === `staff-cancel:${order.id}` ? "Đang xử lý..." : "Cửa hàng hủy đơn"}
+            </button>
+          ) : null}
           <button className="admin-btn secondary" type="button" onClick={onLoadDetail} disabled={savingId === `detail:${order.id}`}>
             {savingId === `detail:${order.id}` ? "Đang tải..." : "Chi tiết"}
           </button>
+          {["CANCELLATION_REQUESTED", "CANCELLATION_APPROVED"].includes(order.orderStatus) ? (
+            <>
+              <button className="admin-btn" type="button" onClick={onRefundCancellation} disabled={savingId === `refund:${order.id}` || activeRefund?.status === "PENDING" || activeRefund?.status === "PROCESSING"}>
+                {savingId === `refund:${order.id}`
+                  ? "Đang hoàn tiền..."
+                  : activeRefund?.status === "PROCESSING" ? "VNPay đang xử lý"
+                      : activeRefund?.status === "PENDING" ? "Hoàn tiền đang chờ"
+                      : order.orderStatus === "CANCELLATION_APPROVED" ? "Thử lại hoàn tiền"
+                        : "Duyệt: Hoàn tiền & hủy"}
+              </button>
+              {order.orderStatus === "CANCELLATION_REQUESTED" && order.cancellationRequestedBy === "CUSTOMER" ? <button className="admin-btn secondary" type="button" onClick={onRejectCancellation} disabled={savingId === `reject:${order.id}` || activeRefund?.status === "PENDING" || activeRefund?.status === "PROCESSING" || activeRefund?.status === "COMPLETED"}>
+                {savingId === `reject:${order.id}` ? "Đang xử lý..." : "Từ chối yêu cầu"}
+              </button> : null}
+            </>
+          ) : null}
           <button className="admin-btn secondary" type="button" onClick={onLoadShipment} disabled={savingId === `load-shipment:${order.id}`}>
             {savingId === `load-shipment:${order.id}` ? "Đang tải..." : "Giao vận"}
           </button>
@@ -162,6 +218,24 @@ const OrderRow = memo(function OrderRow({
             </div>
           </div>
         ) : null}
+        {refunds ? (
+          <div className="admin-subcard admin-subcard-tight">
+            <strong>Giao dịch hoàn tiền</strong>
+            {refunds.length ? refunds.map((refund) => (
+              <div className="admin-inline-form wrap" key={refund.id}>
+                <span className="table-subtle">
+                  {refund.refundCode} · {refund.provider} · {Math.round(refund.amount).toLocaleString("vi-VN")}₫ · <strong>{refund.status}</strong>
+                  {refund.gatewayTransactionNo ? ` · GD: ${refund.gatewayTransactionNo}` : ""}
+                </span>
+                {["PENDING", "PROCESSING"].includes(refund.status) ? (
+                  <button className="admin-btn secondary" type="button" onClick={() => onRefreshRefund(refund.id)} disabled={savingId === `refresh-refund:${refund.id}`}>
+                    {savingId === `refresh-refund:${refund.id}` ? "Đang kiểm tra..." : "Kiểm tra VNPay"}
+                  </button>
+                ) : null}
+              </div>
+            )) : <div className="table-subtle">Chưa có giao dịch hoàn tiền.</div>}
+          </div>
+        ) : null}
       </td>
     </tr>
   );
@@ -195,10 +269,12 @@ export function AdminOrdersClient({
   const [shipmentDrafts, setShipmentDrafts] = useState<Record<string, ReturnType<typeof createShipmentDraft>>>({});
   const [shipments, setShipments] = useState<Record<string, ShipmentResponse | null>>({});
   const [orderDetails, setOrderDetails] = useState<Record<string, AdminOrderResponse>>({});
+  const [refundsByOrder, setRefundsByOrder] = useState<Record<string, OrderRefundResponse[]>>({});
   const [message, setMessage] = useState<string | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
   const orderDetailCacheRef = useRef<Record<string, AdminOrderResponse>>({});
   const shipmentCacheRef = useRef<Record<string, ShipmentResponse | null>>({});
+  const pendingCancellationCount = orders.filter((order) => order.orderStatus === "CANCELLATION_REQUESTED").length;
 
   function navigate(nextPage: number, keyword = searchTerm, status = statusFilter) {
     const params = new URLSearchParams();
@@ -214,6 +290,16 @@ export function AdminOrdersClient({
     return () => window.clearTimeout(timer);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm]);
+
+  useEffect(() => {
+    const cancellationOrders = initialOrders.filter((order) =>
+      ["CANCELLATION_REQUESTED", "CANCELLATION_APPROVED"].includes(order.orderStatus));
+    if (!cancellationOrders.length) return;
+    void Promise.all(cancellationOrders.map(async (order) => {
+      const refunds = await fetchOrderRefunds(order.id);
+      setRefundsByOrder((current) => ({ ...current, [order.id]: refunds }));
+    })).catch(() => undefined);
+  }, [initialOrders]);
 
   async function handleUpdate(id: string) {
     const currentOrder = orders.find((item) => item.id === id);
@@ -261,6 +347,102 @@ export function AdminOrdersClient({
     }
   }
 
+  async function handleRefundCancellation(id: string) {
+    const order = orders.find((item) => item.id === id);
+    if (!order || !window.confirm(`Hoàn ${Math.round(order.totalAmount).toLocaleString("vi-VN")}₫ qua VNPay và hủy đơn ${order.orderCode}?`)) return;
+    try {
+      setSavingId(`refund:${id}`);
+      setMessage(null);
+      const refund = await processCancellationRefund(id);
+      const updated = await fetchOrderDetail(id);
+      orderDetailCacheRef.current[id] = updated;
+      setOrders((current) => current.map((item) => item.id === id ? updated : item));
+      setOrderDetails((current) => ({ ...current, [id]: updated }));
+      setRefundsByOrder((current) => ({
+        ...current,
+        [id]: [refund, ...(current[id] ?? []).filter((item) => item.id !== refund.id)]
+      }));
+      setStatusDrafts((current) => ({ ...current, [id]: updated.orderStatus }));
+      setMessage(refund.status === "COMPLETED"
+        ? `Đã hoàn tiền ${refund.refundCode} và hủy đơn ${updated.orderCode}.`
+        : `Đã gửi giao dịch ${refund.refundCode}; trạng thái hiện tại: ${refund.status}.`);
+    } catch (error) {
+      setMessage(extractError(error, "Không xử lý được hoàn tiền hủy đơn"));
+    } finally {
+      setSavingId(null);
+    }
+  }
+
+  async function handleRejectCancellation(id: string) {
+    const order = orders.find((item) => item.id === id);
+    if (!order || !window.confirm(`Từ chối yêu cầu hủy đơn ${order.orderCode}?`)) return;
+    try {
+      setSavingId(`reject:${id}`);
+      setMessage(null);
+      const updated = await rejectCancellationRequest(id,
+        noteDrafts[id]?.trim() || "Từ chối yêu cầu hủy của khách hàng");
+      orderDetailCacheRef.current[id] = updated;
+      setOrders((current) => current.map((item) => item.id === id ? updated : item));
+      setOrderDetails((current) => ({ ...current, [id]: updated }));
+      setStatusDrafts((current) => ({ ...current, [id]: updated.orderStatus }));
+      setMessage(`Đã từ chối yêu cầu hủy đơn ${updated.orderCode}.`);
+    } catch (error) {
+      setMessage(extractError(error, "Không từ chối được yêu cầu hủy"));
+    } finally {
+      setSavingId(null);
+    }
+  }
+
+  async function handleStaffCancel(id: string) {
+    const order = orders.find((item) => item.id === id);
+    if (!order) return;
+    const reason = noteDrafts[id]?.trim();
+    if (!reason) {
+      setMessage("Hãy nhập lý do cửa hàng hủy đơn vào ô ghi chú trước khi thực hiện.");
+      return;
+    }
+    if (!window.confirm(`Cửa hàng chủ động hủy đơn ${order.orderCode}?`)) return;
+    try {
+      setSavingId(`staff-cancel:${id}`);
+      setMessage(null);
+      const updated = await cancelOrderByStaff(id, reason);
+      orderDetailCacheRef.current[id] = updated;
+      setOrders((current) => current.map((item) => item.id === id ? updated : item));
+      setOrderDetails((current) => ({ ...current, [id]: updated }));
+      setStatusDrafts((current) => ({ ...current, [id]: updated.orderStatus }));
+      setMessage(updated.orderStatus === "CANCELLATION_REQUESTED"
+        ? `Đã ghi nhận cửa hàng hủy đơn ${updated.orderCode}. Hãy duyệt hoàn tiền để hoàn tất.`
+        : `Cửa hàng đã hủy đơn ${updated.orderCode}.`);
+    } catch (error) {
+      setMessage(extractError(error, "Không hủy được đơn hàng"));
+    } finally {
+      setSavingId(null);
+    }
+  }
+
+  async function handleRefreshRefund(orderId: string, refundId: string) {
+    try {
+      setSavingId(`refresh-refund:${refundId}`);
+      setMessage(null);
+      const refund = await refreshVnpayRefund(refundId);
+      const updated = await fetchOrderDetail(orderId);
+      setRefundsByOrder((current) => ({
+        ...current,
+        [orderId]: [refund, ...(current[orderId] ?? []).filter((item) => item.id !== refund.id)]
+      }));
+      setOrders((current) => current.map((item) => item.id === orderId ? updated : item));
+      setOrderDetails((current) => ({ ...current, [orderId]: updated }));
+      setStatusDrafts((current) => ({ ...current, [orderId]: updated.orderStatus }));
+      setMessage(refund.status === "COMPLETED"
+        ? `VNPay xác nhận đã hoàn tiền ${refund.refundCode}; đơn đã được hủy.`
+        : `Trạng thái hoàn tiền ${refund.refundCode}: ${refund.status}.`);
+    } catch (error) {
+      setMessage(extractError(error, "Không kiểm tra được trạng thái hoàn tiền VNPay"));
+    } finally {
+      setSavingId(null);
+    }
+  }
+
   async function handleLoadDetail(id: string) {
     const cached = orderDetailCacheRef.current[id];
     if (cached) {
@@ -271,10 +453,11 @@ export function AdminOrdersClient({
     try {
       setSavingId(`detail:${id}`);
       setMessage(null);
-      const detail = await fetchOrderDetail(id);
+      const [detail, refunds] = await Promise.all([fetchOrderDetail(id), fetchOrderRefunds(id)]);
       orderDetailCacheRef.current[id] = detail;
       setOrderDetails((current) => ({ ...current, [id]: detail }));
       setOrders((current) => current.map((item) => (item.id === detail.id ? detail : item)));
+      setRefundsByOrder((current) => ({ ...current, [id]: refunds }));
     } catch (error) {
       setMessage(extractError(error, "Không tải được chi tiết đơn hàng"));
     } finally {
@@ -310,7 +493,14 @@ export function AdminOrdersClient({
   return (
     <section className="card panel">
       <div className="panel-header">
-        <h2>Danh sách đơn hàng</h2>
+        <div>
+          <h2>Danh sách đơn hàng</h2>
+          {pendingCancellationCount > 0 ? (
+            <p style={{ marginTop: 8, color: "#b45309", fontWeight: 700 }}>
+              Có {pendingCancellationCount} yêu cầu hủy đang chờ xử lý trên trang này.
+            </p>
+          ) : null}
+        </div>
       </div>
       {message ? <p className="action-message">{message}</p> : null}
       <div className="admin-form-grid" style={{ marginBottom: 16 }}>
@@ -321,7 +511,7 @@ export function AdminOrdersClient({
           navigate(1, searchTerm, status);
         }}>
           <option value="all">Tất cả trạng thái</option>
-          {orderStatuses.map((status) => <option value={status} key={status}>{status}</option>)}
+          {orderStatuses.map((status) => <option value={status} key={status}>{orderStatusLabels[status] ?? status}</option>)}
         </select>
       </div>
       {orders.length === 0 ? (
@@ -345,6 +535,7 @@ export function AdminOrdersClient({
                 shipment={shipments[order.id]}
                 shipmentDraft={shipmentDrafts[order.id]}
                 detail={orderDetails[order.id]}
+                refunds={refundsByOrder[order.id]}
                 shippingMethods={shippingMethods}
                 statusDraft={statusDrafts[order.id] ?? order.orderStatus}
                 noteDraft={noteDrafts[order.id] ?? ""}
@@ -354,6 +545,10 @@ export function AdminOrdersClient({
                 onLoadDetail={() => void handleLoadDetail(order.id)}
                 onLoadShipment={() => void handleLoadShipment(order.id)}
                 onSaveStatus={() => void handleUpdate(order.id)}
+                onRefundCancellation={() => void handleRefundCancellation(order.id)}
+                onRejectCancellation={() => void handleRejectCancellation(order.id)}
+                onStaffCancel={() => void handleStaffCancel(order.id)}
+                onRefreshRefund={(refundId) => void handleRefreshRefund(order.id, refundId)}
                 onShipmentDraftChange={(patch) => setShipmentDrafts((current) => ({ ...current, [order.id]: { ...current[order.id], ...patch } }))}
                 onSaveShipment={() => void handleSaveShipment(order.id)}
               />

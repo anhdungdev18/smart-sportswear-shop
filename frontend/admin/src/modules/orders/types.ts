@@ -26,6 +26,9 @@ export type AdminOrderResponse = {
   totalAmount: number;
   note: string | null;
   internalNote: string | null;
+  cancellationRequestedBy: "CUSTOMER" | "STAFF" | null;
+  cancellationReason: string | null;
+  cancellationRequestedAt: string | null;
   items: OrderItemResponse[];
   createdAt: string;
 };

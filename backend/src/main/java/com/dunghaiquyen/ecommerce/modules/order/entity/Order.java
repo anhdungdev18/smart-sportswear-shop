@@ -75,6 +75,16 @@ public class Order extends AbstractAuditEntity {
     @Column(name = "internal_note", columnDefinition = "text")
     private String internalNote;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "cancellation_requested_by", length = 20)
+    private CancellationRequestedBy cancellationRequestedBy;
+
+    @Column(name = "cancellation_reason", columnDefinition = "text")
+    private String cancellationReason;
+
+    @Column(name = "cancellation_requested_at")
+    private Instant cancellationRequestedAt;
+
     /** Set once, when orderStatus first reaches DELIVERED (see OrderService.applyStatusTransition) - backs the returns module's return-window eligibility check. Null for orders delivered before this column existed. */
     @Column(name = "delivered_at")
     private Instant deliveredAt;

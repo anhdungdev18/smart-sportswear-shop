@@ -44,9 +44,13 @@ export function OrderDetailPageClient({ orderId }: { orderId: string }) {
 
   const handleCancel = async () => {
     if (!order) return;
+    const paid = order.paymentStatus === "PAID";
+    if (!window.confirm(paid
+      ? "Gửi yêu cầu hủy đơn và hoàn lại toàn bộ tiền qua VNPay?"
+      : "Bạn chắc chắn muốn hủy đơn này?")) return;
     setCancelling(true);
     try {
-      const updated = await cancelOrder(order.id);
+      const updated = await cancelOrder(order.id, paid ? "Khách hàng yêu cầu hủy và hoàn tiền" : undefined);
       setOrder(updated);
     } catch (err) {
       setError(getApiErrorMessage(err, "Không thể hủy đơn hàng."));
@@ -69,7 +73,7 @@ export function OrderDetailPageClient({ orderId }: { orderId: string }) {
     }
   };
 
-  const canCancel = order?.orderStatus === "PENDING_CONFIRMATION" && order.paymentStatus !== "PAID";
+  const canCancel = order?.orderStatus === "PENDING_CONFIRMATION";
   const canPay = order?.orderStatus === "PENDING_CONFIRMATION"
     && order.paymentMethod === "VNPAY" && order.paymentStatus !== "PAID";
 
@@ -114,8 +118,18 @@ export function OrderDetailPageClient({ orderId }: { orderId: string }) {
                   disabled={cancelling}
                   className="mt-4 h-10 rounded-tl-[18px] rounded-br-[18px] border border-ivy-dark px-5 text-[12px] font-semibold uppercase tracking-[0.05em] text-ivy-dark disabled:opacity-60"
                 >
-                  {cancelling ? "Đang hủy..." : "Hủy đơn"}
+                  {cancelling ? "Đang xử lý..." : order.paymentStatus === "PAID" ? "Yêu cầu hủy & hoàn tiền" : "Hủy đơn"}
                 </button>
+              ) : null}
+              {order.orderStatus === "CANCELLATION_REQUESTED" ? (
+                <p className="mt-4 max-w-[300px] text-[13px] leading-5 text-[#A86516]">
+                  Đang chờ hoàn tiền VNPay. Đơn sẽ tự động hủy khi giao dịch hoàn tiền thành công.
+                </p>
+              ) : null}
+              {order.orderStatus === "CANCELLATION_APPROVED" ? (
+                <p className="mt-4 max-w-[300px] text-[13px] leading-5 text-[#A86516]">
+                  Cửa hàng đã duyệt hủy và đang xử lý hoàn tiền VNPay cho bạn.
+                </p>
               ) : null}
               {canPay ? (
                 <button

@@ -47,6 +47,9 @@ export interface OrderResponse {
   discountAmount: number;
   totalAmount: number;
   note?: string | null;
+  cancellationRequestedBy?: "CUSTOMER" | "STAFF" | null;
+  cancellationReason?: string | null;
+  cancellationRequestedAt?: string | null;
   items: OrderItem[];
   createdAt: string;
 }

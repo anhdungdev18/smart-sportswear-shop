@@ -46,4 +46,13 @@ public class AdminRefundController {
         return ApiResponse.ok("VNPay refund submitted",
                 returnService.submitVnpayRefund(id, principal.getUser(), request.getRemoteAddr()));
     }
+
+    @PostMapping("/{id}/refresh")
+    public ApiResponse<RefundResponse> refresh(
+            @AuthenticationPrincipal CustomUserDetails principal,
+            @PathVariable UUID id,
+            HttpServletRequest request) {
+        return ApiResponse.ok("VNPay refund status refreshed",
+                returnService.refreshVnpayRefund(id, principal.getUser(), request.getRemoteAddr()));
+    }
 }

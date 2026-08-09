@@ -79,7 +79,11 @@ public class OrderService {
      */
     private static final Map<OrderStatus, java.util.Set<OrderStatus>> ALLOWED_TRANSITIONS = Map.of(
             OrderStatus.PENDING_CONFIRMATION,
-                    java.util.Set.of(OrderStatus.CONFIRMED, OrderStatus.CANCELLED),
+                    java.util.Set.of(OrderStatus.CONFIRMED, OrderStatus.CANCELLED, OrderStatus.CANCELLATION_REQUESTED),
+            OrderStatus.CANCELLATION_REQUESTED,
+                    java.util.Set.of(OrderStatus.CANCELLATION_APPROVED),
+            OrderStatus.CANCELLATION_APPROVED,
+                    java.util.Set.of(OrderStatus.CANCELLED),
             OrderStatus.CONFIRMED, java.util.Set.of(OrderStatus.PACKING),
             OrderStatus.PACKING, java.util.Set.of(OrderStatus.SHIPPING),
             OrderStatus.SHIPPING, java.util.Set.of(OrderStatus.DELIVERED),
@@ -364,16 +368,48 @@ public class OrderService {
             throw new ResourceNotFoundException("Order not found");
         }
         User actor = order.getUser();
-        order = applyStatusTransition(order, OrderStatus.CANCELLED, actor);
+        OrderStatus target = order.getPaymentStatus() == PaymentStatus.PAID
+                ? OrderStatus.CANCELLATION_REQUESTED
+                : OrderStatus.CANCELLED;
+        order = applyStatusTransition(order, target, actor);
+        if (target == OrderStatus.CANCELLATION_REQUESTED) {
+            order.setCancellationRequestedBy(com.dunghaiquyen.ecommerce.modules.order.entity.CancellationRequestedBy.CUSTOMER);
+            order.setCancellationReason(reason == null || reason.isBlank() ? "Khách hàng yêu cầu hủy đơn" : reason.trim());
+            order.setCancellationRequestedAt(java.time.Instant.now());
+        }
         if (reason != null && !reason.isBlank()) {
             // No dedicated "cancel reason" column exists (no migration warranted for
             // this patch) - internalNote is staff-visible metadata about the order's
             // lifecycle, which is exactly what this is, and customer-facing `note`
             // must not be overwritten (it holds whatever the customer set at checkout).
-            order.setInternalNote("Cancelled by customer: " + reason.trim());
+            String prefix = target == OrderStatus.CANCELLATION_REQUESTED
+                    ? "Cancellation/refund requested by customer: "
+                    : "Cancelled by customer: ";
+            order.setInternalNote(prefix + reason.trim());
             order = orderRepository.save(order);
         }
         return assembleResponse(order);
+    }
+
+    /** Staff-initiated pre-confirmation cancellation, distinct from a customer request. */
+    @Transactional
+    public AdminOrderResponse cancelOrderByStaff(UUID orderId, String reason, User actor) {
+        Order order = orderRepository.findByIdForUpdate(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+        if (order.getOrderStatus() != OrderStatus.PENDING_CONFIRMATION) {
+            throw new BusinessRuleException(HttpStatus.CONFLICT,
+                    "Only a pending-confirmation order can be cancelled by staff");
+        }
+        boolean requiresRefund = order.getPaymentStatus() == PaymentStatus.PAID;
+        order = applyStatusTransition(order,
+                requiresRefund ? OrderStatus.CANCELLATION_REQUESTED : OrderStatus.CANCELLED, actor);
+        order.setCancellationRequestedBy(
+                com.dunghaiquyen.ecommerce.modules.order.entity.CancellationRequestedBy.STAFF);
+        order.setCancellationReason(reason == null || reason.isBlank() ? "Cửa hàng chủ động hủy đơn" : reason.trim());
+        order.setCancellationRequestedAt(java.time.Instant.now());
+        order.setInternalNote((requiresRefund ? "Staff cancellation awaiting refund: " : "Cancelled by staff: ")
+                + order.getCancellationReason());
+        return assembleAdminResponse(orderRepository.save(order));
     }
 
     /**
@@ -451,6 +487,38 @@ public class OrderService {
     private LineCheck checkLine(CartItem cartItem, boolean lockForUpdate) {
         VariantCheck check = checkVariant(cartItem.getVariant().getId(), cartItem.getQuantity(), lockForUpdate);
         return new LineCheck(cartItem, check.variant(), check.lineTotal(), check.errorStatus(), check.errorMessage());
+    }
+
+    /** Finalizes a paid pre-fulfilment cancellation only after its full refund completed. */
+    @Transactional
+    public OrderResponse completeCancellationAfterRefund(UUID orderId, User actor) {
+        Order order = orderRepository.findByIdForUpdate(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+        if (order.getOrderStatus() != OrderStatus.CANCELLATION_APPROVED) {
+            throw new BusinessRuleException(HttpStatus.CONFLICT, "Cancellation has not been approved");
+        }
+        if (order.getPaymentStatus() != PaymentStatus.REFUNDED) {
+            throw new BusinessRuleException(HttpStatus.CONFLICT, "Order must be refunded before cancellation");
+        }
+        order = applyStatusTransition(order, OrderStatus.CANCELLED, actor);
+        order.setInternalNote("Refund completed; cancellation finalized");
+        return assembleResponse(orderRepository.save(order));
+    }
+
+    /** Persists the admin decision before any external VNPay call is attempted. */
+    @Transactional
+    public AdminOrderResponse approveCancellationForRefund(UUID orderId, User actor) {
+        Order order = orderRepository.findByIdForUpdate(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+        if (order.getOrderStatus() == OrderStatus.CANCELLATION_APPROVED) {
+            return assembleAdminResponse(order);
+        }
+        if (order.getOrderStatus() != OrderStatus.CANCELLATION_REQUESTED) {
+            throw new BusinessRuleException(HttpStatus.CONFLICT, "Order has no cancellation request to approve");
+        }
+        order = applyStatusTransition(order, OrderStatus.CANCELLATION_APPROVED, actor);
+        order.setInternalNote("Cancellation approved by staff; refund processing started");
+        return assembleAdminResponse(orderRepository.save(order));
     }
 
     private record VariantCheck(
@@ -687,6 +755,9 @@ public class OrderService {
                 order.getDiscountAmount(),
                 order.getTotalAmount(),
                 order.getNote(),
+                order.getCancellationRequestedBy(),
+                order.getCancellationReason(),
+                order.getCancellationRequestedAt(),
                 items,
                 order.getCreatedAt());
     }
@@ -708,6 +779,9 @@ public class OrderService {
                 order.getTotalAmount(),
                 order.getNote(),
                 order.getInternalNote(),
+                order.getCancellationRequestedBy(),
+                order.getCancellationReason(),
+                order.getCancellationRequestedAt(),
                 items,
                 order.getCreatedAt());
     }

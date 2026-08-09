@@ -7,6 +7,8 @@ import com.dunghaiquyen.ecommerce.modules.order.dto.CreateOrderRequest;
 import com.dunghaiquyen.ecommerce.modules.order.dto.OrderListQuery;
 import com.dunghaiquyen.ecommerce.modules.order.dto.OrderResponse;
 import com.dunghaiquyen.ecommerce.modules.order.service.OrderService;
+import com.dunghaiquyen.ecommerce.modules.returns.dto.RefundResponse;
+import com.dunghaiquyen.ecommerce.modules.returns.service.ReturnService;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.UUID;
@@ -28,9 +30,11 @@ import org.springframework.web.bind.annotation.RestController;
 public class OrderController {
 
     private final OrderService orderService;
+    private final ReturnService returnService;
 
-    public OrderController(OrderService orderService) {
+    public OrderController(OrderService orderService, ReturnService returnService) {
         this.orderService = orderService;
+        this.returnService = returnService;
     }
 
     @PostMapping
@@ -78,6 +82,16 @@ public class OrderController {
             @RequestBody(required = false) CancelOrderRequest request) {
         String reason = request != null ? request.reason() : null;
         OrderResponse response = orderService.cancelOwnOrder(id, principal.getUserId(), reason);
-        return ApiResponse.ok("Order cancelled", response);
+        String message = response.orderStatus() == com.dunghaiquyen.ecommerce.modules.order.entity.OrderStatus.CANCELLATION_REQUESTED
+                ? "Cancellation and refund requested"
+                : "Order cancelled";
+        return ApiResponse.ok(message, response);
+    }
+
+    @GetMapping("/{id}/refunds")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ApiResponse<List<RefundResponse>> refunds(
+            @AuthenticationPrincipal CustomUserDetails principal, @PathVariable UUID id) {
+        return ApiResponse.ok(returnService.listOrderRefunds(id, principal.getUserId()));
     }
 }

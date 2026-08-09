@@ -1,0 +1,3 @@
+-- Compatibility placeholder for databases where V43 was previously applied as
+-- "recreate promotions". The promotion schema is no longer part of this codebase;
+-- keeping the version prevents Flyway history from being reused by a new change.

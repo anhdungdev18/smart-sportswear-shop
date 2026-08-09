@@ -8,7 +8,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.math.BigDecimal;
 import java.util.Collection;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Lock;
@@ -18,6 +17,13 @@ import org.springframework.data.repository.query.Param;
 public interface RefundRepository extends JpaRepository<Refund, UUID>, JpaSpecificationExecutor<Refund> {
 
     List<Refund> findAllByReturnRequestIdOrderByCreatedAtDesc(UUID returnId);
+
+    List<Refund> findAllByOrderIdOrderByCreatedAtDesc(UUID orderId);
+
+    boolean existsByOrderIdAndStatusIn(UUID orderId, Collection<RefundStatus> statuses);
+
+    Optional<Refund> findFirstByOrderIdAndStatusInOrderByCreatedAtDesc(
+            UUID orderId, Collection<RefundStatus> statuses);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select r from Refund r where r.id = :id")
