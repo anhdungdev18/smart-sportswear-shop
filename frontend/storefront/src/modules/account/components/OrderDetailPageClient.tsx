@@ -2,11 +2,13 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { cancelOrder, getOrderDetail } from "@/modules/account/api";
 import type { OrderResponse } from "@/modules/account/types";
 import { getApiErrorMessage } from "@/lib/api-errors";
 import { getAccessToken } from "@/lib/session";
 import { createVnpayPayment } from "@/modules/checkout/api";
+import { getOrderStatusLabel } from "@/modules/account/order-labels";
 
 const money = (n: number) => `${n.toLocaleString("vi-VN")}đ`;
 
@@ -44,9 +46,13 @@ export function OrderDetailPageClient({ orderId }: { orderId: string }) {
 
   const handleCancel = async () => {
     if (!order) return;
+    const paid = order.paymentStatus === "PAID";
+    if (!window.confirm(paid
+      ? "Gửi yêu cầu hủy đơn và hoàn lại toàn bộ tiền qua VNPay?"
+      : "Bạn chắc chắn muốn hủy đơn này?")) return;
     setCancelling(true);
     try {
-      const updated = await cancelOrder(order.id);
+      const updated = await cancelOrder(order.id, paid ? "Khách hàng yêu cầu hủy và hoàn tiền" : undefined);
       setOrder(updated);
     } catch (err) {
       setError(getApiErrorMessage(err, "Không thể hủy đơn hàng."));
@@ -69,7 +75,7 @@ export function OrderDetailPageClient({ orderId }: { orderId: string }) {
     }
   };
 
-  const canCancel = order?.orderStatus === "PENDING_CONFIRMATION" && order.paymentStatus !== "PAID";
+  const canCancel = order?.orderStatus === "PENDING_CONFIRMATION";
   const canPay = order?.orderStatus === "PENDING_CONFIRMATION"
     && order.paymentMethod === "VNPAY" && order.paymentStatus !== "PAID";
 
@@ -99,7 +105,7 @@ export function OrderDetailPageClient({ orderId }: { orderId: string }) {
               <p className="mt-2 text-[14px] text-ivy-text">
                 Ngày tạo: {new Date(order.createdAt).toLocaleString("vi-VN")}
               </p>
-              <p className="mt-1 text-[14px] text-ivy-text">Trạng thái đơn: {order.orderStatus}</p>
+              <p className="mt-1 text-[14px] text-ivy-text">Trạng thái đơn: {getOrderStatusLabel(order.orderStatus)}</p>
               <p className="mt-1 text-[14px] text-ivy-text">
                 Thanh toán: {order.paymentMethod} / {order.paymentStatus}
               </p>
@@ -114,8 +120,18 @@ export function OrderDetailPageClient({ orderId }: { orderId: string }) {
                   disabled={cancelling}
                   className="mt-4 h-10 rounded-tl-[18px] rounded-br-[18px] border border-ivy-dark px-5 text-[12px] font-semibold uppercase tracking-[0.05em] text-ivy-dark disabled:opacity-60"
                 >
-                  {cancelling ? "Đang hủy..." : "Hủy đơn"}
+                  {cancelling ? "Đang xử lý..." : order.paymentStatus === "PAID" ? "Yêu cầu hủy & hoàn tiền" : "Hủy đơn"}
                 </button>
+              ) : null}
+              {order.orderStatus === "CANCELLATION_REQUESTED" ? (
+                <p className="mt-4 max-w-[300px] text-[13px] leading-5 text-[#A86516]">
+                  Đang chờ hoàn tiền VNPay. Đơn sẽ tự động hủy khi giao dịch hoàn tiền thành công.
+                </p>
+              ) : null}
+              {order.orderStatus === "CANCELLATION_APPROVED" ? (
+                <p className="mt-4 max-w-[300px] text-[13px] leading-5 text-[#A86516]">
+                  Cửa hàng đã duyệt hủy và đang xử lý hoàn tiền VNPay cho bạn.
+                </p>
               ) : null}
               {canPay ? (
                 <button
@@ -134,9 +150,12 @@ export function OrderDetailPageClient({ orderId }: { orderId: string }) {
             {order.items.map((item) => (
               <div
                 key={item.id}
-                className="flex flex-col gap-2 border-b border-dashed border-ivy-hairline pb-4 last:border-none last:pb-0 md:flex-row md:items-center md:justify-between"
+                className="flex gap-4 border-b border-dashed border-ivy-hairline pb-4 last:border-none last:pb-0 md:items-center"
               >
-                <div>
+                <Link href={`/sanpham/${item.productId}`} aria-label={`Xem chi tiết ${item.productName}`} className="relative h-28 w-24 shrink-0 overflow-hidden bg-[#f5f5f5]">
+                  {item.thumbnail ? <Image src={item.thumbnail} alt={item.productName} fill sizes="96px" className="object-cover" /> : null}
+                </Link>
+                <Link href={`/sanpham/${item.productId}`} className="min-w-0 flex-1 hover:text-ivy-accent">
                   <p className="text-[16px] font-medium text-ivy-dark">{item.productName}</p>
                   <p className="mt-1 text-[14px] text-ivy-text">SKU: {item.sku}</p>
                   <p className="mt-1 text-[14px] text-ivy-text">
@@ -145,7 +164,7 @@ export function OrderDetailPageClient({ orderId }: { orderId: string }) {
                   <p className="mt-1 text-[14px] text-ivy-text">
                     {money(item.unitPrice)} × {item.quantity}
                   </p>
-                </div>
+                </Link>
                 <div className="text-[18px] font-semibold text-ivy-dark">{money(item.lineTotal)}</div>
               </div>
             ))}

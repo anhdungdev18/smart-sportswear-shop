@@ -1,7 +1,10 @@
 package com.dunghaiquyen.ecommerce.modules.user.repository;
 
 import com.dunghaiquyen.ecommerce.modules.user.entity.User;
+import com.dunghaiquyen.ecommerce.modules.user.entity.UserRole;
+import com.dunghaiquyen.ecommerce.modules.user.entity.UserStatus;
 import jakarta.persistence.LockModeType;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,6 +18,8 @@ public interface UserRepository extends JpaRepository<User, UUID>, JpaSpecificat
     Optional<User> findByEmail(String email);
 
     boolean existsByEmail(String email);
+
+    List<User> findAllByRoleAndStatus(UserRole role, UserStatus status);
 
     /**
      * Row-locked read used by AdminUserService before a status/role mutation -

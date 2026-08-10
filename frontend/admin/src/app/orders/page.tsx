@@ -29,20 +29,23 @@ export default async function OrdersPage({ searchParams }: { searchParams: Order
 }
 
 async function OrdersContent({ page, keyword, status }: { page: number; keyword: string; status: string }) {
-  const [orderPage, shippingMethods] = await Promise.all([
+  const [orderResult, shippingMethods] = await Promise.all([
     listAdminOrders({ page, limit: 20, keyword: keyword || undefined, status: status === "all" ? undefined : status })
-      .catch(() => ({ items: [], meta: { page, limit: 20, total: 0, totalPages: 0 } })),
+      .then((data) => ({ data, error: null }))
+      .catch(() => ({ data: { items: [], meta: { page, limit: 20, total: 0, totalPages: 0 } }, error: "Không thể tải đơn hàng. Vui lòng kiểm tra backend hoặc đăng nhập lại." })),
     listShippingMethods().catch(() => []),
   ]);
+  const orderPage = orderResult.data;
 
   return (
     <AdminOrdersClient
-      key={`${page}:${keyword}:${status}`}
+      key={`${page}:${keyword}:${status}:${orderPage.items.map((item) => item.id).join(",")}`}
       initialOrders={orderPage.items}
       pageMeta={orderPage.meta}
       initialKeyword={keyword}
       initialStatus={status}
       shippingMethods={shippingMethods}
+      loadError={orderResult.error}
     />
   );
 }

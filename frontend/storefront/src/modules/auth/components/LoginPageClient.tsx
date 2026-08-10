@@ -130,7 +130,7 @@ export function LoginPageClient() {
               {loginMessage ? <p className="text-[14px] text-[#257A4D]">{loginMessage}</p> : null}
               <div className="flex items-center justify-between gap-4 text-[14px] text-ivy-text">
                 <span>Đăng nhập bằng tài khoản khách hàng hiện có.</span>
-                <Link href="/dat-lai-mat-khau" className="underline">Đặt lại mật khẩu</Link>
+                <Link href="#quen-mat-khau" className="underline">Quên mật khẩu?</Link>
               </div>
               <button
                 type="submit"
@@ -232,7 +232,7 @@ export function LoginPageClient() {
           </section>
         </div>
 
-        <section className="mt-8 border border-ivy-hairline px-6 py-8 md:px-10">
+        <section id="quen-mat-khau" className="mt-8 scroll-mt-32 border border-ivy-hairline px-6 py-8 md:px-10">
           <h2 className="mb-2 text-[24px] font-semibold uppercase tracking-[0.04em] text-ivy-dark">Quên mật khẩu</h2>
           <p className="mb-6 text-[15px] leading-7 text-ivy-text">Nhập email tài khoản để nhận liên kết đặt lại mật khẩu qua email.</p>
           <form className="flex flex-col gap-4 md:flex-row" onSubmit={handleForgotSubmit}>

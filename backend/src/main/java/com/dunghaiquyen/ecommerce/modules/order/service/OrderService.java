@@ -34,6 +34,8 @@ import com.dunghaiquyen.ecommerce.modules.product.entity.ProductStatus;
 import com.dunghaiquyen.ecommerce.modules.product.entity.ProductVariant;
 import com.dunghaiquyen.ecommerce.modules.product.entity.VariantStatus;
 import com.dunghaiquyen.ecommerce.modules.product.repository.ProductVariantRepository;
+import com.dunghaiquyen.ecommerce.modules.product.repository.ProductImageRepository;
+import com.dunghaiquyen.ecommerce.modules.product.util.ThumbnailResolver;
 import com.dunghaiquyen.ecommerce.modules.payment.entity.PaymentStatus;
 import com.dunghaiquyen.ecommerce.modules.user.entity.User;
 import com.dunghaiquyen.ecommerce.modules.user.entity.UserRole;
@@ -79,7 +81,11 @@ public class OrderService {
      */
     private static final Map<OrderStatus, java.util.Set<OrderStatus>> ALLOWED_TRANSITIONS = Map.of(
             OrderStatus.PENDING_CONFIRMATION,
-                    java.util.Set.of(OrderStatus.CONFIRMED, OrderStatus.CANCELLED),
+                    java.util.Set.of(OrderStatus.CONFIRMED, OrderStatus.CANCELLED, OrderStatus.CANCELLATION_REQUESTED),
+            OrderStatus.CANCELLATION_REQUESTED,
+                    java.util.Set.of(OrderStatus.CANCELLATION_APPROVED),
+            OrderStatus.CANCELLATION_APPROVED,
+                    java.util.Set.of(OrderStatus.CANCELLED),
             OrderStatus.CONFIRMED, java.util.Set.of(OrderStatus.PACKING),
             OrderStatus.PACKING, java.util.Set.of(OrderStatus.SHIPPING),
             OrderStatus.SHIPPING, java.util.Set.of(OrderStatus.DELIVERED),
@@ -92,6 +98,7 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final OrderItemRepository orderItemRepository;
     private final ProductVariantRepository variantRepository;
+    private final ProductImageRepository productImageRepository;
     private final UserRepository userRepository;
     private final InventoryService inventoryService;
     private final OrderMapper orderMapper;
@@ -106,6 +113,7 @@ public class OrderService {
             OrderRepository orderRepository,
             OrderItemRepository orderItemRepository,
             ProductVariantRepository variantRepository,
+            ProductImageRepository productImageRepository,
             UserRepository userRepository,
             InventoryService inventoryService,
             OrderMapper orderMapper,
@@ -118,6 +126,7 @@ public class OrderService {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.variantRepository = variantRepository;
+        this.productImageRepository = productImageRepository;
         this.userRepository = userRepository;
         this.inventoryService = inventoryService;
         this.orderMapper = orderMapper;
@@ -364,16 +373,51 @@ public class OrderService {
             throw new ResourceNotFoundException("Order not found");
         }
         User actor = order.getUser();
-        order = applyStatusTransition(order, OrderStatus.CANCELLED, actor);
+        OrderStatus target = order.getPaymentStatus() == PaymentStatus.PAID
+                ? OrderStatus.CANCELLATION_REQUESTED
+                : OrderStatus.CANCELLED;
+        order = applyStatusTransition(order, target, actor);
+        if (target == OrderStatus.CANCELLATION_REQUESTED) {
+            order.setCancellationRequestedBy(com.dunghaiquyen.ecommerce.modules.order.entity.CancellationRequestedBy.CUSTOMER);
+            order.setCancellationReason(reason == null || reason.isBlank() ? "Khách hàng yêu cầu hủy đơn" : reason.trim());
+            order.setCancellationRequestedAt(java.time.Instant.now());
+        }
         if (reason != null && !reason.isBlank()) {
             // No dedicated "cancel reason" column exists (no migration warranted for
             // this patch) - internalNote is staff-visible metadata about the order's
             // lifecycle, which is exactly what this is, and customer-facing `note`
             // must not be overwritten (it holds whatever the customer set at checkout).
-            order.setInternalNote("Cancelled by customer: " + reason.trim());
+            String prefix = target == OrderStatus.CANCELLATION_REQUESTED
+                    ? "Cancellation/refund requested by customer: "
+                    : "Cancelled by customer: ";
+            order.setInternalNote(prefix + reason.trim());
             order = orderRepository.save(order);
         }
+        if (target == OrderStatus.CANCELLATION_REQUESTED) {
+            notificationService.notifyAdminsOrderCancelled(order);
+        }
         return assembleResponse(order);
+    }
+
+    /** Staff-initiated pre-confirmation cancellation, distinct from a customer request. */
+    @Transactional
+    public AdminOrderResponse cancelOrderByStaff(UUID orderId, String reason, User actor) {
+        Order order = orderRepository.findByIdForUpdate(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+        if (order.getOrderStatus() != OrderStatus.PENDING_CONFIRMATION) {
+            throw new BusinessRuleException(HttpStatus.CONFLICT,
+                    "Only a pending-confirmation order can be cancelled by staff");
+        }
+        boolean requiresRefund = order.getPaymentStatus() == PaymentStatus.PAID;
+        order = applyStatusTransition(order,
+                requiresRefund ? OrderStatus.CANCELLATION_REQUESTED : OrderStatus.CANCELLED, actor);
+        order.setCancellationRequestedBy(
+                com.dunghaiquyen.ecommerce.modules.order.entity.CancellationRequestedBy.STAFF);
+        order.setCancellationReason(reason == null || reason.isBlank() ? "Cửa hàng chủ động hủy đơn" : reason.trim());
+        order.setCancellationRequestedAt(java.time.Instant.now());
+        order.setInternalNote((requiresRefund ? "Staff cancellation awaiting refund: " : "Cancelled by staff: ")
+                + order.getCancellationReason());
+        return assembleAdminResponse(orderRepository.save(order));
     }
 
     /**
@@ -424,6 +468,7 @@ public class OrderService {
         // own customer should hear about a cancellation either way.
         if (target == OrderStatus.CANCELLED) {
             notificationService.notifyOrderCancelled(order);
+            notificationService.notifyAdminsOrderCancelled(order);
         } else if (target == OrderStatus.DELIVERED) {
             notificationService.notifyOrderDelivered(order);
         }
@@ -451,6 +496,40 @@ public class OrderService {
     private LineCheck checkLine(CartItem cartItem, boolean lockForUpdate) {
         VariantCheck check = checkVariant(cartItem.getVariant().getId(), cartItem.getQuantity(), lockForUpdate);
         return new LineCheck(cartItem, check.variant(), check.lineTotal(), check.errorStatus(), check.errorMessage());
+    }
+
+    /** Finalizes a paid pre-fulfilment cancellation only after its full refund completed. */
+    @Transactional
+    public OrderResponse completeCancellationAfterRefund(UUID orderId, User actor) {
+        Order order = orderRepository.findByIdForUpdate(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+        if (order.getOrderStatus() != OrderStatus.CANCELLATION_APPROVED) {
+            throw new BusinessRuleException(HttpStatus.CONFLICT, "Cancellation has not been approved");
+        }
+        if (order.getPaymentStatus() != PaymentStatus.REFUNDED) {
+            throw new BusinessRuleException(HttpStatus.CONFLICT, "Order must be refunded before cancellation");
+        }
+        order = applyStatusTransition(order, OrderStatus.CANCELLED, actor);
+        order.setInternalNote("Refund completed; cancellation finalized");
+        return assembleResponse(orderRepository.save(order));
+    }
+
+    /** Persists the admin decision before any external VNPay call is attempted. */
+    @Transactional
+    public AdminOrderResponse approveCancellationForRefund(UUID orderId, User actor) {
+        Order order = orderRepository.findByIdForUpdate(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+        if (order.getOrderStatus() == OrderStatus.CANCELLATION_APPROVED) {
+            return assembleAdminResponse(order);
+        }
+        if (order.getOrderStatus() != OrderStatus.CANCELLATION_REQUESTED) {
+            throw new BusinessRuleException(HttpStatus.CONFLICT, "Order has no cancellation request to approve");
+        }
+        order = applyStatusTransition(order, OrderStatus.CANCELLATION_APPROVED, actor);
+        order.setInternalNote("Cancellation approved by staff; refund processing started");
+        order = orderRepository.save(order);
+        notificationService.notifyCancellationApproved(order);
+        return assembleAdminResponse(order);
     }
 
     private record VariantCheck(
@@ -634,8 +713,10 @@ public class OrderService {
     }
 
     private OrderResponse assembleResponse(Order order) {
-        List<OrderItemResponse> items = orderItemRepository.findAllByOrderIdOrderByIdAsc(order.getId()).stream()
-                .map(orderMapper::toItemResponse)
+        List<OrderItem> orderItems = orderItemRepository.findAllByOrderIdOrderByIdAsc(order.getId());
+        Map<UUID, String> thumbnails = resolveThumbnails(orderItems);
+        List<OrderItemResponse> items = orderItems.stream()
+                .map(item -> orderMapper.toItemResponse(item, thumbnails.get(item.getProduct().getId())))
                 .toList();
         return toResponse(order, items);
     }
@@ -651,8 +732,10 @@ public class OrderService {
     }
 
     private AdminOrderResponse assembleAdminResponse(Order order) {
-        List<OrderItemResponse> items = orderItemRepository.findAllByOrderIdOrderByIdAsc(order.getId()).stream()
-                .map(orderMapper::toItemResponse)
+        List<OrderItem> orderItems = orderItemRepository.findAllByOrderIdOrderByIdAsc(order.getId());
+        Map<UUID, String> thumbnails = resolveThumbnails(orderItems);
+        List<OrderItemResponse> items = orderItems.stream()
+                .map(item -> orderMapper.toItemResponse(item, thumbnails.get(item.getProduct().getId())))
                 .toList();
         return toAdminResponse(order, items);
     }
@@ -669,10 +752,28 @@ public class OrderService {
 
     private Map<UUID, List<OrderItemResponse>> itemsByOrderId(List<Order> orders) {
         List<UUID> orderIds = orders.stream().map(Order::getId).toList();
-        return orderItemRepository.findAllByOrderIdIn(orderIds).stream()
+        List<OrderItem> orderItems = orderItemRepository.findAllByOrderIdIn(orderIds);
+        Map<UUID, String> thumbnails = resolveThumbnails(orderItems);
+        return orderItems.stream()
                 .collect(Collectors.groupingBy(
                         i -> i.getOrder().getId(),
-                        Collectors.mapping(orderMapper::toItemResponse, Collectors.toList())));
+                        Collectors.mapping(
+                                item -> orderMapper.toItemResponse(item, thumbnails.get(item.getProduct().getId())),
+                                Collectors.toList())));
+    }
+
+    private Map<UUID, String> resolveThumbnails(List<OrderItem> items) {
+        List<UUID> productIds = items.stream()
+                .map(item -> item.getProduct().getId())
+                .distinct()
+                .toList();
+        if (productIds.isEmpty()) {
+            return Map.of();
+        }
+        return productImageRepository.findAllByProductIdIn(productIds).stream()
+                .collect(Collectors.groupingBy(image -> image.getProduct().getId()))
+                .entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, entry -> ThumbnailResolver.resolve(entry.getValue())));
     }
 
     private OrderResponse toResponse(Order order, List<OrderItemResponse> items) {
@@ -687,6 +788,9 @@ public class OrderService {
                 order.getDiscountAmount(),
                 order.getTotalAmount(),
                 order.getNote(),
+                order.getCancellationRequestedBy(),
+                order.getCancellationReason(),
+                order.getCancellationRequestedAt(),
                 items,
                 order.getCreatedAt());
     }
@@ -708,6 +812,9 @@ public class OrderService {
                 order.getTotalAmount(),
                 order.getNote(),
                 order.getInternalNote(),
+                order.getCancellationRequestedBy(),
+                order.getCancellationReason(),
+                order.getCancellationRequestedAt(),
                 items,
                 order.getCreatedAt());
     }

@@ -31,6 +31,7 @@ export interface OrderItem {
   sku: string;
   size?: string | null;
   color?: string | null;
+  thumbnail?: string | null;
   unitPrice: number;
   quantity: number;
   lineTotal: number;
@@ -47,11 +48,21 @@ export interface OrderResponse {
   discountAmount: number;
   totalAmount: number;
   note?: string | null;
+  cancellationRequestedBy?: "CUSTOMER" | "STAFF" | null;
+  cancellationReason?: string | null;
+  cancellationRequestedAt?: string | null;
   items: OrderItem[];
   createdAt: string;
 }
 
+export interface PageMeta {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
 export interface PagedResult<T> {
   data: T;
-  meta?: Record<string, unknown>;
+  meta?: PageMeta;
 }

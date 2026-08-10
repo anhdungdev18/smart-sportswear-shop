@@ -10,6 +10,7 @@ import com.dunghaiquyen.ecommerce.AbstractIntegrationTest;
 import com.dunghaiquyen.ecommerce.modules.address.entity.Address;
 import com.dunghaiquyen.ecommerce.modules.address.repository.AddressRepository;
 import com.dunghaiquyen.ecommerce.modules.notification.entity.NotificationTemplate;
+import com.dunghaiquyen.ecommerce.modules.notification.entity.NotificationType;
 import com.dunghaiquyen.ecommerce.modules.notification.repository.NotificationTemplateRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.util.UUID;
@@ -116,7 +117,7 @@ class NotificationTemplateIntegrationTest extends AbstractIntegrationTest {
                 .andExpect(status().isOk())
                 .andReturn();
         JsonNode data = json(result.getResponse().getContentAsString()).at("/data");
-        assertThat(data).hasSize(5);
+        assertThat(data).hasSize(NotificationType.values().length);
 
         JsonNode orderCreated = null;
         for (JsonNode item : data) {

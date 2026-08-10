@@ -23,6 +23,10 @@ public final class NotificationPlaceholders {
             NotificationType.ORDER_CANCELLED, Set.of("customerName", "orderCode", "totalAmount"),
             NotificationType.ORDER_DELIVERED, Set.of("customerName", "orderCode", "totalAmount"),
             NotificationType.ORDER_SHIPPING, Set.of("customerName", "orderCode", "totalAmount"),
+            NotificationType.ADMIN_ORDER_CREATED, Set.of("customerName", "orderCode", "totalAmount", "paymentMethod"),
+            NotificationType.ADMIN_ORDER_CANCELLED, Set.of("customerName", "orderCode", "totalAmount"),
+            NotificationType.CANCELLATION_APPROVED, Set.of("customerName", "orderCode", "totalAmount"),
+            NotificationType.CANCELLATION_REJECTED, Set.of("customerName", "orderCode", "rejectionReason"),
             NotificationType.PASSWORD_RESET, Set.of("resetLink", "ttlMinutes"));
 
     private NotificationPlaceholders() {

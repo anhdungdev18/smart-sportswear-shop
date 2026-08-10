@@ -108,6 +108,43 @@ public class VnpayTransactionService {
         return response;
     }
 
+    /** Queries VNPay for the refund transaction; refunds never use a browser redirect. */
+    public Map<String, Object> queryRefund(Refund refund, String ipAddress) {
+        Payment payment = refund.getPayment();
+        if (payment == null || refund.getGatewayTransactionNo() == null) {
+            throw new BusinessRuleException(HttpStatus.CONFLICT,
+                    "Refund has no VNPay transaction to query");
+        }
+        requireTransactionDate(payment);
+        String requestId = requestId();
+        String createDate = now();
+        String orderInfo = "Query refund " + refund.getRefundCode();
+        Map<String, String> body = base(requestId, "querydr");
+        body.put("vnp_TxnRef", payment.getTransactionRef());
+        body.put("vnp_TransactionNo", refund.getGatewayTransactionNo());
+        body.put("vnp_TransactionDate", payment.getTransactionDate());
+        body.put("vnp_CreateDate", createDate);
+        body.put("vnp_IpAddr", safeIp(ipAddress));
+        body.put("vnp_OrderInfo", orderInfo);
+        body.put("vnp_SecureHash", signatures.hashRaw(pipe(requestId, VERSION, "querydr", properties.tmnCode(),
+                payment.getTransactionRef(), payment.getTransactionDate(), createDate, safeIp(ipAddress), orderInfo)));
+        Map<String, Object> response = post(body);
+        verifyQueryResponse(response);
+        if ("00".equals(string(response, "vnp_ResponseCode"))) {
+            String type = string(response, "vnp_TransactionType");
+            if (!List.of("02", "03").contains(type)) {
+                throw new BusinessRuleException(HttpStatus.BAD_GATEWAY,
+                        "VNPay query did not return a refund transaction");
+            }
+            String status = string(response, "vnp_TransactionStatus");
+            refund.setStatus("00".equals(status) ? RefundStatus.COMPLETED
+                    : (List.of("01", "05", "06").contains(status)
+                            ? RefundStatus.PROCESSING : RefundStatus.FAILED));
+            refund.setGatewayResponseJson(response);
+        }
+        return response;
+    }
+
     @SuppressWarnings("unchecked")
     private Map<String, Object> post(Map<String, String> body) {
         try {

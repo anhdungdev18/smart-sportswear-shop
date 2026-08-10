@@ -21,3 +21,53 @@ export async function updateOrderStatus(id: string, input: { status: string; not
     body: JSON.stringify(input)
   });
 }
+
+export async function processCancellationRefund(id: string) {
+  return browserApiRequest<OrderRefundResponse>(adminEndpoints.orderCancellationRefund(id), {
+    method: "POST"
+  });
+}
+
+export type OrderRefundResponse = {
+  id: string;
+  refundCode: string;
+  amount: number;
+  provider: string;
+  status: string;
+  reason: string | null;
+  gatewayRequestId: string | null;
+  gatewayTransactionNo: string | null;
+  manualReference: string | null;
+  manualNote: string | null;
+  refundedAt: string | null;
+  createdAt: string;
+};
+
+export async function fetchOrderRefunds(id: string) {
+  return browserApiRequest<OrderRefundResponse[]>(adminEndpoints.orderRefunds(id), { method: "GET" });
+}
+
+export async function cancelOrderByStaff(id: string, reason: string) {
+  return browserApiRequest<AdminOrderResponse>(adminEndpoints.orderCancel(id), {
+    method: "POST",
+    body: JSON.stringify({ reason })
+  });
+}
+
+export async function rejectCancellationRequest(id: string, reason: string) {
+  return browserApiRequest<AdminOrderResponse>(adminEndpoints.orderCancellationRejection(id), {
+    method: "POST",
+    body: JSON.stringify({ reason })
+  });
+}
+
+export async function refreshVnpayRefund(id: string) {
+  return browserApiRequest<OrderRefundResponse>(adminEndpoints.adminRefundRefresh(id), { method: "POST" });
+}
+
+export async function confirmManualRefund(id: string, reference: string, note?: string) {
+  return browserApiRequest<OrderRefundResponse>(adminEndpoints.adminRefundManualConfirmation(id), {
+    method: "POST",
+    body: JSON.stringify({ reference, note: note || null })
+  });
+}

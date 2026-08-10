@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { getApiErrorMessage } from "@/lib/api-errors";
 import { useAuthenticated } from "@/lib/use-authenticated";
 import {
@@ -26,7 +27,11 @@ const EMPTY_ADDRESS_FORM = {
 };
 
 export function CheckoutPageClient() {
+  const router = useRouter();
   const authenticated = useAuthenticated();
+  // React state disables the button on the next render. The ref also blocks
+  // rapid clicks that arrive before that render has happened.
+  const submitLockRef = useRef(false);
   const [addresses, setAddresses] = useState<AddressResponse[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState("");
   const [addressForm, setAddressForm] = useState(EMPTY_ADDRESS_FORM);
@@ -110,11 +115,14 @@ export function CheckoutPageClient() {
   };
 
   const handleCreateOrder = async () => {
+    if (submitLockRef.current) return;
+
     if (!selectedAddressId) {
       setError("Vui lòng chọn địa chỉ giao hàng.");
       return;
     }
 
+    submitLockRef.current = true;
     setSubmitting(true);
     setError(null);
     setSuccess(null);
@@ -137,12 +145,14 @@ export function CheckoutPageClient() {
         } catch (paymentError) {
           setSuccess(`Đơn ${order.orderCode} đã được tạo và đang giữ hàng.`);
           setError(getApiErrorMessage(paymentError, "Không thể mở cổng VNPay. Hãy thử thanh toán lại từ đơn hàng."));
+          router.replace(`/tai-khoan/don-hang/${order.id}`);
         }
         return;
       }
-      setSuccess(`Đặt hàng thành công. Mã đơn của bạn là ${order.orderCode}.`);
-      await refreshPreview(selectedAddressId);
+      router.replace(`/tai-khoan/don-hang/${order.id}`);
     } catch (err) {
+      // The create-order request failed, so it is safe to let the customer retry.
+      submitLockRef.current = false;
       setError(getApiErrorMessage(err, "Không thể tạo đơn hàng."));
     } finally {
       setSubmitting(false);

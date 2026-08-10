@@ -11,6 +11,7 @@ public record OrderItemResponse(
         String sku,
         String size,
         String color,
+        String thumbnail,
         BigDecimal unitPrice,
         int quantity,
         BigDecimal lineTotal) {

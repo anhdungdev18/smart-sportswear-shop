@@ -18,6 +18,9 @@ import com.dunghaiquyen.ecommerce.modules.notification.template.EmailContent;
 import com.dunghaiquyen.ecommerce.modules.notification.template.NotificationTemplates;
 import com.dunghaiquyen.ecommerce.modules.order.entity.Order;
 import com.dunghaiquyen.ecommerce.modules.user.entity.User;
+import com.dunghaiquyen.ecommerce.modules.user.entity.UserRole;
+import com.dunghaiquyen.ecommerce.modules.user.entity.UserStatus;
+import com.dunghaiquyen.ecommerce.modules.user.repository.UserRepository;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalTime;
@@ -67,18 +70,21 @@ public class NotificationService {
     private final NotificationTemplates notificationTemplates;
     private final NotificationBroadcaster broadcaster;
     private final NotificationDeliveryService deliveryService;
+    private final UserRepository userRepository;
 
     public NotificationService(
             NotificationRepository notificationRepository,
             MailService mailService,
             NotificationTemplates notificationTemplates,
             NotificationBroadcaster broadcaster,
-            NotificationDeliveryService deliveryService) {
+            NotificationDeliveryService deliveryService,
+            UserRepository userRepository) {
         this.notificationRepository = notificationRepository;
         this.mailService = mailService;
         this.notificationTemplates = notificationTemplates;
         this.broadcaster = broadcaster;
         this.deliveryService = deliveryService;
+        this.userRepository = userRepository;
     }
 
     public record ListResult(List<NotificationResponse> items, PageMeta meta) {
@@ -87,6 +93,29 @@ public class NotificationService {
     @Transactional
     public void notifyOrderCreated(Order order) {
         queueAfterCommit(order.getUser(), order, NotificationType.ORDER_CREATED, notificationTemplates.orderCreated(order));
+        notifyActiveAdmins(order, NotificationType.ADMIN_ORDER_CREATED, notificationTemplates.adminOrderCreated(order));
+    }
+
+    @Transactional
+    public void notifyAdminsOrderCancelled(Order order) {
+        notifyActiveAdmins(order, NotificationType.ADMIN_ORDER_CANCELLED, notificationTemplates.adminOrderCancelled(order));
+    }
+
+    @Transactional
+    public void notifyCancellationApproved(Order order) {
+        queueAfterCommit(order.getUser(), order, NotificationType.CANCELLATION_APPROVED,
+                notificationTemplates.cancellationApproved(order));
+    }
+
+    @Transactional
+    public void notifyCancellationRejected(Order order, String reason) {
+        queueAfterCommit(order.getUser(), order, NotificationType.CANCELLATION_REJECTED,
+                notificationTemplates.cancellationRejected(order, reason));
+    }
+
+    private void notifyActiveAdmins(Order order, NotificationType type, EmailContent content) {
+        userRepository.findAllByRoleAndStatus(UserRole.ADMIN, UserStatus.ACTIVE)
+                .forEach(admin -> queueAfterCommit(admin, order, type, content));
     }
 
     @Transactional

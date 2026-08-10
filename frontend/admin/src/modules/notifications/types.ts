@@ -11,6 +11,7 @@ export type NotificationResponse = {
   errorMessage: string | null;
   createdAt: string;
   sentAt: string | null;
+  readAt: string | null;
   resendOfId: string | null;
   resendCount: number;
   lastResendAt: string | null;

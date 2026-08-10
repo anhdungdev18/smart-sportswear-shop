@@ -26,4 +26,14 @@ public interface CartRepository extends JpaRepository<Cart, UUID> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select c from Cart c where c.user.id = :userId")
     Optional<Cart> findByUserIdForUpdate(@Param("userId") UUID userId);
+
+    /**
+     * Common mutation lock for both authenticated and guest carts. CartService
+     * takes this lock before reading or changing cart_items, which serializes
+     * concurrent add/update/delete calls and uses the same cart-first lock order
+     * as checkout.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select c from Cart c where c.id = :id")
+    Optional<Cart> findByIdForUpdate(@Param("id") UUID id);
 }

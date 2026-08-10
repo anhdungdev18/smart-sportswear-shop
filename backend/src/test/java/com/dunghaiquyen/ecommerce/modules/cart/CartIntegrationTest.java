@@ -9,11 +9,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.dunghaiquyen.ecommerce.AbstractIntegrationTest;
+import com.dunghaiquyen.ecommerce.modules.cart.repository.CartItemRepository;
 import com.dunghaiquyen.ecommerce.modules.cart.repository.CartRepository;
+import com.dunghaiquyen.ecommerce.modules.user.repository.UserRepository;
 import com.dunghaiquyen.ecommerce.modules.cart.web.CartIdentityResolver;
 import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.servlet.http.Cookie;
 import java.util.UUID;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -25,6 +32,12 @@ class CartIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
     private CartRepository cartRepository;
+
+    @Autowired
+    private CartItemRepository cartItemRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     private record AdminContext(String token, String categoryId, String brandId) {
     }
@@ -343,6 +356,41 @@ class CartIntegrationTest extends AbstractIntegrationTest {
         assertThat(result.getResponse().getStatus()).isEqualTo(422);
         assertThat(json(result.getResponse().getContentAsString()).at("/message").asText())
                 .isEqualTo("Variant is not available");
+    }
+
+    @Test
+    void concurrentAdds_sameUserAndVariant_accumulateWithoutLostUpdate() throws Exception {
+        AdminContext ctx = setUpAdmin();
+        String productId = createActiveProduct(ctx);
+        String variantId = createVariant(ctx, productId, 20);
+        String email = uniqueEmail("cart-concurrent-add");
+        String token = registerUser(email).accessToken();
+
+        // Establish the cart and its first line before racing two increments.
+        perform(post("/api/v1/cart/items")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(addItemBody(variantId, 1)),
+                null, token);
+
+        Callable<Integer> addTwo = () -> perform(post("/api/v1/cart/items")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(addItemBody(variantId, 2)),
+                null, token).getResponse().getStatus();
+
+        ExecutorService pool = Executors.newFixedThreadPool(2);
+        List<Future<Integer>> results = pool.invokeAll(List.of(addTwo, addTwo));
+        pool.shutdown();
+
+        for (Future<Integer> result : results) {
+            assertThat(result.get()).isEqualTo(201);
+        }
+        var user = userRepository.findByEmail(email).orElseThrow();
+        var cart = cartRepository.findByUserId(user.getId()).orElseThrow();
+        var items = cartItemRepository.findAllByCartIdWithVariantAndProduct(cart.getId());
+        assertThat(items).hasSize(1);
+        assertThat(items.get(0).getQuantity())
+                .as("1 initial + two concurrent increments of 2 must all be retained")
+                .isEqualTo(5);
     }
 
     @Test

@@ -65,7 +65,7 @@ public class CartService {
 
     @Transactional
     public CartResponse addItem(CartOwner owner, AddCartItemRequest request) {
-        Cart cart = findOrCreateCart(owner);
+        Cart cart = lockCart(findOrCreateCart(owner));
         ProductVariant variant = variantRepository.findById(request.variantId())
                 .orElseThrow(() -> new ResourceNotFoundException("Variant not found"));
         validateAddable(variant);
@@ -103,7 +103,7 @@ public class CartService {
 
     @Transactional
     public CartResponse updateItemQuantity(CartOwner owner, UUID itemId, UpdateCartItemRequest request) {
-        Cart cart = findExistingCart(owner);
+        Cart cart = lockCart(findExistingCart(owner));
         CartItem item = findOwnedItem(cart, itemId);
         int available = availableQuantity(item.getVariant());
         requireWithinStock(request.quantity(), available);
@@ -114,7 +114,7 @@ public class CartService {
 
     @Transactional
     public CartResponse removeItem(CartOwner owner, UUID itemId) {
-        Cart cart = findExistingCart(owner);
+        Cart cart = lockCart(findExistingCart(owner));
         CartItem item = findOwnedItem(cart, itemId);
         cartItemRepository.delete(item);
         return assemble(cart);
@@ -133,6 +133,11 @@ public class CartService {
                 ? cartRepository.findByUserId(owner.userId())
                 : cartRepository.findBySessionId(owner.sessionId());
         return cart.orElseThrow(() -> new ResourceNotFoundException("Cart item not found"));
+    }
+
+    private Cart lockCart(Cart cart) {
+        return cartRepository.findByIdForUpdate(cart.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Cart not found"));
     }
 
     /**

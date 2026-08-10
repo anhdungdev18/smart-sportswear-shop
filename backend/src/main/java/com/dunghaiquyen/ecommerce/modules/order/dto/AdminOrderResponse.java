@@ -1,6 +1,7 @@
 package com.dunghaiquyen.ecommerce.modules.order.dto;
 
 import com.dunghaiquyen.ecommerce.modules.order.entity.OrderStatus;
+import com.dunghaiquyen.ecommerce.modules.order.entity.CancellationRequestedBy;
 import com.dunghaiquyen.ecommerce.modules.order.entity.PaymentMethod;
 import com.dunghaiquyen.ecommerce.modules.payment.entity.PaymentStatus;
 import java.math.BigDecimal;
@@ -30,6 +31,9 @@ public record AdminOrderResponse(
         BigDecimal totalAmount,
         String note,
         String internalNote,
+        CancellationRequestedBy cancellationRequestedBy,
+        String cancellationReason,
+        Instant cancellationRequestedAt,
         List<OrderItemResponse> items,
         Instant createdAt) {
 }

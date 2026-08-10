@@ -2,7 +2,6 @@
 
 import {
   ArrowCounterClockwise,
-  Bell,
   Brain,
   Books,
   ChartLineUp,
@@ -32,6 +31,7 @@ import { useEffect, useState } from "react";
 import { adminLogout } from "@/modules/auth/api";
 import { clearAuthSession, getBrowserRefreshToken, getBrowserUserRole } from "@/modules/auth/session";
 import { ADMIN_AI_WORKSPACES_ENABLED } from "@/config/feature-flags";
+import { AdminNotificationBell } from "@/components/ui/AdminNotificationBell";
 
 type NavItem = {
   label: string;
@@ -238,9 +238,7 @@ export function AdminTopbar() {
 
       <div className="admin-actions">
         <span className="admin-badge">Đồng bộ thời gian thực</span>
-        <button className="admin-icon-btn" aria-label="Thông báo">
-          <Bell size={20} weight="duotone" />
-        </button>
+        <AdminNotificationBell />
         <button className="admin-btn">
           <Truck size={18} weight="duotone" />
           Xuất báo cáo
