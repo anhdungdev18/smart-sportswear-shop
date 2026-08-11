@@ -80,6 +80,7 @@ public class ProductService {
     private final InventoryTransactionRepository inventoryTransactionRepository;
     private final OrderItemRepository orderItemRepository;
     private final CatalogOutboxService catalogOutboxService;
+    private final com.dunghaiquyen.ecommerce.modules.promotion.service.PromotionService promotionService;
 
     public ProductService(
             ProductRepository productRepository,
@@ -93,7 +94,9 @@ public class ProductService {
             CartItemRepository cartItemRepository,
             InventoryTransactionRepository inventoryTransactionRepository,
             OrderItemRepository orderItemRepository,
-            CatalogOutboxService catalogOutboxService) {
+            CatalogOutboxService catalogOutboxService,
+            com.dunghaiquyen.ecommerce.modules.promotion.service.PromotionService promotionService) {
+        this.promotionService = promotionService;
         this.productRepository = productRepository;
         this.variantRepository = variantRepository;
         this.imageRepository = imageRepository;
@@ -495,7 +498,16 @@ public class ProductService {
             spec = spec.and(ProductSpecifications.hasVariantPriceLte(q.maxPrice()));
         }
         if (q.discount() != null && !q.discount().isBlank()) {
-            spec = spec.and(ProductSpecifications.hasVariantDiscountBand(q.discount().trim()));
+            // "any" also surfaces products discounted only via an active Promotion
+            // (no compareAtPrice set on the variant) - e.g. the homepage flash sale.
+            Specification<Product> discountSpec = ProductSpecifications.hasVariantDiscountBand(q.discount().trim());
+            if ("any".equalsIgnoreCase(q.discount().trim())) {
+                List<UUID> promoProductIds = promotionService.activePromotionProductIds();
+                if (!promoProductIds.isEmpty()) {
+                    discountSpec = discountSpec.or(ProductSpecifications.hasIdIn(promoProductIds));
+                }
+            }
+            spec = spec.and(discountSpec);
         }
         if (q.productType() != null) {
             spec = spec.and(ProductSpecifications.hasProductType(q.productType()));
@@ -624,16 +636,19 @@ public class ProductService {
                 .collect(Collectors.groupingBy(v -> v.getProduct().getId()));
         Map<UUID, List<ProductImage>> imagesByProduct = imageRepository.findAllByProductIdIn(ids).stream()
                 .collect(Collectors.groupingBy(i -> i.getProduct().getId()));
+        Map<UUID, Integer> promoByProduct = promotionService.activePercentDiscountByProduct(ids);
 
         return products.stream()
                 .map(p -> toListItem(
                         p,
                         variantsByProduct.getOrDefault(p.getId(), List.of()),
-                        imagesByProduct.getOrDefault(p.getId(), List.of())))
+                        imagesByProduct.getOrDefault(p.getId(), List.of()),
+                        promoByProduct.get(p.getId())))
                 .toList();
     }
 
-    private ProductListItemResponse toListItem(Product product, List<ProductVariant> variants, List<ProductImage> images) {
+    private ProductListItemResponse toListItem(
+            Product product, List<ProductVariant> variants, List<ProductImage> images, Integer promoPercent) {
         List<BigDecimal> visiblePrices = variants.stream()
                 .filter(v -> v.getStatus() != VariantStatus.INACTIVE)
                 .map(ProductVariant::getPrice)
@@ -657,6 +672,17 @@ public class ProductService {
                         .divide(compareAtPrice, 0, java.math.RoundingMode.HALF_UP)
                         .intValue()
                 : null;
+
+        // Active product promotion overrides variant-based pricing when it offers a
+        // bigger discount: sale = minPrice * (1 - promo%), compareAt = minPrice.
+        if (promoPercent != null && promoPercent > 0 && minPrice != null
+                && (discountPercent == null || promoPercent > discountPercent)) {
+            compareAtPrice = minPrice;
+            salePrice = minPrice
+                    .multiply(BigDecimal.valueOf(100 - promoPercent))
+                    .divide(BigDecimal.valueOf(100), 0, java.math.RoundingMode.HALF_UP);
+            discountPercent = promoPercent;
+        }
 
         return new ProductListItemResponse(
                 product.getId(),

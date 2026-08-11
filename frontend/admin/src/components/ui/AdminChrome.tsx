@@ -69,6 +69,7 @@ const navGroups: NavGroup[] = [
       { label: "Bộ sưu tập", href: "/collections", icon: Books },
       { label: "Banner", href: "/banners", icon: ImageSquare },
       { label: "Combo", href: "/combos", icon: Ticket },
+      { label: "Khuyến mãi", href: "/promotions", icon: Ticket },
     ],
   },
   {
@@ -100,6 +101,7 @@ function getPageMeta(pathname: string) {
     { prefix: "/collections", title: "Bộ sưu tập", subtitle: "Tạo các cụm trưng bày theo mùa, chiến dịch và dòng sản phẩm." },
     { prefix: "/banners", title: "Banner", subtitle: "Điều phối hero banner, vị trí hiển thị và nội dung chiến dịch." },
     { prefix: "/combos", title: "Combo", subtitle: "Tạo bộ sản phẩm mua kèm và mức giảm cố định khi mua đủ bộ." },
+    { prefix: "/promotions", title: "Khuyến mãi", subtitle: "Tạo chương trình giảm giá theo sản phẩm, phần trăm và khung thời gian hiệu lực." },
     { prefix: "/customers", title: "Khách hàng", subtitle: "Theo dõi tình trạng tài khoản và phân loại người dùng." },
     { prefix: "/pages", title: "Nội dung", subtitle: "Biên tập các trang tĩnh và nội dung truyền thông của hệ thống." },
     { prefix: "/reports", title: "Báo cáo", subtitle: "Xem snapshot kinh doanh theo thời gian thực từ backend." },

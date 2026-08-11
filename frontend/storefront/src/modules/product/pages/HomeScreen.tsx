@@ -10,6 +10,7 @@ import { fetchCollections } from "@/modules/category/queries";
 import { ProductRail } from "@/modules/product/components/ProductRail";
 import { mapProductListItem } from "@/modules/product/mappers";
 import {
+  fetchActivePromotions,
   fetchBestSellingProducts,
   fetchFeaturedProducts,
   fetchHomeBannerSlides,
@@ -18,7 +19,7 @@ import {
 } from "@/modules/product/queries";
 
 export async function HomeScreen() {
-  const [bannerSlides, newProducts, featuredProducts, collections, saleProducts, bestSellingProducts] =
+  const [bannerSlides, newProducts, featuredProducts, collections, saleProducts, bestSellingProducts, activePromotions] =
     await Promise.all([
       fetchHomeBannerSlides(),
       fetchNewestProducts(20),
@@ -26,6 +27,7 @@ export async function HomeScreen() {
       fetchCollections(),
       fetchSaleProducts(12),
       fetchBestSellingProducts(12),
+      fetchActivePromotions(),
     ]);
 
   return (
@@ -35,6 +37,7 @@ export async function HomeScreen() {
       <div className="mx-auto max-w-342 px-4 md:px-0">
         <HomeCategoryGrid />
         <HomeFlashSale
+          promotion={activePromotions[0] ?? null}
           products={saleProducts.map((product) => ({ ...mapProductListItem(product), ribbon: "sale" }))}
         />
         <HomeTeamSelector />

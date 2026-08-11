@@ -11,6 +11,7 @@ export const endpoints = {
   brands: "/api/v1/brands",
   collections: "/api/v1/collections",
   collection: (slug: string) => `/api/v1/collections/${slug}`,
+  activePromotions: "/api/v1/promotions/active",
   banners: "/api/v1/banners/active",
   page: (slug: string) => `/api/v1/pages/${slug}`,
   settings: "/api/v1/settings/public",

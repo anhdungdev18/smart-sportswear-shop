@@ -929,6 +929,15 @@ a {
   min-height: var(--field-h);
 }
 
+.admin-field {
+  display: grid;
+  gap: 6px;
+  color: var(--admin-muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
 .admin-textarea {
   min-height: calc(var(--space-unit) * 28);
   resize: vertical;

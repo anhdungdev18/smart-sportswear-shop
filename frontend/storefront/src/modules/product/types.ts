@@ -86,6 +86,15 @@ export interface Banner {
   items: BannerItem[];
 }
 
+export interface ActivePromotion {
+  id: string;
+  name: string;
+  slug: string;
+  discountPercent: number;
+  startsAt: string | null;
+  endsAt: string | null;
+}
+
 export interface ProductSuggestion {
   id: string;
   name: string;

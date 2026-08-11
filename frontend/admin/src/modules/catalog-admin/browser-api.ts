@@ -150,6 +150,19 @@ export async function listProductsForPicker() {
   return browserApiRequest<ProductPickItem[]>(`${adminEndpoints.products}?limit=200`, { method: "GET" });
 }
 
+export async function listAllProductsForPicker() {
+  const all: ProductPickItem[] = [];
+  for (let page = 1; page <= 100; page += 1) {
+    const batch = await browserApiRequest<ProductPickItem[]>(adminEndpoints.products, {
+      method: "GET",
+      query: { page, limit: 100 }
+    });
+    all.push(...batch);
+    if (batch.length < 100) break;
+  }
+  return all;
+}
+
 export async function listCategoriesForPicker() {
   return browserApiRequest<CategoryResponse[]>(adminEndpoints.categories, { method: "GET" });
 }

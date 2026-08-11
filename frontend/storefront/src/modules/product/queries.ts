@@ -1,7 +1,7 @@
 import { apiFetch } from "@/lib/api";
 import { endpoints } from "@/lib/endpoints";
 import type { BannerSlide } from "@/components/marketing/types";
-import type { Banner, ProductDetail, ProductListItem } from "@/modules/product/types";
+import type { ActivePromotion, Banner, ProductDetail, ProductListItem } from "@/modules/product/types";
 
 type ProductQuery = Record<string, string | number | boolean | undefined>;
 
@@ -31,6 +31,17 @@ export async function fetchBestSellingProducts(limit = 12) {
 
 export async function fetchSaleProducts(limit = 12) {
   return fetchProducts({ discount: "any", limit, sortBy: "createdAt", sortOrder: "desc" });
+}
+
+export async function fetchActivePromotions(): Promise<ActivePromotion[]> {
+  try {
+    const result = await apiFetch<ActivePromotion[]>(endpoints.activePromotions, {
+      cache: "no-store"
+    });
+    return result.data ?? [];
+  } catch {
+    return [];
+  }
 }
 
 export async function fetchProductDetail(slug: string): Promise<ProductDetail | null> {

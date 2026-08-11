@@ -90,6 +90,13 @@ public final class ProductSpecifications {
         return (root, query, cb) -> cb.notEqual(root.get("id"), id);
     }
 
+    /** Matches any of the given ids - empty/null collection matches nothing. */
+    public static Specification<Product> hasIdIn(java.util.Collection<UUID> ids) {
+        return (root, query, cb) -> (ids == null || ids.isEmpty())
+                ? cb.disjunction()
+                : root.get("id").in(ids);
+    }
+
     public static Specification<Product> hasGender(Gender gender) {
         return (root, query, cb) -> cb.equal(root.get("gender"), gender);
     }

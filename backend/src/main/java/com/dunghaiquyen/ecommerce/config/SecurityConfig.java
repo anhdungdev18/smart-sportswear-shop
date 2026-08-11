@@ -39,7 +39,8 @@ public class SecurityConfig {
             "/api/v1/settings/public",
             "/api/v1/inventory/stream",
             "/api/v1/collections",
-            "/api/v1/collections/*"
+            "/api/v1/collections/*",
+            "/api/v1/promotions/active"
     };
 
     // All methods public: guest cart (session_id-based, no JWT) needs full
