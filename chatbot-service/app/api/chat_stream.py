@@ -30,23 +30,51 @@ def _extract_products(state: dict) -> list[dict]:
     Works for search / recommend / sku-lookup items — all expose slug, name,
     a price (priceMin or price) and primaryImage.
     """
-    result = state.get("tool_result") or {}
-    items = result.get("items") or []
+    results = [state.get("tool_result") or {}]
+    secondary_results = state.get("secondary_results") or {}
+    if isinstance(secondary_results, dict):
+        results.extend(secondary_results.values())
+
     products: list[dict] = []
-    for it in items[:6]:
-        if not isinstance(it, dict):
+    seen_slugs: set[str] = set()
+    for result in results:
+        if not isinstance(result, dict):
             continue
-        slug = it.get("slug")
-        name = it.get("name")
-        if not slug or not name:
-            continue
-        products.append({
-            "name": name,
-            "slug": slug,
-            "price": it.get("priceMin") or it.get("price") or it.get("priceMax"),
-            "image": it.get("primaryImage"),
-        })
-    return products
+        for it in result.get("items") or []:
+            if not isinstance(it, dict):
+                continue
+            slug = it.get("slug")
+            name = it.get("name")
+            if not slug or not name or slug in seen_slugs:
+                continue
+            seen_slugs.add(slug)
+            price = next(
+                (it.get(key) for key in ("priceMin", "price", "priceMax") if it.get(key) is not None),
+                None,
+            )
+            products.append({
+                "name": name,
+                "slug": slug,
+                "price": price,
+                "image": it.get("primaryImage"),
+            })
+
+    # The LLM may choose fewer products and a different presentation order than
+    # retrieval ranking. Render only the cards it actually names, in reply order.
+    reply = str(state.get("reply") or "").casefold()
+    original_positions = {product["slug"]: index for index, product in enumerate(products)}
+    mentioned = [
+        (reply.find(str(product["name"]).casefold()), original_positions[product["slug"]], product)
+        for product in products
+        if reply.find(str(product["name"]).casefold()) >= 0
+    ]
+    if mentioned:
+        mentioned.sort(key=lambda item: (item[0], item[1]))
+        return [item[2] for item in mentioned[:6]]
+
+    # Deterministic fallback replies can occasionally describe results without
+    # repeating their full names. Keep retrieval order in that exceptional case.
+    return products[:6]
 
 
 @router.post("/chat/stream")

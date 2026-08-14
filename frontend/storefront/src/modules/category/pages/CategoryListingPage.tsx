@@ -21,6 +21,7 @@ type CategorySearchParams = {
   maxPrice?: string;
   surface?: string;
   discount?: string;
+  gender?: string;
 };
 
 export async function CategoryListingPage({
@@ -32,7 +33,7 @@ export async function CategoryListingPage({
 }) {
   const { slug } = await params;
   const resolvedSearchParams = await searchParams;
-  const { page: pageParam, sort, sortBy, sortOrder, size, color, minPrice, maxPrice, surface, discount } = resolvedSearchParams;
+  const { page: pageParam, sort, sortBy, sortOrder, size, color, minPrice, maxPrice, surface, discount, gender } = resolvedSearchParams;
   const currentPage = Math.max(1, Number(pageParam ?? 1));
   // Surface facet only makes sense for football footwear (group "giay" + boot leaves).
   const showSurface = slug === "giay" || slug.includes("da-bong") || slug.includes("futsal");
@@ -54,6 +55,7 @@ export async function CategoryListingPage({
       maxPrice: maxPrice || undefined,
       surface: surface || undefined,
       discount: discount || undefined,
+      gender: gender || undefined,
     }),
     fetchCategoryDetail(slug),
   ]);
@@ -73,13 +75,14 @@ export async function CategoryListingPage({
       <Breadcrumb items={breadcrumbItems} />
       <div className="mx-auto flex max-w-[1368px] flex-col gap-8 px-4 pb-16 md:px-0 lg:flex-row">
         <CategorySidebarFilter
-          key={[size, color, minPrice, maxPrice, surface, discount].join("|")}
+          key={[size, color, minPrice, maxPrice, surface, discount, gender].join("|")}
           initialSize={size}
           initialColor={color}
           initialMinPrice={minPrice ? Number(minPrice) : undefined}
           initialMaxPrice={maxPrice ? Number(maxPrice) : undefined}
           initialSurface={surface}
           initialDiscount={discount}
+          initialGender={gender}
           showSurface={showSurface}
           sizeType={slug.includes("giay") ? "shoe" : "cloth"}
         />

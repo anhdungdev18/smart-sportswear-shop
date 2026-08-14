@@ -68,7 +68,9 @@ async def search_by_image(
             started = time.perf_counter()
             result = (await build_provider(settings).embed_query(normalized.content)).validate_dimensions(model.dimensions)
             latency_ms = round((time.perf_counter() - started) * 1000)
-            candidates = await repository.search_on(connection, model.id, result.vector, limit)
+            candidates = await repository.search_on(
+                connection, model.id, result.vector, limit, normalized.color_signature
+            )
             await repository.record_query_usage_on(connection, model, result, latency_ms)
             await connection.commit()
     except RepositoryUnavailableError as exc:

@@ -52,6 +52,14 @@ class CatalogIndexer:
             normalized = await self.pipeline.download_and_normalize(image.image_url, image.public_id)
             existing = await self.repository.existing_embedding(image.id, model.id)
             if existing and existing.status == "READY" and existing.image_hash == normalized.sha256:
+                if not existing.color_signature:
+                    await self.repository.mark_color_signature_and_processed(
+                        event.event_id if complete_event else None,
+                        event.event_type.value if complete_event else None,
+                        event.event_version if complete_event else None,
+                        image.id, model.id, normalized.color_signature,
+                    )
+                    return
                 if complete_event:
                     await self._complete(event)
                 return
@@ -68,6 +76,7 @@ class CatalogIndexer:
                     image,
                     model,
                     normalized.sha256,
+                    normalized.color_signature,
                     result,
                     latency_ms,
                 )
@@ -75,7 +84,8 @@ class CatalogIndexer:
                 # Product-wide events complete only after the final image. A synthetic
                 # per-image completion is deliberately avoided so redelivery can hash-skip.
                 await self.repository.mark_ready_and_processed(
-                    None, None, None, image, model, normalized.sha256, result, latency_ms
+                    None, None, None, image, model, normalized.sha256,
+                    normalized.color_signature, result, latency_ms
                 )
         except Exception as error:
             classified = classify_processing_error(error)

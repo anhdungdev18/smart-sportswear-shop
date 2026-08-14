@@ -6,6 +6,7 @@ import Link from "next/link";
 import { getAccessToken } from "@/lib/session";
 import { onSessionChange } from "@/lib/session";
 import {
+  clearChatConversation,
   getChatScope,
   getOrCreateChatSession,
   loadChatMessages,
@@ -34,17 +35,31 @@ export function ChatWidget() {
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const activeScopeRef = useRef("");
 
   useEffect(() => {
     const restore = () => {
       const scope = getChatScope();
       const stored = loadChatMessages(scope);
+      activeScopeRef.current = scope;
       setStorageScope(scope);
       setMessages(stored.length ? stored : [{ role: "bot", text: WELCOME }]);
     };
 
     restore();
-    return onSessionChange(restore);
+    return onSessionChange(() => {
+      const previousScope = activeScopeRef.current;
+      const nextScope = getChatScope();
+
+      if (previousScope !== nextScope) {
+        // Logging out ends the authenticated conversation. Logging in starts a
+        // new one even when this account previously chatted in this browser.
+        if (previousScope.startsWith("user:")) clearChatConversation(previousScope);
+        if (nextScope.startsWith("user:")) clearChatConversation(nextScope);
+      }
+
+      restore();
+    });
   }, []);
 
   useEffect(() => {

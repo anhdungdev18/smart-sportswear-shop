@@ -45,6 +45,7 @@ export async function SearchResultsPage({
           initialMaxPrice={maxPrice ? Number(maxPrice) : undefined}
           initialSurface={surface}
           initialDiscount={discount}
+          initialGender={gender}
           showSurface
         />
         <div className="flex-1">
