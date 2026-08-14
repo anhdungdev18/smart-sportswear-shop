@@ -70,14 +70,14 @@ public class OrderService {
     private static final int MAX_LIMIT = 100;
 
     /**
-     * Deliberately linear, not a general graph: every step here is the one
-     * concrete progression the spec describes (confirm -> pack -> ship ->
-     * deliver), plus a single early exit to CANCELLED. Cancelling after
-     * CONFIRMED/PACKING/SHIPPING is NOT reachable through this matrix - spec
-     * only describes releasing reserved stock on cancel, never restocking
-     * already-deducted stock, so a "real" cancel past CONFIRMED would need a
-     * return/restock flow this phase does not define. Documented tradeoff,
-     * not an oversight.
+     * confirm -> pack -> ship -> deliver, plus cancellation exits. Cancellation
+     * is reachable up through PACKING (not SHIPPING/DELIVERED - once stock has
+     * left for the carrier, undoing it is a logistics problem, not just a stock
+     * one): CONFIRMED and PACKING both had their stock really deducted
+     * (ORDER_CONFIRM_DEDUCT), so their only way out is CANCELLATION_REQUESTED ->
+     * CANCELLATION_APPROVED -> CANCELLED, same as a paid PENDING_CONFIRMATION
+     * order - applyStatusTransition tells the two cases apart via the
+     * inventory transaction log and restocks (not just releases) accordingly.
      */
     private static final Map<OrderStatus, java.util.Set<OrderStatus>> ALLOWED_TRANSITIONS = Map.of(
             OrderStatus.PENDING_CONFIRMATION,
@@ -86,8 +86,8 @@ public class OrderService {
                     java.util.Set.of(OrderStatus.CANCELLATION_APPROVED),
             OrderStatus.CANCELLATION_APPROVED,
                     java.util.Set.of(OrderStatus.CANCELLED),
-            OrderStatus.CONFIRMED, java.util.Set.of(OrderStatus.PACKING),
-            OrderStatus.PACKING, java.util.Set.of(OrderStatus.SHIPPING),
+            OrderStatus.CONFIRMED, java.util.Set.of(OrderStatus.PACKING, OrderStatus.CANCELLATION_REQUESTED),
+            OrderStatus.PACKING, java.util.Set.of(OrderStatus.SHIPPING, OrderStatus.CANCELLATION_REQUESTED),
             OrderStatus.SHIPPING, java.util.Set.of(OrderStatus.DELIVERED),
             OrderStatus.DELIVERED, java.util.Set.of(),
             OrderStatus.CANCELLED, java.util.Set.of());
@@ -101,6 +101,8 @@ public class OrderService {
     private final ProductImageRepository productImageRepository;
     private final UserRepository userRepository;
     private final InventoryService inventoryService;
+    private final com.dunghaiquyen.ecommerce.modules.inventory.repository.InventoryTransactionRepository
+            inventoryTransactionRepository;
     private final OrderMapper orderMapper;
     private final ComboService comboService;
     private final NotificationService notificationService;
@@ -116,6 +118,8 @@ public class OrderService {
             ProductImageRepository productImageRepository,
             UserRepository userRepository,
             InventoryService inventoryService,
+            com.dunghaiquyen.ecommerce.modules.inventory.repository.InventoryTransactionRepository
+                    inventoryTransactionRepository,
             OrderMapper orderMapper,
             ComboService comboService,
             NotificationService notificationService,
@@ -129,6 +133,7 @@ public class OrderService {
         this.productImageRepository = productImageRepository;
         this.userRepository = userRepository;
         this.inventoryService = inventoryService;
+        this.inventoryTransactionRepository = inventoryTransactionRepository;
         this.orderMapper = orderMapper;
         this.comboService = comboService;
         this.notificationService = notificationService;
@@ -348,15 +353,13 @@ public class OrderService {
 
     /**
      * Customer-initiated cancel (API_SPEC_PHASE1.md 7.4 / TASK_BREAKDOWN_PHASE1.md
-     * G4). Deliberately reuses {@link #applyStatusTransition} rather than its own
-     * rule set: ALLOWED_TRANSITIONS already only permits CANCELLED from
-     * PENDING_CONFIRMATION, which is also the only point where stock is still
-     * just "reserved" (not yet deducted) - matching the explicit decision to keep
-     * customer self-cancel out of the CONFIRMED/PACKING restock territory rather
-     * than introduce a second, inconsistent cancellation rule alongside admin's.
-     * "Chưa SHIPPING" from the spec is satisfied by this stricter bound; it just
-     * never reaches CONFIRMED/PACKING because those have already deducted real
-     * stock, which only a return/restock flow (out of scope) could undo safely.
+     * G4), allowed through PACKING (not SHIPPING/DELIVERED - once the order has
+     * left for the carrier it is out of the shop's hands). The target status
+     * depends on how far the order has progressed, not just payment: only an
+     * unpaid order still in PENDING_CONFIRMATION goes straight to CANCELLED
+     * (stock is still just reserved there); everything else - paid, or already
+     * CONFIRMED/PACKING with real stock deducted - must go through
+     * CANCELLATION_REQUESTED so staff can approve the refund/restock.
      */
     @Transactional
     @Caching(evict = {
@@ -372,10 +375,16 @@ public class OrderService {
         if (!order.getUser().getId().equals(customerId)) {
             throw new ResourceNotFoundException("Order not found");
         }
+        OrderStatus current = order.getOrderStatus();
+        if (current != OrderStatus.PENDING_CONFIRMATION
+                && current != OrderStatus.CONFIRMED
+                && current != OrderStatus.PACKING) {
+            throw new BusinessRuleException(HttpStatus.CONFLICT, "Order can no longer be cancelled");
+        }
         User actor = order.getUser();
-        OrderStatus target = order.getPaymentStatus() == PaymentStatus.PAID
-                ? OrderStatus.CANCELLATION_REQUESTED
-                : OrderStatus.CANCELLED;
+        OrderStatus target = current == OrderStatus.PENDING_CONFIRMATION && order.getPaymentStatus() != PaymentStatus.PAID
+                ? OrderStatus.CANCELLED
+                : OrderStatus.CANCELLATION_REQUESTED;
         order = applyStatusTransition(order, target, actor);
         if (target == OrderStatus.CANCELLATION_REQUESTED) {
             order.setCancellationRequestedBy(com.dunghaiquyen.ecommerce.modules.order.entity.CancellationRequestedBy.CUSTOMER);
@@ -399,24 +408,36 @@ public class OrderService {
         return assembleResponse(order);
     }
 
-    /** Staff-initiated pre-confirmation cancellation, distinct from a customer request. */
+    /** Staff-initiated cancellation, allowed through PACKING (see ALLOWED_TRANSITIONS). */
     @Transactional
     public AdminOrderResponse cancelOrderByStaff(UUID orderId, String reason, User actor) {
         Order order = orderRepository.findByIdForUpdate(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
-        if (order.getOrderStatus() != OrderStatus.PENDING_CONFIRMATION) {
+        OrderStatus current = order.getOrderStatus();
+        if (current != OrderStatus.PENDING_CONFIRMATION
+                && current != OrderStatus.CONFIRMED
+                && current != OrderStatus.PACKING) {
             throw new BusinessRuleException(HttpStatus.CONFLICT,
-                    "Only a pending-confirmation order can be cancelled by staff");
+                    "Order can no longer be cancelled by staff");
         }
         boolean requiresRefund = order.getPaymentStatus() == PaymentStatus.PAID;
+        // PENDING_CONFIRMATION + unpaid: nothing to undo but the reservation, so
+        // cancel outright. Everything else (paid, or CONFIRMED/PACKING which always
+        // deducted real stock regardless of payment) must go through the approval
+        // step so staff can process the refund and/or restock deliberately.
+        boolean needsApproval = current != OrderStatus.PENDING_CONFIRMATION || requiresRefund;
         order = applyStatusTransition(order,
-                requiresRefund ? OrderStatus.CANCELLATION_REQUESTED : OrderStatus.CANCELLED, actor);
+                needsApproval ? OrderStatus.CANCELLATION_REQUESTED : OrderStatus.CANCELLED, actor);
         order.setCancellationRequestedBy(
                 com.dunghaiquyen.ecommerce.modules.order.entity.CancellationRequestedBy.STAFF);
         order.setCancellationReason(reason == null || reason.isBlank() ? "Cửa hàng chủ động hủy đơn" : reason.trim());
         order.setCancellationRequestedAt(java.time.Instant.now());
-        order.setInternalNote((requiresRefund ? "Staff cancellation awaiting refund: " : "Cancelled by staff: ")
-                + order.getCancellationReason());
+        String notePrefix = !needsApproval
+                ? "Cancelled by staff: "
+                : requiresRefund
+                        ? "Staff cancellation awaiting refund: "
+                        : "Staff cancellation awaiting restock approval: ";
+        order.setInternalNote(notePrefix + order.getCancellationReason());
         return assembleAdminResponse(orderRepository.save(order));
     }
 
@@ -448,8 +469,19 @@ public class OrderService {
                 inventoryService.confirmDeduct(item.getVariant().getId(), item.getQuantity(), order, actor);
             }
         } else if (target == OrderStatus.CANCELLED) {
+            // A cancellation reaching CANCELLED either never had real stock deducted
+            // (PENDING_CONFIRMATION -> CANCELLED: still just reserved, release() undoes
+            // that) or passed through CONFIRMED/PACKING first (real stock was deducted
+            // there via ORDER_CONFIRM_DEDUCT) - restockReturn() is the correct undo for
+            // that case, release() would incorrectly touch reservedQuantity again.
+            boolean stockWasDeducted = inventoryTransactionRepository.existsByOrder_IdAndType(
+                    order.getId(), com.dunghaiquyen.ecommerce.modules.inventory.entity.InventoryTransactionType.ORDER_CONFIRM_DEDUCT);
             for (OrderItem item : sortedItems) {
-                inventoryService.release(item.getVariant().getId(), item.getQuantity(), order, actor);
+                if (stockWasDeducted) {
+                    inventoryService.restockReturn(item.getVariant().getId(), item.getQuantity(), order, actor);
+                } else {
+                    inventoryService.release(item.getVariant().getId(), item.getQuantity(), order, actor);
+                }
             }
         }
 
@@ -498,7 +530,12 @@ public class OrderService {
         return new LineCheck(cartItem, check.variant(), check.lineTotal(), check.errorStatus(), check.errorMessage());
     }
 
-    /** Finalizes a paid pre-fulfilment cancellation only after its full refund completed. */
+    /**
+     * Finalizes an approved cancellation. A still-PAID order must be refunded
+     * first (VNPAY money is actually held); an UNPAID order (COD that was
+     * cancelled before collection, or CONFIRMED/PACKING COD - never charged)
+     * has nothing to refund and can finalize directly.
+     */
     @Transactional
     public OrderResponse completeCancellationAfterRefund(UUID orderId, User actor) {
         Order order = orderRepository.findByIdForUpdate(orderId)
@@ -506,11 +543,13 @@ public class OrderService {
         if (order.getOrderStatus() != OrderStatus.CANCELLATION_APPROVED) {
             throw new BusinessRuleException(HttpStatus.CONFLICT, "Cancellation has not been approved");
         }
-        if (order.getPaymentStatus() != PaymentStatus.REFUNDED) {
+        if (order.getPaymentStatus() == PaymentStatus.PAID) {
             throw new BusinessRuleException(HttpStatus.CONFLICT, "Order must be refunded before cancellation");
         }
         order = applyStatusTransition(order, OrderStatus.CANCELLED, actor);
-        order.setInternalNote("Refund completed; cancellation finalized");
+        order.setInternalNote(order.getPaymentStatus() == PaymentStatus.REFUNDED
+                ? "Refund completed; cancellation finalized"
+                : "Cancellation finalized (nothing to refund)");
         return assembleResponse(orderRepository.save(order));
     }
 

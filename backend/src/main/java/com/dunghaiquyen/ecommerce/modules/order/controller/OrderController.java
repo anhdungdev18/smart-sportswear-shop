@@ -71,8 +71,9 @@ public class OrderController {
 
     /**
      * API_SPEC_PHASE1.md 7.4: only the order's own customer can cancel it, and
-     * only while it is still PENDING_CONFIRMATION (see OrderService.cancelOwnOrder
-     * for why - same rule the admin status flow already enforces for CANCELLED).
+     * only through PACKING (not once it has shipped) - see OrderService.cancelOwnOrder
+     * for the exact rule and why a cancellation past PENDING_CONFIRMATION always
+     * needs staff approval.
      */
     @PostMapping("/{id}/cancel")
     @PreAuthorize("hasRole('CUSTOMER')")

@@ -32,7 +32,6 @@ import type {
   ProductVariantResponse
 } from "@/modules/catalog-admin/types";
 import type { AdminProduct } from "@/modules/product-management/products";
-import { adjustStock } from "@/modules/inventory/browser-api";
 
 const PRODUCTS_PER_PAGE = 15;
 const PRODUCT_THUMB_FALLBACK = NO_IMAGE;
@@ -46,6 +45,7 @@ const PRODUCT_IMAGE_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp
 const productStatusOptions = ["DRAFT", "ACTIVE", "INACTIVE"] as const;
 const genderOptions = ["MEN", "WOMEN", "UNISEX", "KIDS"] as const;
 const variantStatusOptions = ["ACTIVE", "OUT_OF_STOCK", "INACTIVE"] as const;
+const quickSizeOptions = ["S", "M", "L", "XL", "XXL", "39", "40", "41", "42", "43"];
 
 type ApiFieldErrorPayload = {
   field?: string;
@@ -210,6 +210,44 @@ function collectionStatusLabel(status: string) {
   if (status === "ACTIVE") return "Hoạt động";
   if (status === "ARCHIVED") return "Lưu trữ";
   return "Nháp";
+}
+
+function getPublishChecklist(detail: ProductDetailResponse | null, form: ReturnType<typeof createEmptyProductForm>) {
+  const activeVariants = detail?.variants.filter((variant) => variant.status === "ACTIVE") ?? [];
+  const pricedVariants = activeVariants.filter((variant) => Number(variant.price) > 0);
+  const primaryImage = detail?.images.find((image) => image.isPrimary) ?? detail?.images[0] ?? null;
+
+  return [
+    {
+      key: "info",
+      label: "Thông tin cơ bản",
+      help: "Tên, slug, danh mục và thương hiệu phải đầy đủ.",
+      done: Boolean(form.name.trim() && form.slug.trim() && form.categoryId && form.brandId)
+    },
+    {
+      key: "variants",
+      label: "Biến thể bán hàng",
+      help: "Cần ít nhất một biến thể ACTIVE.",
+      done: activeVariants.length > 0
+    },
+    {
+      key: "prices",
+      label: "Giá bán hợp lệ",
+      help: "Biến thể đang bán phải có giá > 0.",
+      done: activeVariants.length > 0 && pricedVariants.length === activeVariants.length
+    },
+    {
+      key: "images",
+      label: "Ảnh sản phẩm",
+      help: "Cần ít nhất một ảnh, tốt nhất có ảnh chính.",
+      done: Boolean(primaryImage)
+    }
+  ];
+}
+
+function getPublishBlockReason(checklist: ReturnType<typeof getPublishChecklist>) {
+  const missing = checklist.filter((item) => !item.done).map((item) => item.label.toLowerCase());
+  return missing.length ? `Chưa thể chuyển ACTIVE: còn thiếu ${missing.join(", ")}.` : null;
 }
 
 function createEmptyProductForm(categoryId = "", brandId = "") {
@@ -481,6 +519,11 @@ export function AdminProductsCatalogClient({
 
     return selectedProduct?.image ?? PRODUCT_THUMB_FALLBACK;
   }, [detail, selectedProduct, selectedProductId]);
+  const publishChecklist = useMemo(() => getPublishChecklist(detail, productForm), [detail, productForm]);
+  const publishBlockReason = useMemo(() => getPublishBlockReason(publishChecklist), [publishChecklist]);
+  const canPublishActive = !publishBlockReason;
+  const parsedGenColors = useMemo(() => parseCsvList(genColors), [genColors]);
+  const parsedGenSizes = useMemo(() => parseCsvList(genSizes), [genSizes]);
   const missingCategorySetup = categories.length === 0;
   const missingBrandSetup = brands.length === 0;
   const canSubmitProduct = !missingCategorySetup && !missingBrandSetup && saving !== "product";
@@ -730,6 +773,11 @@ export function AdminProductsCatalogClient({
         isFeatured: productForm.isFeatured
       };
 
+      if (payload.status === "ACTIVE" && publishBlockReason) {
+        setMessage(publishBlockReason);
+        return;
+      }
+
       if (selectedProductId) {
         const updated = await updateAdminProduct(selectedProductId, payload);
         detailCacheRef.current[updated.id] = updated;
@@ -918,12 +966,7 @@ export function AdminProductsCatalogClient({
 
   async function handleUpdateVariant(variantId: string) {
     const draft = variantDrafts[variantId];
-    const persistedVariant = detail?.variants.find((variant) => variant.id === variantId);
     if (!draft) {
-      return;
-    }
-    if (!persistedVariant) {
-      setMessage("Không tìm thấy dữ liệu biến thể hiện tại. Hãy tải lại sản phẩm.");
       return;
     }
 
@@ -938,30 +981,6 @@ export function AdminProductsCatalogClient({
         status: draft.status
       });
 
-      const targetAvailable = Number(draft.stockQuantity);
-      if (!Number.isInteger(targetAvailable) || targetAvailable < 0) {
-        throw new Error("Tồn kho phải là số nguyên không âm.");
-      }
-      // Public/admin product detail intentionally reports an unavailable variant as
-      // zero even when it still has physical stock. Once such a variant is
-      // re-activated, `updated` exposes its real available quantity and becomes the
-      // correct adjustment baseline. For an already-active variant the persisted
-      // value is the baseline, including when this save also deactivates it.
-      const adjustmentBaseline = persistedVariant.status === "ACTIVE"
-        ? persistedVariant.availableQuantity
-        : updated.status === "ACTIVE"
-          ? updated.availableQuantity
-          : targetAvailable;
-      const stockDelta = targetAvailable - adjustmentBaseline;
-      const inventory = stockDelta === 0
-        ? null
-        : await adjustStock({
-            variantId,
-            type: stockDelta > 0 ? "ADJUSTMENT_UP" : "ADJUSTMENT_DOWN",
-            quantity: Math.abs(stockDelta),
-            note: "Điều chỉnh từ màn hình quản lý sản phẩm"
-          });
-
       setVariantDrafts((current) => ({
         ...current,
         [variantId]: {
@@ -971,7 +990,7 @@ export function AdminProductsCatalogClient({
           price: updated.price != null ? String(updated.price) : "",
           compareAtPrice: updated.compareAtPrice != null ? String(updated.compareAtPrice) : "",
           status: updated.status,
-          stockQuantity: String(inventory?.availableQuantity ?? updated.availableQuantity),
+          stockQuantity: String(updated.availableQuantity),
           sku: updated.sku
         }
       }));
@@ -1339,6 +1358,35 @@ export function AdminProductsCatalogClient({
           </button>
         </div>
 
+        <div className="publish-checklist" aria-label="Điều kiện xuất bản sản phẩm">
+          <div className="publish-checklist-head">
+            <strong>{canPublishActive ? "Sẵn sàng bán" : "Chưa đủ điều kiện bán"}</strong>
+            <span className={`status ${canPublishActive ? "active" : "draft"}`}>
+              {publishChecklist.filter((item) => item.done).length}/{publishChecklist.length}
+            </span>
+          </div>
+          <div className="readiness-grid">
+            {publishChecklist.map((item) => (
+              <button
+                type="button"
+                key={item.key}
+                className={`readiness-item${item.done ? " done" : ""}`}
+                onClick={() => {
+                  if (item.key === "variants" || item.key === "prices") setActiveTab("variants");
+                  else if (item.key === "images") setActiveTab("images");
+                  else setActiveTab("info");
+                }}
+              >
+                <span className="readiness-dot" aria-hidden />
+                <span>
+                  <strong>{item.label}</strong>
+                  <small>{item.done ? "Đã đủ" : item.help}</small>
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
         {message ? <p className="action-message">{message}</p> : null}
 
         {activeTab === "info" ? (
@@ -1387,7 +1435,11 @@ export function AdminProductsCatalogClient({
                 {genderOptions.map((item) => <option value={item} key={item}>{item}</option>)}
               </select>
               <select className="select" value={productForm.status} onChange={(event) => setProductForm((current) => ({ ...current, status: event.target.value }))}>
-                {productStatusOptions.map((item) => <option value={item} key={item}>{item}</option>)}
+                {productStatusOptions.map((item) => (
+                  <option value={item} key={item} disabled={item === "ACTIVE" && !canPublishActive}>
+                    {item === "DRAFT" ? "DRAFT - Bản nháp" : item === "ACTIVE" ? "ACTIVE - Đang bán" : "INACTIVE - Ẩn/ngừng bán"}
+                  </option>
+                ))}
               </select>
               <input className="admin-input" placeholder="Môn thể thao" value={productForm.sportType} onChange={(event) => setProductForm((current) => ({ ...current, sportType: event.target.value }))} />
               <label className="admin-check">
@@ -1434,6 +1486,44 @@ export function AdminProductsCatalogClient({
                     <input className="admin-input" placeholder="Size (vd: S, M, L, XL)" value={genSizes} onChange={(event) => setGenSizes(event.target.value)} />
                     <input className="admin-input" placeholder="Mã SKU cơ sở (tự sinh nếu trống)" value={genBaseSku} onChange={(event) => setGenBaseSku(event.target.value)} />
                   </div>
+                  <div className="variant-chip-toolbar">
+                    <span className="table-subtle">Size nhanh:</span>
+                    {quickSizeOptions.map((size) => (
+                      <button
+                        type="button"
+                        className={`variant-chip${parsedGenSizes.includes(size) ? " active" : ""}`}
+                        key={size}
+                        onClick={() => {
+                          const next = new Set(parsedGenSizes);
+                          if (next.has(size)) next.delete(size);
+                          else next.add(size);
+                          setGenSizes(Array.from(next).join(", "));
+                        }}
+                      >
+                        {size}
+                      </button>
+                    ))}
+                  </div>
+                  {(parsedGenColors.length > 0 || parsedGenSizes.length > 0) ? (
+                    <div className="variant-chip-preview">
+                      {parsedGenColors.length > 0 ? (
+                        <div>
+                          <span className="table-subtle">Màu đã nhận:</span>
+                          <div className="variant-chip-row">
+                            {parsedGenColors.map((color) => <span className="variant-chip readonly" key={color}>{color}</span>)}
+                          </div>
+                        </div>
+                      ) : null}
+                      {parsedGenSizes.length > 0 ? (
+                        <div>
+                          <span className="table-subtle">Size đã nhận:</span>
+                          <div className="variant-chip-row">
+                            {parsedGenSizes.map((size) => <span className="variant-chip readonly" key={size}>{size}</span>)}
+                          </div>
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
                   <div className="page-actions">
                     <button className="admin-btn secondary" type="button" onClick={handleGenerateMatrix}>
                       Tạo bảng

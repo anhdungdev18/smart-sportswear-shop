@@ -149,7 +149,7 @@ const OrderRow = memo(function OrderRow({
           {!['CANCELLATION_REQUESTED', 'CANCELLATION_APPROVED'].includes(order.orderStatus) ? <button className="admin-btn" type="button" onClick={onSaveStatus} disabled={savingId === order.id || statusDraft === order.orderStatus}>
             {savingId === order.id ? "Đang lưu..." : "Lưu trạng thái"}
           </button> : null}
-          {order.orderStatus === "PENDING_CONFIRMATION" ? (
+          {["PENDING_CONFIRMATION", "CONFIRMED", "PACKING"].includes(order.orderStatus) ? (
             <button className="admin-btn secondary" type="button" onClick={onStaffCancel} disabled={savingId === `staff-cancel:${order.id}`}>
               {savingId === `staff-cancel:${order.id}` ? "Đang xử lý..." : "Cửa hàng hủy đơn"}
             </button>
@@ -414,7 +414,10 @@ export function AdminOrdersClient({
     if (!order) return;
     const reason = noteDrafts[id]?.trim();
     if (!reason) {
-      setMessage("Hãy nhập lý do cửa hàng hủy đơn vào ô ghi chú trước khi thực hiện.");
+      // alert(), not setMessage(): the note field sits far down a long order
+      // list (see the admin orders table), so a passive banner is easy to miss -
+      // this must interrupt the click so the admin actually sees it.
+      window.alert("Hãy nhập lý do cửa hàng hủy đơn vào ô ghi chú trước khi thực hiện.");
       return;
     }
     if (!window.confirm(`Cửa hàng chủ động hủy đơn ${order.orderCode}?`)) return;

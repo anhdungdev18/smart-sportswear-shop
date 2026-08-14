@@ -49,9 +49,12 @@ export function OrderHistoryPageClient() {
     const target = orders.find((order) => order.id === id);
     if (!target) return;
     const paid = target.paymentStatus === "PAID";
-    if (!window.confirm(paid
-      ? "Gửi yêu cầu hủy đơn và hoàn lại toàn bộ tiền qua VNPay? Đơn chỉ được hủy sau khi hoàn tiền thành công."
-      : "Bạn chắc chắn muốn hủy đơn này?")) return;
+    const immediate = target.orderStatus === "PENDING_CONFIRMATION" && !paid;
+    if (!window.confirm(immediate
+      ? "Bạn chắc chắn muốn hủy đơn này?"
+      : paid
+        ? "Gửi yêu cầu hủy đơn và hoàn lại toàn bộ tiền qua VNPay? Đơn chỉ được hủy sau khi hoàn tiền thành công."
+        : "Gửi yêu cầu hủy đơn? Cửa hàng sẽ xem xét và xác nhận.")) return;
     setCancellingId(id);
     setError(null);
     setSuccess(null);
@@ -68,7 +71,8 @@ export function OrderHistoryPageClient() {
     }
   };
 
-  const canCancel = (order: OrderResponse) => order.orderStatus === "PENDING_CONFIRMATION";
+  const canCancel = (order: OrderResponse) =>
+    ["PENDING_CONFIRMATION", "CONFIRMED", "PACKING"].includes(order.orderStatus);
 
   if (!authenticated) {
     return (
@@ -125,7 +129,11 @@ export function OrderHistoryPageClient() {
                       >
                         {cancellingId === order.id
                           ? "Đang xử lý..."
-                          : order.paymentStatus === "PAID" ? "Yêu cầu hủy & hoàn tiền" : "Hủy đơn"}
+                          : order.orderStatus === "PENDING_CONFIRMATION" && order.paymentStatus !== "PAID"
+                            ? "Hủy đơn"
+                            : order.paymentStatus === "PAID"
+                              ? "Yêu cầu hủy & hoàn tiền"
+                              : "Yêu cầu hủy đơn"}
                       </button>
                     ) : null}
                     {order.orderStatus === "CANCELLATION_REQUESTED" ? (

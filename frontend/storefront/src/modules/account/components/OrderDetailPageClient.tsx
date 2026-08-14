@@ -47,12 +47,18 @@ export function OrderDetailPageClient({ orderId }: { orderId: string }) {
   const handleCancel = async () => {
     if (!order) return;
     const paid = order.paymentStatus === "PAID";
-    if (!window.confirm(paid
-      ? "Gửi yêu cầu hủy đơn và hoàn lại toàn bộ tiền qua VNPay?"
-      : "Bạn chắc chắn muốn hủy đơn này?")) return;
+    // Only an unpaid order still awaiting confirmation cancels immediately - stock is
+    // just reserved there. Once CONFIRMED/PACKING (real stock deducted) or paid, it
+    // always needs staff approval, regardless of payment method.
+    const immediate = order.orderStatus === "PENDING_CONFIRMATION" && !paid;
+    if (!window.confirm(immediate
+      ? "Bạn chắc chắn muốn hủy đơn này?"
+      : paid
+        ? "Gửi yêu cầu hủy đơn và hoàn lại toàn bộ tiền qua VNPay?"
+        : "Gửi yêu cầu hủy đơn? Cửa hàng sẽ xem xét và xác nhận.")) return;
     setCancelling(true);
     try {
-      const updated = await cancelOrder(order.id, paid ? "Khách hàng yêu cầu hủy và hoàn tiền" : undefined);
+      const updated = await cancelOrder(order.id, immediate ? undefined : "Khách hàng yêu cầu hủy đơn");
       setOrder(updated);
     } catch (err) {
       setError(getApiErrorMessage(err, "Không thể hủy đơn hàng."));
@@ -75,7 +81,8 @@ export function OrderDetailPageClient({ orderId }: { orderId: string }) {
     }
   };
 
-  const canCancel = order?.orderStatus === "PENDING_CONFIRMATION";
+  const canCancel = order != null
+    && ["PENDING_CONFIRMATION", "CONFIRMED", "PACKING"].includes(order.orderStatus);
   const canPay = order?.orderStatus === "PENDING_CONFIRMATION"
     && order.paymentMethod === "VNPAY" && order.paymentStatus !== "PAID";
 
@@ -120,7 +127,13 @@ export function OrderDetailPageClient({ orderId }: { orderId: string }) {
                   disabled={cancelling}
                   className="mt-4 h-10 rounded-tl-[18px] rounded-br-[18px] border border-ivy-dark px-5 text-[12px] font-semibold uppercase tracking-[0.05em] text-ivy-dark disabled:opacity-60"
                 >
-                  {cancelling ? "Đang xử lý..." : order.paymentStatus === "PAID" ? "Yêu cầu hủy & hoàn tiền" : "Hủy đơn"}
+                  {cancelling
+                    ? "Đang xử lý..."
+                    : order.orderStatus === "PENDING_CONFIRMATION" && order.paymentStatus !== "PAID"
+                      ? "Hủy đơn"
+                      : order.paymentStatus === "PAID"
+                        ? "Yêu cầu hủy & hoàn tiền"
+                        : "Yêu cầu hủy đơn"}
                 </button>
               ) : null}
               {order.orderStatus === "CANCELLATION_REQUESTED" ? (
