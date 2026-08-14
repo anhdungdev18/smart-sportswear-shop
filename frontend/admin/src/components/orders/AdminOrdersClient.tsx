@@ -157,6 +157,9 @@ const OrderRow = memo(function OrderRow({
           <button className="admin-btn secondary" type="button" onClick={onLoadDetail} disabled={savingId === `detail:${order.id}`}>
             {savingId === `detail:${order.id}` ? "Đang tải..." : "Chi tiết"}
           </button>
+          <a className="admin-btn secondary" href={`/orders/${order.id}/packing-slip`} target="_blank" rel="noopener noreferrer">
+            In phiếu giao hàng
+          </a>
           {["CANCELLATION_REQUESTED", "CANCELLATION_APPROVED"].includes(order.orderStatus) ? (
             <>
               <button className="admin-btn" type="button" onClick={onRefundCancellation} disabled={savingId === `refund:${order.id}` || activeRefund?.status === "PENDING" || activeRefund?.status === "PROCESSING"}>

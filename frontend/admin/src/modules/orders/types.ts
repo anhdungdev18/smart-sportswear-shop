@@ -11,6 +11,15 @@ export type OrderItemResponse = {
   lineTotal: number;
 };
 
+export type ShippingAddressResponse = {
+  receiverName: string | null;
+  phone: string | null;
+  province: string | null;
+  district: string | null;
+  ward: string | null;
+  addressLine: string | null;
+};
+
 export type AdminOrderResponse = {
   id: string;
   orderCode: string;
@@ -30,6 +39,7 @@ export type AdminOrderResponse = {
   cancellationReason: string | null;
   cancellationRequestedAt: string | null;
   items: OrderItemResponse[];
+  shippingAddress: ShippingAddressResponse | null;
   createdAt: string;
 };
 

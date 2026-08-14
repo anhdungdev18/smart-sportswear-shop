@@ -858,6 +858,27 @@ public class OrderService {
                 order.getCancellationReason(),
                 order.getCancellationRequestedAt(),
                 items,
+                toShippingAddress(order),
                 order.getCreatedAt());
+    }
+
+    /** Same address_snapshot_json keys ShipmentService.createShipmentFor reads - captured once at checkout. */
+    private com.dunghaiquyen.ecommerce.modules.order.dto.ShippingAddressResponse toShippingAddress(Order order) {
+        Map<String, Object> snapshot = order.getAddressSnapshotJson();
+        if (snapshot == null) {
+            return null;
+        }
+        return new com.dunghaiquyen.ecommerce.modules.order.dto.ShippingAddressResponse(
+                snapshotString(snapshot, "receiverName"),
+                snapshotString(snapshot, "phone"),
+                snapshotString(snapshot, "province"),
+                snapshotString(snapshot, "district"),
+                snapshotString(snapshot, "ward"),
+                snapshotString(snapshot, "addressLine"));
+    }
+
+    private String snapshotString(Map<String, Object> snapshot, String key) {
+        Object value = snapshot.get(key);
+        return value != null ? value.toString() : null;
     }
 }

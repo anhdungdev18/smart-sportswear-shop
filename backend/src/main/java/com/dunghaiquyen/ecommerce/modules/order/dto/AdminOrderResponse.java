@@ -35,5 +35,6 @@ public record AdminOrderResponse(
         String cancellationReason,
         Instant cancellationRequestedAt,
         List<OrderItemResponse> items,
+        ShippingAddressResponse shippingAddress,
         Instant createdAt) {
 }
