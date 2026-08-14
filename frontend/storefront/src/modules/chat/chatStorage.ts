@@ -61,6 +61,19 @@ export function markChatSessionUsed(scope: string): void {
   localStorage.removeItem(`${FRESH_PREFIX}${scope}`);
 }
 
+export function clearChatConversation(scope: string): void {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(`${SESSION_PREFIX}${scope}`);
+  localStorage.removeItem(`${FRESH_PREFIX}${scope}`);
+  localStorage.removeItem(`${MESSAGES_PREFIX}${scope}`);
+
+  // Do not let data from the pre-scoped storage format revive a conversation
+  // after the user has explicitly ended an authenticated session.
+  if (scope.startsWith("user:")) {
+    localStorage.removeItem(LEGACY_SESSION_KEY);
+  }
+}
+
 export function loadChatMessages(scope: string): StoredChatMessage[] {
   try {
     const parsed: unknown = JSON.parse(localStorage.getItem(`${MESSAGES_PREFIX}${scope}`) ?? "[]");
