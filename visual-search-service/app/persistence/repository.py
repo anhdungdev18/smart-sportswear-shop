@@ -48,6 +48,17 @@ class SearchCandidate:
     similarity: float
 
 
+# Shape/content embeddings are the primary retrieval signal. Colour is useful
+# for separating otherwise similar garments, but must not make a dark pair of
+# shorts outrank a long-sleeved tee merely because both are black.
+VISUAL_SIMILARITY_WEIGHT = 0.85
+COLOR_SIMILARITY_WEIGHT = 0.15
+
+
+def blend_visual_and_color_similarity(visual_score: float, color_score: float) -> float:
+    return VISUAL_SIMILARITY_WEIGHT * visual_score + COLOR_SIMILARITY_WEIGHT * color_score
+
+
 @dataclass(frozen=True, slots=True)
 class ReconciliationCandidate:
     image_id: UUID
@@ -732,7 +743,7 @@ class VisualSearchRepository:
                 stored_color = tuple(float(value) for value in row[4]) if row[4] else ()
                 if query_color and stored_color and len(query_color) == len(stored_color):
                     color_score = sum(min(left, right) for left, right in zip(query_color, stored_color))
-                    final_score = .65 * color_score + .35 * visual_score
+                    final_score = blend_visual_and_color_similarity(visual_score, color_score)
                 else:
                     final_score = visual_score
                 ranked.append(SearchCandidate(row[0], row[1], row[2], final_score))
