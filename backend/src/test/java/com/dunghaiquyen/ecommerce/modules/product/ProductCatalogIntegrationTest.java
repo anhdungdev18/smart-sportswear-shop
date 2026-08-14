@@ -398,6 +398,8 @@ class ProductCatalogIntegrationTest extends AbstractIntegrationTest {
         createActiveProductWithGender(ctx, menSlug, "MEN");
         String womenSlug = "prod-women-" + UUID.randomUUID();
         createActiveProductWithGender(ctx, womenSlug, "WOMEN");
+        String unisexSlug = "prod-unisex-" + UUID.randomUUID();
+        createActiveProductWithGender(ctx, unisexSlug, "UNISEX");
 
         mockMvc.perform(get("/api/v1/products")
                         .param("categoryId", ctx.categoryId())
@@ -405,6 +407,7 @@ class ProductCatalogIntegrationTest extends AbstractIntegrationTest {
                         .param("limit", "10"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data[?(@.slug=='" + womenSlug + "')]").exists())
+                .andExpect(jsonPath("$.data[?(@.slug=='" + unisexSlug + "')]").exists())
                 .andExpect(jsonPath("$.data[?(@.slug=='" + menSlug + "')]").doesNotExist())
                 .andExpect(jsonPath("$.meta.page").value(1))
                 .andExpect(jsonPath("$.meta.limit").value(10));

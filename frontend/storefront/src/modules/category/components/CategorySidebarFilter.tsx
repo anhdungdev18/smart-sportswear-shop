@@ -41,6 +41,11 @@ const SURFACE_OPTIONS = [
   { label: "Futsal (IC)", value: "IC" },
 ] as const;
 
+const GENDER_OPTIONS = [
+  { label: "Nam", value: "MEN" },
+  { label: "Nữ", value: "WOMEN" },
+] as const;
+
 type SizeType = "cloth" | "shoe" | "both";
 
 const MIN_PRICE = 0;
@@ -109,6 +114,7 @@ export function CategorySidebarFilter({
   initialMaxPrice,
   initialSurface,
   initialDiscount,
+  initialGender,
   showSurface = false,
   sizeType = "both",
 }: {
@@ -118,6 +124,7 @@ export function CategorySidebarFilter({
   initialMaxPrice?: number;
   initialSurface?: string;
   initialDiscount?: string;
+  initialGender?: string;
   showSurface?: boolean;
   sizeType?: SizeType;
 }) {
@@ -126,6 +133,7 @@ export function CategorySidebarFilter({
   const [openColor, setOpenColor] = useState(false);
   const [openPrice, setOpenPrice] = useState(false);
   const [openDiscount, setOpenDiscount] = useState(false);
+  const [openGender, setOpenGender] = useState(Boolean(initialGender));
   const [selectedSurface, setSelectedSurface] = useState<string | null>(initialSurface ?? null);
 
   const pathname = usePathname();
@@ -136,6 +144,7 @@ export function CategorySidebarFilter({
   const [selectedSize, setSelectedSize] = useState<string | null>(initialSize ?? null);
   const [selectedColor, setSelectedColor] = useState<string | null>(initialColor ?? null);
   const [selectedDiscount, setSelectedDiscount] = useState<string | null>(initialDiscount ?? null);
+  const [selectedGender, setSelectedGender] = useState<string | null>(initialGender ?? null);
   const [priceRange, setPriceRange] = useState<[number, number]>([
     initialMinPrice ?? MIN_PRICE,
     initialMaxPrice ?? MAX_PRICE,
@@ -175,6 +184,9 @@ export function CategorySidebarFilter({
     if (selectedDiscount) params.set("discount", selectedDiscount);
     else params.delete("discount");
 
+    if (selectedGender) params.set("gender", selectedGender);
+    else params.delete("gender");
+
     const query = params.toString();
     const nextUrl = query ? `${pathname}?${query}` : pathname;
     if (nextUrl === currentUrl) return;
@@ -186,12 +198,13 @@ export function CategorySidebarFilter({
 
   function clearFilters() {
     const params = new URLSearchParams(searchParams.toString());
-    ["page", "size", "color", "minPrice", "maxPrice", "surface", "discount"].forEach((k) => params.delete(k));
+    ["page", "size", "color", "minPrice", "maxPrice", "surface", "discount", "gender"].forEach((k) => params.delete(k));
     setSelectedSize(null);
     setSelectedColor(null);
     setSelectedSurface(null);
     setPriceRange([MIN_PRICE, MAX_PRICE]);
     setSelectedDiscount(null);
+    setSelectedGender(null);
     const query = params.toString();
     const nextUrl = query ? `${pathname}?${query}` : pathname;
     if (nextUrl === currentUrl) return;
@@ -206,6 +219,25 @@ export function CategorySidebarFilter({
 
   return (
     <aside className="w-full lg:w-64 lg:shrink-0">
+      <FilterSection label="Giới tính" open={openGender} onToggle={() => setOpenGender((p) => !p)}>
+        <ul className="space-y-3">
+          {GENDER_OPTIONS.map((opt) => (
+            <li key={opt.value}>
+              <label className="flex cursor-pointer items-center gap-2 text-[13px] text-gray-700">
+                <input
+                  type="radio"
+                  name="gender"
+                  checked={selectedGender === opt.value}
+                  onChange={() => setSelectedGender(opt.value)}
+                  className="size-4 accent-ivy-dark"
+                />
+                {opt.label}
+              </label>
+            </li>
+          ))}
+        </ul>
+      </FilterSection>
+
       {showSurface ? (
         <FilterSection label="Mặt sân" open={openSurface} onToggle={() => setOpenSurface((p) => !p)}>
           <ul className="space-y-3">

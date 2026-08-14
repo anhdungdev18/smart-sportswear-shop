@@ -23,11 +23,18 @@ type CategoryListingQuery = {
   maxPrice?: string;
   surface?: string;
   discount?: string;
+  gender?: string;
 };
 
 export async function fetchCategoryListing(query: CategoryListingQuery) {
   try {
-    const result = await apiFetch<ProductListItem[]>(endpoints.products, { query });
+    // Faceted results must reflect the selected filter and freshly migrated
+    // catalog data immediately. Caching can otherwise preserve an empty result
+    // from before a backend restart for up to the default revalidation window.
+    const result = await apiFetch<ProductListItem[]>(endpoints.products, {
+      query,
+      cache: "no-store",
+    });
     return {
       products: result.data,
       meta: (result.meta as PageMeta | undefined) ?? { ...DEFAULT_PAGE_META, size: query.limit, page: query.page },

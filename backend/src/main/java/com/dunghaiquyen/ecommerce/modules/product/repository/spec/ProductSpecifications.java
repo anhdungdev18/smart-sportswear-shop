@@ -98,7 +98,10 @@ public final class ProductSpecifications {
     }
 
     public static Specification<Product> hasGender(Gender gender) {
-        return (root, query, cb) -> cb.equal(root.get("gender"), gender);
+        return (root, query, cb) -> cb.or(
+                cb.equal(root.get("gender"), gender),
+                cb.equal(root.get("gender"), Gender.UNISEX),
+                cb.isNull(root.get("gender")));
     }
 
     public static Specification<Product> hasSportType(String sportType) {
