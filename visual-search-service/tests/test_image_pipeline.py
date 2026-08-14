@@ -33,6 +33,18 @@ def test_downsizes_while_preserving_aspect_ratio():
     assert (normalized.width, normalized.height) == (100, 50)
 
 
+def test_color_signature_ignores_white_catalog_background():
+    output = io.BytesIO()
+    image = Image.new("RGB", (100, 100), "white")
+    for x in range(25, 75):
+        for y in range(15, 90):
+            image.putpixel((x, y), (245, 220, 20))
+    image.save(output, format="PNG")
+    normalized = ImagePipeline(Settings(cloudinary_cloud_name="demo")).normalize(output.getvalue())
+    assert len(normalized.color_signature) == 14
+    assert max(normalized.color_signature[:12]) > normalized.color_signature[13]
+
+
 @pytest.mark.parametrize(
     "content,mime",
     [(b"not-image", "image/jpeg"), (b"x", "text/html"), (image_bytes(), "image/jpeg")],

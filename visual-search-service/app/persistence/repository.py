@@ -37,6 +37,7 @@ class CatalogImage:
 class ExistingEmbedding:
     status: str
     image_hash: str | None
+    color_signature: tuple[float, ...] | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -267,11 +268,26 @@ class VisualSearchRepository:
         async with await self._connect() as connection:
             async with connection.cursor() as cursor:
                 await cursor.execute(
-                    "select status, image_hash from visual_search.image_embeddings where image_id = %s and model_version_id = %s",
+                    "select status, image_hash, color_signature from visual_search.image_embeddings where image_id = %s and model_version_id = %s",
                     (image_id, model_id),
                 )
                 row = await cursor.fetchone()
                 return ExistingEmbedding(*row) if row else None
+
+    async def mark_color_signature_and_processed(
+        self, event_id: UUID | None, event_type: str | None, event_version: int | None,
+        image_id: UUID, model_id: UUID, signature: tuple[float, ...],
+    ) -> None:
+        async with await self._connect() as connection:
+            async with connection.transaction():
+                async with connection.cursor() as cursor:
+                    await cursor.execute(
+                        "update visual_search.image_embeddings set color_signature=%s, updated_at=now() where image_id=%s and model_version_id=%s",
+                        (list(signature), image_id, model_id),
+                    )
+                    if event_id is not None and event_type is not None and event_version is not None:
+                        await self._insert_processed(cursor, event_id, event_type, event_version)
+                        await self._complete_job_item(cursor, event_id)
 
     async def mark_processing(self, image: CatalogImage, model_id: UUID) -> bool:
         async with await self._connect() as connection:
@@ -304,6 +320,7 @@ class VisualSearchRepository:
         image: CatalogImage,
         model: ModelVersion,
         image_hash: str,
+        color_signature: tuple[float, ...],
         result: EmbeddingResult,
         latency_ms: int,
     ) -> None:
@@ -315,11 +332,11 @@ class VisualSearchRepository:
                         """
                         update visual_search.image_embeddings
                         set embedding = %s::vector, image_hash = %s, status = 'READY', last_error = null,
-                            failure_code = null,
+                            failure_code = null, color_signature = %s,
                             ready_at = now(), updated_at = now()
                         where image_id = %s and model_version_id = %s
                         """,
-                        (vector, image_hash, image.id, model.id),
+                        (vector, image_hash, list(color_signature), image.id, model.id),
                     )
                     await cursor.execute(
                         """
@@ -517,6 +534,7 @@ class VisualSearchRepository:
                            case
                                when e.image_id is null then 'MISSING'
                                when e.status = 'PROCESSING' then 'PROCESSING_TIMEOUT'
+                               when e.status = 'READY' and e.color_signature is null then 'COLOR_MISSING'
                                when e.status = 'FAILED' and e.failure_code = 'RetryableEventError'
                                    then 'FAILED_RETRYABLE'
                                when e.status = 'FAILED' then 'FAILED_PERMANENT'
@@ -529,6 +547,7 @@ class VisualSearchRepository:
                     where p.status = 'ACTIVE'
                       and (
                         e.image_id is null
+                        or (e.status = 'READY' and e.color_signature is null)
                         or e.status = 'PENDING'
                         or e.status = 'STALE'
                         or (%s and e.status = 'FAILED')
@@ -664,16 +683,20 @@ class VisualSearchRepository:
                         )
         return IndexingJob(job_id, job_type, len(candidates))
 
-    async def search(self, model_id: UUID, vector: tuple[float, ...], limit: int) -> list[SearchCandidate]:
+    async def search(
+        self, model_id: UUID, vector: tuple[float, ...], limit: int,
+        query_color: tuple[float, ...] = (),
+    ) -> list[SearchCandidate]:
         async with await self._connect() as connection:
-            return await self.search_on(connection, model_id, vector, limit)
+            return await self.search_on(connection, model_id, vector, limit, query_color)
 
     @staticmethod
     async def search_on(
-        connection: psycopg.AsyncConnection[Any], model_id: UUID, vector: tuple[float, ...], limit: int
+        connection: psycopg.AsyncConnection[Any], model_id: UUID, vector: tuple[float, ...], limit: int,
+        query_color: tuple[float, ...] = (),
     ) -> list[SearchCandidate]:
         encoded = "[" + ",".join(str(value) for value in vector) + "]"
-        image_limit = min(limit * 5, 100)
+        image_limit = min(max(limit * 10, 50), 100)
         async with connection.cursor() as cursor:
             await cursor.execute(
                     """
@@ -694,14 +717,27 @@ class VisualSearchRepository:
                         from ranked_images
                         order by product_id, similarity desc
                     )
-                    select product_id, image_id, image_url, similarity
-                    from ranked_products
+                    select rp.product_id, rp.image_id, rp.image_url, rp.similarity, e.color_signature
+                    from ranked_products rp
+                    join visual_search.image_embeddings e
+                      on e.image_id=rp.image_id and e.model_version_id=%s
                     order by similarity desc
-                    limit %s
                     """,
-                    (encoded, model_id, encoded, image_limit, limit),
+                    (encoded, model_id, encoded, image_limit, model_id),
             )
-            return [SearchCandidate(row[0], row[1], row[2], float(row[3])) for row in await cursor.fetchall()]
+            rows = await cursor.fetchall()
+            ranked: list[SearchCandidate] = []
+            for row in rows:
+                visual_score = float(row[3])
+                stored_color = tuple(float(value) for value in row[4]) if row[4] else ()
+                if query_color and stored_color and len(query_color) == len(stored_color):
+                    color_score = sum(min(left, right) for left, right in zip(query_color, stored_color))
+                    final_score = .65 * color_score + .35 * visual_score
+                else:
+                    final_score = visual_score
+                ranked.append(SearchCandidate(row[0], row[1], row[2], final_score))
+            ranked.sort(key=lambda candidate: candidate.similarity, reverse=True)
+            return ranked[:limit]
 
     async def record_query_usage(
         self,

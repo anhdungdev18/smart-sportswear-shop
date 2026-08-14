@@ -28,10 +28,39 @@ class NormalizedImage:
     width: int
     height: int
     original_format: str
+    color_signature: tuple[float, ...] = ()
 
     @property
     def pixels(self) -> int:
         return self.width * self.height
+
+
+def color_signature(image: Image.Image) -> tuple[float, ...]:
+    """Compact foreground-aware HSV histogram: 12 hues + black + gray/white."""
+    sample = image.copy()
+    sample.thumbnail((128, 128), Image.Resampling.BILINEAR)
+    hsv = sample.convert("HSV")
+    bins = [0.0] * 14
+    width, height = hsv.size
+    for index, (hue, saturation, value) in enumerate(hsv.getdata()):
+        x, y = index % width, index // width
+        # Down-weight borders where catalog/query backgrounds and watermarks live.
+        central = 1.0 if width * .12 <= x <= width * .88 and height * .08 <= y <= height * .92 else .2
+        if value < 45:
+            bucket = 12
+        elif saturation < 38:
+            bucket = 13
+        else:
+            bucket = min(11, hue * 12 // 256)
+        # Saturated garment pixels carry more color information than white backgrounds.
+        bins[bucket] += central * (1.0 + saturation / 255.0 * 2.0)
+    chromatic = sum(bins[:12])
+    if chromatic > 0:
+        # Color should dominate neutral studio backgrounds.
+        bins[12] = min(bins[12], chromatic * .15)
+        bins[13] = min(bins[13], chromatic * .15)
+    total = sum(bins) or 1.0
+    return tuple(value / total for value in bins)
 
 
 async def _resolve_public_addresses(host: str) -> set[str]:
@@ -151,6 +180,7 @@ class ImagePipeline:
                     (self.settings.target_image_max_width, self.settings.target_image_max_height),
                     Image.Resampling.LANCZOS,
                 )
+                signature = color_signature(image)
                 output = io.BytesIO()
                 image.save(output, format="JPEG", quality=88, optimize=True)
                 normalized = output.getvalue()
@@ -160,6 +190,7 @@ class ImagePipeline:
                     width=image.width,
                     height=image.height,
                     original_format=original_format,
+                    color_signature=signature,
                 )
         except (UnidentifiedImageError, OSError, Image.DecompressionBombError) as exc:
             raise ImagePipelineError("Image could not be decoded safely") from exc

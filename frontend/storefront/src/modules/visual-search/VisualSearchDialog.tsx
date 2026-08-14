@@ -10,6 +10,7 @@ import type { VisualSearchResult } from "@/modules/product/types";
 import { searchProductsByImage } from "@/modules/visual-search/api";
 
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
+const MAX_RESULTS = 4;
 const ACCEPTED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 async function cropImage(source: string, zoom: number, x: number, y: number): Promise<Blob> {
@@ -182,7 +183,12 @@ export function VisualSearchDialog({ trigger }: { trigger?: (open: () => void) =
     setError(undefined);
     try {
       const image = await cropImage(source, zoom, positionX, positionY);
-      setResults(await searchProductsByImage(image));
+      const searchResults = await searchProductsByImage(image, MAX_RESULTS);
+      setResults(
+        [...searchResults]
+          .sort((first, second) => second.similarity - first.similarity)
+          .slice(0, MAX_RESULTS),
+      );
       setHasSearched(true);
     } catch (cause) {
       setError(errorMessage(cause));

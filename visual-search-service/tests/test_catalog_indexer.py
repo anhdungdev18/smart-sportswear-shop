@@ -52,6 +52,7 @@ class FakeRepository:
         self.ready_calls += 1
         if args[0] is not None:
             self.completed.append(args[0])
+    async def mark_color_signature_and_processed(self, event_id, *_args): self.completed.append(event_id)
     async def mark_processed(self, event_id, _event_type, _event_version): self.completed.append(event_id)
     async def mark_failed(self, image_id, model_id, error, failure_code="PermanentEventError"):
         self.failed.append((image_id, model_id, error, failure_code))
@@ -64,7 +65,7 @@ class FakePipeline:
     async def download_and_normalize(self, _url, _public_id):
         if self.error:
             raise self.error
-        return NormalizedImage(b"jpeg", "a" * 64, 10, 10, "JPEG")
+        return NormalizedImage(b"jpeg", "a" * 64, 10, 10, "JPEG", (1.0,) + (0.0,) * 13)
 
 
 def test_duplicate_event_is_idempotent():
@@ -83,7 +84,7 @@ def test_ready_hash_skips_provider_and_completes_event():
 
     async def scenario():
         event = make_event()
-        repo = FakeRepository(event, existing=ExistingEmbedding("READY", "a" * 64))
+        repo = FakeRepository(event, existing=ExistingEmbedding("READY", "a" * 64, (1.0,) + (0.0,) * 13))
         await CatalogIndexer(repo, FakePipeline(), FailingProvider()).handle(event)
         assert repo.processing_calls == repo.ready_calls == 0
         assert repo.completed == [event.event_id]
