@@ -89,16 +89,35 @@ public class AdminOrderController {
         return ApiResponse.ok("Cancellation refund submitted", response);
     }
 
+    /**
+     * Unlike a customer's cancellation request, a staff-initiated cancel has
+     * nobody left to "approve" it - the admin already made the decision by
+     * clicking this button. So instead of parking the order at
+     * CANCELLATION_REQUESTED for a second admin action to pick up later, this
+     * immediately continues through the same approve + refund/finalize
+     * sequence as POST /{id}/cancellation-refund. A PAID order still ends up
+     * waiting at CANCELLATION_APPROVED for the VNPay refund to complete
+     * (unchanged, external gateway call), same as that endpoint.
+     */
     @PostMapping("/{id}/cancel")
     public ApiResponse<AdminOrderResponse> cancelByStaff(
             @AuthenticationPrincipal CustomUserDetails principal,
             @PathVariable UUID id,
-            @RequestBody(required = false) CancelOrderRequest request) {
+            @RequestBody(required = false) CancelOrderRequest request,
+            HttpServletRequest httpRequest) {
         String reason = request == null ? null : request.reason();
         AdminOrderResponse response = orderService.cancelOrderByStaff(id, reason, principal.getUser());
-        String message = response.orderStatus() == com.dunghaiquyen.ecommerce.modules.order.entity.OrderStatus.CANCELLATION_REQUESTED
-                ? "Staff cancellation awaiting refund" : "Order cancelled by staff";
-        return ApiResponse.ok(message, response);
+        if (response.orderStatus() != com.dunghaiquyen.ecommerce.modules.order.entity.OrderStatus.CANCELLATION_REQUESTED) {
+            return ApiResponse.ok("Order cancelled by staff", response);
+        }
+        AdminOrderResponse approved = orderService.approveCancellationForRefund(id, principal.getUser());
+        if (approved.paymentStatus() != com.dunghaiquyen.ecommerce.modules.payment.entity.PaymentStatus.PAID) {
+            orderService.completeCancellationAfterRefund(id, principal.getUser());
+            return ApiResponse.ok("Order cancelled by staff", orderService.getOrderDetailForAdmin(id));
+        }
+        String ipAddress = httpRequest.getRemoteAddr();
+        returnService.refundCancellation(id, "Staff-initiated cancellation", principal.getUser(), ipAddress);
+        return ApiResponse.ok("Order cancelled by staff; refund submitted", orderService.getOrderDetailForAdmin(id));
     }
 
     @PostMapping("/{id}/cancellation-rejection")

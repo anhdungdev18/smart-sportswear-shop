@@ -423,8 +423,11 @@ public class OrderService {
         boolean requiresRefund = order.getPaymentStatus() == PaymentStatus.PAID;
         // PENDING_CONFIRMATION + unpaid: nothing to undo but the reservation, so
         // cancel outright. Everything else (paid, or CONFIRMED/PACKING which always
-        // deducted real stock regardless of payment) must go through the approval
-        // step so staff can process the refund and/or restock deliberately.
+        // deducted real stock regardless of payment) needs the CANCELLATION_REQUESTED
+        // -> CANCELLATION_APPROVED -> CANCELLED state sequence so a paid refund can
+        // actually be submitted; AdminOrderController.cancelByStaff drives that
+        // sequence automatically right after this call returns, since staff already
+        // made the cancel decision and there is nobody left to "approve" it.
         boolean needsApproval = current != OrderStatus.PENDING_CONFIRMATION || requiresRefund;
         order = applyStatusTransition(order,
                 needsApproval ? OrderStatus.CANCELLATION_REQUESTED : OrderStatus.CANCELLED, actor);

@@ -429,8 +429,8 @@ export function AdminOrdersClient({
       setOrders((current) => current.map((item) => item.id === id ? updated : item));
       setOrderDetails((current) => ({ ...current, [id]: updated }));
       setStatusDrafts((current) => ({ ...current, [id]: updated.orderStatus }));
-      setMessage(updated.orderStatus === "CANCELLATION_REQUESTED"
-        ? `Đã ghi nhận cửa hàng hủy đơn ${updated.orderCode}. Hãy duyệt hoàn tiền để hoàn tất.`
+      setMessage(updated.orderStatus === "CANCELLATION_APPROVED"
+        ? `Đã hủy đơn ${updated.orderCode}, đang xử lý hoàn tiền.`
         : `Cửa hàng đã hủy đơn ${updated.orderCode}.`);
     } catch (error) {
       setMessage(extractError(error, "Không hủy được đơn hàng"));
