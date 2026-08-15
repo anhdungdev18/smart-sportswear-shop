@@ -1,14 +1,33 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetchOrderDetail } from "@/modules/orders/browser-api";
+import { fetchOrderDetail, updateOrderStatus } from "@/modules/orders/browser-api";
 import type { AdminOrderResponse } from "@/modules/orders/types";
 import { ApiRequestError } from "@/modules/api/common";
 import { PACKING_SLIP_STYLES, PackingSlipContent } from "@/components/orders/packingSlipShared";
 
+function extractError(error: unknown, fallback: string) {
+  if (error instanceof ApiRequestError) {
+    const payload = error.payload as { message?: string } | null;
+    return payload?.message ?? fallback;
+  }
+  return fallback;
+}
+
+/**
+ * Printing here has no side effect - it just renders each order's slip.
+ * Advancing an order to PACKING is a separate, explicit action ("Đã in
+ * xong...") taken after staff have actually printed, rather than happening
+ * automatically when the print tab opens - window.open() can be blocked by
+ * the browser and the print dialog can be cancelled, so tying a real state
+ * change to either of those would risk marking an order "packed" when
+ * nothing was actually printed.
+ */
 export function PackingSlipBatchClient({ orderIds }: { orderIds: string[] }) {
   const [orders, setOrders] = useState<AdminOrderResponse[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
+  const [resultMessage, setResultMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (orderIds.length === 0) {
@@ -22,15 +41,11 @@ export function PackingSlipBatchClient({ orderIds }: { orderIds: string[] }) {
       })
       .catch((err) => {
         if (cancelled) return;
-        const payload = err instanceof ApiRequestError ? (err.payload as { message?: string } | null) : null;
-        setError(payload?.message ?? "Không tải được danh sách đơn hàng.");
+        setError(extractError(err, "Không tải được danh sách đơn hàng."));
       });
     return () => {
       cancelled = true;
     };
-    // orderIds comes from a fresh array each render of the server parent, but
-    // its content is only ever set once per page load (from the URL), so
-    // re-running this on identity change is harmless.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderIds.join(",")]);
 
@@ -41,10 +56,41 @@ export function PackingSlipBatchClient({ orderIds }: { orderIds: string[] }) {
     return <div className="packing-slip-status">Đang tải...</div>;
   }
 
+  const confirmedIds = orders.filter((order) => order.orderStatus === "CONFIRMED").map((order) => order.id);
+
+  async function handleConfirmPacked() {
+    if (confirmedIds.length === 0) return;
+    if (!window.confirm(`Xác nhận đã in xong và chuyển ${confirmedIds.length} đơn sang "Đang đóng gói"?`)) return;
+    setConfirming(true);
+    setResultMessage(null);
+    try {
+      const results = await Promise.allSettled(
+        confirmedIds.map((id) => updateOrderStatus(id, { status: "PACKING" }))
+      );
+      const succeeded: AdminOrderResponse[] = [];
+      results.forEach((result) => {
+        if (result.status === "fulfilled") succeeded.push(result.value);
+      });
+      setOrders((current) => current?.map((order) => succeeded.find((s) => s.id === order.id) ?? order) ?? current);
+      const failedCount = confirmedIds.length - succeeded.length;
+      setResultMessage(failedCount > 0
+        ? `Đã chuyển ${succeeded.length} đơn sang đóng gói; ${failedCount} đơn thất bại (có thể đã bị thay đổi trạng thái).`
+        : `Đã chuyển ${succeeded.length} đơn sang Đang đóng gói.`);
+    } finally {
+      setConfirming(false);
+    }
+  }
+
   return (
     <>
       <style>{PACKING_SLIP_STYLES}</style>
       <div className="ps-toolbar no-print">
+        {resultMessage ? <span className="ps-toolbar-message">{resultMessage}</span> : null}
+        {confirmedIds.length > 0 ? (
+          <button type="button" onClick={() => void handleConfirmPacked()} disabled={confirming}>
+            {confirming ? "Đang xử lý..." : `Đã in xong — chuyển ${confirmedIds.length} đơn sang đóng gói`}
+          </button>
+        ) : null}
         <button type="button" onClick={() => window.print()}>In tất cả ({orders.length} đơn)</button>
       </div>
       {orders.map((order, index) => (

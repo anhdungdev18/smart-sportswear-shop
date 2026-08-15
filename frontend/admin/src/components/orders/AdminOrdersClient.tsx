@@ -9,6 +9,7 @@ import type { AdminOrderResponse, PageMeta } from "@/modules/orders/types";
 import { fetchOrderShipment, updateOrderShipment } from "@/modules/shipping/browser-api";
 import type { ShipmentResponse, ShippingMethodResponse } from "@/modules/shipping/types";
 import { ADMIN_ORDER_CHANGED_EVENT } from "@/modules/notifications/inbox-api";
+import { PackingSlipQueueModal } from "@/components/orders/PackingSlipQueueModal";
 
 const orderStatuses = [
   "PENDING_CONFIRMATION",
@@ -76,8 +77,6 @@ const OrderRow = memo(function OrderRow({
   statusDraft,
   noteDraft,
   savingId,
-  selected,
-  onToggleSelect,
   onStatusChange,
   onNoteChange,
   onLoadDetail,
@@ -100,8 +99,6 @@ const OrderRow = memo(function OrderRow({
   statusDraft: string;
   noteDraft: string;
   savingId: string | null;
-  selected: boolean;
-  onToggleSelect: () => void;
   onStatusChange: (value: string) => void;
   onNoteChange: (value: string) => void;
   onLoadDetail: () => void;
@@ -118,11 +115,6 @@ const OrderRow = memo(function OrderRow({
   const activeRefund = refunds?.find((refund) => ["PENDING", "PROCESSING", "COMPLETED"].includes(refund.status));
   return (
     <tr>
-      <td>
-        {order.orderStatus === "CONFIRMED" ? (
-          <input type="checkbox" checked={selected} onChange={onToggleSelect} aria-label={`Chọn đơn ${order.orderCode} để in hàng loạt`} />
-        ) : null}
-      </td>
       <td>
         <strong>{order.orderCode}</strong>
         <div className="table-subtle">{new Date(order.createdAt).toLocaleString("vi-VN")}</div>
@@ -166,9 +158,6 @@ const OrderRow = memo(function OrderRow({
           <button className="admin-btn secondary" type="button" onClick={onLoadDetail} disabled={savingId === `detail:${order.id}`}>
             {savingId === `detail:${order.id}` ? "Đang tải..." : "Chi tiết"}
           </button>
-          <a className="admin-btn secondary" href={`/orders/${order.id}/packing-slip`} target="_blank" rel="noopener noreferrer">
-            In phiếu giao hàng
-          </a>
           {["CANCELLATION_REQUESTED", "CANCELLATION_APPROVED"].includes(order.orderStatus) ? (
             <>
               <button className="admin-btn" type="button" onClick={onRefundCancellation} disabled={savingId === `refund:${order.id}` || activeRefund?.status === "PENDING" || activeRefund?.status === "PROCESSING"}>
@@ -294,11 +283,10 @@ export function AdminOrdersClient({
   const [refundsByOrder, setRefundsByOrder] = useState<Record<string, OrderRefundResponse[]>>({});
   const [message, setMessage] = useState<string | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showPackingModal, setShowPackingModal] = useState(false);
   const orderDetailCacheRef = useRef<Record<string, AdminOrderResponse>>({});
   const shipmentCacheRef = useRef<Record<string, ShipmentResponse | null>>({});
   const pendingCancellationCount = orders.filter((order) => order.orderStatus === "CANCELLATION_REQUESTED").length;
-  const confirmedOrdersOnPage = orders.filter((order) => order.orderStatus === "CONFIRMED");
 
   function navigate(nextPage: number, keyword = searchTerm, status = statusFilter) {
     const params = new URLSearchParams();
@@ -330,71 +318,6 @@ export function AdminOrdersClient({
     window.addEventListener(ADMIN_ORDER_CHANGED_EVENT, refreshOrders);
     return () => window.removeEventListener(ADMIN_ORDER_CHANGED_EVENT, refreshOrders);
   }, [router]);
-
-  useEffect(() => {
-    setSelectedIds(new Set());
-  }, [initialOrders]);
-
-  function toggleSelect(id: string) {
-    setSelectedIds((current) => {
-      const next = new Set(current);
-      if (next.has(id)) next.delete(id); else next.add(id);
-      return next;
-    });
-  }
-
-  function toggleSelectAllConfirmed() {
-    setSelectedIds((current) => {
-      const allSelected = confirmedOrdersOnPage.every((order) => current.has(order.id));
-      if (allSelected) {
-        const next = new Set(current);
-        confirmedOrdersOnPage.forEach((order) => next.delete(order.id));
-        return next;
-      }
-      const next = new Set(current);
-      confirmedOrdersOnPage.forEach((order) => next.add(order.id));
-      return next;
-    });
-  }
-
-  async function handleBulkPackAndPrint() {
-    const ids = Array.from(selectedIds);
-    if (ids.length === 0) return;
-    if (!window.confirm(`In phiếu giao hàng cho ${ids.length} đơn và chuyển sang "Đang đóng gói"?`)) return;
-
-    try {
-      setSavingId("bulk-pack");
-      setMessage(null);
-      const results = await Promise.allSettled(
-        ids.map((id) => updateOrderStatus(id, { status: "PACKING" }))
-      );
-      const succeededIds: string[] = [];
-      results.forEach((result, index) => {
-        const id = ids[index];
-        if (result.status === "fulfilled") {
-          succeededIds.push(id);
-          orderDetailCacheRef.current[id] = result.value;
-          setOrders((current) => current.map((item) => (item.id === id ? result.value : item)));
-          setOrderDetails((current) => ({ ...current, [id]: result.value }));
-          setStatusDrafts((current) => ({ ...current, [id]: result.value.orderStatus }));
-        }
-      });
-      const failedCount = ids.length - succeededIds.length;
-      setSelectedIds((current) => {
-        const next = new Set(current);
-        succeededIds.forEach((id) => next.delete(id));
-        return next;
-      });
-      if (succeededIds.length > 0) {
-        window.open(`/orders/packing-slip-batch?ids=${succeededIds.join(",")}`, "_blank");
-      }
-      setMessage(failedCount > 0
-        ? `Đã chuyển ${succeededIds.length} đơn sang đóng gói; ${failedCount} đơn thất bại (có thể đã bị thay đổi trạng thái).`
-        : `Đã chuyển ${succeededIds.length} đơn sang đóng gói và mở phiếu giao hàng để in.`);
-    } finally {
-      setSavingId(null);
-    }
-  }
 
   async function handleUpdate(id: string) {
     const currentOrder = orders.find((item) => item.id === id);
@@ -620,17 +543,13 @@ export function AdminOrdersClient({
             </p>
           ) : null}
         </div>
+        <button className="admin-btn" type="button" onClick={() => setShowPackingModal(true)}>
+          In phiếu giao hàng
+        </button>
       </div>
       {message ? <p className="action-message">{message}</p> : null}
       {loadError ? <p className="action-message" role="alert">{loadError}</p> : null}
-      {selectedIds.size > 0 ? (
-        <div className="admin-subcard admin-subcard-tight" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
-          <span>Đã chọn {selectedIds.size} đơn đã xác nhận.</span>
-          <button className="admin-btn" type="button" onClick={() => void handleBulkPackAndPrint()} disabled={savingId === "bulk-pack"}>
-            {savingId === "bulk-pack" ? "Đang xử lý..." : "In phiếu giao hàng & chuyển đóng gói"}
-          </button>
-        </div>
-      ) : null}
+      {showPackingModal ? <PackingSlipQueueModal onClose={() => setShowPackingModal(false)} /> : null}
       <div className="admin-form-grid" style={{ marginBottom: 16 }}>
         <input className="admin-input" placeholder="Tìm theo mã đơn, tên khách, số điện thoại hoặc thanh toán" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} />
         <select className="select" value={statusFilter} onChange={(event) => {
@@ -648,16 +567,6 @@ export function AdminOrdersClient({
         <table className="data-table">
           <thead>
             <tr>
-              <th>
-                {confirmedOrdersOnPage.length > 0 ? (
-                  <input
-                    type="checkbox"
-                    checked={confirmedOrdersOnPage.every((order) => selectedIds.has(order.id))}
-                    onChange={toggleSelectAllConfirmed}
-                    aria-label="Chọn tất cả đơn đã xác nhận trên trang này"
-                  />
-                ) : null}
-              </th>
               <th>Mã đơn</th>
               <th>Khách hàng</th>
               <th>Thanh toán</th>
@@ -678,8 +587,6 @@ export function AdminOrdersClient({
                 statusDraft={statusDrafts[order.id] ?? order.orderStatus}
                 noteDraft={noteDrafts[order.id] ?? ""}
                 savingId={savingId}
-                selected={selectedIds.has(order.id)}
-                onToggleSelect={() => toggleSelect(order.id)}
                 onStatusChange={(value) => setStatusDrafts((current) => ({ ...current, [order.id]: value }))}
                 onNoteChange={(value) => setNoteDrafts((current) => ({ ...current, [order.id]: value }))}
                 onLoadDetail={() => void handleLoadDetail(order.id)}

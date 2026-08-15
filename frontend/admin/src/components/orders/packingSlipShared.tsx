@@ -32,8 +32,9 @@ function formatCurrency(value: number) {
 export const PACKING_SLIP_STYLES = `
   .packing-slip { max-width: 760px; margin: 0 auto; padding: 32px 24px; font-family: "Segoe UI", Arial, sans-serif; color: #1a1a1a; background: #fff; }
   .packing-slip-status { padding: 48px; text-align: center; font-family: "Segoe UI", Arial, sans-serif; }
-  .ps-toolbar { display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 20px; }
+  .ps-toolbar { display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-bottom: 20px; }
   .ps-toolbar button { padding: 8px 16px; border-radius: 6px; border: 1px solid #ccc; background: #f5f5f5; cursor: pointer; font-size: 14px; }
+  .ps-toolbar-message { font-size: 14px; color: #257A4D; }
   .ps-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #1a1a1a; padding-bottom: 16px; margin-bottom: 20px; }
   .ps-shop { font-size: 20px; font-weight: 800; }
   .ps-title { text-align: right; }
