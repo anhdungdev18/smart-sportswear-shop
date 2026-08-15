@@ -834,6 +834,7 @@ public class OrderService {
                 order.getCancellationReason(),
                 order.getCancellationRequestedAt(),
                 items,
+                toShippingAddress(order),
                 order.getCreatedAt());
     }
 

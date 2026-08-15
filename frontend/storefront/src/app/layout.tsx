@@ -1,12 +1,11 @@
 ﻿import type { Metadata } from "next";
 import { Montserrat } from "next/font/google";
 import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
+import { SiteChrome } from "@/components/layout/SiteChrome";
 import { NavigationProgress } from "@/components/shared/NavigationProgress";
 import { InventoryRealtimeRefresh } from "@/components/shared/InventoryRealtimeRefresh";
 import { ScrollToTop } from "@/components/shared/ScrollToTop";
 import { ExtensionAttributeSanitizer } from "@/components/shared/ExtensionAttributeSanitizer";
-import { ChatWidget } from "@/modules/chat/ChatWidget";
 import { Toaster } from "@/components/ui/Toaster";
 import "./globals.css";
 
@@ -45,10 +44,7 @@ export default function RootLayout({
         <NavigationProgress />
         <ScrollToTop />
         <InventoryRealtimeRefresh />
-        <Header />
-        {children}
-        <Footer />
-        <ChatWidget />
+        <SiteChrome header={<Header />}>{children}</SiteChrome>
         <Toaster />
       </body>
     </html>

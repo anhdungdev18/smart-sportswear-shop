@@ -37,6 +37,15 @@ export interface OrderItem {
   lineTotal: number;
 }
 
+export interface ShippingAddressResponse {
+  receiverName: string | null;
+  phone: string | null;
+  province: string | null;
+  district: string | null;
+  ward: string | null;
+  addressLine: string | null;
+}
+
 export interface OrderResponse {
   id: string;
   orderCode: string;
@@ -52,6 +61,7 @@ export interface OrderResponse {
   cancellationReason?: string | null;
   cancellationRequestedAt?: string | null;
   items: OrderItem[];
+  shippingAddress?: ShippingAddressResponse | null;
   createdAt: string;
 }
 

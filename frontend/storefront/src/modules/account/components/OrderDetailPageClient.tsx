@@ -120,6 +120,13 @@ export function OrderDetailPageClient({ orderId }: { orderId: string }) {
             <div className="text-right">
               <p className="text-[13px] uppercase tracking-[0.08em] text-ivy-text-muted">Tổng thanh toán</p>
               <p className="mt-2 text-[24px] font-semibold text-ivy-dark">{money(order.totalAmount)}</p>
+              <Link
+                href={`/tai-khoan/don-hang/${order.id}/hoa-don`}
+                target="_blank"
+                className="mt-4 inline-flex h-10 items-center justify-center rounded-tl-[18px] rounded-br-[18px] border border-ivy-dark px-5 text-[12px] font-semibold uppercase tracking-[0.05em] text-ivy-dark"
+              >
+                In hóa đơn
+              </Link>
               {canCancel ? (
                 <button
                   type="button"

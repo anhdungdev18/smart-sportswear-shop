@@ -29,5 +29,6 @@ public record OrderResponse(
         String cancellationReason,
         Instant cancellationRequestedAt,
         List<OrderItemResponse> items,
+        ShippingAddressResponse shippingAddress,
         Instant createdAt) {
 }
