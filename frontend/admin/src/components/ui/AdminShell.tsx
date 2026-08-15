@@ -10,7 +10,7 @@ const FULLSCREEN_ROUTES = ["/admin-copilot"];
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isLoginPage = pathname === "/login";
-  const isPrintPage = pathname.endsWith("/packing-slip");
+  const isPrintPage = pathname.includes("/packing-slip");
   const isFullscreen = ADMIN_AI_WORKSPACES_ENABLED && FULLSCREEN_ROUTES.some((r) => pathname.startsWith(r));
 
   if (isLoginPage || isPrintPage) {
