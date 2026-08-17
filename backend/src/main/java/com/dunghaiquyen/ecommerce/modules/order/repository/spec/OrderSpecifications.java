@@ -2,6 +2,7 @@ package com.dunghaiquyen.ecommerce.modules.order.repository.spec;
 
 import com.dunghaiquyen.ecommerce.modules.order.entity.Order;
 import com.dunghaiquyen.ecommerce.modules.order.entity.OrderStatus;
+import com.dunghaiquyen.ecommerce.modules.order.entity.OrderItem;
 import com.dunghaiquyen.ecommerce.modules.order.entity.PaymentMethod;
 import com.dunghaiquyen.ecommerce.modules.payment.entity.PaymentStatus;
 import com.dunghaiquyen.ecommerce.modules.user.entity.User;
@@ -18,6 +19,14 @@ public final class OrderSpecifications {
 
     public static Specification<Order> belongsToUser(UUID userId) {
         return (root, query, cb) -> cb.equal(root.get("user").get("id"), userId);
+    }
+
+    public static Specification<Order> containsProduct(UUID productId) {
+        return (root, query, cb) -> {
+            Join<Order, OrderItem> itemJoin = root.join("items", JoinType.INNER);
+            query.distinct(true);
+            return cb.equal(itemJoin.get("product").get("id"), productId);
+        };
     }
 
     /**

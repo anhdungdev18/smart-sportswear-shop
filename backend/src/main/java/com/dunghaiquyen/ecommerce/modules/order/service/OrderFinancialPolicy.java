@@ -22,7 +22,10 @@ final class OrderFinancialPolicy {
                     HttpStatus.CONFLICT,
                     "Paid order must be refunded before cancellation");
         }
-        if (target == OrderStatus.CONFIRMED
+        if ((target == OrderStatus.CONFIRMED
+                || target == OrderStatus.PACKING
+                || target == OrderStatus.SHIPPING
+                || target == OrderStatus.DELIVERED)
                 && order.getPaymentMethod() == PaymentMethod.VNPAY
                 && order.getPaymentStatus() != PaymentStatus.PAID) {
             throw new BusinessRuleException(

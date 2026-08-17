@@ -587,6 +587,21 @@ class OrderIntegrationTest extends AbstractIntegrationTest {
                 .andReturn();
         assertThat(json(list.getResponse().getContentAsString()).at("/data")).isNotEmpty();
 
+        MvcResult productOrders = mockMvc.perform(get("/api/v1/admin/orders")
+                        .param("productId", productId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + ctx.token()))
+                .andExpect(status().isOk())
+                .andReturn();
+        assertThat(json(productOrders.getResponse().getContentAsString()).at("/data/0/id").asText())
+                .isEqualTo(orderId);
+
+        MvcResult unrelatedProductOrders = mockMvc.perform(get("/api/v1/admin/orders")
+                        .param("productId", java.util.UUID.randomUUID().toString())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + ctx.token()))
+                .andExpect(status().isOk())
+                .andReturn();
+        assertThat(json(unrelatedProductOrders.getResponse().getContentAsString()).at("/data")).isEmpty();
+
         MvcResult detail = mockMvc.perform(get("/api/v1/admin/orders/" + orderId)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + ctx.token()))
                 .andExpect(status().isOk())
@@ -638,10 +653,10 @@ class OrderIntegrationTest extends AbstractIntegrationTest {
         assertThat(variant.getReservedQuantity()).isEqualTo(0);
     }
 
-    // ===== status transition: invalid transition rejected with 409 =====
+    // ===== admin may freely correct status until DELIVERED becomes final =====
 
     @Test
-    void adminUpdateStatus_invalidTransition_returns409_andLeavesStatusUnchanged() throws Exception {
+    void adminUpdateStatus_allowsCorrectionUntilDelivered_thenRejectsFurtherChanges() throws Exception {
         AdminContext ctx = setUpAdmin();
         String productId = createActiveProduct(ctx, "Belt");
         String variantId = createVariant(ctx, productId, 30000, 10);
@@ -659,19 +674,37 @@ class OrderIntegrationTest extends AbstractIntegrationTest {
                 .andReturn();
         String orderId = json(created.getResponse().getContentAsString()).at("/data/id").asText();
 
-        // PENDING_CONFIRMATION -> SHIPPING is not a valid direct jump.
+        // Admin may correct/jump to any operational status before delivery.
         MvcResult result = mockMvc.perform(patch("/api/v1/admin/orders/" + orderId + "/status")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + ctx.token())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"status\":\"SHIPPING\"}"))
                 .andReturn();
-        assertThat(result.getResponse().getStatus()).isEqualTo(409);
+        assertThat(result.getResponse().getStatus()).isEqualTo(200);
 
         MvcResult detail = mockMvc.perform(get("/api/v1/admin/orders/" + orderId)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + ctx.token()))
                 .andReturn();
         assertThat(json(detail.getResponse().getContentAsString()).at("/data/orderStatus").asText())
-                .isEqualTo("PENDING_CONFIRMATION");
+                .isEqualTo("SHIPPING");
+
+        mockMvc.perform(patch("/api/v1/admin/orders/" + orderId + "/status")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + ctx.token())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"DELIVERED\"}"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(patch("/api/v1/admin/orders/" + orderId + "/status")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + ctx.token())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"PACKING\"}"))
+                .andExpect(status().isConflict());
+
+        mockMvc.perform(post("/api/v1/admin/orders/" + orderId + "/cancel")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + ctx.token())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reason\":\"too late\"}"))
+                .andExpect(status().isConflict());
     }
 
     // ===== cancel from PENDING_CONFIRMATION releases the reservation =====
@@ -708,6 +741,12 @@ class OrderIntegrationTest extends AbstractIntegrationTest {
         var afterCancel = variantRepository.findById(UUID.fromString(variantId)).orElseThrow();
         assertThat(afterCancel.getReservedQuantity()).isEqualTo(0);
         assertThat(afterCancel.getStockQuantity()).isEqualTo(10);
+
+        mockMvc.perform(patch("/api/v1/admin/orders/" + orderId + "/status")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + ctx.token())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"CONFIRMED\"}"))
+                .andExpect(status().isConflict());
     }
 
     // ===== concurrent checkouts on a low-stock variant must never reserve past stock =====

@@ -6,6 +6,7 @@ export type OrderItemResponse = {
   sku: string;
   size: string | null;
   color: string | null;
+  thumbnail: string | null;
   unitPrice: number;
   quantity: number;
   lineTotal: number;

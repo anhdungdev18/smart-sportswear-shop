@@ -84,6 +84,9 @@ public class NotificationTemplates {
                     Vui lòng giữ điện thoại liên lạc để đơn vị vận chuyển có thể liên hệ khi cần.
 
                     Trân trọng."""),
+            NotificationType.ORDER_STATUS_UPDATED, new EmailContent(
+                    "Cập nhật đơn hàng {orderCode}: {newStatus}",
+                    "Xin chào {customerName}, trạng thái đơn hàng {orderCode} đã được cập nhật từ {oldStatus} sang {newStatus}."),
             NotificationType.ADMIN_ORDER_CREATED, new EmailContent(
                     "Có đơn hàng mới {orderCode}",
                     "Khách hàng {customerName} vừa tạo đơn {orderCode}, tổng tiền {totalAmount}, thanh toán {paymentMethod}."),
@@ -181,6 +184,15 @@ public class NotificationTemplates {
         params.put("orderCode", order.getOrderCode());
         params.put("totalAmount", order.getTotalAmount().toString());
         return render(NotificationType.ORDER_SHIPPING, params);
+    }
+
+    public EmailContent orderStatusUpdated(Order order, String oldStatus, String newStatus) {
+        Map<String, String> params = new HashMap<>();
+        params.put("customerName", order.getUser().getFullName());
+        params.put("orderCode", order.getOrderCode());
+        params.put("oldStatus", oldStatus);
+        params.put("newStatus", newStatus);
+        return render(NotificationType.ORDER_STATUS_UPDATED, params);
     }
 
     public EmailContent passwordReset(String resetLink, int ttlMinutes) {

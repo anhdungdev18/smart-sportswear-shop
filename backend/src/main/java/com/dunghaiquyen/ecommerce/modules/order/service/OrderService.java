@@ -79,18 +79,9 @@ public class OrderService {
      * order - applyStatusTransition tells the two cases apart via the
      * inventory transaction log and restocks (not just releases) accordingly.
      */
-    private static final Map<OrderStatus, java.util.Set<OrderStatus>> ALLOWED_TRANSITIONS = Map.of(
-            OrderStatus.PENDING_CONFIRMATION,
-                    java.util.Set.of(OrderStatus.CONFIRMED, OrderStatus.CANCELLED, OrderStatus.CANCELLATION_REQUESTED),
-            OrderStatus.CANCELLATION_REQUESTED,
-                    java.util.Set.of(OrderStatus.CANCELLATION_APPROVED),
-            OrderStatus.CANCELLATION_APPROVED,
-                    java.util.Set.of(OrderStatus.CANCELLED),
-            OrderStatus.CONFIRMED, java.util.Set.of(OrderStatus.PACKING, OrderStatus.CANCELLATION_REQUESTED),
-            OrderStatus.PACKING, java.util.Set.of(OrderStatus.SHIPPING, OrderStatus.CANCELLATION_REQUESTED),
-            OrderStatus.SHIPPING, java.util.Set.of(OrderStatus.DELIVERED),
-            OrderStatus.DELIVERED, java.util.Set.of(),
-            OrderStatus.CANCELLED, java.util.Set.of());
+    private static final java.util.Set<OrderStatus> ADMIN_EDITABLE_STATUSES = java.util.Set.of(
+            OrderStatus.PENDING_CONFIRMATION, OrderStatus.CONFIRMED, OrderStatus.PACKING,
+            OrderStatus.SHIPPING, OrderStatus.DELIVERED);
 
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
@@ -293,6 +284,12 @@ public class OrderService {
     @Transactional(readOnly = true)
     public ListResult<AdminOrderResponse> listOrdersForAdmin(AdminOrderListQuery query) {
         Specification<Order> spec = OrderSpecifications.fetchUser();
+        if (query.customerId() != null) {
+            spec = spec.and(OrderSpecifications.belongsToUser(query.customerId()));
+        }
+        if (query.productId() != null) {
+            spec = spec.and(OrderSpecifications.containsProduct(query.productId()));
+        }
         if (query.status() != null) {
             spec = spec.and(OrderSpecifications.hasStatus(query.status()));
         }
@@ -343,7 +340,13 @@ public class OrderService {
         // rejected by applyStatusTransition's ALLOWED_TRANSITIONS check.
         Order order = orderRepository.findByIdForUpdate(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
-        order = applyStatusTransition(order, request.status(), actor);
+        if (order.getOrderStatus() == OrderStatus.DELIVERED || order.getOrderStatus() == OrderStatus.CANCELLED) {
+            throw new BusinessRuleException(HttpStatus.CONFLICT, "Delivered or cancelled order is final and cannot be updated");
+        }
+        if (!ADMIN_EDITABLE_STATUSES.contains(request.status())) {
+            throw new BusinessRuleException(HttpStatus.CONFLICT, "Use the cancellation workflow to cancel an order");
+        }
+        order = applyStatusTransition(order, request.status(), actor, true);
         if (request.note() != null) {
             order.setInternalNote(request.note());
             order = orderRepository.save(order);
@@ -408,15 +411,15 @@ public class OrderService {
         return assembleResponse(order);
     }
 
-    /** Staff-initiated cancellation, allowed through PACKING (see ALLOWED_TRANSITIONS). */
+    /** Staff-initiated cancellation is allowed until delivery becomes final. */
     @Transactional
     public AdminOrderResponse cancelOrderByStaff(UUID orderId, String reason, User actor) {
         Order order = orderRepository.findByIdForUpdate(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
         OrderStatus current = order.getOrderStatus();
-        if (current != OrderStatus.PENDING_CONFIRMATION
-                && current != OrderStatus.CONFIRMED
-                && current != OrderStatus.PACKING) {
+        if (current == OrderStatus.DELIVERED || current == OrderStatus.CANCELLED
+                || current == OrderStatus.CANCELLATION_REQUESTED
+                || current == OrderStatus.CANCELLATION_APPROVED) {
             throw new BusinessRuleException(HttpStatus.CONFLICT,
                     "Order can no longer be cancelled by staff");
         }
@@ -430,7 +433,7 @@ public class OrderService {
         // made the cancel decision and there is nobody left to "approve" it.
         boolean needsApproval = current != OrderStatus.PENDING_CONFIRMATION || requiresRefund;
         order = applyStatusTransition(order,
-                needsApproval ? OrderStatus.CANCELLATION_REQUESTED : OrderStatus.CANCELLED, actor);
+                needsApproval ? OrderStatus.CANCELLATION_REQUESTED : OrderStatus.CANCELLED, actor, true);
         order.setCancellationRequestedBy(
                 com.dunghaiquyen.ecommerce.modules.order.entity.CancellationRequestedBy.STAFF);
         order.setCancellationReason(reason == null || reason.isBlank() ? "Cửa hàng chủ động hủy đơn" : reason.trim());
@@ -453,8 +456,15 @@ public class OrderService {
      * diverging (e.g. one path allowing a cancel the other forbids).
      */
     private Order applyStatusTransition(Order order, OrderStatus target, User actor) {
+        return applyStatusTransition(order, target, actor, false);
+    }
+
+    private Order applyStatusTransition(Order order, OrderStatus target, User actor, boolean adminOverride) {
         OrderStatus current = order.getOrderStatus();
-        if (!ALLOWED_TRANSITIONS.getOrDefault(current, java.util.Set.of()).contains(target)) {
+        if (current == target) {
+            throw new BusinessRuleException(HttpStatus.CONFLICT, "Order already has status " + target);
+        }
+        if (!adminOverride && !isWorkflowTransition(current, target)) {
             throw new BusinessRuleException(
                     HttpStatus.CONFLICT, "Cannot transition order from " + current + " to " + target);
         }
@@ -467,7 +477,11 @@ public class OrderService {
                 .sorted(Comparator.comparing(i -> i.getVariant().getId()))
                 .toList();
 
-        if (target == OrderStatus.CONFIRMED) {
+        boolean wasEverDeducted = inventoryTransactionRepository.existsByOrder_IdAndType(
+                order.getId(), com.dunghaiquyen.ecommerce.modules.inventory.entity.InventoryTransactionType.ORDER_CONFIRM_DEDUCT);
+        boolean targetUsesDeductedStock = java.util.Set.of(
+                OrderStatus.CONFIRMED, OrderStatus.PACKING, OrderStatus.SHIPPING, OrderStatus.DELIVERED).contains(target);
+        if (targetUsesDeductedStock && !wasEverDeducted) {
             for (OrderItem item : sortedItems) {
                 inventoryService.confirmDeduct(item.getVariant().getId(), item.getQuantity(), order, actor);
             }
@@ -506,8 +520,37 @@ public class OrderService {
             notificationService.notifyAdminsOrderCancelled(order);
         } else if (target == OrderStatus.DELIVERED) {
             notificationService.notifyOrderDelivered(order);
+        } else if (adminOverride && ADMIN_EDITABLE_STATUSES.contains(target)) {
+            notificationService.notifyOrderStatusUpdated(order,
+                    orderStatusLabel(current), orderStatusLabel(target));
         }
         return order;
+    }
+
+    private String orderStatusLabel(OrderStatus status) {
+        return switch (status) {
+            case PENDING_CONFIRMATION -> "Chờ xác nhận";
+            case CANCELLATION_REQUESTED -> "Chờ xử lý hủy";
+            case CANCELLATION_APPROVED -> "Đã duyệt hủy";
+            case CONFIRMED -> "Đã xác nhận";
+            case PACKING -> "Đang đóng gói";
+            case SHIPPING -> "Đang giao";
+            case DELIVERED -> "Đã giao";
+            case CANCELLED -> "Đã hủy";
+        };
+    }
+
+    private boolean isWorkflowTransition(OrderStatus current, OrderStatus target) {
+        return switch (current) {
+            case PENDING_CONFIRMATION -> java.util.Set.of(OrderStatus.CONFIRMED, OrderStatus.CANCELLED,
+                    OrderStatus.CANCELLATION_REQUESTED).contains(target);
+            case CANCELLATION_REQUESTED -> target == OrderStatus.CANCELLATION_APPROVED;
+            case CANCELLATION_APPROVED -> target == OrderStatus.CANCELLED;
+            case CONFIRMED -> java.util.Set.of(OrderStatus.PACKING, OrderStatus.CANCELLATION_REQUESTED).contains(target);
+            case PACKING -> java.util.Set.of(OrderStatus.SHIPPING, OrderStatus.CANCELLATION_REQUESTED).contains(target);
+            case SHIPPING -> target == OrderStatus.DELIVERED;
+            case DELIVERED, CANCELLED -> false;
+        };
     }
 
     private record ValidatedLine(int quantity, ProductVariant variant) {

@@ -8,6 +8,7 @@ import { useAuthenticated } from "@/lib/use-authenticated";
 import { cancelOrder, listMyOrders } from "@/modules/account/api";
 import type { OrderResponse } from "@/modules/account/types";
 import { getOrderStatusLabel } from "@/modules/account/order-labels";
+import { CUSTOMER_ORDER_CHANGED_EVENT } from "@/modules/notifications/types";
 
 const ORDERS_PER_PAGE = 5;
 
@@ -43,6 +44,17 @@ export function OrderHistoryPageClient() {
       return;
     }
     void loadOrders();
+  }, [authenticated, loadOrders]);
+
+  useEffect(() => {
+    if (!authenticated) return;
+    const refresh = () => void loadOrders();
+    window.addEventListener(CUSTOMER_ORDER_CHANGED_EVENT, refresh);
+    window.addEventListener("focus", refresh);
+    return () => {
+      window.removeEventListener(CUSTOMER_ORDER_CHANGED_EVENT, refresh);
+      window.removeEventListener("focus", refresh);
+    };
   }, [authenticated, loadOrders]);
 
   const handleCancel = async (id: string) => {

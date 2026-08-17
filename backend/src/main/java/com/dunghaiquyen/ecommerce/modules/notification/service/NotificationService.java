@@ -141,6 +141,12 @@ public class NotificationService {
     }
 
     @Transactional
+    public void notifyOrderStatusUpdated(Order order, String oldStatus, String newStatus) {
+        queueAfterCommit(order.getUser(), order, NotificationType.ORDER_STATUS_UPDATED,
+                notificationTemplates.orderStatusUpdated(order, oldStatus, newStatus));
+    }
+
+    @Transactional
     public void notifyPasswordReset(User user, String resetLink, int ttlMinutes) {
         send(user, null, NotificationType.PASSWORD_RESET, notificationTemplates.passwordReset(resetLink, ttlMinutes));
     }

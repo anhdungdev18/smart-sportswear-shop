@@ -86,7 +86,7 @@ public class AdminOrderController {
         String ipAddress = request.getRemoteAddr();
         RefundResponse response = returnService.refundCancellation(
                 id, "Approved cancellation request", principal.getUser(), ipAddress);
-        return ApiResponse.ok("Cancellation refund submitted", response);
+        return ApiResponse.ok("Cancellation refund completed", response);
     }
 
     /**
@@ -95,9 +95,9 @@ public class AdminOrderController {
      * clicking this button. So instead of parking the order at
      * CANCELLATION_REQUESTED for a second admin action to pick up later, this
      * immediately continues through the same approve + refund/finalize
-     * sequence as POST /{id}/cancellation-refund. A PAID order still ends up
-     * waiting at CANCELLATION_APPROVED for the VNPay refund to complete
-     * (unchanged, external gateway call), same as that endpoint.
+     * sequence as POST /{id}/cancellation-refund. A PAID order now finalizes
+     * the refund immediately from the admin decision, because this
+     * deployment has no production refund gateway.
      */
     @PostMapping("/{id}/cancel")
     public ApiResponse<AdminOrderResponse> cancelByStaff(
@@ -117,7 +117,7 @@ public class AdminOrderController {
         }
         String ipAddress = httpRequest.getRemoteAddr();
         returnService.refundCancellation(id, "Staff-initiated cancellation", principal.getUser(), ipAddress);
-        return ApiResponse.ok("Order cancelled by staff; refund submitted", orderService.getOrderDetailForAdmin(id));
+        return ApiResponse.ok("Order cancelled by staff; refund completed", orderService.getOrderDetailForAdmin(id));
     }
 
     @PostMapping("/{id}/cancellation-rejection")
