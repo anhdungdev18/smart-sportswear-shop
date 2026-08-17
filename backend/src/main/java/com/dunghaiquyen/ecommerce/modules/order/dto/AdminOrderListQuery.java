@@ -16,6 +16,7 @@ public record AdminOrderListQuery(
         Integer limit,
         String keyword,
         UUID customerId,
+        UUID productId,
         OrderStatus status,
         PaymentStatus paymentStatus,
         PaymentMethod paymentMethod,

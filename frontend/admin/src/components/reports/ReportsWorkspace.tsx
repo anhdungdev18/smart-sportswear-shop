@@ -48,6 +48,12 @@ export function ReportsWorkspace({ overview, initialRevenue, initialCustomers, i
   const [orderResultTotal, setOrderResultTotal] = useState(0);
   const [orderPage, setOrderPage] = useState(1);
   const [orderTotalPages, setOrderTotalPages] = useState(0);
+  const [productOrderSearch, setProductOrderSearch] = useState("");
+  const [selectedProduct, setSelectedProduct] = useState<{ id: string; name: string } | null>(null);
+  const [productOrders, setProductOrders] = useState<AdminOrderResponse[]>([]);
+  const [productOrderTotal, setProductOrderTotal] = useState(0);
+  const [productOrderPage, setProductOrderPage] = useState(1);
+  const [productOrderTotalPages, setProductOrderTotalPages] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   async function load(nextGranularity = granularity, filters: ReportFilters = { dateFrom, dateTo }) {
@@ -161,6 +167,44 @@ export function ReportsWorkspace({ overview, initialRevenue, initialCustomers, i
     }
   }
 
+  async function showProductOrders(productId: string, productName: string) {
+    setSelectedProduct({ id: productId, name: productName });
+    setProductOrderSearch("");
+    await loadProductOrderPage(1, productId, "");
+  }
+
+  async function searchProductOrder(event: FormEvent) {
+    event.preventDefault();
+    const keyword = productOrderSearch.trim();
+    if (!keyword) return;
+    setSelectedProduct(null);
+    await loadProductOrderPage(1, undefined, keyword);
+  }
+
+  async function loadProductOrderPage(page: number, productId = selectedProduct?.id, keyword = productOrderSearch.trim()) {
+    setOrderLoading(true);
+    setError(null);
+    try {
+      const result = await listAdminOrdersPage(page, 20, productId ? undefined : keyword, undefined, undefined, dateFrom || undefined, dateTo || undefined, productId);
+      setProductOrders(result.items);
+      setProductOrderTotal(result.meta.total);
+      setProductOrderPage(result.meta.page);
+      setProductOrderTotalPages(result.meta.totalPages);
+    } catch {
+      setProductOrders([]);
+      setError("Không tải được đơn hàng liên quan đến mặt hàng.");
+    } finally {
+      setOrderLoading(false);
+    }
+  }
+
+  function closeProductOrders() {
+    setSelectedProduct(null);
+    setProductOrderSearch("");
+    setProductOrders([]);
+    setProductOrderTotal(0);
+  }
+
   return (
     <main className="workspace">
       <section className="page-title">
@@ -213,12 +257,18 @@ export function ReportsWorkspace({ overview, initialRevenue, initialCustomers, i
       </section>
 
       <section className="card panel">
-        <div className="panel-header"><div><h2>Bán hàng theo mặt hàng</h2><p className="panel-copy">Số lượng và doanh thu từ các đơn không bị hủy.</p></div></div>
+        <div className="panel-header"><div><h2>Bán hàng theo mặt hàng</h2><p className="panel-copy">Số lượng và doanh thu từ các đơn không bị hủy. Nhấn vào mặt hàng để xem các đơn đã mua.</p></div></div>
+        <form className="report-order-search" onSubmit={searchProductOrder}>
+          <input aria-label="Tìm đơn hàng trong báo cáo mặt hàng" placeholder="Nhập mã đơn hàng để xem các sản phẩm đã mua..." value={productOrderSearch} onChange={(event) => setProductOrderSearch(event.target.value)} />
+          <button className="filter-chip active" type="submit" disabled={orderLoading || !productOrderSearch.trim()}>{orderLoading ? "Đang tìm..." : "Tìm đơn"}</button>
+          {(selectedProduct || productOrderSearch.trim() || productOrders.length > 0) && <button className="filter-chip" type="button" onClick={closeProductOrders}>Đóng kết quả</button>}
+        </form>
         <div className="table-scroll"><table className="data-table"><thead><tr><th>#</th><th>Mặt hàng</th><th>Số lượng bán</th><th>Doanh thu</th></tr></thead><tbody>
           {!products.bestSelling.length && <tr><td colSpan={4} className="report-empty">Không có dữ liệu mặt hàng.</td></tr>}
-          {products.bestSelling.map((item, index) => <tr key={item.productId}><td>{((products.meta ?? EMPTY_META).page - 1) * (products.meta ?? EMPTY_META).limit + index + 1}</td><td>{item.productName}</td><td>{item.totalQuantitySold.toLocaleString("vi-VN")}</td><td>{money(item.totalRevenue)}</td></tr>)}
+          {products.bestSelling.map((item, index) => <tr className="report-customer-row" key={item.productId} onClick={() => void showProductOrders(item.productId, item.productName)}><td>{((products.meta ?? EMPTY_META).page - 1) * (products.meta ?? EMPTY_META).limit + index + 1}</td><td><button className="report-customer-link" type="button">{item.productName}</button></td><td>{item.totalQuantitySold.toLocaleString("vi-VN")}</td><td>{money(item.totalRevenue)}</td></tr>)}
         </tbody></table></div>
         <ReportPager label="mặt hàng" meta={products.meta ?? EMPTY_META} loading={loading} onPage={loadProductPage} />
+        {(selectedProduct || productOrderSearch.trim() || productOrders.length > 0) && <OrderResults title={selectedProduct ? `Đơn hàng có mua ${selectedProduct.name}` : `Kết quả cho mã đơn “${productOrderSearch.trim()}”`} orders={productOrders} total={productOrderTotal} page={productOrderPage} totalPages={productOrderTotalPages} loading={orderLoading} onPage={loadProductOrderPage} />}
       </section>
     </main>
   );
@@ -227,8 +277,8 @@ export function ReportsWorkspace({ overview, initialRevenue, initialCustomers, i
 function OrderResults({ title, orders, total, page, totalPages, loading, onPage }: { title: string; orders: AdminOrderResponse[]; total: number; page: number; totalPages: number; loading: boolean; onPage: (page: number) => Promise<void> }) {
   return <div className="report-order-results">
     <div className="report-order-results-head"><h3>{title}</h3><span>{total.toLocaleString("vi-VN")} đơn hàng</span></div>
-    {loading ? <p className="report-empty">Đang tải đơn hàng...</p> : !orders.length ? <p className="report-empty">Không tìm thấy đơn hàng phù hợp.</p> : <div className="table-scroll"><table className="data-table"><thead><tr><th>Mã đơn</th><th>Khách hàng</th><th>Số điện thoại</th><th>Ngày đặt</th><th>Trạng thái</th><th>Tổng tiền</th></tr></thead><tbody>
-      {orders.map((order) => <tr key={order.id}><td><a className="report-order-code" href={`/orders?keyword=${encodeURIComponent(order.orderCode)}`}>{order.orderCode}</a></td><td>{order.customerName}</td><td>{order.customerPhone || "—"}</td><td>{new Date(order.createdAt).toLocaleString("vi-VN")}</td><td>{order.orderStatus}</td><td>{money(order.totalAmount)}</td></tr>)}
+    {loading ? <p className="report-empty">Đang tải đơn hàng...</p> : !orders.length ? <p className="report-empty">Không tìm thấy đơn hàng phù hợp.</p> : <div className="table-scroll"><table className="data-table"><thead><tr><th>Mã đơn</th><th>Khách hàng</th><th>Mặt hàng đã mua</th><th>Ngày đặt</th><th>Trạng thái</th><th>Tổng tiền</th></tr></thead><tbody>
+      {orders.map((order) => <tr key={order.id}><td><a className="report-order-code" href={`/orders?keyword=${encodeURIComponent(order.orderCode)}`}>{order.orderCode}</a></td><td>{order.customerName}<div className="table-subtle">{order.customerPhone || "—"}</div></td><td>{order.items.map((item) => <div className="report-order-item" key={item.id}>{item.productName} <span>× {item.quantity}</span></div>)}</td><td>{new Date(order.createdAt).toLocaleString("vi-VN")}</td><td>{order.orderStatus}</td><td>{money(order.totalAmount)}</td></tr>)}
     </tbody></table></div>}
     {totalPages > 1 && <ReportPager label="đơn hàng" meta={{ page, limit: 20, total, totalPages }} loading={loading} onPage={onPage} />}
   </div>;

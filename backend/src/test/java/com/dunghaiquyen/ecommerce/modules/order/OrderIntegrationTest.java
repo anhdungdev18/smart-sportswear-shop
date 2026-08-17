@@ -587,6 +587,21 @@ class OrderIntegrationTest extends AbstractIntegrationTest {
                 .andReturn();
         assertThat(json(list.getResponse().getContentAsString()).at("/data")).isNotEmpty();
 
+        MvcResult productOrders = mockMvc.perform(get("/api/v1/admin/orders")
+                        .param("productId", productId)
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + ctx.token()))
+                .andExpect(status().isOk())
+                .andReturn();
+        assertThat(json(productOrders.getResponse().getContentAsString()).at("/data/0/id").asText())
+                .isEqualTo(orderId);
+
+        MvcResult unrelatedProductOrders = mockMvc.perform(get("/api/v1/admin/orders")
+                        .param("productId", java.util.UUID.randomUUID().toString())
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + ctx.token()))
+                .andExpect(status().isOk())
+                .andReturn();
+        assertThat(json(unrelatedProductOrders.getResponse().getContentAsString()).at("/data")).isEmpty();
+
         MvcResult detail = mockMvc.perform(get("/api/v1/admin/orders/" + orderId)
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + ctx.token()))
                 .andExpect(status().isOk())

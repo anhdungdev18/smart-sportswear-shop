@@ -841,6 +841,8 @@ a {
 .report-order-results-head h3 { margin: 0; font-size: 17px; }
 .report-order-results-head span { color: var(--admin-muted); font-size: 13px; }
 .report-order-code { color: var(--admin-accent); font-weight: 750; }
+.report-order-item + .report-order-item { margin-top: 5px; }
+.report-order-item span { color: var(--admin-muted); white-space: nowrap; }
 
 .report-empty {
   padding: 28px 12px !important;

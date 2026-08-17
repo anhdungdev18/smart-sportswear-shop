@@ -296,6 +296,9 @@ public class OrderService {
         if (query.customerId() != null) {
             spec = spec.and(OrderSpecifications.belongsToUser(query.customerId()));
         }
+        if (query.productId() != null) {
+            spec = spec.and(OrderSpecifications.containsProduct(query.productId()));
+        }
         if (query.status() != null) {
             spec = spec.and(OrderSpecifications.hasStatus(query.status()));
         }
