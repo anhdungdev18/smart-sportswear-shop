@@ -795,6 +795,53 @@ a {
   color: var(--admin-text);
 }
 
+.report-order-search {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 4px 0 18px;
+}
+
+.report-order-search input {
+  width: min(430px, 100%);
+  min-height: 40px;
+  padding: 0 13px;
+  border: 1px solid var(--admin-line);
+  border-radius: 9px;
+  background: var(--admin-surface);
+  color: var(--admin-text);
+}
+
+.report-customer-row { cursor: pointer; }
+.report-customer-row:hover td { background: var(--admin-accent-soft); }
+.report-customer-link {
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--admin-accent);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.report-order-results {
+  margin-top: 20px;
+  padding-top: 18px;
+  border-top: 1px solid var(--admin-line);
+}
+
+.report-order-results-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.report-order-results-head h3 { margin: 0; font-size: 17px; }
+.report-order-results-head span { color: var(--admin-muted); font-size: 13px; }
+.report-order-code { color: var(--admin-accent); font-weight: 750; }
+
 .report-empty {
   padding: 28px 12px !important;
   text-align: center;

@@ -293,6 +293,9 @@ public class OrderService {
     @Transactional(readOnly = true)
     public ListResult<AdminOrderResponse> listOrdersForAdmin(AdminOrderListQuery query) {
         Specification<Order> spec = OrderSpecifications.fetchUser();
+        if (query.customerId() != null) {
+            spec = spec.and(OrderSpecifications.belongsToUser(query.customerId()));
+        }
         if (query.status() != null) {
             spec = spec.and(OrderSpecifications.hasStatus(query.status()));
         }

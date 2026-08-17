@@ -3,6 +3,8 @@
 import { FormEvent, useState } from "react";
 import { RevenueChart } from "@/components/ui/AdminCharts";
 import { fetchCustomerReport, fetchProductReport, fetchReports } from "@/modules/reports/browser-api";
+import { listAdminOrdersPage } from "@/modules/orders/browser-api";
+import type { AdminOrderResponse } from "@/modules/orders/types";
 import type {
   CustomerReportResponse,
   OverviewReportResponse,
@@ -39,6 +41,13 @@ export function ReportsWorkspace({ overview, initialRevenue, initialCustomers, i
   const [customers, setCustomers] = useState(initialCustomers);
   const [products, setProducts] = useState(initialProducts);
   const [loading, setLoading] = useState(false);
+  const [orderLoading, setOrderLoading] = useState(false);
+  const [orderSearch, setOrderSearch] = useState("");
+  const [selectedCustomer, setSelectedCustomer] = useState<{ id: string; name: string } | null>(null);
+  const [customerOrders, setCustomerOrders] = useState<AdminOrderResponse[]>([]);
+  const [orderResultTotal, setOrderResultTotal] = useState(0);
+  const [orderPage, setOrderPage] = useState(1);
+  const [orderTotalPages, setOrderTotalPages] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   async function load(nextGranularity = granularity, filters: ReportFilters = { dateFrom, dateTo }) {
@@ -96,6 +105,62 @@ export function ReportsWorkspace({ overview, initialRevenue, initialCustomers, i
     }
   }
 
+  async function showCustomerOrders(customerId: string, customerName: string) {
+    setSelectedCustomer({ id: customerId, name: customerName });
+    setOrderSearch("");
+    setOrderLoading(true);
+    setError(null);
+    try {
+      const result = await listAdminOrdersPage(1, 20, undefined, undefined, customerId, dateFrom || undefined, dateTo || undefined);
+      setCustomerOrders(result.items);
+      setOrderResultTotal(result.meta.total);
+      setOrderPage(result.meta.page);
+      setOrderTotalPages(result.meta.totalPages);
+    } catch {
+      setCustomerOrders([]);
+      setError("Không tải được đơn hàng của khách hàng.");
+    } finally {
+      setOrderLoading(false);
+    }
+  }
+
+  async function searchOrder(event: FormEvent) {
+    event.preventDefault();
+    const keyword = orderSearch.trim();
+    if (!keyword) return;
+    setSelectedCustomer(null);
+    setOrderLoading(true);
+    setError(null);
+    try {
+      const result = await listAdminOrdersPage(1, 20, keyword, undefined, undefined, dateFrom || undefined, dateTo || undefined);
+      setCustomerOrders(result.items);
+      setOrderResultTotal(result.meta.total);
+      setOrderPage(result.meta.page);
+      setOrderTotalPages(result.meta.totalPages);
+    } catch {
+      setCustomerOrders([]);
+      setError("Không tìm được thông tin đơn hàng. Vui lòng thử lại.");
+    } finally {
+      setOrderLoading(false);
+    }
+  }
+
+  async function loadOrderPage(page: number) {
+    setOrderLoading(true);
+    setError(null);
+    try {
+      const result = await listAdminOrdersPage(page, 20, selectedCustomer ? undefined : orderSearch.trim(), undefined, selectedCustomer?.id, dateFrom || undefined, dateTo || undefined);
+      setCustomerOrders(result.items);
+      setOrderResultTotal(result.meta.total);
+      setOrderPage(result.meta.page);
+      setOrderTotalPages(result.meta.totalPages);
+    } catch {
+      setError("Không tải được trang đơn hàng.");
+    } finally {
+      setOrderLoading(false);
+    }
+  }
+
   return (
     <main className="workspace">
       <section className="page-title">
@@ -133,12 +198,18 @@ export function ReportsWorkspace({ overview, initialRevenue, initialCustomers, i
       </section>
 
       <section className="card panel">
-        <div className="panel-header"><div><h2>Bán hàng theo khách hàng</h2><p className="panel-copy">Xếp hạng theo tổng giá trị đơn không bị hủy.</p></div></div>
+        <div className="panel-header"><div><h2>Bán hàng theo khách hàng</h2><p className="panel-copy">Xếp hạng theo tổng giá trị đơn không bị hủy. Nhấn vào khách hàng để xem các đơn đã mua.</p></div></div>
+        <form className="report-order-search" onSubmit={searchOrder}>
+          <input aria-label="Tìm theo mã đơn hàng" placeholder="Nhập mã đơn hàng để tìm khách hàng..." value={orderSearch} onChange={(event) => setOrderSearch(event.target.value)} />
+          <button className="filter-chip active" type="submit" disabled={orderLoading || !orderSearch.trim()}>{orderLoading ? "Đang tìm..." : "Tìm đơn"}</button>
+          {(selectedCustomer || orderSearch.trim() || customerOrders.length > 0) && <button className="filter-chip" type="button" onClick={() => { setSelectedCustomer(null); setCustomerOrders([]); setOrderResultTotal(0); setOrderSearch(""); }}>Đóng kết quả</button>}
+        </form>
         <div className="table-scroll"><table className="data-table"><thead><tr><th>#</th><th>Khách hàng</th><th>Email</th><th>Số đơn</th><th>Doanh thu</th></tr></thead><tbody>
           {!customers.customers.length && <tr><td colSpan={5} className="report-empty">Không có dữ liệu khách hàng.</td></tr>}
-          {customers.customers.map((item, index) => <tr key={item.customerId}><td>{((customers.meta ?? EMPTY_META).page - 1) * (customers.meta ?? EMPTY_META).limit + index + 1}</td><td>{item.customerName}</td><td>{item.email}</td><td>{item.totalOrders.toLocaleString("vi-VN")}</td><td>{money(item.totalRevenue)}</td></tr>)}
+          {customers.customers.map((item, index) => <tr className="report-customer-row" key={item.customerId} onClick={() => void showCustomerOrders(item.customerId, item.customerName)}><td>{((customers.meta ?? EMPTY_META).page - 1) * (customers.meta ?? EMPTY_META).limit + index + 1}</td><td><button className="report-customer-link" type="button">{item.customerName}</button></td><td>{item.email}</td><td>{item.totalOrders.toLocaleString("vi-VN")}</td><td>{money(item.totalRevenue)}</td></tr>)}
         </tbody></table></div>
         <ReportPager label="khách hàng" meta={customers.meta ?? EMPTY_META} loading={loading} onPage={loadCustomerPage} />
+        {(selectedCustomer || orderSearch.trim() || customerOrders.length > 0) && <OrderResults title={selectedCustomer ? `Đơn hàng của ${selectedCustomer.name}` : `Kết quả cho mã đơn “${orderSearch.trim()}”`} orders={customerOrders} total={orderResultTotal} page={orderPage} totalPages={orderTotalPages} loading={orderLoading} onPage={loadOrderPage} />}
       </section>
 
       <section className="card panel">
@@ -151,6 +222,16 @@ export function ReportsWorkspace({ overview, initialRevenue, initialCustomers, i
       </section>
     </main>
   );
+}
+
+function OrderResults({ title, orders, total, page, totalPages, loading, onPage }: { title: string; orders: AdminOrderResponse[]; total: number; page: number; totalPages: number; loading: boolean; onPage: (page: number) => Promise<void> }) {
+  return <div className="report-order-results">
+    <div className="report-order-results-head"><h3>{title}</h3><span>{total.toLocaleString("vi-VN")} đơn hàng</span></div>
+    {loading ? <p className="report-empty">Đang tải đơn hàng...</p> : !orders.length ? <p className="report-empty">Không tìm thấy đơn hàng phù hợp.</p> : <div className="table-scroll"><table className="data-table"><thead><tr><th>Mã đơn</th><th>Khách hàng</th><th>Số điện thoại</th><th>Ngày đặt</th><th>Trạng thái</th><th>Tổng tiền</th></tr></thead><tbody>
+      {orders.map((order) => <tr key={order.id}><td><a className="report-order-code" href={`/orders?keyword=${encodeURIComponent(order.orderCode)}`}>{order.orderCode}</a></td><td>{order.customerName}</td><td>{order.customerPhone || "—"}</td><td>{new Date(order.createdAt).toLocaleString("vi-VN")}</td><td>{order.orderStatus}</td><td>{money(order.totalAmount)}</td></tr>)}
+    </tbody></table></div>}
+    {totalPages > 1 && <ReportPager label="đơn hàng" meta={{ page, limit: 20, total, totalPages }} loading={loading} onPage={onPage} />}
+  </div>;
 }
 
 function ReportPager({ label, meta, loading, onPage }: { label: string; meta: { page: number; limit: number; total: number; totalPages: number }; loading: boolean; onPage: (page: number) => Promise<void> }) {

@@ -6,6 +6,7 @@ export type AdminOrderListParams = {
   page?: number;
   limit?: number;
   keyword?: string;
+  customerId?: string;
   status?: string;
 };
 

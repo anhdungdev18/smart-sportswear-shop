@@ -4,6 +4,7 @@ import com.dunghaiquyen.ecommerce.modules.order.entity.OrderStatus;
 import com.dunghaiquyen.ecommerce.modules.order.entity.PaymentMethod;
 import com.dunghaiquyen.ecommerce.modules.payment.entity.PaymentStatus;
 import java.time.LocalDate;
+import java.util.UUID;
 
 /**
  * Admin order list query (API_SPEC_PHASE1.md 10.1). "keyword" covers spec's
@@ -14,6 +15,7 @@ public record AdminOrderListQuery(
         Integer page,
         Integer limit,
         String keyword,
+        UUID customerId,
         OrderStatus status,
         PaymentStatus paymentStatus,
         PaymentMethod paymentMethod,
