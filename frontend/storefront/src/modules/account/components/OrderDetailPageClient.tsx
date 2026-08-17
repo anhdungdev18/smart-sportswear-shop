@@ -9,6 +9,7 @@ import { getApiErrorMessage } from "@/lib/api-errors";
 import { getAccessToken } from "@/lib/session";
 import { createVnpayPayment } from "@/modules/checkout/api";
 import { getOrderStatusLabel } from "@/modules/account/order-labels";
+import { CUSTOMER_ORDER_CHANGED_EVENT } from "@/modules/notifications/types";
 
 const money = (n: number) => `${n.toLocaleString("vi-VN")}đ`;
 
@@ -43,6 +44,20 @@ export function OrderDetailPageClient({ orderId }: { orderId: string }) {
     }, 0);
     return () => clearTimeout(timer);
   }, [load]);
+
+  useEffect(() => {
+    const refresh = (event: Event) => {
+      const changedOrderId = (event as CustomEvent<{ orderId?: string }>).detail?.orderId;
+      if (!changedOrderId || changedOrderId === orderId) void load();
+    };
+    const refreshOnFocus = () => void load();
+    window.addEventListener(CUSTOMER_ORDER_CHANGED_EVENT, refresh);
+    window.addEventListener("focus", refreshOnFocus);
+    return () => {
+      window.removeEventListener(CUSTOMER_ORDER_CHANGED_EVENT, refresh);
+      window.removeEventListener("focus", refreshOnFocus);
+    };
+  }, [load, orderId]);
 
   const handleCancel = async () => {
     if (!order) return;

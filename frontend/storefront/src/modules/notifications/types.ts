@@ -20,3 +20,5 @@ export type NotificationItem = {
 export type UnreadCount = {
   unread: number;
 };
+
+export const CUSTOMER_ORDER_CHANGED_EVENT = "customer-order-changed";

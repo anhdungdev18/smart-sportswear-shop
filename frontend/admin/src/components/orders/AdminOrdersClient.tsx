@@ -22,10 +22,7 @@ const orderStatuses = [
   "CANCELLED"
 ] as const;
 
-const nextOrderStatuses: Record<string, readonly string[]> = {
-  PENDING_CONFIRMATION: ["CONFIRMED"], CANCELLATION_REQUESTED: [], CANCELLATION_APPROVED: [], CONFIRMED: ["PACKING"],
-  PACKING: ["SHIPPING"], SHIPPING: ["DELIVERED"], DELIVERED: [], CANCELLED: []
-};
+const editableOrderStatuses = ["PENDING_CONFIRMATION", "CONFIRMED", "PACKING", "SHIPPING", "DELIVERED"] as const;
 
 const orderStatusLabels: Record<string, string> = {
   PENDING_CONFIRMATION: "Chờ xác nhận",
@@ -113,6 +110,8 @@ const OrderRow = memo(function OrderRow({
   onSaveShipment: () => void;
 }) {
   const activeRefund = refunds?.find((refund) => ["PENDING", "PROCESSING", "COMPLETED"].includes(refund.status));
+  const isTerminal = ["DELIVERED", "CANCELLED"].includes(order.orderStatus);
+  const isCancellationFlow = ["CANCELLATION_REQUESTED", "CANCELLATION_APPROVED"].includes(order.orderStatus);
   return (
     <tr>
       <td>
@@ -141,18 +140,18 @@ const OrderRow = memo(function OrderRow({
           </div>
         ) : null}
         <div className="admin-inline-form wrap">
-          {!['CANCELLATION_REQUESTED', 'CANCELLATION_APPROVED'].includes(order.orderStatus) ? <select className="select" value={statusDraft} onChange={(event) => onStatusChange(event.target.value)}>
-            {[order.orderStatus, ...(nextOrderStatuses[order.orderStatus] ?? [])].map((status) => (
+          {!isTerminal && !isCancellationFlow ? <select className="select" value={statusDraft} onChange={(event) => onStatusChange(event.target.value)}>
+            {Array.from(new Set([order.orderStatus, ...editableOrderStatuses])).map((status) => (
               <option value={status} key={status}>{orderStatusLabels[status] ?? status}</option>
             ))}
           </select> : null}
-          <input className="admin-input" placeholder="Ghi chú nội bộ" value={noteDraft} onChange={(event) => onNoteChange(event.target.value)} />
-          {!['CANCELLATION_REQUESTED', 'CANCELLATION_APPROVED'].includes(order.orderStatus) ? <button className="admin-btn" type="button" onClick={onSaveStatus} disabled={savingId === order.id || statusDraft === order.orderStatus}>
+          {!isTerminal ? <input className="admin-input" placeholder="Ghi chú nội bộ / lý do hủy" value={noteDraft} onChange={(event) => onNoteChange(event.target.value)} /> : null}
+          {!isTerminal && !isCancellationFlow ? <button className="admin-btn" type="button" onClick={onSaveStatus} disabled={savingId === order.id || statusDraft === order.orderStatus}>
             {savingId === order.id ? "Đang lưu..." : "Lưu trạng thái"}
           </button> : null}
-          {["PENDING_CONFIRMATION", "CONFIRMED", "PACKING"].includes(order.orderStatus) ? (
-            <button className="admin-btn secondary" type="button" onClick={onStaffCancel} disabled={savingId === `staff-cancel:${order.id}`}>
-              {savingId === `staff-cancel:${order.id}` ? "Đang xử lý..." : "Cửa hàng hủy đơn"}
+          {!isTerminal && !isCancellationFlow ? (
+            <button className="admin-btn" style={{ background: "var(--admin-danger)", color: "white" }} type="button" onClick={onStaffCancel} disabled={savingId === `staff-cancel:${order.id}`}>
+              {savingId === `staff-cancel:${order.id}` ? "Đang xử lý..." : "Hủy đơn"}
             </button>
           ) : null}
           <button className="admin-btn secondary" type="button" onClick={onLoadDetail} disabled={savingId === `detail:${order.id}`}>
@@ -173,9 +172,10 @@ const OrderRow = memo(function OrderRow({
               </button> : null}
             </>
           ) : null}
-          <button className="admin-btn secondary" type="button" onClick={onLoadShipment} disabled={savingId === `load-shipment:${order.id}`}>
+          {!isTerminal ? <button className="admin-btn secondary" type="button" onClick={onLoadShipment} disabled={savingId === `load-shipment:${order.id}`}>
             {savingId === `load-shipment:${order.id}` ? "Đang tải..." : "Giao vận"}
-          </button>
+          </button> : null}
+          {isTerminal ? <span className="table-subtle">{order.orderStatus === "DELIVERED" ? "Đơn đã giao" : "Đơn đã hủy"} — vòng đời đã kết thúc, không thể cập nhật hoặc hủy.</span> : null}
         </div>
 
         {shipmentDraft ? (
@@ -288,6 +288,11 @@ export function AdminOrdersClient({
   const shipmentCacheRef = useRef<Record<string, ShipmentResponse | null>>({});
   const pendingCancellationCount = orders.filter((order) => order.orderStatus === "CANCELLATION_REQUESTED").length;
 
+  useEffect(() => {
+    setOrders(initialOrders);
+    setStatusDrafts(Object.fromEntries(initialOrders.map((item) => [item.id, item.orderStatus])));
+  }, [initialOrders]);
+
   function navigate(nextPage: number, keyword = searchTerm, status = statusFilter) {
     const params = new URLSearchParams();
     if (nextPage > 1) params.set("page", String(nextPage));
@@ -332,6 +337,7 @@ export function AdminOrdersClient({
       orderDetailCacheRef.current[id] = updated;
       setOrders((current) => current.map((item) => (item.id === id ? updated : item)));
       setOrderDetails((current) => ({ ...current, [id]: updated }));
+      setStatusDrafts((current) => ({ ...current, [id]: updated.orderStatus }));
       setMessage(`Đã cập nhật trạng thái đơn ${updated.orderCode}.`);
     } catch (error) {
       setMessage(extractError(error, "Không cập nhật được trạng thái đơn hàng"));
