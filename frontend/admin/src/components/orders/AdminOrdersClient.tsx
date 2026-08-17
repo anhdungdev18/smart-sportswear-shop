@@ -1,6 +1,7 @@
 ﻿"use client";
 
-import { memo, useEffect, useRef, useState } from "react";
+import { Fragment, memo, useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ApiRequestError } from "@/modules/api/common";
 import { cancelOrderByStaff, confirmManualRefund, fetchOrderDetail, fetchOrderRefunds, processCancellationRefund, refreshVnpayRefund, rejectCancellationRequest, updateOrderStatus } from "@/modules/orders/browser-api";
@@ -113,6 +114,7 @@ const OrderRow = memo(function OrderRow({
   const isTerminal = ["DELIVERED", "CANCELLED"].includes(order.orderStatus);
   const isCancellationFlow = ["CANCELLATION_REQUESTED", "CANCELLATION_APPROVED"].includes(order.orderStatus);
   return (
+    <Fragment>
     <tr>
       <td>
         <strong>{order.orderCode}</strong>
@@ -139,13 +141,16 @@ const OrderRow = memo(function OrderRow({
             <div className="table-subtle">{order.paymentStatus === "PAID" ? "Đơn đã thanh toán — cần hoàn tiền trước khi hủy." : "Đơn chưa thanh toán — có thể hủy ngay."}</div>
           </div>
         ) : null}
-        <div className="admin-inline-form wrap">
-          {!isTerminal && !isCancellationFlow ? <select className="select" value={statusDraft} onChange={(event) => onStatusChange(event.target.value)}>
-            {Array.from(new Set([order.orderStatus, ...editableOrderStatuses])).map((status) => (
-              <option value={status} key={status}>{orderStatusLabels[status] ?? status}</option>
-            ))}
-          </select> : null}
-          {!isTerminal ? <input className="admin-input" placeholder="Ghi chú nội bộ / lý do hủy" value={noteDraft} onChange={(event) => onNoteChange(event.target.value)} /> : null}
+        <div className="order-actions">
+          {!isTerminal ? <div className="order-action-fields">
+            {!isCancellationFlow ? <select className="select" aria-label="Trạng thái đơn hàng" value={statusDraft} onChange={(event) => onStatusChange(event.target.value)}>
+              {Array.from(new Set([order.orderStatus, ...editableOrderStatuses])).map((status) => (
+                <option value={status} key={status}>{orderStatusLabels[status] ?? status}</option>
+              ))}
+            </select> : null}
+            <input className="admin-input" placeholder="Ghi chú nội bộ / lý do hủy" value={noteDraft} onChange={(event) => onNoteChange(event.target.value)} />
+          </div> : null}
+          <div className="order-action-buttons">
           {!isTerminal && !isCancellationFlow ? <button className="admin-btn" type="button" onClick={onSaveStatus} disabled={savingId === order.id || statusDraft === order.orderStatus}>
             {savingId === order.id ? "Đang lưu..." : "Lưu trạng thái"}
           </button> : null}
@@ -155,17 +160,14 @@ const OrderRow = memo(function OrderRow({
             </button>
           ) : null}
           <button className="admin-btn secondary" type="button" onClick={onLoadDetail} disabled={savingId === `detail:${order.id}`}>
-            {savingId === `detail:${order.id}` ? "Đang tải..." : "Chi tiết"}
+            {savingId === `detail:${order.id}` ? "Đang tải..." : detail ? "Ẩn chi tiết" : "Chi tiết"}
           </button>
           {["CANCELLATION_REQUESTED", "CANCELLATION_APPROVED"].includes(order.orderStatus) ? (
             <>
-              <button className="admin-btn" type="button" onClick={onRefundCancellation} disabled={savingId === `refund:${order.id}` || activeRefund?.status === "PENDING" || activeRefund?.status === "PROCESSING"}>
+              <button className="admin-btn" type="button" onClick={onRefundCancellation} disabled={savingId === `refund:${order.id}`}>
                 {savingId === `refund:${order.id}`
-                  ? "Đang hoàn tiền..."
-                  : activeRefund?.status === "PROCESSING" ? "VNPay đang xử lý"
-                      : activeRefund?.status === "PENDING" ? "Hoàn tiền đang chờ"
-                      : order.orderStatus === "CANCELLATION_APPROVED" ? "Thử lại hoàn tiền"
-                        : "Duyệt: Hoàn tiền & hủy"}
+                  ? "Đang hoàn tất..."
+                  : "Duyệt hoàn tiền & kết thúc"}
               </button>
               {order.orderStatus === "CANCELLATION_REQUESTED" && order.cancellationRequestedBy === "CUSTOMER" ? <button className="admin-btn secondary" type="button" onClick={onRejectCancellation} disabled={savingId === `reject:${order.id}` || activeRefund?.status === "PENDING" || activeRefund?.status === "PROCESSING" || activeRefund?.status === "COMPLETED"}>
                 {savingId === `reject:${order.id}` ? "Đang xử lý..." : "Từ chối yêu cầu"}
@@ -176,6 +178,7 @@ const OrderRow = memo(function OrderRow({
             {savingId === `load-shipment:${order.id}` ? "Đang tải..." : "Giao vận"}
           </button> : null}
           {isTerminal ? <span className="table-subtle">{order.orderStatus === "DELIVERED" ? "Đơn đã giao" : "Đơn đã hủy"} — vòng đời đã kết thúc, không thể cập nhật hoặc hủy.</span> : null}
+          </div>
         </div>
 
         {shipmentDraft ? (
@@ -207,21 +210,6 @@ const OrderRow = memo(function OrderRow({
           </div>
         ) : null}
 
-        {detail ? (
-          <div className="admin-subcard admin-subcard-tight">
-            <strong>Chi tiết đơn</strong>
-            <div className="table-subtle">Khách hàng: {detail.customerName} · {detail.customerPhone ?? "Chưa có số điện thoại"}</div>
-            <div className="table-subtle">Ghi chú khách: {detail.note ?? "Không có"}</div>
-            <div className="table-subtle">Ghi chú nội bộ: {detail.internalNote ?? "Không có"}</div>
-            <div className="admin-stack">
-              {detail.items.map((item) => (
-                <div className="table-subtle" key={item.id}>
-                  {item.productName} · {item.sku} · x{item.quantity} · {Math.round(item.lineTotal).toLocaleString("vi-VN")}₫
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : null}
         {refunds ? (
           <div className="admin-subcard admin-subcard-tight">
             <strong>Giao dịch hoàn tiền</strong>
@@ -247,6 +235,42 @@ const OrderRow = memo(function OrderRow({
         ) : null}
       </td>
     </tr>
+    {detail ? (
+      <tr className="order-detail-row">
+        <td colSpan={5}>
+          <div className="order-detail-panel">
+            <section className="order-detail-products" aria-label="Sản phẩm trong đơn hàng">
+              <h3>Sản phẩm trong đơn ({detail.items.length})</h3>
+              <div className="order-product-list">
+                {detail.items.map((item) => (
+                  <article className="order-product-item" key={item.id}>
+                    {item.thumbnail ? (
+                      <Image src={item.thumbnail} alt={item.productName} width={72} height={72} unoptimized />
+                    ) : (
+                      <div className="order-product-placeholder" aria-hidden="true">Ảnh</div>
+                    )}
+                    <div className="order-product-copy">
+                      <strong>{item.productName}</strong>
+                      <span>{item.sku}{item.size ? ` · Size ${item.size}` : ""}{item.color ? ` · ${item.color}` : ""}</span>
+                      <span>{Math.round(item.unitPrice).toLocaleString("vi-VN")}₫ × {item.quantity}</span>
+                    </div>
+                    <strong className="order-product-total">{Math.round(item.lineTotal).toLocaleString("vi-VN")}₫</strong>
+                  </article>
+                ))}
+              </div>
+            </section>
+            <section className="order-detail-summary" aria-label="Thông tin chi tiết đơn hàng">
+              <h3>Chi tiết đơn</h3>
+              <div><span>Khách hàng</span><strong>{detail.customerName}</strong></div>
+              <div><span>Số điện thoại</span><strong>{detail.customerPhone ?? "Chưa có"}</strong></div>
+              <div><span>Ghi chú khách</span><strong>{detail.note ?? "Không có"}</strong></div>
+              <div><span>Ghi chú nội bộ</span><strong>{detail.internalNote ?? "Không có"}</strong></div>
+            </section>
+          </div>
+        </td>
+      </tr>
+    ) : null}
+    </Fragment>
   );
 });
 
@@ -373,7 +397,7 @@ export function AdminOrdersClient({
 
   async function handleRefundCancellation(id: string) {
     const order = orders.find((item) => item.id === id);
-    if (!order || !window.confirm(`Hoàn ${Math.round(order.totalAmount).toLocaleString("vi-VN")}₫ qua VNPay và hủy đơn ${order.orderCode}?`)) return;
+    if (!order || !window.confirm(`Xác nhận đã hoàn ${Math.round(order.totalAmount).toLocaleString("vi-VN")}₫ cho khách và kết thúc đơn ${order.orderCode}? Thao tác này không thể hoàn tác.`)) return;
     try {
       setSavingId(`refund:${id}`);
       setMessage(null);
@@ -387,9 +411,7 @@ export function AdminOrdersClient({
         [id]: [refund, ...(current[id] ?? []).filter((item) => item.id !== refund.id)]
       }));
       setStatusDrafts((current) => ({ ...current, [id]: updated.orderStatus }));
-      setMessage(refund.status === "COMPLETED"
-        ? `Đã hoàn tiền ${refund.refundCode} và hủy đơn ${updated.orderCode}.`
-        : `Đã gửi giao dịch ${refund.refundCode}; trạng thái hiện tại: ${refund.status}.`);
+      setMessage(`Đã xác nhận hoàn tiền ${refund.refundCode} và kết thúc đơn ${updated.orderCode}.`);
     } catch (error) {
       setMessage(extractError(error, "Không xử lý được hoàn tiền hủy đơn"));
     } finally {
@@ -492,6 +514,14 @@ export function AdminOrdersClient({
   }
 
   async function handleLoadDetail(id: string) {
+    if (orderDetails[id]) {
+      setOrderDetails((current) => {
+        const next = { ...current };
+        delete next[id];
+        return next;
+      });
+      return;
+    }
     const cached = orderDetailCacheRef.current[id];
     if (cached) {
       setOrderDetails((current) => ({ ...current, [id]: cached }));
@@ -570,7 +600,7 @@ export function AdminOrdersClient({
       {!loadError && orders.length === 0 ? (
         <div className="empty-state">Không có đơn hàng nào khớp bộ lọc hiện tại.</div>
       ) : orders.length > 0 ? (
-        <table className="data-table">
+        <table className="data-table orders-table">
           <thead>
             <tr>
               <th>Mã đơn</th>

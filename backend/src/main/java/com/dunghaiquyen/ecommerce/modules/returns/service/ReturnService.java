@@ -435,9 +435,12 @@ public class ReturnService {
     }
 
     /**
-     * Creates the full VNPay refund for a pre-confirmation cancellation request
-     * and submits it to the gateway. A failed gateway response leaves the order
-     * in CANCELLATION_REQUESTED so staff can safely retry without losing the request.
+     * Completes a cancellation refund from the admin decision itself.
+     *
+     * <p>The project does not have a production VNPay refund API, so the admin
+     * approval is the operational proof that the money was returned outside the
+     * system. Persist it as a completed MANUAL refund and finalize the order in
+     * the same transaction instead of leaving its lifecycle waiting on a gateway.
      */
     @Transactional
     public RefundResponse refundCancellation(UUID orderId, String reason, User actor, String ipAddress) {
@@ -452,44 +455,42 @@ public class ReturnService {
         var activeRefund = refundRepository.findFirstByOrderIdAndStatusInOrderByCreatedAtDesc(orderId,
                 Set.of(RefundStatus.PENDING, RefundStatus.PROCESSING, RefundStatus.COMPLETED));
         if (activeRefund.isPresent()) {
-            // Idempotent admin action: a double-click/page refresh must show the
-            // existing money movement, never attempt a second refund.
-            if (activeRefund.get().getStatus() == RefundStatus.COMPLETED) {
-                syncCompletedRefund(activeRefund.get());
+            Refund existing = activeRefund.get();
+            // Also close refunds created by the former gateway-based flow, so
+            // old PENDING/PROCESSING orders do not remain stuck forever.
+            if (existing.getStatus() != RefundStatus.COMPLETED) {
+                existing.setProvider(RefundProvider.MANUAL);
+                existing.setStatus(RefundStatus.COMPLETED);
+                existing.setManualReference("ADMIN-APPROVED-" + order.getOrderCode());
+                existing.setManualNote("Admin approval represents a completed out-of-band refund");
+                existing.setRefundedAt(Instant.now());
+                existing = refundRepository.save(existing);
             }
-            return toRefundResponse(activeRefund.get());
+            syncCompletedRefund(existing);
+            return toRefundResponse(existing);
         }
 
         Payment payment = paymentRepository
                 .findFirstByOrderIdAndStatusOrderByCreatedAtDesc(orderId, PaymentStatus.PAID)
                 .orElseThrow(() -> new BusinessRuleException(HttpStatus.CONFLICT,
                         "Paid VNPay transaction not found"));
-        if (payment.getProvider() != PaymentProvider.VNPAY) {
-            throw new BusinessRuleException(HttpStatus.UNPROCESSABLE_ENTITY,
-                    "Only VNPay cancellation refunds are supported by this action");
-        }
 
         Refund refund = new Refund();
         refund.setOrder(order);
         refund.setPayment(payment);
         refund.setRefundCode(generateCode("RFD"));
         refund.setAmount(payment.getAmount());
-        refund.setProvider(RefundProvider.VNPAY);
-        refund.setStatus(RefundStatus.PENDING);
+        refund.setProvider(RefundProvider.MANUAL);
+        refund.setStatus(RefundStatus.COMPLETED);
         refund.setReason(reason == null || reason.isBlank() ? "Customer cancellation request" : reason.trim());
         refund.setCreatedBy(actor);
+        refund.setManualReference("ADMIN-APPROVED-" + order.getOrderCode());
+        refund.setManualNote("Admin approval represents a completed out-of-band refund");
+        refund.setRefundedAt(Instant.now());
         refund = saveRefundWithCodeRetry(refund);
-
-        vnpayTransactionService.refund(refund, actor != null ? actor.getFullName() : "system", ipAddress);
-        if (refund.getStatus() == RefundStatus.COMPLETED) {
-            refund.setRefundedAt(Instant.now());
-        }
-        refund = refundRepository.save(refund);
-        auditLogService.record(actor, "CANCELLATION_REFUND_SUBMIT", "Refund", refund.getId().toString(), null,
-                Map.of("orderId", orderId.toString(), "status", refund.getStatus().name()));
-        if (refund.getStatus() == RefundStatus.COMPLETED) {
-            syncCompletedRefund(refund);
-        }
+        auditLogService.record(actor, "CANCELLATION_REFUND_COMPLETE", "Refund", refund.getId().toString(), null,
+                Map.of("orderId", orderId.toString(), "status", refund.getStatus().name(), "mode", "ADMIN_APPROVAL"));
+        syncCompletedRefund(refund);
         return toRefundResponse(refund);
     }
 
