@@ -2,6 +2,7 @@
 import { adminEndpoints } from "@/modules/api/endpoints";
 import { adminProducts, productStats, type AdminProduct } from "@/modules/product-management/products";
 import { NO_IMAGE } from "@/modules/ui/placeholder";
+import { normalizeImageUrl } from "@/modules/ui/image-url";
 
 export type AdminProductListQuery = ApiQuery & {
   q?: string;
@@ -113,7 +114,7 @@ async function loadAdminProductDataset(query: AdminProductListQuery = {}) {
       sold: soldByProduct.get(item.id) ?? 0,
       status: mapAdminStatus(item.status, stock),
       isFeatured: item.isFeatured,
-      image: item.thumbnail ?? NO_IMAGE
+      image: normalizeImageUrl(item.thumbnail, NO_IMAGE)
     } satisfies AdminProduct;
   });
 }
