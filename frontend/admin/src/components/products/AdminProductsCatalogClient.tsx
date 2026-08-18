@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { memo, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { ApiRequestError } from "@/modules/api/common";
 import { NO_IMAGE } from "@/modules/ui/placeholder";
+import { normalizeImageUrl } from "@/modules/ui/image-url";
 import { toSlug } from "@/modules/utils/slug";
 import {
   addProductImage,
@@ -420,12 +421,13 @@ const ProductImageCard = memo(function ProductImageCard({
   return (
     <article className={`admin-image-card${image.isPrimary ? " is-primary" : ""}`}>
       <Image
-        src={image.imageUrl}
+        src={normalizeImageUrl(image.imageUrl, NO_IMAGE)}
         alt={image.altText ?? productName}
         width={320}
         height={320}
         sizes="(max-width: 768px) 100vw, 320px"
         style={{ width: "100%", height: "auto" }}
+        unoptimized
       />
       <div>
         <strong>{image.altText ?? "Không có alt text"}</strong>
@@ -1016,7 +1018,7 @@ export function AdminProductsCatalogClient({
       setSaving("image-url");
       setMessage(null);
       await addProductImage(selectedProductId, {
-        imageUrl: imageForm.imageUrl,
+        imageUrl: normalizeImageUrl(imageForm.imageUrl, ""),
         // A pasted URL is not necessarily managed by our Cloudinary account.
         // Only the upload endpoint should persist a storage-provider publicId.
         publicId: null,
