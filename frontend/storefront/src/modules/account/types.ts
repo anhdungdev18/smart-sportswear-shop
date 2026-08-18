@@ -63,6 +63,11 @@ export interface OrderResponse {
   cancellationRequestedAt?: string | null;
   items: OrderItem[];
   shippingAddress?: ShippingAddressResponse | null;
+  invoiceNumber?: string | null;
+  invoiceRequested: boolean;
+  invoiceCompanyName?: string | null;
+  invoiceTaxCode?: string | null;
+  invoiceCompanyAddress?: string | null;
   createdAt: string;
 }
 

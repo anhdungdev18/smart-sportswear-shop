@@ -7,7 +7,7 @@ import { getApiErrorMessage } from "@/lib/api-errors";
 import { useAuthenticated } from "@/lib/use-authenticated";
 import { cancelOrder, listMyOrders } from "@/modules/account/api";
 import type { OrderResponse } from "@/modules/account/types";
-import { getOrderStatusLabel } from "@/modules/account/order-labels";
+import { getOrderStatusLabel, isInvoiceEligible } from "@/modules/account/order-labels";
 import { CUSTOMER_ORDER_CHANGED_EVENT } from "@/modules/notifications/types";
 
 const ORDERS_PER_PAGE = 5;
@@ -85,8 +85,7 @@ export function OrderHistoryPageClient() {
 
   const canCancel = (order: OrderResponse) =>
     ["PENDING_CONFIRMATION", "CONFIRMED", "PACKING"].includes(order.orderStatus);
-  // A cancelled order was never a completed transaction - nothing to print.
-  const canPrintInvoice = (order: OrderResponse) => order.orderStatus !== "CANCELLED";
+  const canPrintInvoice = isInvoiceEligible;
 
   if (!authenticated) {
     return (

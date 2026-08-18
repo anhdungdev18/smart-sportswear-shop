@@ -93,6 +93,16 @@ export async function getOrderDetail(id: string) {
   return result.data;
 }
 
+/**
+ * Enforces server-side that the order is actually invoice-eligible (paid,
+ * not cancelled) and assigns its invoice number on first call - see
+ * OrderService.getOrderInvoice. Throws ApiError on an ineligible order.
+ */
+export async function getOrderInvoice(id: string) {
+  const result = await apiFetch<OrderResponse>(`${endpoints.orders.detail(id)}/invoice`);
+  return result.data;
+}
+
 export async function cancelOrder(id: string, reason?: string) {
   const result = await apiFetch<OrderResponse>(`${endpoints.orders.detail(id)}/cancel`, {
     method: "POST",

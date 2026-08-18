@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { getOrderDetail } from "@/modules/account/api";
+import { getOrderInvoice } from "@/modules/account/api";
 import type { OrderResponse } from "@/modules/account/types";
+import { ApiError } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/api-errors";
 import { getAccessToken } from "@/lib/session";
 import { getOrderStatusLabel } from "@/modules/account/order-labels";
@@ -23,6 +24,9 @@ const paymentStatusLabels: Record<string, string> = {
   REFUNDED: "Đã hoàn tiền"
 };
 
+const NOT_ELIGIBLE_MESSAGE =
+  "Đơn hàng chưa đủ điều kiện xuất hóa đơn — cần đã thanh toán thành công và không trong quá trình hủy.";
+
 export function OrderInvoiceClient({ orderId }: { orderId: string }) {
   const [order, setOrder] = useState<OrderResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -32,9 +36,14 @@ export function OrderInvoiceClient({ orderId }: { orderId: string }) {
     setLoading(true);
     setError(null);
     try {
-      setOrder(await getOrderDetail(orderId));
+      setOrder(await getOrderInvoice(orderId));
     } catch (err) {
-      setError(getApiErrorMessage(err, "Không thể tải hóa đơn."));
+      // The eligibility rule (paid, not cancelled) is enforced server-side -
+      // show a fixed, user-facing explanation for a 409 rather than whatever
+      // raw message the backend happens to send.
+      setError(err instanceof ApiError && err.status === 409
+        ? NOT_ELIGIBLE_MESSAGE
+        : getApiErrorMessage(err, "Không thể tải hóa đơn."));
     } finally {
       setLoading(false);
     }
@@ -58,9 +67,6 @@ export function OrderInvoiceClient({ orderId }: { orderId: string }) {
   if (error || !order) {
     return <div className="invoice-status">{error ?? "Không tìm thấy đơn hàng."}</div>;
   }
-  if (order.orderStatus === "CANCELLED") {
-    return <div className="invoice-status">Đơn hàng đã hủy không có hóa đơn để in.</div>;
-  }
 
   const address = order.shippingAddress;
 
@@ -76,9 +82,11 @@ export function OrderInvoiceClient({ orderId }: { orderId: string }) {
         .inv-title { text-align: right; }
         .inv-title h1 { font-size: 22px; margin: 0; }
         .inv-title div { font-size: 14px; color: #555; margin-top: 4px; }
+        .inv-number { font-size: 14px; color: #1a1a1a; font-weight: 700; margin-top: 4px; }
         .inv-section { margin-bottom: 20px; }
         .inv-section h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: #555; margin: 0 0 8px; }
         .inv-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .inv-grid.inv-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
         .inv-box { border: 1px solid #ddd; border-radius: 8px; padding: 14px 16px; }
         .inv-box p { margin: 2px 0; font-size: 14px; }
         .inv-box .name { font-weight: 700; font-size: 15px; }
@@ -104,19 +112,28 @@ export function OrderInvoiceClient({ orderId }: { orderId: string }) {
       <div className="inv-header">
         <div className="inv-shop">Điểm Đến Thể Thao</div>
         <div className="inv-title">
-          <h1>HÓA ĐƠN MUA HÀNG</h1>
+          <h1>HÓA ĐƠN BÁN HÀNG</h1>
+          {order.invoiceNumber ? <div className="inv-number">Số: {order.invoiceNumber}</div> : null}
           <div>Mã đơn: <strong>{order.orderCode}</strong></div>
           <div>Ngày đặt: {new Date(order.createdAt).toLocaleString("vi-VN")}</div>
         </div>
       </div>
 
-      <div className="inv-grid inv-section">
+      <div className={`inv-grid inv-section${order.invoiceRequested ? " inv-grid-3" : ""}`}>
         <div className="inv-box">
           <h2>Địa chỉ giao hàng</h2>
           <p className="name">{address?.receiverName ?? "-"}</p>
           <p>{address?.phone ?? "-"}</p>
           <p>{[address?.addressLine, address?.ward, address?.district, address?.province].filter(Boolean).join(", ") || "Chưa có địa chỉ"}</p>
         </div>
+        {order.invoiceRequested ? (
+          <div className="inv-box">
+            <h2>Đơn vị mua hàng</h2>
+            <p className="name">{order.invoiceCompanyName}</p>
+            <p>MST: {order.invoiceTaxCode}</p>
+            <p>{order.invoiceCompanyAddress}</p>
+          </div>
+        ) : null}
         <div className="inv-box">
           <h2>Thông tin đơn hàng</h2>
           <p>Trạng thái: {getOrderStatusLabel(order.orderStatus)}</p>

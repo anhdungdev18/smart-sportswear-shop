@@ -11,5 +11,12 @@ public record CreateOrderRequest(
         String note,
         List<UUID> cartItemIds,
         UUID buyNowVariantId,
-        Integer buyNowQuantity) {
+        Integer buyNowQuantity,
+        // Company (VAT-style) invoice request - all three required together
+        // when invoiceRequested is true, validated in OrderService since it is
+        // a cross-field rule.
+        Boolean invoiceRequested,
+        String invoiceCompanyName,
+        String invoiceTaxCode,
+        String invoiceCompanyAddress) {
 }

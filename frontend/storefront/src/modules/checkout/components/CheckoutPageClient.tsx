@@ -26,6 +26,17 @@ const EMPTY_ADDRESS_FORM = {
   addressLine: "",
 };
 
+const EMPTY_INVOICE_FORM = {
+  requested: false,
+  companyName: "",
+  taxCode: "",
+  companyAddress: "",
+};
+
+// Vietnamese business tax code: 10 digits, optionally with a 3-digit branch
+// suffix (e.g. 0123456789-001) - mirrors OrderService.TAX_CODE_PATTERN.
+const TAX_CODE_PATTERN = /^\d{10}(-\d{3})?$/;
+
 export function CheckoutPageClient() {
   const router = useRouter();
   const authenticated = useAuthenticated();
@@ -37,6 +48,7 @@ export function CheckoutPageClient() {
   const [addressForm, setAddressForm] = useState(EMPTY_ADDRESS_FORM);
   const [preview, setPreview] = useState<CheckoutPreviewResponse | null>(null);
   const [note, setNote] = useState("");
+  const [invoiceForm, setInvoiceForm] = useState(EMPTY_INVOICE_FORM);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("COD");
   const [cartItemIds] = useState<string[]>(() => loadCheckoutSelection());
   const [buyNow] = useState(() => loadBuyNowSelection());
@@ -121,6 +133,16 @@ export function CheckoutPageClient() {
       setError("Vui lòng chọn địa chỉ giao hàng.");
       return;
     }
+    if (invoiceForm.requested) {
+      if (!invoiceForm.companyName.trim() || !invoiceForm.taxCode.trim() || !invoiceForm.companyAddress.trim()) {
+        setError("Vui lòng nhập đầy đủ tên công ty, mã số thuế và địa chỉ để xuất hóa đơn công ty.");
+        return;
+      }
+      if (!TAX_CODE_PATTERN.test(invoiceForm.taxCode.trim())) {
+        setError("Mã số thuế không đúng định dạng (10 chữ số, có thể kèm 3 số chi nhánh, ví dụ 0123456789-001).");
+        return;
+      }
+    }
 
     submitLockRef.current = true;
     setSubmitting(true);
@@ -135,6 +157,10 @@ export function CheckoutPageClient() {
         cartItemIds: cartItemIds.length ? cartItemIds : undefined,
         buyNowVariantId: buyNow?.variantId,
         buyNowQuantity: buyNow?.quantity,
+        invoiceRequested: invoiceForm.requested,
+        invoiceCompanyName: invoiceForm.requested ? invoiceForm.companyName.trim() : undefined,
+        invoiceTaxCode: invoiceForm.requested ? invoiceForm.taxCode.trim() : undefined,
+        invoiceCompanyAddress: invoiceForm.requested ? invoiceForm.companyAddress.trim() : undefined,
       });
       clearCheckoutSelection();
       if (paymentMethod === "VNPAY") {
@@ -308,6 +334,38 @@ export function CheckoutPageClient() {
                     className="mt-6 min-h-[120px] w-full border border-ivy-hairline px-4 py-3 text-[15px] outline-none"
                     placeholder="Ghi chú đơn hàng"
                   />
+
+                  <label className="mt-6 flex items-center gap-3 text-[15px] text-ivy-text">
+                    <input
+                      type="checkbox"
+                      checked={invoiceForm.requested}
+                      onChange={(e) => setInvoiceForm((current) => ({ ...current, requested: e.target.checked }))}
+                      className="size-4 accent-ivy-dark"
+                    />
+                    <span>Xuất hóa đơn công ty</span>
+                  </label>
+                  {invoiceForm.requested ? (
+                    <div className="mt-4 grid gap-4 md:grid-cols-2">
+                      <input
+                        className="h-12 border border-ivy-hairline px-4 text-[15px] outline-none md:col-span-2"
+                        placeholder="Tên công ty"
+                        value={invoiceForm.companyName}
+                        onChange={(e) => setInvoiceForm((current) => ({ ...current, companyName: e.target.value }))}
+                      />
+                      <input
+                        className="h-12 border border-ivy-hairline px-4 text-[15px] outline-none"
+                        placeholder="Mã số thuế (VD: 0123456789)"
+                        value={invoiceForm.taxCode}
+                        onChange={(e) => setInvoiceForm((current) => ({ ...current, taxCode: e.target.value }))}
+                      />
+                      <input
+                        className="h-12 border border-ivy-hairline px-4 text-[15px] outline-none"
+                        placeholder="Địa chỉ công ty"
+                        value={invoiceForm.companyAddress}
+                        onChange={(e) => setInvoiceForm((current) => ({ ...current, companyAddress: e.target.value }))}
+                      />
+                    </div>
+                  ) : null}
                 </div>
               </section>
 

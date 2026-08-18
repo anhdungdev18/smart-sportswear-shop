@@ -32,4 +32,8 @@ public interface OrderRepository extends JpaRepository<Order, UUID>, JpaSpecific
 
     List<Order> findTop100ByOrderStatusAndPaymentMethodAndPaymentStatusInAndCreatedAtBeforeOrderByCreatedAtAsc(
             OrderStatus orderStatus, PaymentMethod paymentMethod, List<PaymentStatus> paymentStatuses, Instant cutoff);
+
+    /** Backs OrderService.generateInvoiceNumber - a real DB sequence so concurrent invoice issuance never collides. */
+    @Query(value = "select nextval('orders_invoice_number_seq')", nativeQuery = true)
+    long nextInvoiceSequence();
 }

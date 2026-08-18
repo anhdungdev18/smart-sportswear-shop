@@ -27,6 +27,10 @@ export async function createOrder(payload: {
   cartItemIds?: string[];
   buyNowVariantId?: string;
   buyNowQuantity?: number;
+  invoiceRequested?: boolean;
+  invoiceCompanyName?: string;
+  invoiceTaxCode?: string;
+  invoiceCompanyAddress?: string;
 }) {
   const result = await apiFetch<OrderResponse>(endpoints.orders.root, {
     method: "POST",

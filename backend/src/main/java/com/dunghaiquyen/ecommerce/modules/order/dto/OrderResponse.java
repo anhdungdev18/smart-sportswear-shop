@@ -30,5 +30,10 @@ public record OrderResponse(
         Instant cancellationRequestedAt,
         List<OrderItemResponse> items,
         ShippingAddressResponse shippingAddress,
+        String invoiceNumber,
+        boolean invoiceRequested,
+        String invoiceCompanyName,
+        String invoiceTaxCode,
+        String invoiceCompanyAddress,
         Instant createdAt) {
 }

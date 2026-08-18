@@ -89,6 +89,23 @@ public class Order extends AbstractAuditEntity {
     @Column(name = "delivered_at")
     private Instant deliveredAt;
 
+    /** Assigned once, lazily, the first time the order becomes invoice-eligible and someone actually asks for it - see OrderService.getOrderInvoice. Null until then. */
+    @Column(name = "invoice_number", unique = true, length = 30)
+    private String invoiceNumber;
+
+    /** Whether the customer asked for a company (VAT-style) invoice at checkout, as opposed to the default personal receipt. */
+    @Column(name = "invoice_requested", nullable = false)
+    private boolean invoiceRequested = false;
+
+    @Column(name = "invoice_company_name", length = 200)
+    private String invoiceCompanyName;
+
+    @Column(name = "invoice_tax_code", length = 50)
+    private String invoiceTaxCode;
+
+    @Column(name = "invoice_company_address", length = 255)
+    private String invoiceCompanyAddress;
+
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<OrderItem> items = new ArrayList<>();
 }

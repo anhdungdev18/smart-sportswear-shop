@@ -8,7 +8,7 @@ import type { OrderResponse } from "@/modules/account/types";
 import { getApiErrorMessage } from "@/lib/api-errors";
 import { getAccessToken } from "@/lib/session";
 import { createVnpayPayment } from "@/modules/checkout/api";
-import { getOrderStatusLabel } from "@/modules/account/order-labels";
+import { getOrderStatusLabel, isInvoiceEligible } from "@/modules/account/order-labels";
 import { CUSTOMER_ORDER_CHANGED_EVENT } from "@/modules/notifications/types";
 
 const money = (n: number) => `${n.toLocaleString("vi-VN")}đ`;
@@ -100,8 +100,7 @@ export function OrderDetailPageClient({ orderId }: { orderId: string }) {
     && ["PENDING_CONFIRMATION", "CONFIRMED", "PACKING"].includes(order.orderStatus);
   const canPay = order?.orderStatus === "PENDING_CONFIRMATION"
     && order.paymentMethod === "VNPAY" && order.paymentStatus !== "PAID";
-  // A cancelled order was never a completed transaction - nothing to print.
-  const canPrintInvoice = order != null && order.orderStatus !== "CANCELLED";
+  const canPrintInvoice = order != null && isInvoiceEligible(order);
 
   return (
     <main className="page-below-header">

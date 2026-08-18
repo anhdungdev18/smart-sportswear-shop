@@ -69,6 +69,19 @@ public class OrderService {
     private static final int DEFAULT_LIMIT = 20;
     private static final int MAX_LIMIT = 100;
 
+    /** Vietnamese business tax code: 10 digits, optionally with a 3-digit branch suffix (e.g. 0123456789-001). */
+    private static final java.util.regex.Pattern TAX_CODE_PATTERN =
+            java.util.regex.Pattern.compile("^\\d{10}(-\\d{3})?$");
+
+    /**
+     * An order sitting in one of these still has an unresolved cancellation in
+     * flight (or is already cancelled outright) - not a completed sale, so no
+     * invoice can be issued even if paymentStatus happens to still read PAID
+     * (e.g. refund not settled yet).
+     */
+    private static final java.util.Set<OrderStatus> INVOICE_BLOCKED_STATUSES = java.util.Set.of(
+            OrderStatus.CANCELLATION_REQUESTED, OrderStatus.CANCELLATION_APPROVED, OrderStatus.CANCELLED);
+
     /**
      * confirm -> pack -> ship -> deliver, plus cancellation exits. Cancellation
      * is reachable up through PACKING (not SHIPPING/DELIVERED - once stock has
@@ -198,6 +211,7 @@ public class OrderService {
         order.setAddressSnapshotJson(buildAddressSnapshot(address));
         order.setPaymentMethod(request.paymentMethod());
         order.setNote(request.note());
+        applyInvoiceRequest(order, request);
 
         BigDecimal subtotal = BigDecimal.ZERO;
         for (ValidatedLine line : validated) {
@@ -279,6 +293,69 @@ public class OrderService {
             throw new ResourceNotFoundException("Order not found");
         }
         return assembleResponse(order);
+    }
+
+    /**
+     * A real invoice is only issued for a completed sale: paid, and not
+     * cancelled or mid-cancellation. Lazily assigns invoiceNumber the first
+     * time an eligible order's invoice is actually requested, rather than at
+     * order creation or at payment time - mirrors how a shop only writes the
+     * invoice once someone asks for it, and keeps the number stable across
+     * repeated views/reprints (issued once, then reused).
+     */
+    @Transactional
+    public OrderResponse getOrderInvoice(UUID orderId, UUID customerId) {
+        Order order = orderRepository.findByIdForUpdate(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+        if (!order.getUser().getId().equals(customerId)) {
+            throw new ResourceNotFoundException("Order not found");
+        }
+        if (!isInvoiceEligible(order)) {
+            throw new BusinessRuleException(HttpStatus.CONFLICT,
+                    "Order must be paid and not cancelled before an invoice can be issued");
+        }
+        if (order.getInvoiceNumber() == null) {
+            order.setInvoiceNumber(generateInvoiceNumber());
+            order = orderRepository.save(order);
+        }
+        return assembleResponse(order);
+    }
+
+    private boolean isInvoiceEligible(Order order) {
+        return order.getPaymentStatus() == PaymentStatus.PAID
+                && !INVOICE_BLOCKED_STATUSES.contains(order.getOrderStatus());
+    }
+
+    private String generateInvoiceNumber() {
+        long sequence = orderRepository.nextInvoiceSequence();
+        int year = LocalDate.now(AppTimeZone.ZONE).getYear();
+        return String.format("HD-%d-%06d", year, sequence);
+    }
+
+    /**
+     * All three company fields are required together (or none at all) -
+     * a cross-field rule that does not fit a single-field bean validation
+     * annotation on CreateOrderRequest, so it is checked here instead.
+     */
+    private void applyInvoiceRequest(Order order, CreateOrderRequest request) {
+        boolean requested = Boolean.TRUE.equals(request.invoiceRequested());
+        if (!requested) {
+            return;
+        }
+        String companyName = request.invoiceCompanyName() != null ? request.invoiceCompanyName().trim() : "";
+        String taxCode = request.invoiceTaxCode() != null ? request.invoiceTaxCode().trim() : "";
+        String companyAddress = request.invoiceCompanyAddress() != null ? request.invoiceCompanyAddress().trim() : "";
+        if (companyName.isEmpty() || taxCode.isEmpty() || companyAddress.isEmpty()) {
+            throw new BusinessRuleException(HttpStatus.UNPROCESSABLE_ENTITY,
+                    "Company name, tax code, and address are required to request a company invoice");
+        }
+        if (!TAX_CODE_PATTERN.matcher(taxCode).matches()) {
+            throw new BusinessRuleException(HttpStatus.UNPROCESSABLE_ENTITY, "Invalid tax code format");
+        }
+        order.setInvoiceRequested(true);
+        order.setInvoiceCompanyName(companyName);
+        order.setInvoiceTaxCode(taxCode);
+        order.setInvoiceCompanyAddress(companyAddress);
     }
 
     @Transactional(readOnly = true)
@@ -878,6 +955,11 @@ public class OrderService {
                 order.getCancellationRequestedAt(),
                 items,
                 toShippingAddress(order),
+                order.getInvoiceNumber(),
+                order.isInvoiceRequested(),
+                order.getInvoiceCompanyName(),
+                order.getInvoiceTaxCode(),
+                order.getInvoiceCompanyAddress(),
                 order.getCreatedAt());
     }
 

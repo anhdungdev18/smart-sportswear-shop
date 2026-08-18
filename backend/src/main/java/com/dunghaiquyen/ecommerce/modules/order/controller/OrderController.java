@@ -89,6 +89,20 @@ public class OrderController {
         return ApiResponse.ok(message, response);
     }
 
+    /**
+     * Separate from GET /{id}: this one enforces the invoice eligibility rule
+     * (paid, not cancelled/mid-cancellation - see OrderService.getOrderInvoice)
+     * and lazily assigns the order's invoice number on first call, so a plain
+     * "view my order" never accidentally issues one.
+     */
+    @GetMapping("/{id}/invoice")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ApiResponse<OrderResponse> invoice(
+            @AuthenticationPrincipal CustomUserDetails principal, @PathVariable UUID id) {
+        OrderResponse response = orderService.getOrderInvoice(id, principal.getUserId());
+        return ApiResponse.ok(response);
+    }
+
     @GetMapping("/{id}/refunds")
     @PreAuthorize("hasRole('CUSTOMER')")
     public ApiResponse<List<RefundResponse>> refunds(
