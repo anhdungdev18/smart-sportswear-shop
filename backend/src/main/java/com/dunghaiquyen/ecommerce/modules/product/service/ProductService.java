@@ -16,6 +16,7 @@ import com.dunghaiquyen.ecommerce.modules.product.dto.ProductListItemResponse;
 import com.dunghaiquyen.ecommerce.modules.product.dto.ProductListQuery;
 import com.dunghaiquyen.ecommerce.modules.product.dto.ProductSuggestionResponse;
 import com.dunghaiquyen.ecommerce.modules.product.dto.ProductUpdateRequest;
+import com.dunghaiquyen.ecommerce.modules.product.dto.ProductVariantResponse;
 import com.dunghaiquyen.ecommerce.modules.product.dto.ReviewAggregateProjection;
 import com.dunghaiquyen.ecommerce.modules.product.dto.ReviewSummaryResponse;
 import com.dunghaiquyen.ecommerce.modules.product.entity.Product;
@@ -760,6 +761,16 @@ public class ProductService {
         ReviewSummaryResponse reviewSummary = visibleOnly ? buildReviewSummary(product.getId()) : null;
         List<ProductListItemResponse> relatedProducts = visibleOnly ? findRelatedProducts(product) : List.of();
 
+        List<ProductVariantResponse> variantResponses = variants.stream().map(productMapper::toVariantResponse).toList();
+        if (visibleOnly) {
+            // Public view only - admins editing a product need to see what they
+            // actually stored, not a promo-adjusted display price.
+            Integer promoPercent = promotionService
+                    .activePercentDiscountByProduct(List.of(product.getId()))
+                    .get(product.getId());
+            variantResponses = variantResponses.stream().map(v -> applyPromo(v, promoPercent)).toList();
+        }
+
         return new ProductDetailResponse(
                 product.getId(),
                 product.getName(),
@@ -772,12 +783,29 @@ public class ProductService {
                 toRef(product.getBrand()),
                 toRef(product.getCategory()),
                 images.stream().map(productMapper::toImageResponse).toList(),
-                variants.stream().map(productMapper::toVariantResponse).toList(),
+                variantResponses,
                 product.getStatus(),
                 product.isFeatured(),
                 product.getAttributes(),
                 reviewSummary,
                 relatedProducts);
+    }
+
+    /**
+     * Applies the same discount rule OrderService charges at checkout (see
+     * PromotionService.effectivePrice) to the variant response shown on the
+     * product detail page, so a customer never sees a price here that checkout
+     * would then charge differently.
+     */
+    private ProductVariantResponse applyPromo(ProductVariantResponse variant, Integer promoPercent) {
+        var effective = promotionService.effectivePrice(variant.price(), variant.compareAtPrice(), promoPercent);
+        if (effective.price().compareTo(variant.price()) == 0
+                && java.util.Objects.equals(effective.compareAtPrice(), variant.compareAtPrice())) {
+            return variant;
+        }
+        return new ProductVariantResponse(
+                variant.id(), variant.sku(), variant.size(), variant.color(),
+                effective.price(), effective.compareAtPrice(), variant.availableQuantity(), variant.status());
     }
 
     /** APPROVED only - pending/rejected reviews must never influence what the public sees (Phase N4). */

@@ -13,6 +13,8 @@ import com.dunghaiquyen.ecommerce.modules.promotion.entity.PromotionType;
 import com.dunghaiquyen.ecommerce.modules.promotion.repository.ProductPromoDiscount;
 import com.dunghaiquyen.ecommerce.modules.promotion.repository.PromotionProductRepository;
 import com.dunghaiquyen.ecommerce.modules.promotion.repository.PromotionRepository;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.Normalizer;
 import java.time.Instant;
 import java.util.Collection;
@@ -53,6 +55,39 @@ public class PromotionService {
                         ProductPromoDiscount::getProductId,
                         d -> d.getPercent().intValue(),
                         Math::max));
+    }
+
+    /**
+     * The single source of truth for "what does a promotion actually change about
+     * a price": given a variant's own price/compareAtPrice and the active promo
+     * percent for its product (if any), returns what to show/charge. A variant's
+     * own markdown (compareAtPrice set higher than price) and a promotion
+     * campaign never stack - whichever discount percentage is bigger wins, so a
+     * product already on sale is not silently double-discounted. Shared by
+     * product display (listing, detail) and order pricing (checkout preview,
+     * order creation) so what a customer is shown while browsing is exactly what
+     * they are charged - the two must never be computed independently again.
+     */
+    public EffectivePrice effectivePrice(BigDecimal price, BigDecimal compareAtPrice, Integer promoPercent) {
+        int variantDiscountPercent = 0;
+        if (compareAtPrice != null && compareAtPrice.compareTo(price) > 0) {
+            variantDiscountPercent = compareAtPrice.subtract(price)
+                    .multiply(BigDecimal.valueOf(100))
+                    .divide(compareAtPrice, 0, RoundingMode.HALF_UP)
+                    .intValue();
+        }
+        if (promoPercent == null || promoPercent <= 0 || promoPercent <= variantDiscountPercent) {
+            return new EffectivePrice(price, compareAtPrice);
+        }
+        BigDecimal base = compareAtPrice != null ? compareAtPrice : price;
+        BigDecimal discounted = base
+                .multiply(BigDecimal.valueOf(100 - promoPercent))
+                .divide(BigDecimal.valueOf(100), 0, RoundingMode.HALF_UP);
+        return new EffectivePrice(discounted, base);
+    }
+
+    /** price = what to charge/show now; compareAtPrice = the "was" price to strike through, null when there is no discount to show. */
+    public record EffectivePrice(BigDecimal price, BigDecimal compareAtPrice) {
     }
 
     /** Product ids currently discounted by an active promotion (used by the discount=any filter). */

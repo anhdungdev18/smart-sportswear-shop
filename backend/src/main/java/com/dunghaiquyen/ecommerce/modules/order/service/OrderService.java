@@ -37,6 +37,7 @@ import com.dunghaiquyen.ecommerce.modules.product.repository.ProductVariantRepos
 import com.dunghaiquyen.ecommerce.modules.product.repository.ProductImageRepository;
 import com.dunghaiquyen.ecommerce.modules.product.util.ThumbnailResolver;
 import com.dunghaiquyen.ecommerce.modules.payment.entity.PaymentStatus;
+import com.dunghaiquyen.ecommerce.modules.promotion.service.PromotionService;
 import com.dunghaiquyen.ecommerce.modules.user.entity.User;
 import com.dunghaiquyen.ecommerce.modules.user.entity.UserRole;
 import com.dunghaiquyen.ecommerce.modules.user.repository.UserRepository;
@@ -109,6 +110,7 @@ public class OrderService {
             inventoryTransactionRepository;
     private final OrderMapper orderMapper;
     private final ComboService comboService;
+    private final PromotionService promotionService;
     private final NotificationService notificationService;
     private final AppShippingProperties shippingProperties;
 
@@ -126,6 +128,7 @@ public class OrderService {
                     inventoryTransactionRepository,
             OrderMapper orderMapper,
             ComboService comboService,
+            PromotionService promotionService,
             NotificationService notificationService,
             AppShippingProperties shippingProperties) {
         this.cartRepository = cartRepository;
@@ -140,6 +143,7 @@ public class OrderService {
         this.inventoryTransactionRepository = inventoryTransactionRepository;
         this.orderMapper = orderMapper;
         this.comboService = comboService;
+        this.promotionService = promotionService;
         this.notificationService = notificationService;
         this.shippingProperties = shippingProperties;
     }
@@ -216,7 +220,11 @@ public class OrderService {
         BigDecimal subtotal = BigDecimal.ZERO;
         for (ValidatedLine line : validated) {
             ProductVariant variant = line.variant();
-            BigDecimal lineTotal = variant.getPrice().multiply(BigDecimal.valueOf(line.quantity()));
+            // Same effective price (variant markdown vs active promotion, whichever
+            // discount is bigger) the customer was just shown on the product page
+            // and in the checkout preview - see effectiveUnitPrice's javadoc.
+            BigDecimal unitPrice = effectiveUnitPrice(variant);
+            BigDecimal lineTotal = unitPrice.multiply(BigDecimal.valueOf(line.quantity()));
             subtotal = subtotal.add(lineTotal);
 
             OrderItem orderItem = new OrderItem();
@@ -227,7 +235,7 @@ public class OrderService {
             orderItem.setSkuSnapshot(variant.getSku());
             orderItem.setSizeSnapshot(variant.getSize());
             orderItem.setColorSnapshot(variant.getColor());
-            orderItem.setUnitPriceSnapshot(variant.getPrice());
+            orderItem.setUnitPriceSnapshot(unitPrice);
             orderItem.setQuantity(line.quantity());
             orderItem.setLineTotal(lineTotal);
             order.getItems().add(orderItem);
@@ -722,8 +730,22 @@ public class OrderService {
             return new VariantCheck(
                     variant, null, HttpStatus.UNPROCESSABLE_ENTITY, "Insufficient stock for " + variant.getSku());
         }
-        BigDecimal lineTotal = variant.getPrice().multiply(BigDecimal.valueOf(quantity));
+        BigDecimal lineTotal = effectiveUnitPrice(variant).multiply(BigDecimal.valueOf(quantity));
         return new VariantCheck(variant, lineTotal, null, null);
+    }
+
+    /**
+     * What this variant actually costs right now, including any active product
+     * promotion - see PromotionService.effectivePrice for the "which discount
+     * wins" rule. Used everywhere a price is computed for the customer (cart
+     * preview, checkout preview, and the real order) so none of them can drift
+     * from what the product detail page shows while browsing.
+     */
+    private BigDecimal effectiveUnitPrice(ProductVariant variant) {
+        Integer promoPercent = promotionService
+                .activePercentDiscountByProduct(List.of(variant.getProduct().getId()))
+                .get(variant.getProduct().getId());
+        return promotionService.effectivePrice(variant.getPrice(), variant.getCompareAtPrice(), promoPercent).price();
     }
 
     private int requireBuyNowQuantity(Integer quantity) {
@@ -800,7 +822,7 @@ public class OrderService {
                 variant != null ? variant.getProduct().getName() : null,
                 variant != null ? variant.getSku() : null,
                 quantity,
-                variant != null ? variant.getPrice() : null,
+                variant != null ? effectiveUnitPrice(variant) : null,
                 check.isValid() ? check.lineTotal() : BigDecimal.ZERO,
                 check.isValid(),
                 check.errorMessage());
@@ -825,7 +847,7 @@ public class OrderService {
         UUID productId = variant != null ? variant.getProduct().getId() : null;
         String productName = variant != null ? variant.getProduct().getName() : null;
         String sku = variant != null ? variant.getSku() : null;
-        BigDecimal unitPrice = variant != null ? variant.getPrice() : null;
+        BigDecimal unitPrice = variant != null ? effectiveUnitPrice(variant) : null;
         BigDecimal lineTotal = check.isValid() ? check.lineTotal() : BigDecimal.ZERO;
         return new CartLineCheck(
                 variantId, productId, productName, sku, cartItem.getQuantity(), unitPrice, lineTotal,

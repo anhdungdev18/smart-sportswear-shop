@@ -142,6 +142,16 @@ export function ProductPurchasePanel({
     return prices.length ? Math.min(...prices) : price;
   }, [variants, selectedColorLabel, price]);
 
+  // compareAtPrice already reflects whichever discount (variant markdown or an
+  // active product promotion) is actually being charged - see
+  // PromotionService.effectivePrice on the backend. Sourced from the exact
+  // selected variant so the badge matches what "Thêm vào giỏ" will charge.
+  const compareAtPrice = selectedVariant?.compareAtPrice ?? null;
+  const discountPercent =
+    compareAtPrice != null && compareAtPrice > displayPrice
+      ? Math.round(((compareAtPrice - displayPrice) / compareAtPrice) * 100)
+      : null;
+
   useEffect(() => {
     if (allSizes.length === 0) {
       setSelectedSizeLabel("");
@@ -238,7 +248,17 @@ export function ProductPurchasePanel({
         <span>({reviewCount} đánh giá)</span>
       </div>
 
-      <div className="mb-6 text-[30px] font-semibold text-ivy-dark">{displayPrice.toLocaleString("vi-VN")}đ</div>
+      <div className="mb-6 flex flex-wrap items-center gap-3">
+        <span className="text-[30px] font-semibold text-ivy-dark">{displayPrice.toLocaleString("vi-VN")}đ</span>
+        {compareAtPrice != null ? (
+          <span className="text-[16px] text-ivy-text-muted line-through">{compareAtPrice.toLocaleString("vi-VN")}đ</span>
+        ) : null}
+        {discountPercent ? (
+          <span className="rounded-bl-[14px] rounded-tr-[14px] bg-[#E7A746] px-2 py-1 text-[11px] font-semibold text-white">
+            -{discountPercent}%
+          </span>
+        ) : null}
+      </div>
 
       {/* Each product is a single colorway, so color is shown as a per-product label.
           The swatch picker only appears if a product ever carries more than one color. */}
