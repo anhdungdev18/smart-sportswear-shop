@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { shouldBypassImageOptimization } from "@/lib/image";
 import { HeartIcon, ShoppingBagIcon } from "@/components/shared/icons";
 import type { Product } from "@/modules/product/types";
 
@@ -52,6 +53,7 @@ export function ProductCard({ product }: { product: Product }) {
               fill
               sizes="(max-width: 767px) 46vw, (max-width: 1279px) 30vw, 332px"
               className="h-full w-full object-cover object-center"
+              unoptimized={shouldBypassImageOptimization(product.image)}
             />
             <Image
               src={product.hoverImage}
@@ -59,6 +61,7 @@ export function ProductCard({ product }: { product: Product }) {
               fill
               sizes="(max-width: 767px) 46vw, (max-width: 1279px) 30vw, 332px"
               className="hover-img invisible absolute inset-0 h-full w-full object-cover object-center opacity-0 transition-all duration-300 ease-in-out group-hover:visible group-hover:opacity-100"
+              unoptimized={shouldBypassImageOptimization(product.hoverImage)}
             />
           </Link>
 
@@ -126,6 +129,7 @@ export function ProductCard({ product }: { product: Product }) {
                       width={18}
                       height={18}
                       className="h-full w-full object-cover"
+                      unoptimized={shouldBypassImageOptimization(color.image)}
                     />
                   </button>
                 </li>

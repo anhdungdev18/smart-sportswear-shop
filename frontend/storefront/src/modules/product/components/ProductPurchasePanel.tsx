@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { shouldBypassImageOptimization } from "@/lib/image";
 import { Minus, Plus, Ruler, Star } from "lucide-react";
 import { HeartIcon } from "@/components/shared/icons";
 import { getApiErrorMessage } from "@/lib/api-errors";
@@ -264,7 +265,14 @@ export function ProductPurchasePanel({
                       isSoldOut && "opacity-45",
                     )}
                   >
-                    <Image src={color.image} alt={color.label} fill sizes="48px" className="object-cover" />
+                    <Image
+                      src={color.image}
+                      alt={color.label}
+                      fill
+                      sizes="48px"
+                      className="object-cover"
+                      unoptimized={shouldBypassImageOptimization(color.image)}
+                    />
                     {isSoldOut ? (
                       <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
                         <span className="h-[1.5px] w-[150%] rotate-45 bg-ivy-dark/70" />
