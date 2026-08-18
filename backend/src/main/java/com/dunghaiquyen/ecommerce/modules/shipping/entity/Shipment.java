@@ -62,7 +62,8 @@ public class Shipment extends AbstractAuditEntity {
     @Column(nullable = false, length = 100)
     private String province;
 
-    @Column(nullable = false, length = 100)
+    /** Vietnam dropped this administrative tier in the 2025 reform - kept nullable for legacy rows. */
+    @Column(length = 100)
     private String district;
 
     @Column(nullable = false, length = 100)

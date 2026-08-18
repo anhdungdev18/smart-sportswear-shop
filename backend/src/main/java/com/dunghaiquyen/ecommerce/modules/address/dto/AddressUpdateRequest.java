@@ -19,7 +19,7 @@ public record AddressUpdateRequest(
         @Size(max = 100, message = "Province must be at most 100 characters")
         String province,
 
-        @NullOrNotBlank(message = "District must not be blank")
+        // Optional: Vietnam's 2025 administrative reform dropped this tier.
         @Size(max = 100, message = "District must be at most 100 characters")
         String district,
 

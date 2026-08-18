@@ -62,7 +62,7 @@ public class AddressService {
         address.setReceiverName(request.receiverName().trim());
         address.setPhone(request.phone().trim());
         address.setProvince(request.province().trim());
-        address.setDistrict(request.district().trim());
+        address.setDistrict(request.district() != null ? request.district().trim() : null);
         address.setWard(request.ward().trim());
         address.setAddressLine(request.addressLine().trim());
         address.setDefault(makeDefault);

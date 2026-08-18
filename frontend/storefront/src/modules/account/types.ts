@@ -16,7 +16,8 @@ export interface AddressResponse {
   receiverName: string;
   phone: string;
   province: string;
-  district: string;
+  // Vietnam's 2025 administrative reform dropped this tier - null on new addresses.
+  district: string | null;
   ward: string;
   addressLine: string;
   isDefault: boolean;

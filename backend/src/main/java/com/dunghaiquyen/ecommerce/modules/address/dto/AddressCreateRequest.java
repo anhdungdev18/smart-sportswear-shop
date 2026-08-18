@@ -18,7 +18,8 @@ public record AddressCreateRequest(
         @Size(max = 100, message = "Province must be at most 100 characters")
         String province,
 
-        @NotBlank(message = "District is required")
+        // Optional: Vietnam's 2025 administrative reform dropped this tier
+        // (addresses are now Tinh/Thanh pho -> Phuong/Xa directly).
         @Size(max = 100, message = "District must be at most 100 characters")
         String district,
 

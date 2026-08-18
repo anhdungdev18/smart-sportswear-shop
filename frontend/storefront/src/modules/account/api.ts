@@ -36,7 +36,8 @@ export async function createAddress(payload: {
   receiverName: string;
   phone: string;
   province: string;
-  district: string;
+  // Vietnam's 2025 administrative reform dropped this tier - optional now.
+  district?: string;
   ward: string;
   addressLine: string;
   isDefault?: boolean;

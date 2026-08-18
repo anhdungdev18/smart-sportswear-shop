@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getApiErrorMessage } from "@/lib/api-errors";
 import { useAuthenticated } from "@/lib/use-authenticated";
+import { ProvinceWardSelect } from "@/components/shared/ProvinceWardSelect";
 import {
   createAddress,
   listAddresses,
@@ -21,7 +22,6 @@ const EMPTY_ADDRESS_FORM = {
   receiverName: "",
   phone: "",
   province: "",
-  district: "",
   ward: "",
   addressLine: "",
 };
@@ -212,7 +212,7 @@ export function CheckoutPageClient() {
                             </div>
                             <p className="mt-2 text-[14px] text-ivy-text">{address.phone}</p>
                             <p className="mt-1 text-[14px] text-ivy-text">
-                              {address.addressLine}, {address.ward}, {address.district}, {address.province}
+                              {[address.addressLine, address.ward, address.district, address.province].filter(Boolean).join(", ")}
                             </p>
                             {!address.isDefault ? (
                               <button
@@ -251,23 +251,11 @@ export function CheckoutPageClient() {
                       value={addressForm.phone}
                       onChange={(e) => setAddressForm((current) => ({ ...current, phone: e.target.value }))}
                     />
-                    <input
-                      className="h-12 border border-ivy-hairline px-4 text-[15px] outline-none"
-                      placeholder="Tỉnh / Thành phố"
-                      value={addressForm.province}
-                      onChange={(e) => setAddressForm((current) => ({ ...current, province: e.target.value }))}
-                    />
-                    <input
-                      className="h-12 border border-ivy-hairline px-4 text-[15px] outline-none"
-                      placeholder="Quận / Huyện"
-                      value={addressForm.district}
-                      onChange={(e) => setAddressForm((current) => ({ ...current, district: e.target.value }))}
-                    />
-                    <input
-                      className="h-12 border border-ivy-hairline px-4 text-[15px] outline-none"
-                      placeholder="Phường / Xã"
-                      value={addressForm.ward}
-                      onChange={(e) => setAddressForm((current) => ({ ...current, ward: e.target.value }))}
+                    <ProvinceWardSelect
+                      provinceValue={addressForm.province}
+                      wardValue={addressForm.ward}
+                      onProvinceChange={(name) => setAddressForm((current) => ({ ...current, province: name }))}
+                      onWardChange={(name) => setAddressForm((current) => ({ ...current, ward: name }))}
                     />
                     <input
                       className="h-12 border border-ivy-hairline px-4 text-[15px] outline-none md:col-span-2"

@@ -22,7 +22,7 @@ export type ShipmentResponse = {
   receiverName: string;
   receiverPhone: string;
   province: string;
-  district: string;
+  district: string | null;
   ward: string;
   addressLine: string;
   shippedAt: string | null;
