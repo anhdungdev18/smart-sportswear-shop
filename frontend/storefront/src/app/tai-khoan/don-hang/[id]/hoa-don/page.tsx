@@ -1,6 +1,13 @@
 import { OrderInvoiceClient } from "@/modules/account/components/OrderInvoiceClient";
 
-export default async function OrderInvoicePage({ params }: { params: Promise<{ id: string }> }) {
+export default async function OrderInvoicePage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ payload?: string }>;
+}) {
   const { id } = await params;
-  return <OrderInvoiceClient orderId={id} />;
+  const { payload } = await searchParams;
+  return <OrderInvoiceClient orderId={id} payloadKey={payload} />;
 }

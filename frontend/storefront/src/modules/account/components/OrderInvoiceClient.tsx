@@ -7,6 +7,7 @@ import { ApiError } from "@/lib/api";
 import { getApiErrorMessage } from "@/lib/api-errors";
 import { getAccessToken } from "@/lib/session";
 import { getOrderStatusLabel } from "@/modules/account/order-labels";
+import { readTransferredInvoice } from "@/modules/account/components/InvoicePrintLink";
 
 const money = (n: number) => `${Math.round(n).toLocaleString("vi-VN")}đ`;
 
@@ -27,13 +28,12 @@ const paymentStatusLabels: Record<string, string> = {
 const NOT_ELIGIBLE_MESSAGE =
   "Đơn hàng chưa đủ điều kiện xuất hóa đơn — cần đã thanh toán thành công và không trong quá trình hủy.";
 
-export function OrderInvoiceClient({ orderId }: { orderId: string }) {
+export function OrderInvoiceClient({ orderId, payloadKey }: { orderId: string; payloadKey?: string }) {
   const [order, setOrder] = useState<OrderResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    setLoading(true);
     setError(null);
     try {
       setOrder(await getOrderInvoice(orderId));
@@ -41,6 +41,7 @@ export function OrderInvoiceClient({ orderId }: { orderId: string }) {
       // The eligibility rule (paid, not cancelled) is enforced server-side -
       // show a fixed, user-facing explanation for a 409 rather than whatever
       // raw message the backend happens to send.
+      setOrder(null);
       setError(err instanceof ApiError && err.status === 409
         ? NOT_ELIGIBLE_MESSAGE
         : getApiErrorMessage(err, "Không thể tải hóa đơn."));
@@ -50,6 +51,11 @@ export function OrderInvoiceClient({ orderId }: { orderId: string }) {
   }, [orderId]);
 
   useEffect(() => {
+    const transferredOrder = readTransferredInvoice(payloadKey, orderId);
+    if (transferredOrder) {
+      setOrder(transferredOrder);
+      setLoading(false);
+    }
     const timer = setTimeout(() => {
       if (!getAccessToken()) {
         setLoading(false);
@@ -59,7 +65,7 @@ export function OrderInvoiceClient({ orderId }: { orderId: string }) {
       void load();
     }, 0);
     return () => clearTimeout(timer);
-  }, [load]);
+  }, [load, orderId, payloadKey]);
 
   if (loading) {
     return <div className="invoice-status">Đang tải hóa đơn...</div>;

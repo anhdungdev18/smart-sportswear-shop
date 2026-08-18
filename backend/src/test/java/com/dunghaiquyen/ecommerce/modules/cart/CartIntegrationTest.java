@@ -154,6 +154,32 @@ class CartIntegrationTest extends AbstractIntegrationTest {
         assertThat(secondBody.at("/data/subtotal").asDouble()).isEqualTo(500000.0);
     }
 
+    @Test
+    void guest_addNewItem_displaysNewestItemFirst() throws Exception {
+        AdminContext ctx = setUpAdmin();
+        String firstProductId = createActiveProduct(ctx);
+        String firstVariantId = createVariant(ctx, firstProductId, 10);
+        String secondProductId = createActiveProduct(ctx);
+        String secondVariantId = createVariant(ctx, secondProductId, 10);
+
+        MvcResult first = perform(
+                post("/api/v1/cart/items").contentType(MediaType.APPLICATION_JSON)
+                        .content(addItemBody(firstVariantId, 1)),
+                null, null);
+        String sessionId = sessionIdOf(first);
+
+        MvcResult second = perform(
+                post("/api/v1/cart/items").contentType(MediaType.APPLICATION_JSON)
+                        .content(addItemBody(secondVariantId, 1)),
+                sessionId, null);
+
+        assertThat(second.getResponse().getStatus()).isEqualTo(201);
+        JsonNode items = json(second.getResponse().getContentAsString()).at("/data/items");
+        assertThat(items).hasSize(2);
+        assertThat(items.get(0).get("variantId").asText()).isEqualTo(secondVariantId);
+        assertThat(items.get(1).get("variantId").asText()).isEqualTo(firstVariantId);
+    }
+
     // ===== D. guest update quantity =====
 
     @Test

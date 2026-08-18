@@ -9,6 +9,7 @@ import { cancelOrder, listMyOrders } from "@/modules/account/api";
 import type { OrderResponse } from "@/modules/account/types";
 import { getOrderStatusLabel, isInvoiceEligible } from "@/modules/account/order-labels";
 import { CUSTOMER_ORDER_CHANGED_EVENT } from "@/modules/notifications/types";
+import { InvoicePrintLink } from "@/modules/account/components/InvoicePrintLink";
 
 const ORDERS_PER_PAGE = 5;
 
@@ -135,13 +136,10 @@ export function OrderHistoryPageClient() {
                     <p className="mt-2 text-[24px] font-semibold text-ivy-dark">{order.totalAmount.toLocaleString("vi-VN")}đ</p>
                     <div className="mt-4 flex flex-wrap justify-end gap-3">
                       {canPrintInvoice(order) ? (
-                        <Link
-                          href={`/tai-khoan/don-hang/${order.id}/hoa-don`}
-                          target="_blank"
+                        <InvoicePrintLink
+                          order={order}
                           className="inline-flex h-10 items-center justify-center rounded-tl-[18px] rounded-br-[18px] border border-ivy-dark px-5 text-[12px] font-semibold uppercase tracking-[0.05em] text-ivy-dark"
-                        >
-                          In hóa đơn
-                        </Link>
+                        />
                       ) : null}
                       {canCancel(order) ? (
                         <button

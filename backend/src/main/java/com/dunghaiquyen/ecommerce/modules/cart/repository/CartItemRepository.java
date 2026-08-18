@@ -14,7 +14,7 @@ public interface CartItemRepository extends JpaRepository<CartItem, UUID> {
 
     /** Fetch-joins variant+product so assembling a cart response does not lazy-load them per row (N+1). */
     @Query("select ci from CartItem ci join fetch ci.variant v join fetch v.product p "
-            + "where ci.cart.id = :cartId order by ci.createdAt asc")
+            + "where ci.cart.id = :cartId order by ci.createdAt desc, ci.id desc")
     List<CartItem> findAllByCartIdWithVariantAndProduct(@Param("cartId") UUID cartId);
 
     /**
