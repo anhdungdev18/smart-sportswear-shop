@@ -4,6 +4,7 @@ import { Header } from "@/components/layout/Header";
 import { SiteChrome } from "@/components/layout/SiteChrome";
 import { NavigationProgress } from "@/components/shared/NavigationProgress";
 import { InventoryRealtimeRefresh } from "@/components/shared/InventoryRealtimeRefresh";
+import { DataRealtimeRefresh } from "@/components/shared/DataRealtimeRefresh";
 import { ScrollToTop } from "@/components/shared/ScrollToTop";
 import { ExtensionAttributeSanitizer } from "@/components/shared/ExtensionAttributeSanitizer";
 import { Toaster } from "@/components/ui/Toaster";
@@ -44,6 +45,7 @@ export default function RootLayout({
         <NavigationProgress />
         <ScrollToTop />
         <InventoryRealtimeRefresh />
+        <DataRealtimeRefresh />
         <SiteChrome header={<Header />}>{children}</SiteChrome>
         <Toaster />
       </body>

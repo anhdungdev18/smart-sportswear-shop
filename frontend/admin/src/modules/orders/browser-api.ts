@@ -22,6 +22,13 @@ export async function updateOrderStatus(id: string, input: { status: string; not
   });
 }
 
+export async function fetchPackingSlipBatch(orderIds: string[]) {
+  return browserApiRequest<AdminOrderResponse[]>(adminEndpoints.packingSlipBatch, {
+    method: "POST",
+    body: JSON.stringify({ orderIds })
+  });
+}
+
 export async function processCancellationRefund(id: string) {
   return browserApiRequest<OrderRefundResponse>(adminEndpoints.orderCancellationRefund(id), {
     method: "POST"

@@ -80,12 +80,17 @@ export function CheckoutPageClient() {
       }
 
       try {
-        const addressList = await listAddresses();
+        // These calls do not depend on each other. Loading them concurrently
+        // keeps a slow address query from delaying the cart summary (and vice versa).
+        const [addressList, checkoutPreview] = await Promise.all([
+          listAddresses(),
+          previewCheckout(undefined, cartItemIds, buyNow),
+        ]);
         setAddresses(addressList);
         const defaultAddress = addressList.find((item) => item.isDefault) ?? addressList[0];
         const defaultId = defaultAddress?.id ?? "";
         setSelectedAddressId(defaultId);
-        await refreshPreview(defaultId);
+        setPreview(checkoutPreview);
       } catch (err) {
         setError(getApiErrorMessage(err, "Không thể tải địa chỉ hoặc giỏ hàng."));
       } finally {
@@ -94,7 +99,7 @@ export function CheckoutPageClient() {
     };
 
     void load();
-  }, [authenticated, refreshPreview]);
+  }, [authenticated, buyNow, cartItemIds]);
 
   const handleCreateAddress = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -303,31 +308,8 @@ export function CheckoutPageClient() {
 
                 <div className="border border-ivy-hairline px-6 py-8">
                   <h2 className="mb-5 text-[26px] font-semibold uppercase tracking-[0.04em] text-ivy-dark">
-                    Phương thức thanh toán
+                    Thông tin bổ sung
                   </h2>
-                  <div className="space-y-4 text-[15px] text-ivy-text">
-                    <label className="flex items-center gap-3">
-                      <input
-                        type="radio"
-                        name="payment"
-                        checked={paymentMethod === "COD"}
-                        onChange={() => setPaymentMethod("COD")}
-                        className="size-4 accent-ivy-dark"
-                      />
-                      <span>Thanh toán khi nhận hàng (COD)</span>
-                    </label>
-                    <label className="flex items-center gap-3">
-                      <input
-                        type="radio"
-                        name="payment"
-                        checked={paymentMethod === "VNPAY"}
-                        onChange={() => setPaymentMethod("VNPAY")}
-                        className="size-4 accent-ivy-dark"
-                      />
-                      <span>Thanh toán VNPAY</span>
-                    </label>
-                  </div>
-
                   <textarea
                     value={note}
                     onChange={(e) => setNote(e.target.value)}
@@ -414,12 +396,44 @@ export function CheckoutPageClient() {
                   <span>{(preview?.totalAmount ?? 0).toLocaleString("vi-VN")}đ</span>
                 </div>
 
+                <fieldset className="mt-6 border-t border-ivy-hairline pt-6">
+                  <legend className="mb-4 text-[15px] font-semibold uppercase tracking-[0.05em] text-ivy-dark">
+                    Phương thức thanh toán
+                  </legend>
+                  <div className="space-y-3 text-[14px] text-ivy-text">
+                    <label className="flex cursor-pointer items-center gap-3">
+                      <input
+                        type="radio"
+                        name="payment"
+                        checked={paymentMethod === "COD"}
+                        onChange={() => setPaymentMethod("COD")}
+                        className="size-4 accent-ivy-dark"
+                      />
+                      <span>Thanh toán khi nhận hàng (COD)</span>
+                    </label>
+                    <label className="flex cursor-pointer items-center gap-3">
+                      <input
+                        type="radio"
+                        name="payment"
+                        checked={paymentMethod === "VNPAY"}
+                        onChange={() => setPaymentMethod("VNPAY")}
+                        className="size-4 accent-ivy-dark"
+                      />
+                      <span>Thanh toán qua VNPay</span>
+                    </label>
+                  </div>
+                </fieldset>
+
                 <button
                   disabled={submitting || !selectedAddress || !preview?.canCheckout}
                   onClick={() => void handleCreateOrder()}
                   className="mt-6 h-12 w-full rounded-tl-[20px] rounded-br-[20px] bg-ivy-dark text-[14px] font-semibold uppercase tracking-[0.05em] text-white disabled:opacity-60"
                 >
-                  {submitting ? "Đang xử lý..." : "Hoàn tất đặt hàng"}
+                  {submitting
+                    ? "Đang xử lý..."
+                    : paymentMethod === "VNPAY"
+                      ? "Thanh toán qua VNPay"
+                      : "Hoàn tất đặt hàng COD"}
                 </button>
 
                 <Link href="/gio-hang" className="mt-4 block text-center text-[14px] text-ivy-dark underline">

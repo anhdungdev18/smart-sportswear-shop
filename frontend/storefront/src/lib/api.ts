@@ -27,6 +27,14 @@ export class ApiError extends Error {
   }
 }
 
+const READ_API_TIMEOUT_MS = 20_000;
+const MUTATION_API_TIMEOUT_MS = 60_000;
+
+function requestSignal(timeoutMs: number, signal?: AbortSignal | null): AbortSignal {
+  const timeoutSignal = AbortSignal.timeout(timeoutMs);
+  return signal ? AbortSignal.any([signal, timeoutSignal]) : timeoutSignal;
+}
+
 type QueryValue = string | number | boolean | null | undefined;
 
 function buildUrl(
@@ -60,6 +68,7 @@ async function refreshAccessToken(): Promise<boolean> {
         const res = await fetch(buildUrl(endpoints.auth.refresh), {
           method: "POST",
           credentials: "include",
+          signal: requestSignal(READ_API_TIMEOUT_MS),
           headers: { Accept: "application/json", "Content-Type": "application/json" },
           body: JSON.stringify({ refreshToken }),
         });
@@ -108,12 +117,21 @@ export async function apiFetch<T>(
   // explicitly selected a cache mode.
   const nextOptions = next ?? (isGet && !token && rest.cache == null ? { revalidate: 60 } : undefined);
 
-  const res = await fetch(buildUrl(path, query), {
-    ...rest,
-    credentials: "include",
-    headers,
-    ...(nextOptions ? { next: nextOptions } : {}),
-  });
+  let res: Response;
+  try {
+    res = await fetch(buildUrl(path, query), {
+      ...rest,
+      signal: requestSignal(isGet ? READ_API_TIMEOUT_MS : MUTATION_API_TIMEOUT_MS, rest.signal),
+      credentials: "include",
+      headers,
+      ...(nextOptions ? { next: nextOptions } : {}),
+    });
+  } catch (error) {
+    if (error instanceof DOMException && (error.name === "TimeoutError" || error.name === "AbortError")) {
+      throw new ApiError(408, "Máy chủ phản hồi quá chậm. Vui lòng thử lại.", null);
+    }
+    throw error;
+  }
 
   // Silent recovery from an expired access token: refresh once, then replay the
   // original request. Guards against loops (_retry) and refreshing the refresh

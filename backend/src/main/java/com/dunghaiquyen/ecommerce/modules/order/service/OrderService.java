@@ -52,6 +52,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -409,6 +410,19 @@ public class OrderService {
         return assembleAdminResponse(order);
     }
 
+    @Transactional(readOnly = true)
+    public List<AdminOrderResponse> getPackingSlipDetailsForAdmin(List<UUID> requestedOrderIds) {
+        List<UUID> orderIds = requestedOrderIds.stream().distinct().toList();
+        Map<UUID, Order> ordersById = orderRepository.findAllById(orderIds).stream()
+                .collect(Collectors.toMap(Order::getId, Function.identity()));
+        if (ordersById.size() != orderIds.size()) {
+            throw new ResourceNotFoundException("One or more orders were not found");
+        }
+
+        List<Order> orders = orderIds.stream().map(ordersById::get).toList();
+        return assembleAdminResponses(orders, false);
+    }
+
     @Transactional
     @Caching(evict = {
             @CacheEvict(value = CacheConfig.REPORT_OVERVIEW, allEntries = true),
@@ -576,10 +590,8 @@ public class OrderService {
             // that) or passed through CONFIRMED/PACKING first (real stock was deducted
             // there via ORDER_CONFIRM_DEDUCT) - restockReturn() is the correct undo for
             // that case, release() would incorrectly touch reservedQuantity again.
-            boolean stockWasDeducted = inventoryTransactionRepository.existsByOrder_IdAndType(
-                    order.getId(), com.dunghaiquyen.ecommerce.modules.inventory.entity.InventoryTransactionType.ORDER_CONFIRM_DEDUCT);
             for (OrderItem item : sortedItems) {
-                if (stockWasDeducted) {
+                if (wasEverDeducted) {
                     inventoryService.restockReturn(item.getVariant().getId(), item.getQuantity(), order, actor);
                 } else {
                     inventoryService.release(item.getVariant().getId(), item.getQuantity(), order, actor);
@@ -925,19 +937,27 @@ public class OrderService {
     }
 
     private List<AdminOrderResponse> assembleAdminResponses(List<Order> orders) {
+        return assembleAdminResponses(orders, true);
+    }
+
+    private List<AdminOrderResponse> assembleAdminResponses(List<Order> orders, boolean includeThumbnails) {
         if (orders.isEmpty()) {
             return List.of();
         }
-        Map<UUID, List<OrderItemResponse>> itemsByOrder = itemsByOrderId(orders);
+        Map<UUID, List<OrderItemResponse>> itemsByOrder = itemsByOrderId(orders, includeThumbnails);
         return orders.stream()
                 .map(o -> toAdminResponse(o, itemsByOrder.getOrDefault(o.getId(), List.of())))
                 .toList();
     }
 
     private Map<UUID, List<OrderItemResponse>> itemsByOrderId(List<Order> orders) {
+        return itemsByOrderId(orders, true);
+    }
+
+    private Map<UUID, List<OrderItemResponse>> itemsByOrderId(List<Order> orders, boolean includeThumbnails) {
         List<UUID> orderIds = orders.stream().map(Order::getId).toList();
         List<OrderItem> orderItems = orderItemRepository.findAllByOrderIdIn(orderIds);
-        Map<UUID, String> thumbnails = resolveThumbnails(orderItems);
+        Map<UUID, String> thumbnails = includeThumbnails ? resolveThumbnails(orderItems) : Map.of();
         return orderItems.stream()
                 .collect(Collectors.groupingBy(
                         i -> i.getOrder().getId(),

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { listAdminOrdersPage } from "@/modules/orders/browser-api";
 import type { AdminOrderResponse } from "@/modules/orders/types";
 import { ApiRequestError } from "@/modules/api/common";
@@ -24,12 +25,14 @@ function extractError(error: unknown, fallback: string) {
  * not automatically when this modal opens the print tab.
  */
 export function PackingSlipQueueModal({ onClose }: { onClose: () => void }) {
+  const router = useRouter();
   const [orders, setOrders] = useState<AdminOrderResponse[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [total, setTotal] = useState(0);
 
   useEffect(() => {
+    router.prefetch("/orders/packing-slip-batch");
     let cancelled = false;
     listAdminOrdersPage(1, QUEUE_LIMIT, undefined, "CONFIRMED")
       .then((page) => {
@@ -44,7 +47,7 @@ export function PackingSlipQueueModal({ onClose }: { onClose: () => void }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [router]);
 
   function toggle(id: string) {
     setSelectedIds((current) => {
@@ -62,8 +65,19 @@ export function PackingSlipQueueModal({ onClose }: { onClose: () => void }) {
   }
 
   function handlePrint() {
-    if (selectedIds.size === 0) return;
-    window.open(`/orders/packing-slip-batch?ids=${Array.from(selectedIds).join(",")}`, "_blank");
+    if (selectedIds.size === 0 || !orders) return;
+    const selectedOrders = orders.filter((order) => selectedIds.has(order.id));
+    const payloadKey = `packing-slip:${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    let transferred = false;
+    try {
+      window.localStorage.setItem(payloadKey, JSON.stringify(selectedOrders));
+      transferred = true;
+    } catch {
+      // Storage can be unavailable or full; the print page will use the batch API instead.
+    }
+    const ids = selectedOrders.map((order) => order.id).join(",");
+    const payloadParam = transferred ? `&payload=${encodeURIComponent(payloadKey)}` : "";
+    window.open(`/orders/packing-slip-batch?ids=${ids}${payloadParam}`, "_blank");
     onClose();
   }
 

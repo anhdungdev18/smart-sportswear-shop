@@ -3,9 +3,9 @@ import { PackingSlipBatchClient } from "@/components/orders/PackingSlipBatchClie
 export default async function PackingSlipBatchPage({
   searchParams
 }: {
-  searchParams: Promise<{ ids?: string }>;
+  searchParams: Promise<{ ids?: string; payload?: string }>;
 }) {
-  const { ids } = await searchParams;
+  const { ids, payload } = await searchParams;
   const orderIds = (ids ?? "").split(",").map((id) => id.trim()).filter(Boolean);
-  return <PackingSlipBatchClient orderIds={orderIds} />;
+  return <PackingSlipBatchClient orderIds={orderIds} payloadKey={payload} />;
 }

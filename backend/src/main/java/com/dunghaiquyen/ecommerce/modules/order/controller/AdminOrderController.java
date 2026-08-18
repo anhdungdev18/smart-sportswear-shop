@@ -4,6 +4,7 @@ import com.dunghaiquyen.ecommerce.common.response.ApiResponse;
 import com.dunghaiquyen.ecommerce.common.security.CustomUserDetails;
 import com.dunghaiquyen.ecommerce.modules.order.dto.AdminOrderListQuery;
 import com.dunghaiquyen.ecommerce.modules.order.dto.AdminOrderResponse;
+import com.dunghaiquyen.ecommerce.modules.order.dto.PackingSlipBatchRequest;
 import com.dunghaiquyen.ecommerce.modules.order.dto.UpdateOrderStatusRequest;
 import com.dunghaiquyen.ecommerce.modules.order.dto.CancelOrderRequest;
 import com.dunghaiquyen.ecommerce.modules.order.service.OrderService;
@@ -47,6 +48,12 @@ public class AdminOrderController {
     @GetMapping("/{id}")
     public ApiResponse<AdminOrderResponse> detail(@PathVariable UUID id) {
         return ApiResponse.ok(orderService.getOrderDetailForAdmin(id));
+    }
+
+    @PostMapping("/packing-slip-batch")
+    public ApiResponse<List<AdminOrderResponse>> packingSlipBatch(
+            @Valid @RequestBody PackingSlipBatchRequest request) {
+        return ApiResponse.ok(orderService.getPackingSlipDetailsForAdmin(request.orderIds()));
     }
 
     @PatchMapping("/{id}/status")

@@ -11,6 +11,7 @@ export const adminEndpoints = {
   inventoryExport: "/api/v1/admin/inventory/export",
   inventoryAdjust: "/api/v1/admin/inventory/adjust",
   orders: "/api/v1/admin/orders",
+  packingSlipBatch: "/api/v1/admin/orders/packing-slip-batch",
   orderDetail: (id: string) => `/api/v1/admin/orders/${id}`,
   orderStatus: (id: string) => `/api/v1/admin/orders/${id}/status`,
   orderCancellationRefund: (id: string) => `/api/v1/admin/orders/${id}/cancellation-refund`,

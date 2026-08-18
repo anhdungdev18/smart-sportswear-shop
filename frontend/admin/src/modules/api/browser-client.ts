@@ -5,6 +5,9 @@ type BrowserApiRequestInit = RequestInit & {
   query?: ApiQuery;
 };
 
+export const ADMIN_LOCAL_MUTATION_KEY = "admin:last-local-mutation-at";
+const ADMIN_API_TIMEOUT_MS = 45_000;
+
 function readCookie(name: string) {
   if (typeof document === "undefined") {
     return null;
@@ -50,11 +53,30 @@ export async function browserApiRequestEnvelope<T>(path: string, init?: BrowserA
     requestHeaders["Content-Type"] = "application/json";
   }
 
-  const response = await fetch(buildApiUrl(path, query), {
-    ...requestInit,
-    credentials: requestInit.credentials ?? "include",
-    headers: requestHeaders
-  });
+  const method = (requestInit.method ?? "GET").toUpperCase();
+  const isMutation = !["GET", "HEAD", "OPTIONS"].includes(method);
+  if (isMutation && typeof window !== "undefined") {
+    // The backend broadcasts successful mutations to every admin tab. Mark
+    // this tab before sending so its realtime listener can ignore its own echo.
+    sessionStorage.setItem(ADMIN_LOCAL_MUTATION_KEY, String(Date.now()));
+  }
+
+  let response: Response;
+  try {
+    response = await fetch(buildApiUrl(path, query), {
+      ...requestInit,
+      signal: requestInit.signal
+        ? AbortSignal.any([requestInit.signal, AbortSignal.timeout(ADMIN_API_TIMEOUT_MS)])
+        : AbortSignal.timeout(ADMIN_API_TIMEOUT_MS),
+      credentials: requestInit.credentials ?? "include",
+      headers: requestHeaders
+    });
+  } catch (error) {
+    if (error instanceof DOMException && (error.name === "TimeoutError" || error.name === "AbortError")) {
+      throw new ApiRequestError(408, "Máy chủ xử lý quá lâu. Vui lòng kiểm tra lại trạng thái đơn trước khi thử lại.", null);
+    }
+    throw error;
+  }
 
   const payload = await response.json().catch(() => null);
 

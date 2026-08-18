@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { BrandPromoCarousel } from "@/components/marketing/BrandPromoCarousel";
 import { FeaturedCollections } from "@/components/marketing/FeaturedCollections";
 import { HomeBanner } from "@/components/marketing/HomeBanner";
@@ -18,51 +19,62 @@ import {
   fetchSaleProducts,
 } from "@/modules/product/queries";
 
-export async function HomeScreen() {
-  const [bannerSlides, newProducts, featuredProducts, collections, saleProducts, bestSellingProducts, activePromotions] =
-    await Promise.all([
-      fetchHomeBannerSlides(),
-      fetchNewestProducts(20),
-      fetchFeaturedProducts(12),
-      fetchCollections(),
-      fetchSaleProducts(12),
-      fetchBestSellingProducts(12),
-      fetchActivePromotions(),
-    ]);
+async function HeroContent() {
+  return <HomeBanner slides={await fetchHomeBannerSlides()} />;
+}
 
+async function FlashSaleContent() {
+  const [promotions, products] = await Promise.all([fetchActivePromotions(), fetchSaleProducts(12)]);
+  return (
+    <HomeFlashSale
+      promotion={promotions[0] ?? null}
+      products={products.map((product) => ({ ...mapProductListItem(product), ribbon: "sale" }))}
+    />
+  );
+}
+
+async function PopularProductsContent() {
+  const [bestSelling, featured] = await Promise.all([fetchBestSellingProducts(12), fetchFeaturedProducts(12)]);
+  if (bestSelling.length === 0 && featured.length === 0) return null;
+  return (
+    <ProductRail
+      title="Sản phẩm được yêu thích"
+      tabs={[
+        {
+          id: "best-selling",
+          label: "Bán chạy",
+          products: bestSelling.map((product) => ({
+            ...mapProductListItem(product),
+            ribbon: "bestseller" as const,
+          })),
+        },
+        { id: "featured", label: "Nổi bật", products: featured.map(mapProductListItem) },
+      ].filter((tab) => tab.products.length > 0)}
+    />
+  );
+}
+
+async function CollectionsContent() {
+  return <FeaturedCollections collections={await fetchCollections()} />;
+}
+
+async function NewProductsContent() {
+  const products = await fetchNewestProducts(20);
+  return <ProductRail title="Sản phẩm mới" products={products.map(mapProductListItem)} />;
+}
+
+export function HomeScreen() {
   return (
     <main className="site-main page-below-header flex-1 border-b border-ivy-hairline">
-      <HomeBanner slides={bannerSlides} />
+      <Suspense fallback={null}><HeroContent /></Suspense>
       <HomeUspStrip />
       <div className="mx-auto max-w-342 px-4 md:px-0">
         <HomeCategoryGrid />
-        <HomeFlashSale
-          promotion={activePromotions[0] ?? null}
-          products={saleProducts.map((product) => ({ ...mapProductListItem(product), ribbon: "sale" }))}
-        />
+        <Suspense fallback={null}><FlashSaleContent /></Suspense>
         <HomeTeamSelector />
-        {bestSellingProducts.length > 0 || featuredProducts.length > 0 ? (
-          <ProductRail
-            title="Sản phẩm được yêu thích"
-            tabs={[
-              {
-                id: "best-selling",
-                label: "Bán chạy",
-                products: bestSellingProducts.map((product) => ({
-                  ...mapProductListItem(product),
-                  ribbon: "bestseller" as const,
-                })),
-              },
-              {
-                id: "featured",
-                label: "Nổi bật",
-                products: featuredProducts.map(mapProductListItem),
-              },
-            ].filter((tab) => tab.products.length > 0)}
-          />
-        ) : null}
-        <FeaturedCollections collections={collections} />
-        <ProductRail title="Sản phẩm mới" products={newProducts.map(mapProductListItem)} />
+        <Suspense fallback={null}><PopularProductsContent /></Suspense>
+        <Suspense fallback={null}><CollectionsContent /></Suspense>
+        <Suspense fallback={null}><NewProductsContent /></Suspense>
       </div>
       <HomeVisualSearchBanner />
       <BrandPromoCarousel />

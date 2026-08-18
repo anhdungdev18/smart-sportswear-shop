@@ -102,7 +102,7 @@ export async function fetchSearchResults(
 
 export async function fetchCollections() {
   try {
-    const result = await apiFetch<CollectionSummary[]>(endpoints.collections);
+    const result = await apiFetch<CollectionSummary[]>(endpoints.collections, { cache: "no-store" });
     return result.data ?? [];
   } catch {
     return [] as CollectionSummary[];

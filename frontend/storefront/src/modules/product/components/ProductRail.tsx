@@ -71,7 +71,7 @@ export function ProductRail({ title, tabs, products }: ProductRailProps) {
 
           <button
             type="button"
-            aria-label="Sáº£n pháº©m trÆ°á»›c"
+            aria-label="Sản phẩm trước"
             onClick={() => scrollByAmount(-1)}
             className="absolute left-3 top-[38%] flex h-[30px] w-[30px] -translate-y-1/2 items-center justify-center rounded-sm text-[#BCBDC0] transition-all duration-300 ease-in-out hover:text-ivy-dark md:left-[8px] xl:left-[12px]"
           >
@@ -79,7 +79,7 @@ export function ProductRail({ title, tabs, products }: ProductRailProps) {
           </button>
           <button
             type="button"
-            aria-label="Sáº£n pháº©m tiáº¿p theo"
+            aria-label="Sản phẩm tiếp theo"
             onClick={() => scrollByAmount(1)}
             className="absolute right-3 top-[38%] flex h-[30px] w-[30px] -translate-y-1/2 items-center justify-center rounded-sm text-[#BCBDC0] transition-all duration-300 ease-in-out hover:text-ivy-dark md:right-[8px] xl:right-[12px]"
           >

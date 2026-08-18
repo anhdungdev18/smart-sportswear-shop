@@ -3,6 +3,7 @@ import { Bricolage_Grotesque, Plus_Jakarta_Sans } from "next/font/google";
 import { AdminShell } from "@/components/ui/AdminShell";
 import { NavigationProgress } from "@/components/ui/NavigationProgress";
 import { InventoryRealtimeRefresh } from "@/components/ui/InventoryRealtimeRefresh";
+import { DataRealtimeRefresh } from "@/components/ui/DataRealtimeRefresh";
 import "./globals.css";
 
 const display = Bricolage_Grotesque({
@@ -28,6 +29,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body className={`${display.variable} ${body.variable}`}>
         <NavigationProgress />
         <InventoryRealtimeRefresh />
+        <DataRealtimeRefresh />
         <AdminShell>{children}</AdminShell>
       </body>
     </html>

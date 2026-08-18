@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { fetchOrderDetail, updateOrderStatus } from "@/modules/orders/browser-api";
+import { fetchPackingSlipBatch, updateOrderStatus } from "@/modules/orders/browser-api";
 import type { AdminOrderResponse } from "@/modules/orders/types";
 import { ApiRequestError } from "@/modules/api/common";
 import { PACKING_SLIP_STYLES, PackingSlipContent } from "@/components/orders/packingSlipShared";
@@ -23,19 +23,37 @@ function extractError(error: unknown, fallback: string) {
  * change to either of those would risk marking an order "packed" when
  * nothing was actually printed.
  */
-export function PackingSlipBatchClient({ orderIds }: { orderIds: string[] }) {
+function readTransferredOrders(payloadKey?: string) {
+  if (!payloadKey?.startsWith("packing-slip:")) return null;
+  try {
+    const payload = window.localStorage.getItem(payloadKey);
+    window.localStorage.removeItem(payloadKey);
+    if (!payload) return null;
+    const parsed = JSON.parse(payload) as unknown;
+    return Array.isArray(parsed) ? parsed as AdminOrderResponse[] : null;
+  } catch {
+    return null;
+  }
+}
+
+export function PackingSlipBatchClient({ orderIds, payloadKey }: { orderIds: string[]; payloadKey?: string }) {
   const [orders, setOrders] = useState<AdminOrderResponse[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [resultMessage, setResultMessage] = useState<string | null>(null);
 
   useEffect(() => {
+    const transferredOrders = readTransferredOrders(payloadKey);
+    if (transferredOrders) {
+      setOrders(transferredOrders);
+      return;
+    }
     if (orderIds.length === 0) {
       setError("Không có đơn hàng nào được chọn.");
       return;
     }
     let cancelled = false;
-    Promise.all(orderIds.map((id) => fetchOrderDetail(id)))
+    fetchPackingSlipBatch(orderIds)
       .then((data) => {
         if (!cancelled) setOrders(data);
       })
@@ -46,8 +64,7 @@ export function PackingSlipBatchClient({ orderIds }: { orderIds: string[] }) {
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [orderIds.join(",")]);
+  }, [orderIds, payloadKey]);
 
   if (error) {
     return <div className="packing-slip-status">{error}</div>;
