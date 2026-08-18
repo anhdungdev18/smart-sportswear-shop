@@ -132,29 +132,31 @@ export function OrderHistoryPageClient() {
                   <div className="text-right">
                     <p className="text-[13px] uppercase tracking-[0.08em] text-ivy-text-muted">Tổng thanh toán</p>
                     <p className="mt-2 text-[24px] font-semibold text-ivy-dark">{order.totalAmount.toLocaleString("vi-VN")}đ</p>
-                    <Link
-                      href={`/tai-khoan/don-hang/${order.id}/hoa-don`}
-                      target="_blank"
-                      className="mt-4 inline-flex h-10 items-center justify-center rounded-tl-[18px] rounded-br-[18px] border border-ivy-dark px-5 text-[12px] font-semibold uppercase tracking-[0.05em] text-ivy-dark"
-                    >
-                      In hóa đơn
-                    </Link>
-                    {canCancel(order) ? (
-                      <button
-                        type="button"
-                        onClick={() => void handleCancel(order.id)}
-                        disabled={cancellingId === order.id}
-                        className="mt-4 h-10 rounded-tl-[18px] rounded-br-[18px] border border-ivy-dark px-5 text-[12px] font-semibold uppercase tracking-[0.05em] text-ivy-dark disabled:opacity-60"
+                    <div className="mt-4 flex flex-wrap justify-end gap-3">
+                      <Link
+                        href={`/tai-khoan/don-hang/${order.id}/hoa-don`}
+                        target="_blank"
+                        className="inline-flex h-10 items-center justify-center rounded-tl-[18px] rounded-br-[18px] border border-ivy-dark px-5 text-[12px] font-semibold uppercase tracking-[0.05em] text-ivy-dark"
                       >
-                        {cancellingId === order.id
-                          ? "Đang xử lý..."
-                          : order.orderStatus === "PENDING_CONFIRMATION" && order.paymentStatus !== "PAID"
-                            ? "Hủy đơn"
-                            : order.paymentStatus === "PAID"
-                              ? "Yêu cầu hủy & hoàn tiền"
-                              : "Yêu cầu hủy đơn"}
-                      </button>
-                    ) : null}
+                        In hóa đơn
+                      </Link>
+                      {canCancel(order) ? (
+                        <button
+                          type="button"
+                          onClick={() => void handleCancel(order.id)}
+                          disabled={cancellingId === order.id}
+                          className="inline-flex h-10 items-center justify-center rounded-tl-[18px] rounded-br-[18px] border border-ivy-dark px-5 text-[12px] font-semibold uppercase tracking-[0.05em] text-ivy-dark disabled:opacity-60"
+                        >
+                          {cancellingId === order.id
+                            ? "Đang xử lý..."
+                            : order.orderStatus === "PENDING_CONFIRMATION" && order.paymentStatus !== "PAID"
+                              ? "Hủy đơn"
+                              : order.paymentStatus === "PAID"
+                                ? "Yêu cầu hủy & hoàn tiền"
+                                : "Yêu cầu hủy đơn"}
+                        </button>
+                      ) : null}
+                    </div>
                     {order.orderStatus === "CANCELLATION_REQUESTED" ? (
                       <p className="mt-4 max-w-[260px] text-[13px] leading-5 text-[#A86516]">
                         Đang chờ cửa hàng hoàn tiền VNPay. Đơn sẽ tự động hủy sau khi hoàn tiền thành công.

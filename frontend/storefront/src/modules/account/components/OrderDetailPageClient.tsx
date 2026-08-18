@@ -135,29 +135,41 @@ export function OrderDetailPageClient({ orderId }: { orderId: string }) {
             <div className="text-right">
               <p className="text-[13px] uppercase tracking-[0.08em] text-ivy-text-muted">Tổng thanh toán</p>
               <p className="mt-2 text-[24px] font-semibold text-ivy-dark">{money(order.totalAmount)}</p>
-              <Link
-                href={`/tai-khoan/don-hang/${order.id}/hoa-don`}
-                target="_blank"
-                className="mt-4 inline-flex h-10 items-center justify-center rounded-tl-[18px] rounded-br-[18px] border border-ivy-dark px-5 text-[12px] font-semibold uppercase tracking-[0.05em] text-ivy-dark"
-              >
-                In hóa đơn
-              </Link>
-              {canCancel ? (
-                <button
-                  type="button"
-                  onClick={() => void handleCancel()}
-                  disabled={cancelling}
-                  className="mt-4 h-10 rounded-tl-[18px] rounded-br-[18px] border border-ivy-dark px-5 text-[12px] font-semibold uppercase tracking-[0.05em] text-ivy-dark disabled:opacity-60"
+              <div className="mt-4 flex flex-wrap justify-end gap-3">
+                <Link
+                  href={`/tai-khoan/don-hang/${order.id}/hoa-don`}
+                  target="_blank"
+                  className="inline-flex h-10 items-center justify-center rounded-tl-[18px] rounded-br-[18px] border border-ivy-dark px-5 text-[12px] font-semibold uppercase tracking-[0.05em] text-ivy-dark"
                 >
-                  {cancelling
-                    ? "Đang xử lý..."
-                    : order.orderStatus === "PENDING_CONFIRMATION" && order.paymentStatus !== "PAID"
-                      ? "Hủy đơn"
-                      : order.paymentStatus === "PAID"
-                        ? "Yêu cầu hủy & hoàn tiền"
-                        : "Yêu cầu hủy đơn"}
-                </button>
-              ) : null}
+                  In hóa đơn
+                </Link>
+                {canCancel ? (
+                  <button
+                    type="button"
+                    onClick={() => void handleCancel()}
+                    disabled={cancelling}
+                    className="inline-flex h-10 items-center justify-center rounded-tl-[18px] rounded-br-[18px] border border-ivy-dark px-5 text-[12px] font-semibold uppercase tracking-[0.05em] text-ivy-dark disabled:opacity-60"
+                  >
+                    {cancelling
+                      ? "Đang xử lý..."
+                      : order.orderStatus === "PENDING_CONFIRMATION" && order.paymentStatus !== "PAID"
+                        ? "Hủy đơn"
+                        : order.paymentStatus === "PAID"
+                          ? "Yêu cầu hủy & hoàn tiền"
+                          : "Yêu cầu hủy đơn"}
+                  </button>
+                ) : null}
+                {canPay ? (
+                  <button
+                    type="button"
+                    onClick={() => void handlePay()}
+                    disabled={paying}
+                    className="inline-flex h-10 items-center justify-center rounded-tl-[18px] rounded-br-[18px] bg-ivy-dark px-5 text-[12px] font-semibold uppercase tracking-[0.05em] text-white disabled:opacity-60"
+                  >
+                    {paying ? "Đang mở VNPay..." : "Thanh toán VNPay"}
+                  </button>
+                ) : null}
+              </div>
               {order.orderStatus === "CANCELLATION_REQUESTED" ? (
                 <p className="mt-4 max-w-[300px] text-[13px] leading-5 text-[#A86516]">
                   Đang chờ hoàn tiền VNPay. Đơn sẽ tự động hủy khi giao dịch hoàn tiền thành công.
@@ -167,16 +179,6 @@ export function OrderDetailPageClient({ orderId }: { orderId: string }) {
                 <p className="mt-4 max-w-[300px] text-[13px] leading-5 text-[#A86516]">
                   Cửa hàng đã duyệt hủy và đang xử lý hoàn tiền VNPay cho bạn.
                 </p>
-              ) : null}
-              {canPay ? (
-                <button
-                  type="button"
-                  onClick={() => void handlePay()}
-                  disabled={paying}
-                  className="mt-4 ml-3 h-10 rounded-tl-[18px] rounded-br-[18px] bg-ivy-dark px-5 text-[12px] font-semibold uppercase tracking-[0.05em] text-white disabled:opacity-60"
-                >
-                  {paying ? "Đang mở VNPay..." : "Thanh toán VNPay"}
-                </button>
               ) : null}
             </div>
           </div>
