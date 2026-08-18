@@ -85,6 +85,8 @@ export function OrderHistoryPageClient() {
 
   const canCancel = (order: OrderResponse) =>
     ["PENDING_CONFIRMATION", "CONFIRMED", "PACKING"].includes(order.orderStatus);
+  // A cancelled order was never a completed transaction - nothing to print.
+  const canPrintInvoice = (order: OrderResponse) => order.orderStatus !== "CANCELLED";
 
   if (!authenticated) {
     return (
@@ -133,13 +135,15 @@ export function OrderHistoryPageClient() {
                     <p className="text-[13px] uppercase tracking-[0.08em] text-ivy-text-muted">Tổng thanh toán</p>
                     <p className="mt-2 text-[24px] font-semibold text-ivy-dark">{order.totalAmount.toLocaleString("vi-VN")}đ</p>
                     <div className="mt-4 flex flex-wrap justify-end gap-3">
-                      <Link
-                        href={`/tai-khoan/don-hang/${order.id}/hoa-don`}
-                        target="_blank"
-                        className="inline-flex h-10 items-center justify-center rounded-tl-[18px] rounded-br-[18px] border border-ivy-dark px-5 text-[12px] font-semibold uppercase tracking-[0.05em] text-ivy-dark"
-                      >
-                        In hóa đơn
-                      </Link>
+                      {canPrintInvoice(order) ? (
+                        <Link
+                          href={`/tai-khoan/don-hang/${order.id}/hoa-don`}
+                          target="_blank"
+                          className="inline-flex h-10 items-center justify-center rounded-tl-[18px] rounded-br-[18px] border border-ivy-dark px-5 text-[12px] font-semibold uppercase tracking-[0.05em] text-ivy-dark"
+                        >
+                          In hóa đơn
+                        </Link>
+                      ) : null}
                       {canCancel(order) ? (
                         <button
                           type="button"

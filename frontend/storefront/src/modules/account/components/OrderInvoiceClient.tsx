@@ -58,6 +58,9 @@ export function OrderInvoiceClient({ orderId }: { orderId: string }) {
   if (error || !order) {
     return <div className="invoice-status">{error ?? "Không tìm thấy đơn hàng."}</div>;
   }
+  if (order.orderStatus === "CANCELLED") {
+    return <div className="invoice-status">Đơn hàng đã hủy không có hóa đơn để in.</div>;
+  }
 
   const address = order.shippingAddress;
 
