@@ -352,14 +352,20 @@ public class NotificationService {
         notification = notificationRepository.save(notification);
 
         UUID notificationId = notification.getId();
+        UUID userId = user.getId();
+        NotificationResponse realtimePayload = toResponse(notification);
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
                 @Override
                 public void afterCommit() {
+                    // Realtime UI synchronization must not wait for SMTP. Email
+                    // delivery remains asynchronous and may take several seconds.
+                    broadcaster.broadcast(userId, realtimePayload);
                     scheduleDelivery(notificationId);
                 }
             });
         } else {
+            broadcaster.broadcast(userId, realtimePayload);
             scheduleDelivery(notificationId);
         }
     }

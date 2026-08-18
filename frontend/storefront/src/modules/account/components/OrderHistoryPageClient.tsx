@@ -24,8 +24,8 @@ export function OrderHistoryPageClient() {
   const [success, setSuccess] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
 
-  const loadOrders = useCallback(async () => {
-    setLoading(true);
+  const loadOrders = useCallback(async (showLoading = true) => {
+    if (showLoading) setLoading(true);
     setError(null);
     try {
       const result = await listMyOrders({ page, limit: ORDERS_PER_PAGE });
@@ -35,7 +35,7 @@ export function OrderHistoryPageClient() {
     } catch (err) {
       setError(getApiErrorMessage(err, "Không thể tải lịch sử đơn hàng."));
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   }, [page]);
 
@@ -49,12 +49,12 @@ export function OrderHistoryPageClient() {
 
   useEffect(() => {
     if (!authenticated) return;
-    const refresh = () => void loadOrders();
+    // Realtime updates replace the data in place. Keep the current list visible
+    // so an admin status change does not flash the full-page loading state.
+    const refresh = () => void loadOrders(false);
     window.addEventListener(CUSTOMER_ORDER_CHANGED_EVENT, refresh);
-    window.addEventListener("focus", refresh);
     return () => {
       window.removeEventListener(CUSTOMER_ORDER_CHANGED_EVENT, refresh);
-      window.removeEventListener("focus", refresh);
     };
   }, [authenticated, loadOrders]);
 

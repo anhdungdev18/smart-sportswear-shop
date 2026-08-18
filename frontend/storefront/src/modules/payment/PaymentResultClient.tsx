@@ -7,6 +7,7 @@ import { getPaymentsByOrder, processVnpayReturn, type PaymentResponse } from "@/
 
 export function PaymentResultClient() {
   const [payment, setPayment] = useState<PaymentResponse | null>(null);
+  const [orderId, setOrderId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -19,33 +20,46 @@ export function PaymentResultClient() {
       }, 0);
       return () => window.clearTimeout(timer);
     }
+    const orderIdTimer = window.setTimeout(() => setOrderId(orderId), 0);
     let cancelled = false;
     let attempts = 0;
+    let pollTimer: number | undefined;
+    const scheduleNextCheck = () => {
+      pollTimer = window.setTimeout(check, 1000);
+    };
     const check = async () => {
+      attempts += 1;
       try {
-        if (attempts === 0) {
-          await processVnpayReturn(new URLSearchParams(window.location.search));
+        if (attempts === 1) {
+          // Do not block status polling on the browser callback. The backend may
+          // still commit a valid VNPay result after this request times out.
+          void processVnpayReturn(new URLSearchParams(window.location.search)).catch(() => undefined);
         }
         const payments = await getPaymentsByOrder(orderId);
         if (cancelled) return;
         const latest = payments[0] ?? null;
         setPayment(latest);
-        attempts += 1;
-        if (latest?.status === "PENDING" && attempts < 10) {
-          window.setTimeout(check, 2000);
+        if (latest?.status === "PENDING" && attempts < 60) {
+          scheduleNextCheck();
         } else {
           setLoading(false);
           if (latest?.status !== "PENDING") sessionStorage.removeItem("vnpay-pending-order-id");
         }
       } catch (cause) {
-        if (!cancelled) {
+        if (!cancelled && attempts < 60) {
+          scheduleNextCheck();
+        } else if (!cancelled) {
           setError(getApiErrorMessage(cause, "Không thể xác minh trạng thái thanh toán."));
           setLoading(false);
         }
       }
     };
     void check();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+      window.clearTimeout(orderIdTimer);
+      if (pollTimer !== undefined) window.clearTimeout(pollTimer);
+    };
   }, []);
 
   const message = payment?.status === "PAID"
@@ -62,7 +76,12 @@ export function PaymentResultClient() {
       {error ? <p className="mt-8 text-[#C62127]">{error}</p> : <p className="mt-8 text-ivy-text">{loading ? "Đang xác minh..." : message}</p>}
       {payment ? <p className="mt-3 text-sm text-ivy-text">Mã giao dịch: {payment.transactionRef}</p> : null}
       <div className="mt-10 flex justify-center gap-4">
-        <Link href="/tai-khoan" className="border border-ivy-dark px-6 py-3">Xem đơn hàng</Link>
+        <Link
+          href={orderId ? `/tai-khoan/don-hang/${orderId}` : "/tai-khoan"}
+          className="border border-ivy-dark px-6 py-3"
+        >
+          Xem đơn hàng
+        </Link>
         <Link href="/" className="bg-ivy-dark px-6 py-3 text-white">Tiếp tục mua sắm</Link>
       </div>
     </main>

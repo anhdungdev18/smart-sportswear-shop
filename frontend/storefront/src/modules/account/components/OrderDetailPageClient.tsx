@@ -21,15 +21,15 @@ export function OrderDetailPageClient({ orderId }: { orderId: string }) {
   const [cancelling, setCancelling] = useState(false);
   const [paying, setPaying] = useState(false);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async (showLoading = true) => {
+    if (showLoading) setLoading(true);
     setError(null);
     try {
       setOrder(await getOrderDetail(orderId));
     } catch (err) {
       setError(getApiErrorMessage(err, "Không thể tải chi tiết đơn hàng."));
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   }, [orderId]);
 
@@ -49,14 +49,11 @@ export function OrderDetailPageClient({ orderId }: { orderId: string }) {
   useEffect(() => {
     const refresh = (event: Event) => {
       const changedOrderId = (event as CustomEvent<{ orderId?: string }>).detail?.orderId;
-      if (!changedOrderId || changedOrderId === orderId) void load();
+      if (!changedOrderId || changedOrderId === orderId) void load(false);
     };
-    const refreshOnFocus = () => void load();
     window.addEventListener(CUSTOMER_ORDER_CHANGED_EVENT, refresh);
-    window.addEventListener("focus", refreshOnFocus);
     return () => {
       window.removeEventListener(CUSTOMER_ORDER_CHANGED_EVENT, refresh);
-      window.removeEventListener("focus", refreshOnFocus);
     };
   }, [load, orderId]);
 

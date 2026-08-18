@@ -37,7 +37,12 @@ function isRelevantToStorefront(scope: string, pathname: string) {
     return pathname === "/" || ["/sanpham", "/danh-muc", "/cua-hang", "/tim-kiem", "/lookbook", "/bo-suu-tap"]
       .some((route) => pathname.startsWith(route));
   }
-  if (["orders", "returns"].includes(scope)) return pathname.startsWith("/tai-khoan") || pathname.startsWith("/tra-cuu-don-hang");
+  // Order updates are delivered through the authenticated notification stream.
+  // That stream is customer-specific and includes the changed order id, whereas
+  // this application-wide stream would refresh every customer's whole page for
+  // an order changed by somebody else.
+  if (scope === "orders") return false;
+  if (scope === "returns") return pathname.startsWith("/tai-khoan") || pathname.startsWith("/tra-cuu-don-hang");
   if (scope === "reviews") return pathname.startsWith("/sanpham");
   if (scope === "pages") return pathname.startsWith("/about") || pathname.startsWith("/tin-tuc");
   return false;
