@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { shouldBypassImageOptimization } from "@/lib/image";
 
 interface ProductGalleryProps {
   images: string[];
@@ -33,7 +34,14 @@ export function ProductGallery({ images, alt }: ProductGalleryProps) {
               index === activeIndex && "border-ivy-dark",
             )}
           >
-            <Image src={image} alt={`${alt} thumbnail ${index + 1}`} fill sizes="90px" className="object-cover" />
+            <Image
+              src={image}
+              alt={`${alt} thumbnail ${index + 1}`}
+              fill
+              sizes="90px"
+              className="object-cover"
+              unoptimized={shouldBypassImageOptimization(image)}
+            />
           </button>
         ))}
       </div>
@@ -59,6 +67,7 @@ export function ProductGallery({ images, alt }: ProductGalleryProps) {
             sizes="(min-width: 1024px) 620px, 100vw"
             className="object-cover"
             priority
+            unoptimized={shouldBypassImageOptimization(images[activeIndex])}
           />
         </div>
 

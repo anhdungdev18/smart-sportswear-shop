@@ -44,7 +44,7 @@ export function GoogleSignInButton({
         const data = await googleLogin(response.credential);
         setSession(data.tokens);
         onSuccess?.(data.user.fullName);
-        router.push("/tai-khoan");
+        router.push("/");
       } catch (error) {
         onError?.(getApiErrorMessage(error, "Đăng nhập Google không thành công."));
       }

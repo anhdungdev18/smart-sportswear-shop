@@ -38,7 +38,7 @@ export function LoginPageClient() {
       const response = await login(loginForm);
       setSession(response.tokens);
       setLoginMessage(`Chào mừng ${response.user.fullName}, bạn đã đăng nhập thành công.`);
-      router.push("/tai-khoan");
+      router.push("/");
     } catch (error) {
       setLoginError(getApiErrorMessage(error, "Đăng nhập không thành công."));
     } finally {
